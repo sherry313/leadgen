@@ -207,10 +207,17 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
 
   console.log(`[ScrapeRaw] "${searchQuery}" @ ${location} | max ${maxResults}`);
 
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+  res.flushHeaders();
+  const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
+  const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 15000);
+
   try {
     const { companies: rawCompanies, apifyCostUsd: apifyActualCost } = dataSource === 'google_search'
       ? await searchGoogleSearch(searchQuery, location, maxResults)
       : await scrapeAustralianCompanies(searchQuery, location, maxResults, dataOptions);
+
+    console.log('[ScrapeRaw] Got companies:', rawCompanies.length);
 
     // Dedup: filter out companies already in the database
     const { placeIds: existingPlaceIds, phones: existingPhones, emails: existingEmails, domains: existingDomains } = await getExistingLeadKeys();
@@ -233,10 +240,15 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
     const searchId  = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length });
     await updateSearchRunCosts(searchId, { apifyCostUsd: apifyCost, anthropicCostUsd: 0, totalCostUsd: apifyCost, totalQualified: 0 });
 
-    const payload = { success: true, searchId, companies, apifyCostUsd: apifyCost, totalRaw: rawCompanies.length, skippedCount };
-    console.log(`[ScrapeRaw] → res.json: success=${payload.success} totalRaw=${payload.totalRaw} skippedCount=${payload.skippedCount} companies.length=${payload.companies.length} searchId=${payload.searchId}`);
+    for (let i = 0; i < companies.length; i++) {
+      console.log('[ScrapeRaw] Sending company event:', i + 1);
+      send({ type: 'company', company: companies[i], done: i + 1, total: companies.length });
+    }
+
+    console.log('[ScrapeRaw] Done event sent');
+    console.log(`[ScrapeRaw] → done: totalRaw=${rawCompanies.length} skippedCount=${skippedCount} companies=${companies.length} searchId=${searchId}`);
     if (companies.length > 0) console.log('[ScrapeRaw] First company sample:', JSON.stringify(companies[0]).slice(0, 200));
-    res.json(payload);
+    send({ type: 'done', success: true, searchId, companies, apifyCostUsd: apifyCost, totalRaw: rawCompanies.length, skippedCount });
   } catch (err) {
     console.error('[ScrapeRaw] ===== ERROR =====');
     console.error('[ScrapeRaw] message :', err.message);
@@ -249,7 +261,10 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
     const msg = status === 502 || status === 503 || status === 504
       ? `数据源暂时不可用（${status}），请稍后重试`
       : (err.message || '抓取失败，请重试');
-    res.status(500).json({ success: false, error: msg });
+    send({ type: 'error', error: msg });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
   }
 });
 

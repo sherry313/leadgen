@@ -2781,11 +2781,14 @@ async function startScrapeRaw() {
   document.getElementById('preFilterSection').style.display = 'none';
   document.getElementById('dedupBanner').style.display = 'none';
 
+  const _totalExpected = maxResults * selectedCombos.length;
+  let _companiesFound  = 0;
+  setStatus(`正在抓取 0/${_totalExpected}…`);
+
   for (let ci = 0; ci < selectedCombos.length; ci++) {
     const combo = selectedCombos[ci];
     const dot = document.getElementById(`combo-dot-${ci}`);
     if (dot) { dot.className = 'combo-dot running'; dot.textContent = '…'; }
-    setStatus(`正在抓取 ${ci + 1}/${selectedCombos.length}：${combo.label}`);
 
     try {
       const res = await fetch('/api/scrape-raw', {
@@ -2793,8 +2796,35 @@ async function startScrapeRaw() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ searchQuery: combo.query, location: combo.location, maxResults, dataOptions, dataSource: _selectedDataSource }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let data = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop();
+        for (const part of parts) {
+          if (!part.startsWith('data: ')) continue;
+          let evt;
+          try { evt = JSON.parse(part.slice(6)); } catch { continue; }
+          if (evt.type === 'company') {
+            _companiesFound++;
+            setStatus(`正在抓取 ${_companiesFound}/${_totalExpected}：${evt.company?.companyName || ''}`);
+          } else if (evt.type === 'done') {
+            data = evt;
+          } else if (evt.type === 'error') {
+            throw new Error(evt.error);
+          }
+        }
+      }
+
+      if (!data || !data.success) throw new Error(data?.error || '抓取失败');
 
       if (!_currentSearchId) _currentSearchId = data.searchId;
       _rawResults = _rawResults.concat(data.companies || []);
