@@ -9,9 +9,9 @@ const requireAuth = require('./middleware/auth');
 const { scrapeAustralianCompanies } = require('./services/apify');
 const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
-const { enrichLead, preFilterLead } = require('./services/aiEnrich');
+const { analyzeICP, generateEmails, preFilterLead } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun } = require('./services/supabase');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -84,8 +84,8 @@ app.post('/api/scrape', requireAuth, async (req, res) => {
     // Extra buffer between companies to avoid hitting rate limits
     await new Promise(r => setTimeout(r, 1000));
 
-    // Step 4: AI scoring + 5-email sequence generation (usage field included in return value)
-    const enrichment = await enrichLead(company, websiteContent, companyProfile, icp, keepSignals, lowSignal);
+    // Step 4: AI ICP + intent scoring (email generation is now a separate step)
+    const enrichment = await analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal);
 
     // Merge all data into the final lead object (enrichment.usage stays for post-loop cost calc)
     const lead = {
@@ -350,7 +350,7 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
       if (shouldSkip) {
         return { ...company, websiteContent, status: `filtered: ${reason}`, dateAdded: today };
       }
-      const enrichment = await enrichLead(company, websiteContent, companyProfile, icp, keepSignals, lowSignal);
+      const enrichment = await analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal);
       sonnetIn  += enrichment.usage?.input_tokens  || 0;
       sonnetOut += enrichment.usage?.output_tokens || 0;
       return { ...company, websiteContent, keepSignals, lowSignal, ...enrichment, dateAdded: today, status: 'enriched' };
@@ -398,16 +398,129 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
   res.end();
 });
 
+// ── Templates metadata ────────────────────────────────────────────────────────
+// GET /api/frameworks  →  { success, frameworks: [...] }
+app.get('/api/frameworks', requireAuth, (req, res) => {
+  const frameworks = require('./services/emailFrameworks');
+  const result = Object.entries(frameworks).map(([key, fw]) => ({
+    key,
+    name:             fw.name,
+    en_name:          fw.en_name,
+    source:           fw.source,
+    description:      fw.description,
+    icon:             fw.icon,
+    best_for:         fw.best_for,
+    is_custom:        fw.is_custom || false,
+    sample_subject:   fw.sample_subject   || '',
+    sample_email_body:fw.is_custom ? '' : (fw.sample_email_body || ''),
+    structure:        fw.structure        || [],
+  }));
+  res.json({ success: true, frameworks: result });
+});
+
+// GET /api/templates  →  { success, templates: [ { key, en_label, pain_point, value_prop, emails[] } ] }
+app.get('/api/templates', requireAuth, (req, res) => {
+  const templates = require('./services/emailTemplates');
+  const result = Object.entries(templates).map(([key, tmpl]) => ({
+    key,
+    en_label:        tmpl.en_label,
+    zh_label:        tmpl.zh_label || key,
+    pain_point:      tmpl.angle_config?.pain_point || '',
+    value_prop:      tmpl.angle_config?.value_prop || '',
+    angle_config:    tmpl.angle_config  || {},
+    preview_samples: (tmpl.preview_samples || []).map(s => ({
+      stage:   s.stage,
+      day:     s.day,
+      purpose: s.purpose,
+      en:      s.en,
+      zh:      s.zh,
+    })),
+  }));
+  res.json({ success: true, templates: result });
+});
+
+// ── Email generation via chosen template (SSE) ────────────────────────────────
+// POST /api/leads/generate-emails
+// Body: { companies: Lead[], template_key: string }
+// Each company must have websiteContent stored from the enrich step.
+let emailGenCancelled = false;
+
+app.post('/api/leads/generate-emails/cancel', requireAuth, (req, res) => {
+  emailGenCancelled = true;
+  console.log('[EmailGen] Cancel requested');
+  res.json({ success: true });
+});
+
+app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
+  emailGenCancelled = false;
+  const { companies, template_key, framework_key, custom_framework, searchId } = req.body;
+
+  if (!Array.isArray(companies) || !companies.length)
+    return res.status(400).json({ success: false, error: 'companies array required' });
+  if (!template_key)
+    return res.status(400).json({ success: false, error: 'template_key required' });
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+
+  const results = new Array(companies.length);
+  let sonnetIn = 0, sonnetOut = 0;
+  let completed = 0;
+  let idx = 0;
+
+  const worker = async () => {
+    while (idx < companies.length && !emailGenCancelled) {
+      const i = idx++;
+      const company = companies[i];
+      try {
+        const emails = await generateEmails(company, template_key, company.websiteContent || '', framework_key, custom_framework);
+        sonnetIn  += emails.usage?.input_tokens  || 0;
+        sonnetOut += emails.usage?.output_tokens || 0;
+        results[i] = { ...company, ...emails, emailTemplateKey: template_key };
+      } catch (err) {
+        console.error(`[EmailGen] ${company.companyName}:`, err.message);
+        results[i] = { ...company, emailTemplateKey: template_key };
+      }
+      completed++;
+      send({ type: 'progress', lead: results[i], done: completed, total: companies.length });
+    }
+  };
+
+  const CONCURRENCY = 2;
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, companies.length) }, () => worker()));
+
+  const sonnetCost = (sonnetIn / 1_000_000 * 3) + (sonnetOut / 1_000_000 * 15);
+  console.log(`[EmailGen] Done: ${completed}/${companies.length} | Sonnet $${sonnetCost.toFixed(4)}`);
+  if (searchId) {
+    try { await appendSearchRunCosts(searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: 0 }); }
+    catch (e) { console.warn('[EmailGen] cost save failed:', e.message); }
+  }
+
+  send({ type: 'done', results, cancelled: emailGenCancelled });
+  res.end();
+});
+
 // ── Search history ────────────────────────────────────────────────────────────
 app.get('/api/history', requireAuth, async (req, res) => {
-  const history = await getSearchHistory();
-  res.json({ success: true, history });
+  const [history, emailsSent] = await Promise.all([getSearchHistory(), getEmailsSentCount()]);
+  res.json({ success: true, history, emailsSent });
 });
 
 app.get('/api/history/:id', requireAuth, async (req, res) => {
   const leads = await getLeadsForSearch(req.params.id);
   console.log(`[History] 加载 ID: ${req.params.id}，找到 ${leads.length} 条 leads`);
   res.json({ success: true, leads });
+});
+
+app.delete('/api/history/:id', requireAuth, async (req, res) => {
+  const ok = await deleteSearchRun(req.params.id);
+  if (!ok) return res.status(500).json({ success: false, error: '删除失败' });
+  console.log(`[History] Deleted search run ${req.params.id}`);
+  res.json({ success: true });
 });
 
 // ── Add lead (full 5-email sequence) to Instantly campaign ───────────────────

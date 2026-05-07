@@ -51,11 +51,43 @@
       font-weight: 600; font-size: 0.88rem; transition: background 0.2s, transform 0.15s;
     }
     .btn-nav:hover { background: var(--blue-dark); transform: translateY(-1px); }
-    .nav-login-status { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--sub); }
-    .login-dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; flex-shrink: 0; }
-    .login-dot.offline { background: rgba(255,255,255,0.2); }
     .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
     .hamburger span { display: block; width: 24px; height: 2px; background: var(--text); border-radius: 2px; }
+    .nav-primary { color: var(--text) !important; font-weight: 700; }
+    .btn-hub-trigger {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 0.38rem 0.9rem; background: rgba(37,99,235,0.12);
+      border: 1px solid rgba(37,99,235,0.3); border-radius: 20px; color: #93c5fd;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: all 0.18s; white-space: nowrap;
+    }
+    .btn-hub-trigger:hover { background: rgba(37,99,235,0.22); border-color: rgba(99,179,237,0.5); color: #f1f5f9; }
+    .nav-user-btn {
+      display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; color: var(--text); font-size: 0.84rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap;
+    }
+    .nav-user-btn:hover { background: rgba(255,255,255,0.13); }
+    .nav-dropdown { position: relative; }
+    .nav-dropdown-menu {
+      display: none; position: absolute; right: 0; top: calc(100% + 10px);
+      background: rgba(13,20,38,0.98); border: 1px solid var(--border);
+      border-radius: 10px; padding: 5px; min-width: 155px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.55); z-index: 500;
+      backdrop-filter: blur(14px);
+    }
+    .nav-dropdown-menu.open { display: block; }
+    .nav-dd-item {
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 7px;
+      color: var(--sub); font-size: 0.83rem; cursor: pointer; text-decoration: none;
+      transition: all 0.12s; white-space: nowrap; background: none; border: none;
+      width: 100%; font-family: inherit; text-align: left;
+    }
+    .nav-dd-item:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+    .nav-dd-item.danger { color: #f87171; }
+    .nav-dd-item.danger:hover { background: rgba(239,68,68,0.1); color: #f87171; }
+    .nav-dd-sep { height: 1px; background: var(--border); margin: 4px 0; }
 
     /* ── Layout ── */
     .container { max-width: 1060px; margin: 0 auto; padding: 88px 18px 56px; }
@@ -389,6 +421,9 @@
     .status-filtered { background: #f1f5f9; color: #64748b; }
     .status-skipped  { background: #fef9c3; color: #854d0e; }
     .status-error    { background: #fee2e2; color: #b91c1c; }
+    .row-disqualified td { opacity: 0.6; }
+    .row-disqualified .company-name { color: var(--sub); }
+    .warn-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:0.72rem;color:#fbbf24;font-weight:500;white-space:normal;line-height:1.3; }
     .social-links { display: flex; gap: 3px; }
     .social-link {
       width: 20px; height: 20px; border-radius: 4px;
@@ -420,7 +455,9 @@
     .contact-icon:hover { opacity: 1; }
     .score-group { display: flex; gap: 3px; flex-wrap: nowrap; align-items: center; }
     .score-xs { padding: 1px 5px; border-radius: 8px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
-    .act-btns { display: flex; gap: 3px; align-items: center; }
+    .act-btns { display: flex; gap: 4px; align-items: center; flex-wrap: nowrap; }
+    .act-btns .btn-sm { padding: 5px 10px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+    .act-btns .btn-instantly { padding: 5px 10px; font-size: 0.72rem; }
 
     /* ── Email detail rows ── */
     .email-detail-row { display: none; }
@@ -595,6 +632,292 @@
       max-width: 300px;
     }
     #toast.show { transform: translateX(0); opacity: 1; pointer-events: auto; }
+
+    /* ── Template Cards ──────────────────────────────────────────────────── */
+    #templateSection {
+      margin-bottom: 24px;
+    }
+    .template-scroll {
+      display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    .template-scroll::-webkit-scrollbar { height: 4px; }
+    .template-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .tcard {
+      flex: 0 0 182px; scroll-snap-align: start;
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 14px 14px 12px;
+      cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .tcard:hover { border-color: rgba(37,99,235,0.5); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+    .tcard.selected {
+      border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+      background: rgba(37,99,235,0.07);
+    }
+    .tcard-icon { font-size: 1.5rem; line-height: 1; }
+    .tcard-label { font-size: 0.82rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .tcard-zh { font-size: 0.72rem; color: var(--sub); }
+    .tcard-pain { font-size: 0.71rem; color: var(--sub); line-height: 1.35; margin-top: 2px; flex: 1; }
+    .tcard-btns { display: flex; gap: 6px; margin-top: 6px; }
+    .tcard-btn {
+      flex: 1; padding: 4px 6px; font-size: 0.7rem; font-weight: 600;
+      border-radius: 6px; cursor: pointer; font-family: inherit; border: 1px solid var(--border);
+      background: transparent; color: var(--sub); transition: all 0.12s;
+    }
+    .tcard-btn:hover { background: rgba(37,99,235,0.1); border-color: var(--blue); color: var(--blue); }
+    .tcard-btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .tcard-btn.primary:hover { background: var(--blue-dark); }
+    .tcard.selected .tcard-btn.primary { background: #10b981; border-color: #10b981; }
+
+    /* ── Framework cards grid ─────────────────────────────────────────────── */
+    .fw-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 12px; margin-bottom: 4px;
+    }
+    .fwcard {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 14px 14px 12px;
+      cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+      display: flex; flex-direction: column; gap: 5px; position: relative;
+    }
+    .fwcard:hover { border-color: rgba(37,99,235,0.5); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+    .fwcard.selected {
+      border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+      background: rgba(37,99,235,0.07);
+    }
+    .fwcard-source {
+      position: absolute; top: 10px; right: 10px;
+      font-size: 0.59rem; font-weight: 700; padding: 2px 6px;
+      border-radius: 8px; white-space: nowrap; letter-spacing: 0.02em;
+    }
+    .fwcard-source.method { background: rgba(16,185,129,0.15); color: #34d399; }
+    .fwcard-source.udemy  { background: rgba(245,158,11,0.13); color: #fcd34d; }
+    .fwcard-source.user   { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+    .fwcard-icon { font-size: 1.5rem; line-height: 1; margin-top: 4px; }
+    .fwcard-name { font-size: 0.82rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .fwcard-en   { font-size: 0.7rem; color: var(--sub); }
+    .fwcard-desc { font-size: 0.7rem; color: #93c5fd; font-weight: 600; margin-top: 1px; }
+    .fwcard-best { font-size: 0.68rem; color: var(--sub); line-height: 1.35; flex: 1; margin-top: 2px; }
+    .fwcard-btns { display: flex; gap: 6px; margin-top: 8px; }
+    .fwcard-btn {
+      flex: 1; padding: 4px 6px; font-size: 0.7rem; font-weight: 600;
+      border-radius: 6px; cursor: pointer; font-family: inherit; border: 1px solid var(--border);
+      background: transparent; color: var(--sub); transition: all 0.12s;
+    }
+    .fwcard-btn:hover { background: rgba(37,99,235,0.1); border-color: var(--blue); color: var(--blue); }
+    .fwcard-btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .fwcard-btn.primary:hover { background: var(--blue-dark); }
+    .fwcard.selected .fwcard-btn.primary { background: #10b981; border-color: #10b981; }
+
+    /* ── Framework example modal ──────────────────────────────────────────── */
+    #fwExModal {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      align-items: center; justify-content: center;
+    }
+    #fwExModal.open { display: flex; }
+    #fwExModalOverlay {
+      position: absolute; inset: 0;
+      background: rgba(15,23,42,0.6); backdrop-filter: blur(3px);
+    }
+    #fwExModalBox {
+      position: relative; z-index: 501;
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      width: min(560px, 96vw); max-height: 86vh; display: flex; flex-direction: column;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    }
+    #fwExModalHeader {
+      padding: 18px 22px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    #fwExModalClose {
+      background: none; border: none; color: var(--sub); font-size: 1.3rem;
+      cursor: pointer; padding: 0 4px; line-height: 1; flex-shrink: 0;
+    }
+    #fwExModalClose:hover { color: var(--text); }
+    #fwExModalBody { padding: 18px 22px; overflow-y: auto; flex: 1; }
+    .fw-struct-row {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .fw-struct-chip {
+      padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700;
+      text-align: center; white-space: nowrap;
+      background: rgba(37,99,235,0.15); color: #93c5fd;
+    }
+    .fw-sample-subj {
+      padding: 8px 12px; background: rgba(30,41,59,0.8);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.83rem; font-weight: 600; color: var(--text); margin-bottom: 10px;
+    }
+    .fw-sample-body {
+      padding: 12px; background: rgba(30,41,59,0.5);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.8rem; color: var(--text); line-height: 1.65;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* ── Custom framework modal ───────────────────────────────────────────── */
+    #customFwModal {
+      display: none; position: fixed; inset: 0; z-index: 520;
+      align-items: center; justify-content: center;
+    }
+    #customFwModal.open { display: flex; }
+    #customFwModalOverlay {
+      position: absolute; inset: 0;
+      background: rgba(15,23,42,0.7); backdrop-filter: blur(4px);
+    }
+    #customFwModalBox {
+      position: relative; z-index: 521;
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      width: min(600px, 96vw); max-height: 92vh; display: flex; flex-direction: column;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+    #customFwModalHeader {
+      padding: 18px 22px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    #customFwModalClose {
+      background: none; border: none; color: var(--sub); font-size: 1.3rem;
+      cursor: pointer; padding: 0 4px; line-height: 1; flex-shrink: 0;
+    }
+    #customFwModalClose:hover { color: var(--text); }
+    #customFwModalBody { padding: 18px 22px; overflow-y: auto; flex: 1; }
+    .cfw-field { margin-bottom: 16px; }
+    .cfw-label {
+      display: block; font-size: 0.72rem; font-weight: 700; color: var(--sub);
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
+    }
+    .cfw-input, .cfw-textarea {
+      width: 100%; background: rgba(15,23,42,0.6); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.82rem;
+      padding: 8px 11px; transition: border-color 0.15s; outline: none; resize: vertical;
+    }
+    .cfw-input:focus, .cfw-textarea:focus { border-color: var(--blue); }
+    .cfw-hint { font-size: 0.67rem; color: var(--sub); margin-top: 4px; }
+    .cfw-seq-btns { display: flex; gap: 8px; }
+    .cfw-seq-btn {
+      flex: 1; padding: 7px 0; font-size: 0.78rem; font-weight: 600;
+      border-radius: 8px; cursor: pointer; font-family: inherit;
+      border: 1px solid var(--border); background: transparent; color: var(--sub);
+      transition: all 0.12s;
+    }
+    .cfw-seq-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .cfw-days-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .cfw-day-input {
+      width: 50px; text-align: center; background: rgba(15,23,42,0.6);
+      border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+      font-family: inherit; font-size: 0.82rem; padding: 5px 6px; outline: none;
+    }
+    .cfw-day-input:focus { border-color: var(--blue); }
+    .cfw-tip {
+      background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2);
+      border-radius: 8px; padding: 10px 13px; font-size: 0.74rem; color: var(--sub);
+      line-height: 1.5; margin-bottom: 16px;
+    }
+    #customFwModalFooter {
+      padding: 14px 22px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 10px;
+    }
+
+    #generateEmailsBtn {
+      margin-top: 14px; padding: 10px 22px; font-size: 0.9rem; font-weight: 700;
+      background: var(--blue); color: #fff; border: none; border-radius: 10px;
+      cursor: pointer; font-family: inherit; transition: background 0.15s, opacity 0.15s;
+    }
+    #generateEmailsBtn:hover:not(:disabled) { background: var(--blue-dark); }
+    #generateEmailsBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Template Preview Modal ───────────────────────────────────────────── */
+    #tplModal {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      align-items: center; justify-content: center;
+    }
+    #tplModal.open { display: flex; }
+    #tplModalOverlay {
+      position: absolute; inset: 0;
+      background: rgba(15,23,42,0.6); backdrop-filter: blur(3px);
+    }
+    #tplModalBox {
+      position: relative; z-index: 501;
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      width: min(680px, 96vw); max-height: 88vh; display: flex; flex-direction: column;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    }
+    #tplModalHeader {
+      padding: 18px 22px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    #tplModalClose {
+      background: none; border: none; color: var(--sub); font-size: 1.3rem;
+      cursor: pointer; padding: 0 4px; line-height: 1; flex-shrink: 0;
+    }
+    #tplModalClose:hover { color: var(--text); }
+    #tplModalBody { padding: 18px 22px; overflow-y: auto; flex: 1; }
+
+    /* Framework strip */
+    .tpl-framework-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .tpl-fp {
+      padding: 6px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 700;
+      text-align: center; line-height: 1.4; white-space: nowrap;
+    }
+    .tpl-fp-hook { background: rgba(37,99,235,0.15); color: #93c5fd; }
+    .tpl-fp-value { background: rgba(16,185,129,0.12); color: #34d399; }
+    .tpl-fp-proof { background: rgba(245,158,11,0.12); color: #fcd34d; }
+    .tpl-fp-diff { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+    .tpl-fp-breakup { background: rgba(239,68,68,0.12); color: #fca5a5; }
+    .tpl-arrow { color: var(--sub); font-size: 0.7rem; }
+
+    /* Section label */
+    .tpl-section-label { font-size: 0.68rem; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+
+    /* Angle config grid */
+    .tpl-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .tpl-config-item { padding: 9px 11px; background: rgba(30,41,59,0.5); border-radius: 8px; border: 1px solid var(--border); }
+    .tpl-config-item.full { grid-column: 1 / -1; }
+    .tpl-config-key { font-size: 0.65rem; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 5px; }
+    .tpl-config-val { font-size: 0.78rem; color: var(--text); line-height: 1.45; }
+    .tpl-tag-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .tpl-tag { padding: 2px 7px; border-radius: 10px; font-size: 0.65rem; background: rgba(37,99,235,0.12); color: #93c5fd; border: 1px solid rgba(37,99,235,0.2); }
+
+    /* Preview samples section */
+    .tpl-samples-section { border-top: 1px solid var(--border); padding-top: 14px; }
+    .tpl-sample-tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+    .tpl-sample-tab {
+      padding: 5px 12px; font-size: 0.74rem; font-weight: 600; border-radius: 6px;
+      cursor: pointer; border: 1px solid var(--border); background: transparent;
+      color: var(--sub); font-family: inherit; transition: all 0.12s;
+    }
+    .tpl-sample-tab.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .tpl-sample-tab:not(.active):hover { color: var(--text); }
+    .tpl-lang-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
+    .tpl-lang-btn {
+      padding: 4px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 6px;
+      cursor: pointer; font-family: inherit; border: 1px solid var(--border);
+      background: transparent; color: var(--sub); transition: all 0.12s;
+    }
+    .tpl-lang-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .tpl-subject-box {
+      padding: 8px 12px; background: rgba(30,41,59,0.8);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 10px;
+    }
+    .tpl-body-box {
+      padding: 12px; background: rgba(30,41,59,0.5);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.83rem; color: var(--text); line-height: 1.65;
+      white-space: pre-wrap; font-family: inherit;
+    }
+    .tpl-purpose {
+      font-size: 0.75rem; color: var(--sub); line-height: 1.5;
+      padding: 8px 11px; background: rgba(30,41,59,0.6); border-radius: 8px; margin-top: 10px;
+    }
+    .tpl-placeholder { background: rgba(37,99,235,0.2); color: #93c5fd; border-radius: 4px; padding: 0 3px; }
+    #tplModalFooter {
+      padding: 14px 22px; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
 
     /* ── Email Drawer ─────────────────────────────────────────────────────── */
     #drawerOverlay {
@@ -948,8 +1271,6 @@
     .admin-header:hover { background: rgba(251,191,36,0.05) !important; }
     .admin-cost-card { background: rgba(15,23,42,0.6) !important; border-color: rgba(251,191,36,0.2) !important; }
     .cost-table th { background: rgba(15,23,42,0.6) !important; color: var(--sub) !important; }
-    #hubDrawer { background: rgba(15,23,42,0.98) !important; border-color: rgba(37,99,235,0.2) !important; }
-    .hub-drawer-head { border-color: rgba(37,99,235,0.15) !important; }
     .cost-table td { border-bottom-color: rgba(99,179,237,0.07) !important; color: var(--text) !important; }
     .cost-table tfoot td { background: rgba(37,99,235,0.1) !important; color: #93c5fd !important; }
 
@@ -969,41 +1290,6 @@
       .hamburger { display: flex; }
     }
 
-    /* ── Hub Drawer (Email Center) ─────────────────────────────── */
-    .btn-hub-trigger {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 0.38rem 0.9rem; background: rgba(37,99,235,0.12);
-      border: 1px solid rgba(37,99,235,0.3); border-radius: 20px; color: #93c5fd;
-      font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit;
-      transition: all 0.18s; white-space: nowrap; position: relative;
-    }
-    .btn-hub-trigger:hover { background: rgba(37,99,235,0.22); border-color: rgba(99,179,237,0.5); color: #f1f5f9; }
-
-    #hubOverlay {
-      display: none; position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.52); backdrop-filter: blur(2px);
-    }
-    #hubDrawer {
-      position: fixed; top: 0; right: 0; height: 100dvh; width: 680px;
-      max-width: 100vw; z-index: 201; background: var(--card);
-      border-left: 1px solid var(--border); display: flex; flex-direction: column;
-      transform: translateX(100%); transition: transform 0.28s cubic-bezier(.4,0,.2,1);
-      overflow: hidden;
-    }
-    #hubDrawer.open { transform: translateX(0); }
-    .hub-drawer-head {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-    }
-    .hub-drawer-head h3 { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .hub-drawer-body { flex: 1; overflow-y: auto; padding: 0 20px 24px; }
-    .hub-close-btn {
-      background: none; border: none; color: var(--sub); font-size: 1.1rem;
-      cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 1;
-      transition: color 0.15s;
-    }
-    .hub-close-btn:hover { color: var(--text); }
-    @media (max-width: 720px) { #hubDrawer { width: 100vw; } }
 
     /* ── Adaptive step progress ─────────────────────────────────── */
     .step-label.done { display: none; }
@@ -1030,20 +1316,30 @@
 <body>
 
 <nav id="navbar">
-  <a href="landing.html" class="nav-logo">智拓客</a>
-  <ul class="nav-links" id="navLinks">
+  <a href="index.html" class="nav-logo">智拓客</a>
+
+  <!-- Marketing nav — shown when not logged in -->
+  <ul class="nav-links" id="navMkt">
     <li><a href="landing.html">首页</a></li>
     <li><a href="pricing.html">定价</a></li>
     <li><a href="tutorial.html">教程</a></li>
     <li><a href="about.html">关于我们</a></li>
-    <li><a href="dashboard.html" style="color:var(--text);font-weight:600" title="查看历史搜索记录">仪表盘</a></li>
-    <li><button class="btn-hub-trigger" onclick="openHubDrawer()" title="邮件发送中心">📬 邮件</button></li>
-    <li id="navCostLink" style="display:none"><a href="dashboard.html">💰 成本</a></li>
-    <li class="nav-login-status">
-      <div class="login-dot offline" id="loginDot"></div>
-      <span id="loginStatusText">未登录</span>
+    <li><a href="index.html" class="btn-nav">立即登录</a></li>
+  </ul>
+
+  <!-- App nav — shown when logged in -->
+  <ul class="nav-links" id="navApp" style="display:none">
+    <li><a href="index.html" class="nav-primary">找客户</a></li>
+    <li><a href="dashboard.html">仪表盘</a></li>
+    <li><button class="btn-hub-trigger" onclick="goToStep(5)" title="邮件发送配置">📬 邮件</button></li>
+    <li class="nav-dropdown" id="navUserMenu">
+      <button class="nav-user-btn" onclick="toggleUserMenu()" title="账户菜单">👤 ▾</button>
+      <div class="nav-dropdown-menu" id="userDropdown">
+        <button class="nav-dd-item danger" onclick="logout()">🚪 退出</button>
+      </div>
     </li>
   </ul>
+
   <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
 </nav>
 
@@ -1069,6 +1365,11 @@
     <div class="step-item" onclick="goToStep(4)">
       <div class="step-num" id="snum-4">4</div>
       <span class="step-label" id="slbl-4">开始搜索</span>
+    </div>
+    <div class="step-connector" id="scon-4"></div>
+    <div class="step-item" onclick="goToStep(5)">
+      <div class="step-num" id="snum-5">5</div>
+      <span class="step-label" id="slbl-5">邮件发送</span>
     </div>
   </div>
 
@@ -1342,6 +1643,25 @@
       </table>
     </div>
 
+    <!-- AI prefilter row — shown when there are results to act on -->
+    <div id="aiFilterRow" style="display:none;margin-top:16px;padding:14px 16px;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.25);border-radius:10px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button class="btn-start" id="btnAIFilter" onclick="startAIFilter()" style="padding:9px 20px;font-size:0.88rem">
+          🤖 AI 预筛选这 <span id="btnAIFilterCount">0</span> 条 · 预计 <span id="btnAIFilterCost">$0.000</span>
+        </button>
+        <span style="font-size:0.8rem;color:var(--sub)">或</span>
+        <button id="btnManualSelect" onclick="startManualSelect()"
+          style="padding:9px 18px;font-size:0.85rem;font-weight:600;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--sub);cursor:pointer;font-family:inherit;transition:all 0.15s"
+          onmouseover="this.style.borderColor='#94a3b8';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--sub)'">
+          手动选择
+        </button>
+      </div>
+      <div id="aiFilterProgress" style="display:none;margin-top:12px">
+        <div class="progress-text" style="margin-bottom:8px"><span class="spinner"></span>AI 正在分析每家公司，请稍候...</div>
+        <div class="progress-track"><div class="progress-fill-indeterminate"></div></div>
+      </div>
+    </div>
+
     <!-- Step A: Download -->
     <div style="margin-top:20px;padding:18px 20px;background:rgba(30,41,59,0.85);border:1px solid var(--border);border-radius:12px">
       <div style="font-size:0.78rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px">下载原始数据</div>
@@ -1359,28 +1679,6 @@
       </div>
     </div>
 
-    <!-- Step B: AI Pre-filter (user choice) -->
-    <div style="margin-top:12px;padding:18px 20px;background:rgba(30,41,59,0.85);border:1px solid var(--border);border-radius:12px">
-      <div style="font-size:0.78rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">下一步（可选）</div>
-      <div style="font-size:0.84rem;color:var(--sub);margin-bottom:14px">用 AI 快速筛掉明显不符合的公司，保留高质量线索后再进行深度分析</div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <button class="btn-start" id="btnAIFilter" onclick="startAIFilter()"
-          style="padding:11px 28px;font-size:0.92rem;flex-shrink:0">
-          🤖 AI 预筛选 <span id="btnAIFilterCost" style="font-size:0.8rem;opacity:0.8"></span>
-        </button>
-        <span style="font-size:0.8rem;color:var(--sub)">或</span>
-        <button id="btnManualSelect" onclick="startManualSelect()"
-          style="padding:11px 24px;font-size:0.88rem;font-weight:600;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--sub);cursor:pointer;font-family:inherit;transition:all 0.15s"
-          onmouseover="this.style.borderColor='#94a3b8';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--sub)'">
-          手动选择
-        </button>
-      </div>
-    </div>
-
-    <div id="aiFilterProgress" style="display:none;margin-top:12px">
-      <div class="progress-text" style="margin-bottom:8px"><span class="spinner"></span>AI 正在分析每家公司，请稍候...</div>
-      <div class="progress-track"><div class="progress-fill-indeterminate"></div></div>
-    </div>
   </div>
 
   <!-- Selection results (AI-filtered or manual) -->
@@ -1486,7 +1784,262 @@
   </div>
 
 
+  <!-- Step 5: Email Config & Send -->
+  <div id="step5Section" style="display:none;margin-top:32px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div class="panel-title" style="margin-bottom:4px">
+          第五步：邮件配置 & 发送
+          <span id="hubHeaderCampaignName" style="font-size:0.82rem;font-weight:400;color:var(--sub)"> — 未选择 Campaign</span>
+          <span id="hubHeaderBadge"></span>
+        </div>
+        <div class="panel-sub">选择写作框架 + 客户角度，AI 个性化生成开发信序列，再配置 Campaign 推送</div>
+      </div>
+      <button class="hub-btn ghost" onclick="loadInstantlyData()" style="padding:5px 14px;font-size:0.8rem">↻ 刷新数据</button>
+    </div>
+
+    <!-- 5.1 Framework selection -->
+    <div id="frameworkSection" style="margin-bottom:20px">
+      <div style="font-size:0.78rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">
+        5.1 &nbsp;选择写作框架
+      </div>
+      <div id="frameworkCardsLoading" style="color:var(--sub);font-size:0.85rem;padding:10px 0">加载框架中…</div>
+      <div id="frameworkCardsGrid" class="fw-grid" style="display:none"></div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin:0 0 20px"></div>
+
+    <!-- 5.2 Template/angle selection -->
+    <div id="templateSection">
+      <div style="font-size:0.78rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">
+        5.2 &nbsp;选择客户类型角度
+      </div>
+      <div id="templateCardsLoading" style="color:var(--sub);font-size:0.85rem;padding:16px 0">加载模板中…</div>
+      <div id="templateCardsWrap" class="template-scroll" style="display:none"></div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <button id="generateEmailsBtn" onclick="startEmailGeneration()" disabled>
+          ✉️ 先选好框架和角度
+        </button>
+        <div id="emailGenProgress" style="display:none;font-size:0.82rem;color:var(--sub)">
+          <span class="spinner"></span><span id="emailGenProgressText">生成中…</span>
+        </div>
+        <span id="selectedTemplateLabel" style="font-size:0.8rem;color:#34d399;display:none"></span>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin:20px 0"></div>
+
+    <!-- Empty state: no qualified leads yet -->
+    <div id="step5Empty" style="padding:24px 20px;text-align:center;background:rgba(30,41,59,0.6);border:1px dashed var(--border);border-radius:12px;color:var(--sub);font-size:0.88rem">
+      深度分析完成后，Campaign 配置将在此出现
+    </div>
+
+    <!-- Hub grid -->
+    <div id="step5Grid" class="hub-grid" style="display:none">
+
+      <!-- Card 1: Campaign selector -->
+      <div class="hub-card">
+        <div class="hub-card-title">Campaign 选择</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <select id="hubCampaignSelect" class="hub-select" onchange="onCampaignSelect(this.value)">
+            <option value="">— 选择 Campaign —</option>
+          </select>
+          <button class="hub-btn ghost" onclick="openCreateCampaignModal()" title="新建 Campaign" style="padding:6px 12px;flex-shrink:0">+</button>
+        </div>
+      </div>
+
+      <!-- Card 2: Email accounts -->
+      <div class="hub-card">
+        <div class="hub-card-title">发件邮箱（多选）</div>
+        <div id="hubAccountsList" style="max-height:170px;overflow-y:auto;margin-bottom:10px">
+          <div style="color:var(--sub);font-size:0.8rem">加载中…</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="hub-btn primary" onclick="syncAccountsToCampaign()" style="padding:5px 12px;font-size:0.77rem">同步到 Campaign</button>
+          <a href="https://app.instantly.ai/app/accounts" target="_blank" style="font-size:0.74rem;color:#93c5fd;text-decoration:none" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">在 Instantly 添加邮箱 →</a>
+        </div>
+      </div>
+
+      <!-- Card 3: Sequence timing -->
+      <div class="hub-card">
+        <div class="hub-card-title">发送序列间隔（天）</div>
+        <div class="seq-grid">
+          <div class="seq-input-wrap"><div class="seq-day-label">第1封</div><input class="seq-input" id="seqDelay0" type="number" min="0" max="999" value="0"></div>
+          <div class="seq-input-wrap"><div class="seq-day-label">第2封</div><input class="seq-input" id="seqDelay1" type="number" min="0" max="999" value="2"></div>
+          <div class="seq-input-wrap"><div class="seq-day-label">第3封</div><input class="seq-input" id="seqDelay2" type="number" min="0" max="999" value="4"></div>
+          <div class="seq-input-wrap"><div class="seq-day-label">第4封</div><input class="seq-input" id="seqDelay3" type="number" min="0" max="999" value="6"></div>
+          <div class="seq-input-wrap"><div class="seq-day-label">第5封</div><input class="seq-input" id="seqDelay4" type="number" min="0" max="999" value="9"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+          <button class="hub-btn primary" onclick="saveSequenceDelays()" style="padding:5px 12px;font-size:0.77rem">保存时间设置</button>
+          <span id="seqSaveStatus" style="font-size:0.74rem;color:var(--sub)"></span>
+        </div>
+      </div>
+
+      <!-- Card 4: Campaign controls -->
+      <div class="hub-card">
+        <div class="hub-card-title">Campaign 控制</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="hub-btn success" id="btnActivate" onclick="activateCampaign()" disabled>🚀 激活</button>
+          <button class="hub-btn danger"  id="btnPause"    onclick="pauseCampaign()"    disabled>⏸ 暂停</button>
+        </div>
+        <div id="hubCampaignStatus" style="font-size:0.78rem;color:var(--sub)">请先选择 Campaign</div>
+      </div>
+
+      <!-- Card 5: Analytics (collapsed by default) -->
+      <div class="hub-card" style="grid-column:1/-1">
+        <div class="hub-card-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleAnalyticsDash()">
+          <span>数据看板</span>
+          <span id="analyticsDashToggle" style="font-size:0.78rem;color:var(--sub);text-transform:none;letter-spacing:0;font-weight:400">▸ 展开</span>
+        </div>
+        <div id="analyticsDashBody" style="display:none;margin-top:12px">
+          <div class="analytics-grid" id="hubAnalyticsGrid">
+            <div style="color:var(--sub);font-size:0.8rem;grid-column:1/-1">请先选择 Campaign</div>
+          </div>
+          <div id="hubAnalyticsTime" style="font-size:0.68rem;color:var(--sub);margin-top:8px;text-align:right"></div>
+        </div>
+      </div>
+
+    </div><!-- /step5Grid -->
+  </div><!-- /step5Section -->
+
 </div><!-- /container -->
+
+<!-- ── Template Preview Modal ─────────────────────────────────────────────── -->
+<div id="tplModal">
+  <div id="tplModalOverlay" onclick="closeTemplatePreview()"></div>
+  <div id="tplModalBox">
+    <div id="tplModalHeader">
+      <div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text)" id="tplModalTitle">模板预览</div>
+        <div style="font-size:0.78rem;color:var(--sub);margin-top:3px" id="tplModalMeta"></div>
+      </div>
+      <button id="tplModalClose" onclick="closeTemplatePreview()">✕</button>
+    </div>
+    <div id="tplModalBody">
+      <!-- Section 1: 5-step framework (static) -->
+      <div style="margin-bottom:16px">
+        <div class="tpl-section-label">5步序列框架（所有客户类型通用）</div>
+        <div class="tpl-framework-row">
+          <div class="tpl-fp tpl-fp-hook">Hook<br><span style="font-weight:400;opacity:0.8">Day 1</span></div>
+          <span class="tpl-arrow">→</span>
+          <div class="tpl-fp tpl-fp-value">Value Drop<br><span style="font-weight:400;opacity:0.8">Day 4</span></div>
+          <span class="tpl-arrow">→</span>
+          <div class="tpl-fp tpl-fp-proof">Social Proof<br><span style="font-weight:400;opacity:0.8">Day 7</span></div>
+          <span class="tpl-arrow">→</span>
+          <div class="tpl-fp tpl-fp-diff">Differentiator<br><span style="font-weight:400;opacity:0.8">Day 10</span></div>
+          <span class="tpl-arrow">→</span>
+          <div class="tpl-fp tpl-fp-breakup">Breakup<br><span style="font-weight:400;opacity:0.8">Day 14</span></div>
+        </div>
+      </div>
+      <!-- Section 2: Angle config -->
+      <div style="margin-bottom:0">
+        <div class="tpl-section-label">角度配置</div>
+        <div class="tpl-config-grid" id="tplConfigGrid"></div>
+      </div>
+      <!-- Section 3: Preview samples -->
+      <div class="tpl-samples-section">
+        <div class="tpl-section-label" style="margin-bottom:4px">风格示范</div>
+        <div style="font-size:0.72rem;color:var(--sub);margin-bottom:10px">AI 会基于以上框架，针对每条线索的官网内容、城市、行业个性化生成——100条线索 100种表达</div>
+        <div class="tpl-sample-tabs" id="tplSampleTabsRow"></div>
+        <div class="tpl-lang-toggle">
+          <button class="tpl-lang-btn active" id="tplLangEN" onclick="setPreviewLang('en')">英文版</button>
+          <button class="tpl-lang-btn" id="tplLangZH" onclick="setPreviewLang('zh')">中文参考</button>
+        </div>
+        <div style="font-size:0.68rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">主题行</div>
+        <div class="tpl-subject-box" id="tplSubjectBox"></div>
+        <div style="font-size:0.68rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;margin-top:12px">正文</div>
+        <div class="tpl-body-box" id="tplBodyBox"></div>
+        <div class="tpl-purpose" id="tplPurposeText"></div>
+      </div>
+    </div>
+    <div id="tplModalFooter">
+      <span style="font-size:0.78rem;color:var(--sub)" id="tplFooterHint">选择此角度后，AI 针对每条线索个性化生成邮件</span>
+      <button class="btn-start" id="tplSelectBtn" onclick="selectTemplateFromModal()" style="padding:8px 20px;font-size:0.85rem">✓ 选择此角度</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Framework Example Modal ────────────────────────────────────────────── -->
+<div id="fwExModal">
+  <div id="fwExModalOverlay" onclick="closeFwExModal()"></div>
+  <div id="fwExModalBox">
+    <div id="fwExModalHeader">
+      <div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text)" id="fwExModalTitle">框架示例</div>
+        <div style="font-size:0.75rem;color:var(--sub);margin-top:3px" id="fwExModalSource"></div>
+      </div>
+      <button id="fwExModalClose" onclick="closeFwExModal()">✕</button>
+    </div>
+    <div id="fwExModalBody">
+      <div style="margin-bottom:14px">
+        <div class="tpl-section-label" style="margin-bottom:8px">框架结构</div>
+        <div class="fw-struct-row" id="fwExStructRow"></div>
+      </div>
+      <div>
+        <div class="tpl-section-label" style="margin-bottom:8px">原版示例邮件</div>
+        <div class="fw-sample-subj" id="fwExSubj"></div>
+        <div class="fw-sample-body" id="fwExBody"></div>
+      </div>
+    </div>
+    <div style="padding:12px 22px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px">
+      <button class="hub-btn ghost" onclick="closeFwExModal()" style="padding:6px 16px">关闭</button>
+      <button class="hub-btn primary" id="fwExSelectBtn" onclick="selectFwFromModal()" style="padding:6px 16px">✓ 选择此框架</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Custom Framework Modal ─────────────────────────────────────────────── -->
+<div id="customFwModal">
+  <div id="customFwModalOverlay" onclick="closeCustomFwModal()"></div>
+  <div id="customFwModalBox">
+    <div id="customFwModalHeader">
+      <div style="font-size:1rem;font-weight:700;color:var(--text)">✏️ 自定义邮件框架</div>
+      <button id="customFwModalClose" onclick="closeCustomFwModal()">✕</button>
+    </div>
+    <div id="customFwModalBody">
+      <div class="cfw-tip">
+        💡 自定义框架是高级功能。如果还不熟悉冷邮件写作，建议先用 7 个预设框架做 A/B 测试，找到最有效的再考虑自定义。
+      </div>
+      <div class="cfw-field">
+        <label class="cfw-label">框架名称 <span style="color:#f87171">*</span><span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--sub)"> （最多 30 字符）</span></label>
+        <input type="text" id="cfwName" class="cfw-input" maxlength="30" placeholder="例：4U 框架">
+      </div>
+      <div class="cfw-field">
+        <label class="cfw-label">框架结构描述 <span style="color:#f87171">*</span><span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--sub)"> （最多 500 字符）</span></label>
+        <textarea id="cfwStructure" class="cfw-textarea" rows="4" maxlength="500"
+          placeholder="例：&#10;Useful: 实用 — 内容对读者有实际价值&#10;Urgent: 紧迫 — 为什么现在行动&#10;Unique: 独特 — 区别于其他选项&#10;Ultra-specific: 超具体 — 用数字和细节"></textarea>
+      </div>
+      <div class="cfw-field">
+        <label class="cfw-label">写作要求/铁律 <span style="color:var(--sub);font-weight:400;text-transform:none;letter-spacing:0">（可选，最多 500 字符）</span></label>
+        <textarea id="cfwRules" class="cfw-textarea" rows="3" maxlength="500"
+          placeholder="例：每封 < 80 词、用第二人称、必须包含一个具体数字..."></textarea>
+      </div>
+      <div class="cfw-field">
+        <label class="cfw-label">示范邮件 <span style="color:var(--sub);font-weight:400;text-transform:none;letter-spacing:0">（可选，最多 1000 字符，AI 会模仿此风格）</span></label>
+        <textarea id="cfwSample" class="cfw-textarea" rows="5" maxlength="1000"
+          placeholder="Subject: ...&#10;&#10;Body: ..."></textarea>
+      </div>
+      <div class="cfw-field">
+        <label class="cfw-label">序列长度</label>
+        <div class="cfw-seq-btns" id="cfwSeqBtns">
+          <button class="cfw-seq-btn" onclick="setCfwSeq(3)" data-val="3">3 封</button>
+          <button class="cfw-seq-btn active" onclick="setCfwSeq(5)" data-val="5">5 封</button>
+          <button class="cfw-seq-btn" onclick="setCfwSeq(7)" data-val="7">7 封</button>
+        </div>
+      </div>
+      <div class="cfw-field" id="cfwDaysField">
+        <label class="cfw-label">时间节奏（天数）</label>
+        <div class="cfw-days-row" id="cfwDaysRow"></div>
+      </div>
+      <input type="hidden" id="cfwEditId">
+    </div>
+    <div id="customFwModalFooter">
+      <button class="hub-btn ghost" onclick="closeCustomFwModal()" style="padding:7px 18px">取消</button>
+      <button class="hub-btn primary" onclick="saveCustomFramework()" style="padding:7px 18px">💾 保存模板</button>
+    </div>
+  </div>
+</div>
 
 <!-- Email drawer -->
 <div id="drawerOverlay" onclick="closeEmailDrawer()"></div>
@@ -1517,89 +2070,7 @@
   </div>
 </div>
 
-<!-- ── Hub Drawer (Email Center) ─────────────────────────────── -->
-<div id="hubOverlay" onclick="closeHubDrawer()"></div>
-<div id="hubDrawer" role="dialog" aria-label="邮件发送中心">
-  <div class="hub-drawer-head">
-    <div>
-      <h3>📬 邮件发送中心
-        <span id="hubHeaderCampaignName" style="font-size:0.82rem;font-weight:400;color:var(--sub)">未选择 Campaign</span>
-        <span id="hubHeaderBadge"></span>
-      </h3>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <button class="hub-btn ghost" id="hubRefreshBtn" onclick="loadInstantlyData()" style="padding:4px 12px;font-size:0.74rem">↻ 刷新</button>
-      <button class="hub-close-btn" onclick="closeHubDrawer()" title="关闭">✕</button>
-    </div>
-  </div>
-  <div class="hub-drawer-body">
-    <div class="hub-body" id="hubBody">
-      <div class="hub-grid">
-
-        <!-- Card 1: Campaign selector -->
-        <div class="hub-card">
-          <div class="hub-card-title">Campaign 选择</div>
-          <div style="display:flex;gap:8px;margin-bottom:10px">
-            <select id="hubCampaignSelect" class="hub-select" onchange="onCampaignSelect(this.value)">
-              <option value="">— 选择 Campaign —</option>
-            </select>
-            <button class="hub-btn ghost" onclick="openCreateCampaignModal()" title="新建 Campaign" style="padding:6px 12px;flex-shrink:0">+</button>
-          </div>
-        </div>
-
-        <!-- Card 2: Email accounts -->
-        <div class="hub-card">
-          <div class="hub-card-title">发件邮箱（多选）</div>
-          <div id="hubAccountsList" style="max-height:170px;overflow-y:auto;margin-bottom:10px">
-            <div style="color:var(--sub);font-size:0.8rem">展开后自动加载…</div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="hub-btn primary" onclick="syncAccountsToCampaign()" style="padding:5px 12px;font-size:0.77rem">同步到 Campaign</button>
-            <a href="https://app.instantly.ai/app/accounts" target="_blank" style="font-size:0.74rem;color:#93c5fd;text-decoration:none" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">在 Instantly 添加邮箱 →</a>
-          </div>
-        </div>
-
-        <!-- Card 3: Sequence timing -->
-        <div class="hub-card">
-          <div class="hub-card-title">发送序列间隔（天）</div>
-          <div class="seq-grid">
-            <div class="seq-input-wrap"><div class="seq-day-label">第1封</div><input class="seq-input" id="seqDelay0" type="number" min="0" max="999" value="0"></div>
-            <div class="seq-input-wrap"><div class="seq-day-label">第2封</div><input class="seq-input" id="seqDelay1" type="number" min="0" max="999" value="2"></div>
-            <div class="seq-input-wrap"><div class="seq-day-label">第3封</div><input class="seq-input" id="seqDelay2" type="number" min="0" max="999" value="4"></div>
-            <div class="seq-input-wrap"><div class="seq-day-label">第4封</div><input class="seq-input" id="seqDelay3" type="number" min="0" max="999" value="6"></div>
-            <div class="seq-input-wrap"><div class="seq-day-label">第5封</div><input class="seq-input" id="seqDelay4" type="number" min="0" max="999" value="9"></div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
-            <button class="hub-btn primary" onclick="saveSequenceDelays()" style="padding:5px 12px;font-size:0.77rem">保存时间设置</button>
-            <span id="seqSaveStatus" style="font-size:0.74rem;color:var(--sub)"></span>
-          </div>
-        </div>
-
-        <!-- Card 4: Campaign controls -->
-        <div class="hub-card">
-          <div class="hub-card-title">Campaign 控制</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-            <button class="hub-btn success" id="btnActivate" onclick="activateCampaign()" disabled>🚀 激活</button>
-            <button class="hub-btn danger"  id="btnPause"    onclick="pauseCampaign()"    disabled>⏸ 暂停</button>
-          </div>
-          <div id="hubCampaignStatus" style="font-size:0.78rem;color:var(--sub)">请先选择 Campaign</div>
-        </div>
-
-        <!-- Card 5: Analytics (full width) -->
-        <div class="hub-card" style="grid-column:1/-1">
-          <div class="hub-card-title" style="display:flex;align-items:center;justify-content:space-between">
-            <span>数据看板</span>
-            <span id="hubAnalyticsTime" style="font-size:0.68rem;color:var(--sub);text-transform:none;letter-spacing:0;font-weight:400"></span>
-          </div>
-          <div class="analytics-grid" id="hubAnalyticsGrid">
-            <div style="color:var(--sub);font-size:0.8rem;grid-column:1/-1">请先选择 Campaign</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
+<!-- (Hub drawer removed — email config is now Step 5 inline section) -->
 
 <div id="toast"></div>
 
@@ -1648,7 +2119,8 @@ let _allLeads           = [];
 let _preFilterResults = [];
 let _currentSearchId  = null;
 let _showAll            = false;
-let _rawResults         = [];   // raw Apify companies before any filter
+let _rawResults             = [];   // raw Apify companies before any filter
+let _currentFilteredResults = [];   // quick-filtered subset; AI prefilter operates on this
 let _pfMode             = null; // 'ai' | 'manual'
 let _pTimers            = [];   // progress animation timer handles
 
@@ -1677,6 +2149,15 @@ function toggleType(i) {
 
 // ── Step navigation ───────────────────────────────────────────────────────────
 function goToStep(n) {
+  if (n === 5) {
+    const s5 = document.getElementById('step5Section');
+    if (s5 && s5.style.display !== 'none') {
+      currentStep = 5;
+      updateStepProgress();
+      s5.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    return;
+  }
   if (n > 1 && selectedCountries.size === 0) { alert('请至少选择一个目标国家'); goToStep(1); return; }
   if (n > 2 && selectedTypes.size === 0)     { alert('请至少选择一种客户类型'); goToStep(2); return; }
   document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
@@ -1704,10 +2185,11 @@ function goToStep(n) {
 function nextStep(n) { goToStep(n); }
 
 function updateStepProgress() {
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 5; i++) {
     const numEl = document.getElementById(`snum-${i}`);
     const lblEl = document.getElementById(`slbl-${i}`);
-    const item  = numEl.parentElement;
+    if (!numEl || !lblEl) continue;
+    const item = numEl.parentElement;
     if (i < currentStep) {
       numEl.className   = 'step-num done';
       numEl.textContent = '✓';
@@ -1724,8 +2206,10 @@ function updateStepProgress() {
       lblEl.className   = 'step-label';
       item.classList.remove('step-done');
     }
-    if (i < 4) document.getElementById(`scon-${i}`).className =
-      'step-connector' + (i < currentStep ? ' done' : '');
+    if (i < 5) {
+      const con = document.getElementById(`scon-${i}`);
+      if (con) con.className = 'step-connector' + (i < currentStep ? ' done' : '');
+    }
   }
 }
 
@@ -1829,11 +2313,30 @@ function onTokenInput() {
   localStorage.setItem('leadgen_accessToken', document.getElementById('accessToken').value);
   updateLoginStatus();
   checkAdminAndShow();
+  if (!_frameworksLoaded) loadFrameworks();
+  if (!_templatesLoaded)  loadTemplates();
 }
 function updateLoginStatus() {
   const token = getStoredToken();
-  document.getElementById('loginDot').className = 'login-dot' + (token ? '' : ' offline');
-  document.getElementById('loginStatusText').textContent = token ? '已登录' : '未登录';
+  const mkt = document.getElementById('navMkt');
+  const app = document.getElementById('navApp');
+  if (token) {
+    if (mkt) mkt.style.display = 'none';
+    if (app) app.style.removeProperty('display');
+  } else {
+    if (mkt) mkt.style.removeProperty('display');
+    if (app) app.style.display = 'none';
+  }
+}
+function toggleUserMenu() {
+  document.getElementById('userDropdown').classList.toggle('open');
+}
+function closeUserMenu() {
+  document.getElementById('userDropdown').classList.remove('open');
+}
+function logout() {
+  localStorage.removeItem('leadgen_accessToken');
+  location.href = 'landing.html';
 }
 function getStoredToken() {
   return localStorage.getItem('leadgen_accessToken') || document.getElementById('accessToken').value.trim();
@@ -1906,8 +2409,8 @@ function toggleEmails(idx) {
   const row = document.getElementById(`detail-${idx}`);
   const btn = document.getElementById(`toggle-${idx}`);
   const open = row.classList.toggle('open');
-  btn.textContent = open ? '▾' : '▸';
-  btn.title = open ? '收起' : '展开详情/开发信';
+  btn.textContent = open ? '收起 ▴' : '展开 ▾';
+  btn.title = open ? '收起详细分析' : '查看 AI 评估理由和详细分析';
 }
 function switchTab(idx, n) {
   for (let i = 1; i <= 5; i++) {
@@ -1943,30 +2446,52 @@ function _markSentLS(key) {
 function getLeadKey(lead) { return String(lead.dbId || lead.email || lead.companyName || ''); }
 
 // ── Render results ────────────────────────────────────────────────────────────
+function _isLeadQualified(lead) {
+  return !lead.status?.startsWith('filtered') &&
+         lead.status !== 'error' &&
+         Number(lead.icpScore  || 0) >= 5 &&
+         Number(lead.intentScore || 0) >= 5;
+}
+
+function _disqualifyReason(lead) {
+  if (lead.status?.startsWith('filtered')) {
+    const raw = lead.status.replace(/^filtered:\s*/i, '');
+    return raw.includes('manufacturer') ? '官网含制造商特征，非目标采购商' : `已过滤：${raw}`;
+  }
+  if (lead.status === 'error') return 'AI 分析出错，请重试';
+  const icp    = Number(lead.icpScore    || 0);
+  const intent = Number(lead.intentScore || 0);
+  if (icp < 5 && intent < 5) return `ICP ${icp}/10 · 意向 ${intent}/10，不符合目标`;
+  if (icp < 5)    return `ICP 仅 ${icp}/10，不匹配客户画像，未生成开发信`;
+  if (intent < 5) return `意向仅 ${intent}/10，购买意向偏低`;
+  return '';
+}
+
 function renderResults(leads) {
   _allLeads = leads || [];
   document.getElementById('resultsSection').style.display = 'block';
   const tbody = document.getElementById('resultsBody');
   const count = document.getElementById('resultCount');
 
-  const displayItems = _allLeads
-    .map((lead, origIdx) => ({ lead, origIdx }))
-    .filter(({ lead }) =>
-      !lead.status?.startsWith('filtered') &&
-      Number(lead.icpScore || 0) >= 5 &&
-      Number(lead.intentScore || 0) >= 5
-    );
+  const displayItems = _allLeads.map((lead, origIdx) => ({ lead, origIdx }));
 
-  count.textContent = `找到 ${displayItems.length} 条合格线索`;
+  const qualifiedCount = displayItems.filter(({ lead }) => _isLeadQualified(lead)).length;
+  const total = displayItems.length;
+  count.textContent = total === 0 ? '暂无线索'
+    : total === qualifiedCount ? `找到 ${qualifiedCount} 条合格线索`
+    : `共 ${total} 条（${qualifiedCount} 合格 · ${total - qualifiedCount} 不合格）`;
 
   if (!displayItems.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无合格线索</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无线索</td></tr>';
     return;
   }
 
   const TAB_LABELS = ['第1封（开场）','跟进1','跟进2','跟进3','跟进4'];
 
   tbody.innerHTML = displayItems.map(({ lead, origIdx }) => {
+    const qualified     = _isLeadQualified(lead);
+    const disqualReason = qualified ? '' : _disqualifyReason(lead);
+
     const websiteCell = lead.website ? (() => {
       try { return `<a class="website-link" href="${lead.website}" target="_blank">${new URL(lead.website).hostname}</a>`; }
       catch(e) { return lead.website; }
@@ -1999,7 +2524,7 @@ function renderResults(leads) {
            <div class="analysis-box" style="margin-top:6px">${lead.intentReasoning}</div>
          </div>` : '';
 
-    const hasEmails = lead.status === 'enriched' || !!(lead.EMAIL_1_SUBJECT || lead.EMAIL_1_BODY);
+    const hasEmails = !!(lead.EMAIL_1_SUBJECT || lead.EMAIL_1_BODY);
 
     const tabsHtml = [1,2,3,4,5].map(n =>
       `<button class="tab-btn${n===1?' active':''}" id="et-${origIdx}-${n}" onclick="switchTab(${origIdx},${n})">${TAB_LABELS[n-1]}</button>`
@@ -2043,21 +2568,26 @@ function renderResults(leads) {
       ? `<span class="score-xs score ${icpN>=7?'high':icpN>=4?'mid':'low'}" title="ICP匹配分">🎯${icpN}</span>` : '';
     const scoreCell = `<div class="score-group">${ratingPill}${intentPill}${icpPill}</div>`;
 
-    const detailBtn     = hasDetail ? `<button class="btn-sm" id="toggle-${origIdx}" onclick="toggleEmails(${origIdx})" title="展开详情/开发信">▸</button>` : '';
-    const viewEmailsBtn = hasEmails ? `<button class="btn-sm btn-view-emails" onclick="openEmailDrawer(${origIdx})" title="查看开发信">📝</button>` : '';
+    const detailBtn     = (lead.intentReasoning || lead.icpReasoning) ? `<button class="btn-sm" id="toggle-${origIdx}" onclick="toggleEmails(${origIdx})" title="查看 AI 评估理由">展开 ▾</button>` : '';
+    const viewEmailsBtn = hasEmails
+      ? `<button class="btn-sm btn-view-emails" id="emailbtn-${origIdx}" onclick="openEmailDrawer(${origIdx})" title="查看已生成的 5 封开发信">📝 查看邮件</button>`
+      : (qualified ? `<button class="btn-sm" id="emailbtn-${origIdx}" onclick="goToStep(5)" title="前往第五步选模板生成邮件" style="color:#60a5fa;border-color:rgba(37,99,235,0.4)">✉️ 生成邮件</button>` : '');
     const leadKey = getLeadKey(lead);
     const alreadySent = _isSentLS(leadKey);
     const noCampaign  = !getSelectedCampaignId();
-    const instantlyBtn = lead.email
+    const instantlyBtn = (qualified && lead.email)
       ? `<button class="btn-instantly${alreadySent ? ' sent' : ''}" id="ibtn-${origIdx}"
-          ${alreadySent ? 'disabled title="已加入 Instantly"'
-            : noCampaign ? 'disabled title="请先在下方选择 Campaign"'
-            : 'title="加入 Instantly 序列"'}
-          onclick="sendLeadToInstantly(${origIdx})">${alreadySent ? '✓' : '✉'}</button>`
+          ${alreadySent ? 'disabled title="已加入 Instantly Campaign"'
+            : noCampaign ? 'title="点击前往第五步选择 Campaign"'
+            : 'title="将此线索加入 Instantly Campaign，开始自动发送邮件序列"'}
+          onclick="sendLeadToInstantly(${origIdx})">${alreadySent ? '✓ 已发送' : '✉ 加入序列'}</button>`
       : '';
-    const actionCell = `<div class="act-btns">${[detailBtn, viewEmailsBtn, instantlyBtn].filter(Boolean).join('')}</div>`;
+    const warnBadge = !qualified && disqualReason
+      ? `<span class="warn-badge">⚠️ ${disqualReason}</span>`
+      : '';
+    const actionCell = `<div class="act-btns">${[detailBtn, viewEmailsBtn, instantlyBtn, warnBadge].filter(Boolean).join('')}</div>`;
 
-    return `<tr id="row-${origIdx}">
+    return `<tr id="row-${origIdx}"${qualified ? '' : ' class="row-disqualified"'}>
       <td><input type="checkbox" class="result-check" data-idx="${origIdx}" onchange="updateBulkBar()" style="accent-color:var(--blue);width:15px;height:15px;cursor:pointer"></td>
       <td style="color:var(--sub);font-size:0.76rem">${origIdx+1}</td>
       <td><div class="company-name">${lead.companyName||'—'}</div>${websiteCell}${tagsHtml}${sourceBadgeHtml(lead.source)}</td>
@@ -2211,9 +2741,6 @@ async function startScrapeRaw() {
     if (wrap) wrap.style.display = 'none';
     btn.style.display = 'none';
     renderRawResults(_rawResults);
-    const aiCost = (_rawResults.length * 0.003).toFixed(2);
-    const costSpan = document.getElementById('btnAIFilterCost');
-    if (costSpan) costSpan.textContent = `约 $${aiCost}`;
     document.getElementById('rawSection').style.display = 'block';
 
     // Show dedup banner if any duplicates were skipped
@@ -2248,7 +2775,24 @@ function renderRawResults(companies) {
   const countEl = document.getElementById('rawFilterCount');
   if (countEl) countEl.textContent = '';
   document.getElementById('rawCountHeader').textContent = `找到 ${companies.length} 条结果`;
+  _currentFilteredResults = companies;
   _renderRawBody(companies);
+  _updateAIFilterRow();
+}
+
+function _updateAIFilterRow() {
+  const row  = document.getElementById('aiFilterRow');
+  const cnt  = document.getElementById('btnAIFilterCount');
+  const cost = document.getElementById('btnAIFilterCost');
+  if (!row) return;
+  const n = _currentFilteredResults.length;
+  if (n > 0) {
+    row.style.display = 'block';
+    if (cnt)  cnt.textContent  = String(n);
+    if (cost) cost.textContent = `$${(n * 0.001).toFixed(3)}`;
+  } else {
+    row.style.display = 'none';
+  }
 }
 
 function _renderRawBody(companies) {
@@ -2295,6 +2839,7 @@ function applyRawFilters() {
     if (_rawFilters.has('rating')  && parseFloat(c.googleRating) < 4) return false;
     return true;
   });
+  _currentFilteredResults = filtered;
   _renderRawBody(filtered);
   const countEl = document.getElementById('rawFilterCount');
   if (countEl) {
@@ -2302,6 +2847,7 @@ function applyRawFilters() {
       ? `共 ${_rawResults.length} 条，筛选后 ${filtered.length} 条`
       : '';
   }
+  _updateAIFilterRow();
 }
 
 function exportRawCSV() {
@@ -2345,8 +2891,9 @@ async function downloadRawDOCX() {
 
 // ── Phase 2A: AI pre-filter ───────────────────────────────────────────────────
 async function startAIFilter() {
-  const token = getStoredToken();
-  if (!_rawResults.length) return;
+  const token    = getStoredToken();
+  const toFilter = _currentFilteredResults.length > 0 ? _currentFilteredResults : _rawResults;
+  if (!toFilter.length) return;
   _pfMode = 'ai';
 
   const btnAI    = document.getElementById('btnAIFilter');
@@ -2354,14 +2901,15 @@ async function startAIFilter() {
   const prog     = document.getElementById('aiFilterProgress');
   const progText = prog.querySelector('.progress-text');
   btnAI.disabled = true;  btnAI.classList.add('btn-analyzing');  btnAI.innerHTML = 'AI 分析中...';
-  btnMan.disabled = true;
+  if (btnMan) btnMan.disabled = true;
   prog.style.display = 'block';
 
+  let succeeded = false;
   try {
     const res = await fetch('/api/prefilter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ companies: _rawResults, searchId: _currentSearchId }),
+      body: JSON.stringify({ companies: toFilter, searchId: _currentSearchId }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -2393,26 +2941,37 @@ async function startAIFilter() {
 
     if (!doneData) throw new Error('未收到完成数据');
     _preFilterResults = doneData.companies || [];
-    const visible = _preFilterResults.filter(c => c.level !== 'skip');
-    const skipped = _preFilterResults.length - visible.length;
+    const visible   = _preFilterResults.filter(c => c.level !== 'skip');
+    const priority  = _preFilterResults.filter(c => c.level === 'priority').length;
+    const recommend = _preFilterResults.filter(c => c.level === 'recommend').length;
+    const skipped   = _preFilterResults.length - visible.length;
     showPreFilterSection('ai', visible);
     setStatus(`✅ AI预筛选完成！筛掉 ${skipped} 家不相关公司，剩余 ${visible.length} 家值得联系。请勾选后开始深度分析。`, 'success');
+    _showToast(`✓ AI 预筛选完成（${priority} 条优先 · ${recommend} 条推荐 · ${skipped} 条跳过）`);
+    succeeded = true;
   } catch (err) {
     setStatus(`AI预筛选失败：${err.message}`, 'error');
     _pfMode = null;
   } finally {
-    btnAI.disabled = false;  btnAI.classList.remove('btn-analyzing');
-    btnAI.textContent = `🤖 AI预筛选（推荐）约$${(_rawResults.length * 0.003).toFixed(2)}`;
-    btnMan.disabled = false;
     prog.style.display = 'none';
+    if (succeeded) {
+      document.getElementById('aiFilterRow').style.display = 'none';
+    } else {
+      btnAI.disabled = false;
+      btnAI.classList.remove('btn-analyzing');
+      btnAI.innerHTML = `🤖 AI 预筛选这 <span id="btnAIFilterCount">0</span> 条 · 预计 <span id="btnAIFilterCost">$0.000</span>`;
+      if (btnMan) btnMan.disabled = false;
+      _updateAIFilterRow();
+    }
   }
 }
 
 // ── Phase 2B: Manual select ───────────────────────────────────────────────────
 function startManualSelect() {
-  if (!_rawResults.length) return;
+  const toUse = _currentFilteredResults.length > 0 ? _currentFilteredResults : _rawResults;
+  if (!toUse.length) return;
   _pfMode = 'manual';
-  _preFilterResults = _rawResults.map(c => ({ ...c, level: 'recommend', reason: '' }));
+  _preFilterResults = toUse.map(c => ({ ...c, level: 'recommend', reason: '' }));
   showPreFilterSection('manual', _preFilterResults);
   setStatus('请勾选需要深度分析的公司，然后点击「开始深度分析」。', 'success');
 }
@@ -2697,11 +3256,9 @@ async function startPipeline() {
   }
 
   showDownloadBar(allResults, lastSheetUrl);
-  const q = allResults.filter(r =>
-    !r.status?.startsWith('filtered') &&
-    Number(r.icpScore || 0) >= 5 && Number(r.intentScore || 0) >= 5
-  ).length;
-  setStatus(`✅ 全部完成！找到 ${q} 条合格线索。`, 'success');
+  const q = allResults.filter(r => _isLeadQualified(r)).length;
+  const total = allResults.length;
+  setStatus(`✅ 全部完成！共 ${total} 条，${q} 条合格线索。`, 'success');
   btn.disabled = false;
   window.dispatchEvent(new Event('pipelineDone'));
   setTimeout(() => document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'}), 300);
@@ -2752,83 +3309,17 @@ async function loadSearchById(searchId) {
   }
 }
 
-// Keyboard close
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    if (_hubDrawerOpen) closeHubDrawer();
-  }
-});
 
-// ── Admin cost panel ──────────────────────────────────────────────────────────
-let _adminPanelOpen = false;
 let _isAdmin = false;
 
 async function checkAdminAndShow() {
   const token = getStoredToken();
-  const costLink = document.getElementById('navCostLink');
-  if (!token) { _isAdmin = false; if (costLink) costLink.style.display = 'none'; return; }
+  if (!token) { _isAdmin = false; return; }
   try {
     const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     _isAdmin = !!data.isAdmin;
-    if (costLink) costLink.style.display = data.isAdmin ? '' : 'none';
-  } catch { _isAdmin = false; if (costLink) costLink.style.display = 'none'; }
-}
-
-function toggleAdminPanel() {
-  _adminPanelOpen = !_adminPanelOpen;
-  document.getElementById('adminBody').classList.toggle('open', _adminPanelOpen);
-  document.getElementById('adminPanelIcon').textContent = _adminPanelOpen ? '▴ 收起' : '▾ 展开';
-  if (_adminPanelOpen) loadCosts();
-}
-
-async function loadCosts() {
-  const token = getStoredToken();
-  try {
-    const res  = await fetch('/api/admin/costs', { headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
-    renderCosts(data);
-  } catch(err) {
-    document.getElementById('costRows').innerHTML =
-      `<tr><td colspan="7" class="empty-state" style="color:#b91c1c">加载失败：${err.message}</td></tr>`;
-  }
-}
-
-function renderCosts({ runs, totalCostUsd, monthCostUsd }) {
-  const fmt  = v => v != null ? `$${Number(v).toFixed(4)}` : '—';
-  const fmt2 = v => v != null ? `$${Number(v).toFixed(2)}` : '—';
-
-  document.getElementById('costMonthTotal').textContent = fmt2(monthCostUsd);
-  document.getElementById('costGrandTotal').textContent = fmt2(totalCostUsd);
-
-  if (!runs.length) {
-    document.getElementById('costRows').innerHTML = '<tr><td colspan="7" class="empty-state">暂无记录</td></tr>';
-    document.getElementById('costFooter').style.display = 'none';
-    return;
-  }
-
-  let sumApify = 0, sumAi = 0, sumTotal = 0;
-  document.getElementById('costRows').innerHTML = runs.map(r => {
-    const d = new Date(r.created_at).toLocaleString('zh-CN', { dateStyle: 'short', timeStyle: 'short' });
-    sumApify += r.apify_cost_usd || 0;
-    sumAi    += r.ai_cost_usd    || 0;
-    sumTotal += r.total_cost_usd || 0;
-    return `<tr>
-      <td style="color:var(--sub);font-size:0.78rem;white-space:nowrap">${d}</td>
-      <td style="font-weight:600;font-size:0.83rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.query||'—'}</td>
-      <td style="font-size:0.78rem;color:var(--sub)">${r.location||'—'}</td>
-      <td style="text-align:center;font-size:0.81rem">${r.max_results??'—'}</td>
-      <td style="text-align:right;font-size:0.81rem;font-family:monospace">${fmt(r.apify_cost_usd)}</td>
-      <td style="text-align:right;font-size:0.81rem;font-family:monospace">${fmt(r.ai_cost_usd)}</td>
-      <td style="text-align:right;font-size:0.81rem;font-family:monospace;font-weight:700">${fmt(r.total_cost_usd)}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('footApify').textContent = fmt(sumApify);
-  document.getElementById('footAi').textContent    = fmt(sumAi);
-  document.getElementById('footTotal').textContent = fmt(sumTotal);
-  document.getElementById('costFooter').style.display = '';
+  } catch { _isAdmin = false; }
 }
 
 function restoreIcp() {
@@ -3012,7 +3503,8 @@ async function sendLeadToInstantly(origIdx) {
 
   const campaignId = getSelectedCampaignId();
   if (!campaignId) {
-    _showToast('请先点击导航栏「📬 邮件」选择 Campaign');
+    _showToast('请先在下方第五步选择 Campaign');
+    goToStep(5);
     return;
   }
 
@@ -3142,24 +3634,56 @@ function getSelectedCampaignId() {
   return localStorage.getItem(_LS_CAMPAIGN) || '';
 }
 
-let _hubDrawerOpen = false;
+function openHubDrawer() { goToStep(5); }   // legacy alias
+function closeHubDrawer() {}                 // legacy alias — drawer removed
+function toggleInstantlyHub() { goToStep(5); }
 
-function openHubDrawer() {
-  _hubDrawerOpen = true;
-  document.getElementById('hubOverlay').style.display = 'block';
-  document.getElementById('hubDrawer').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  if (!_hubLoaded) loadInstantlyData();
+function showStep5() {
+  const s5 = document.getElementById('step5Section');
+  if (!s5) return;
+  s5.style.display = 'block';
+
+  // Always load templates + frameworks (idempotent)
+  if (!_frameworksLoaded) loadFrameworks();
+  if (!_templatesLoaded)  loadTemplates();
+  _updateGenerateBtn();
+
+  const qualified = (_allLeads || []).filter(l => _isLeadQualified(l)).length;
+  const emptyEl   = document.getElementById('step5Empty');
+  const gridEl    = document.getElementById('step5Grid');
+  if (qualified > 0) {
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (gridEl)  gridEl.style.display  = 'grid';
+    currentStep = 5;
+    updateStepProgress();
+    if (!_hubLoaded) loadInstantlyData();
+  } else {
+    if (emptyEl) emptyEl.style.display = 'block';
+    if (gridEl)  gridEl.style.display  = 'none';
+  }
 }
 
-function closeHubDrawer() {
-  _hubDrawerOpen = false;
-  document.getElementById('hubOverlay').style.display = 'none';
-  document.getElementById('hubDrawer').classList.remove('open');
-  document.body.style.overflow = '';
+function toggleAnalyticsDash() {
+  const body   = document.getElementById('analyticsDashBody');
+  const toggle = document.getElementById('analyticsDashToggle');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display  = isOpen ? 'none' : 'block';
+  if (toggle) toggle.textContent = isOpen ? '▸ 展开' : '▾ 收起';
+  if (!isOpen) {
+    const id = getSelectedCampaignId();
+    if (id) loadAnalytics(id);
+  }
 }
 
-function toggleInstantlyHub() { openHubDrawer(); }
+window.addEventListener('pipelineDone', () => {
+  showStep5();
+  setTimeout(() => {
+    const s5 = document.getElementById('step5Section');
+    if (s5 && s5.style.display !== 'none')
+      s5.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 600);
+});
 
 async function loadInstantlyData() {
   _hubLoaded = true;
@@ -3247,7 +3771,7 @@ function updateInstantlyButtons() {
   document.querySelectorAll('.btn-instantly:not(.sent):not(.error)').forEach(btn => {
     if (btn.id?.startsWith('ibtn-')) {
       btn.disabled = !hasCampaign;
-      if (!hasCampaign) btn.title = '请先在上方选择 Campaign';
+      if (!hasCampaign) btn.title = '请先在下方第五步选择 Campaign';
     }
   });
   // Also update drawer button if open
@@ -3459,10 +3983,10 @@ async function createCampaign() {
   } catch (e) { _showToast('创建失败：' + e.message); }
 }
 
-// Auto-refresh analytics every 60s when hub is open
+// Auto-refresh analytics every 60s when step5 is visible and dash is expanded
 setInterval(() => {
-  const body = document.getElementById('hubBody');
-  if (body?.style.display !== 'none') {
+  const dashBody = document.getElementById('analyticsDashBody');
+  if (dashBody && dashBody.style.display !== 'none') {
     const id = getSelectedCampaignId();
     if (id) loadAnalytics(id);
   }
@@ -3553,12 +4077,598 @@ checkAdminAndShow();
 // ── Nav hamburger ─────────────────────────────────────────────────────────────
 (function() {
   const hb = document.getElementById('hamburger');
-  const nl = document.getElementById('navLinks');
-  if (hb && nl) {
-    hb.addEventListener('click', () => nl.classList.toggle('open'));
-    nl.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nl.classList.remove('open')));
-  }
+  if (!hb) return;
+  hb.addEventListener('click', () => {
+    const app = document.getElementById('navApp');
+    const nav = (app && !app.style.display) ? app : document.getElementById('navMkt');
+    if (nav) nav.classList.toggle('open');
+  });
+  ['navMkt', 'navApp'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.querySelectorAll('a').forEach(a => a.addEventListener('click', () => el.classList.remove('open')));
+  });
 })();
+
+// Click-outside closes user dropdown
+document.addEventListener('click', e => {
+  if (!e.target.closest('#navUserMenu')) closeUserMenu();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeUserMenu(); closeTemplatePreview(); closeFwExModal(); closeCustomFwModal(); }
+});
+
+// ── Framework selection ────────────────────────────────────────────────────────
+
+let _frameworks        = [];
+let _frameworksLoaded  = false;
+let _selectedFrameworkKey = null;
+let _selectedCustomFramework = null; // full object when custom is chosen
+let _customFrameworks  = [];         // saved in localStorage
+let _fwExKey           = null;       // key being previewed in example modal
+let _cfwSeqLen         = 5;          // selected sequence length in custom form
+
+const FW_DEFAULT_DAYS = { 3: [1,7,14], 5: [1,4,7,10,14], 7: [1,3,5,7,10,12,14] };
+
+function _loadCustomFrameworks() {
+  try { _customFrameworks = JSON.parse(localStorage.getItem('zhituoke_custom_frameworks') || '[]'); }
+  catch { _customFrameworks = []; }
+}
+
+async function loadFrameworks() {
+  if (_frameworksLoaded) return;
+  _loadCustomFrameworks();
+  const token = getStoredToken();
+  if (!token) return; // no token yet — caller will retry after login
+  const loadingEl = document.getElementById('frameworkCardsLoading');
+  const gridEl    = document.getElementById('frameworkCardsGrid');
+  try {
+    const r = await fetch('/api/frameworks', { headers: { Authorization: `Bearer ${token}` } });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Failed');
+    _frameworks = d.frameworks || [];
+    _frameworksLoaded = true;
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (gridEl) { gridEl.style.display = 'grid'; _renderFrameworkCards(); }
+  } catch (err) {
+    console.warn('[Frameworks] load failed:', err.message);
+    if (loadingEl) loadingEl.textContent = '框架加载失败，请刷新重试';
+  }
+}
+
+function _sourceClass(source) {
+  if (!source) return 'udemy';
+  if (source.includes('方法论') || source.includes('专业')) return 'method';
+  if (source.includes('Udemy') || source.includes('课程')) return 'udemy';
+  return 'user';
+}
+function _sourceBadge(fw) {
+  if (fw.is_custom) return `<span class="fwcard-source user">您自己创建</span>`;
+  if (fw.source && fw.source.includes('方法论')) return `<span class="fwcard-source method">专业方法论</span>`;
+  return `<span class="fwcard-source udemy">Udemy 课程</span>`;
+}
+
+function _renderFrameworkCards() {
+  const grid = document.getElementById('frameworkCardsGrid');
+  if (!grid) return;
+
+  const presetCards = _frameworks.filter(fw => !fw.is_custom).map(fw => {
+    const sel = fw.key === _selectedFrameworkKey;
+    const structShort = (fw.structure || []).map(s => s.stage).join(' → ') || fw.description;
+    return `<div class="fwcard${sel ? ' selected' : ''}" id="fwcard-${CSS.escape(fw.key)}" onclick="selectFramework('${fw.key.replace(/'/g,"\\'")}')">
+      ${_sourceBadge(fw)}
+      <div class="fwcard-icon">${fw.icon || '📋'}</div>
+      <div class="fwcard-name">${fw.en_name}</div>
+      <div class="fwcard-en">${fw.name}</div>
+      <div class="fwcard-desc" style="font-size:0.65rem">${structShort}</div>
+      <div class="fwcard-best">${fw.best_for || ''}</div>
+      <div class="fwcard-btns">
+        <button class="fwcard-btn" onclick="event.stopPropagation();openFwExModal('${fw.key.replace(/'/g,"\\'")}')">👁 看示例</button>
+        <button class="fwcard-btn primary">${sel ? '✓ 已选' : '选择'}</button>
+      </div>
+    </div>`;
+  });
+
+  const customSavedCards = _customFrameworks.map(cf => {
+    const sel = _selectedFrameworkKey === 'custom' && _selectedCustomFramework && _selectedCustomFramework.id === cf.id;
+    const structShort = (cf.structure || '').split('\n').slice(0,2).join(' → ');
+    return `<div class="fwcard${sel ? ' selected' : ''}" id="fwcard-cus-${CSS.escape(String(cf.id))}">
+      <span class="fwcard-source user">您自己创建</span>
+      <div class="fwcard-icon">✏️</div>
+      <div class="fwcard-name">${_esc(cf.name)}</div>
+      <div class="fwcard-en">Custom Framework</div>
+      <div class="fwcard-desc" style="font-size:0.65rem">${_esc(structShort) || cf.name}</div>
+      <div class="fwcard-best">高级用户自定义</div>
+      <div class="fwcard-btns" style="flex-wrap:wrap;gap:4px">
+        <button class="fwcard-btn" style="flex:none;padding:3px 7px" onclick="event.stopPropagation();editCustomFramework(${cf.id})">✏ 编辑</button>
+        <button class="fwcard-btn" style="flex:none;padding:3px 7px;color:#f87171;border-color:rgba(239,68,68,0.25)" onclick="event.stopPropagation();deleteCustomFramework(${cf.id})">🗑</button>
+        <button class="fwcard-btn primary" style="flex:1" onclick="selectCustomFramework(${cf.id})">${sel ? '✓ 已选' : '选择'}</button>
+      </div>
+    </div>`;
+  });
+
+  // Custom "create new" placeholder card (if user has < 5 saved)
+  const canCreate = _customFrameworks.length < 5;
+  const createCard = canCreate
+    ? `<div class="fwcard" style="cursor:default;border-style:dashed;opacity:0.75;align-items:center;text-align:center;justify-content:center" onclick="openCustomFwModal(null)">
+        <div style="font-size:2rem">✏️</div>
+        <div class="fwcard-name">自定义框架</div>
+        <div class="fwcard-en">Custom Framework</div>
+        <div class="fwcard-best" style="text-align:center">有验证过的写法？自己定义</div>
+        <button class="fwcard-btn primary" style="margin-top:4px" onclick="event.stopPropagation();openCustomFwModal(null)">+ 创建自定义框架</button>
+      </div>`
+    : `<div class="fwcard" style="cursor:default;border-style:dashed;opacity:0.5;align-items:center;text-align:center;justify-content:center">
+        <div style="font-size:1.2rem;color:var(--sub)">已达上限</div>
+        <div class="fwcard-best" style="text-align:center">最多保存 5 个自定义框架<br>请删除一个再创建</div>
+      </div>`;
+
+  grid.innerHTML = presetCards.join('') + customSavedCards.join('') + createCard;
+}
+
+function _esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function selectFramework(key) {
+  _selectedFrameworkKey = key;
+  _selectedCustomFramework = null;
+  _renderFrameworkCards();
+  _updateGenerateBtn();
+  const fw = _frameworks.find(f => f.key === key);
+  _showToast(`✓ 已选框架：${fw ? fw.en_name : key}`);
+}
+
+function selectCustomFramework(id) {
+  const cf = _customFrameworks.find(f => f.id === id);
+  if (!cf) return;
+  _selectedFrameworkKey = 'custom';
+  _selectedCustomFramework = cf;
+  _renderFrameworkCards();
+  _updateGenerateBtn();
+  _showToast(`✓ 已选框架：${cf.name}`);
+}
+
+// ── Framework Example Modal ────────────────────────────────────────────────────
+
+function openFwExModal(key) {
+  const fw = _frameworks.find(f => f.key === key);
+  if (!fw) return;
+  _fwExKey = key;
+
+  document.getElementById('fwExModalTitle').textContent = `${fw.icon || ''} ${fw.en_name}`;
+  document.getElementById('fwExModalSource').textContent = `来源：${fw.source || ''}`;
+
+  // Structure chips
+  const structRow = document.getElementById('fwExStructRow');
+  if (fw.structure && fw.structure.length) {
+    structRow.innerHTML = fw.structure.map((s, i) =>
+      `${i > 0 ? '<span style="color:var(--sub);font-size:0.7rem">→</span>' : ''}<div class="fw-struct-chip">${s.letter ? s.letter + ' — ' : ''}${s.stage}</div>`
+    ).join('');
+  } else {
+    structRow.innerHTML = `<div class="fw-struct-chip">${fw.description}</div>`;
+  }
+
+  // Sample email
+  document.getElementById('fwExSubj').textContent = fw.sample_subject
+    ? `Subject: ${fw.sample_subject}`
+    : '（无固定 Subject 示例）';
+  document.getElementById('fwExBody').textContent = fw.sample_email_body || '（本框架无原版示例，AI 按结构自由创作）';
+
+  // Select button state
+  const selBtn = document.getElementById('fwExSelectBtn');
+  selBtn.textContent = _selectedFrameworkKey === key ? '✓ 已选择此框架' : '✓ 选择此框架';
+  selBtn.style.background = _selectedFrameworkKey === key ? '#10b981' : '';
+
+  document.getElementById('fwExModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeFwExModal() {
+  document.getElementById('fwExModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function selectFwFromModal() {
+  if (_fwExKey) { selectFramework(_fwExKey); closeFwExModal(); }
+}
+
+// ── Custom Framework CRUD ──────────────────────────────────────────────────────
+
+function _renderCfwDays(len) {
+  const days = FW_DEFAULT_DAYS[len] || FW_DEFAULT_DAYS[5];
+  document.getElementById('cfwDaysRow').innerHTML = days.map((d, i) =>
+    `<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+       <span style="font-size:0.62rem;color:var(--sub)">第${i+1}封</span>
+       <input class="cfw-day-input" id="cfwDay${i}" type="number" min="0" max="99" value="${d}">
+     </div>`
+  ).join('');
+}
+
+function setCfwSeq(len) {
+  _cfwSeqLen = len;
+  document.querySelectorAll('.cfw-seq-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.val) === len)
+  );
+  _renderCfwDays(len);
+}
+
+function openCustomFwModal(editId) {
+  _loadCustomFrameworks();
+  const existing = editId != null ? _customFrameworks.find(f => f.id === editId) : null;
+
+  document.getElementById('cfwName').value     = existing ? existing.name      : '';
+  document.getElementById('cfwStructure').value= existing ? existing.structure : '';
+  document.getElementById('cfwRules').value    = existing ? (existing.rules || '')  : '';
+  document.getElementById('cfwSample').value   = existing ? (existing.sample || '') : '';
+  document.getElementById('cfwEditId').value   = existing ? String(existing.id) : '';
+
+  _cfwSeqLen = existing ? (existing.sequence_length || 5) : 5;
+  document.querySelectorAll('.cfw-seq-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.val) === _cfwSeqLen)
+  );
+  _renderCfwDays(_cfwSeqLen);
+
+  if (existing && existing.days) {
+    existing.days.forEach((d, i) => {
+      const el = document.getElementById(`cfwDay${i}`);
+      if (el) el.value = d;
+    });
+  }
+
+  document.getElementById('customFwModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCustomFwModal() {
+  document.getElementById('customFwModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function editCustomFramework(id) { openCustomFwModal(id); }
+
+function deleteCustomFramework(id) {
+  if (!confirm('删除这个自定义框架？')) return;
+  _loadCustomFrameworks();
+  _customFrameworks = _customFrameworks.filter(f => f.id !== id);
+  localStorage.setItem('zhituoke_custom_frameworks', JSON.stringify(_customFrameworks));
+  if (_selectedCustomFramework && _selectedCustomFramework.id === id) {
+    _selectedFrameworkKey = null;
+    _selectedCustomFramework = null;
+    _updateGenerateBtn();
+  }
+  _renderFrameworkCards();
+  _showToast('已删除自定义框架');
+}
+
+function saveCustomFramework() {
+  const name      = document.getElementById('cfwName').value.trim();
+  const structure = document.getElementById('cfwStructure').value.trim();
+  const rules     = document.getElementById('cfwRules').value.trim();
+  const sample    = document.getElementById('cfwSample').value.trim();
+  const editIdRaw = document.getElementById('cfwEditId').value;
+
+  if (!name)      { _showToast('请填写框架名称'); return; }
+  if (!structure) { _showToast('请填写框架结构描述'); return; }
+
+  _loadCustomFrameworks();
+  if (_customFrameworks.length >= 5 && !editIdRaw) {
+    _showToast('最多保存 5 个自定义框架，请先删除一个');
+    return;
+  }
+
+  const days = [];
+  for (let i = 0; i < _cfwSeqLen; i++) {
+    const el = document.getElementById(`cfwDay${i}`);
+    days.push(el ? parseInt(el.value) || 0 : 0);
+  }
+
+  if (editIdRaw) {
+    const id = parseInt(editIdRaw);
+    const idx = _customFrameworks.findIndex(f => f.id === id);
+    if (idx >= 0) {
+      _customFrameworks[idx] = { ..._customFrameworks[idx], name, structure, rules, sample, sequence_length: _cfwSeqLen, days };
+      if (_selectedCustomFramework && _selectedCustomFramework.id === id) {
+        _selectedCustomFramework = _customFrameworks[idx];
+      }
+    }
+  } else {
+    const newId = Date.now();
+    _customFrameworks.push({ id: newId, name, structure, rules, sample, sequence_length: _cfwSeqLen, days });
+  }
+
+  localStorage.setItem('zhituoke_custom_frameworks', JSON.stringify(_customFrameworks));
+  closeCustomFwModal();
+  _renderFrameworkCards();
+  _showToast(`✓ 自定义框架「${name}」已保存`);
+}
+
+// ── Template selection & email generation ─────────────────────────────────────
+
+let _templates        = [];
+let _templatesLoaded  = false;
+let _selectedTemplateKey = null;
+let _previewKey       = null;
+let _previewTabIdx    = 0;
+let _previewLang      = 'en';
+
+const TEMPLATE_ICONS = {
+  '房产开发商': '🏗️',
+  '装修承包商': '🔨',
+  '室内设计师': '🎨',
+  '建材经销商': '🏪',
+  '工程承包商': '🏛️',
+  '家具制造商': '🪑',
+  '酒店装修采购': '🏨',
+  '超市建材采购': '🛒',
+};
+
+async function loadTemplates() {
+  if (_templatesLoaded) return;
+  const token = getStoredToken();
+  const loadingEl = document.getElementById('templateCardsLoading');
+  const wrapEl    = document.getElementById('templateCardsWrap');
+  try {
+    const r = await fetch('/api/templates', { headers: { Authorization: `Bearer ${token}` } });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Failed to load templates');
+    _templates = d.templates || [];
+    _templatesLoaded = true;
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (wrapEl) { wrapEl.style.display = 'flex'; _renderTemplateCards(); }
+  } catch (err) {
+    console.warn('[Templates] load failed:', err.message);
+    if (loadingEl) loadingEl.textContent = '模板加载失败，请刷新重试';
+  }
+}
+
+function _renderTemplateCards() {
+  const wrap = document.getElementById('templateCardsWrap');
+  if (!wrap) return;
+  wrap.innerHTML = _templates.map(t => {
+    const icon = TEMPLATE_ICONS[t.key] || '📦';
+    const sel  = t.key === _selectedTemplateKey;
+    const painShort = (t.pain_point || '').split('、')[0].split(',')[0].trim();
+    return `<div class="tcard${sel ? ' selected' : ''}" id="tcard-${CSS.escape(t.key)}" onclick="selectTemplate('${t.key.replace(/'/g, "\\'")}')">
+      <div class="tcard-icon">${icon}</div>
+      <div class="tcard-label">${t.en_label}</div>
+      <div class="tcard-zh">${t.key}</div>
+      <div class="tcard-pain">${painShort}</div>
+      <div class="tcard-btns">
+        <button class="tcard-btn" onclick="event.stopPropagation(); previewTemplate('${t.key.replace(/'/g, "\\'")}')">👁 框架&示范</button>
+        <button class="tcard-btn primary">${sel ? '✓ 已选' : '选择'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectTemplate(key) {
+  _selectedTemplateKey = key;
+  _renderTemplateCards();
+  _updateGenerateBtn();
+  const labelEl = document.getElementById('selectedTemplateLabel');
+  const tmpl = _templates.find(t => t.key === key);
+  if (labelEl && tmpl) {
+    labelEl.textContent = `当前角度：${TEMPLATE_ICONS[key] || ''} ${tmpl.en_label}（${key}）`;
+    labelEl.style.display = 'inline';
+  }
+  _showToast(`✓ 已选角度：${key}`);
+}
+
+function _updateGenerateBtn() {
+  const btn = document.getElementById('generateEmailsBtn');
+  if (!btn) return;
+  const qualified = (_allLeads || []).filter(l => _isLeadQualified(l));
+  const withoutEmails = qualified.filter(l => !l.EMAIL_1_SUBJECT);
+  const n = qualified.length;
+  const cost = (n * 0.025).toFixed(3);
+
+  const hasFramework = !!_selectedFrameworkKey;
+  const hasTemplate  = !!_selectedTemplateKey;
+
+  if (!hasFramework) {
+    btn.textContent = '✉️ 请先选择写作框架';
+    btn.disabled = true;
+  } else if (!hasTemplate) {
+    btn.textContent = '✉️ 请先选择客户角度';
+    btn.disabled = true;
+  } else if (n === 0) {
+    btn.textContent = '✉️ 完成深度分析后生成';
+    btn.disabled = true;
+  } else {
+    const fwObj = _selectedFrameworkKey === 'custom' && _selectedCustomFramework
+      ? _selectedCustomFramework
+      : _frameworks.find(f => f.key === _selectedFrameworkKey);
+    const fwLabel  = fwObj ? (fwObj.en_name || fwObj.name) : _selectedFrameworkKey;
+    const tmpl     = _templates.find(t => t.key === _selectedTemplateKey);
+    const angleLabel = tmpl ? tmpl.zh_label || tmpl.key : _selectedTemplateKey;
+    const action   = withoutEmails.length > 0 ? '生成' : '重新生成';
+    btn.textContent = `✉️ ${action} ${n} 条×5封 ${fwLabel} 邮件（${angleLabel}角度）$${cost}`;
+    btn.disabled = false;
+  }
+}
+
+// ── Template preview modal ─────────────────────────────────────────────────────
+
+function previewTemplate(key) {
+  const tmpl = _templates.find(t => t.key === key);
+  if (!tmpl) return;
+  _previewKey    = key;
+  _previewTabIdx = 0;
+  _previewLang   = 'en';
+
+  document.getElementById('tplModalTitle').textContent = `${TEMPLATE_ICONS[key] || ''} ${tmpl.en_label}（${key}）`;
+  document.getElementById('tplModalMeta').textContent  = '';
+
+  // Render angle config
+  _renderAngleConfig(tmpl);
+
+  // Render sample tabs
+  const samples = tmpl.preview_samples || [];
+  const SAMPLE_LABELS = { hook: 'Hook · Day 1', value_drop: 'Value · Day 4', social_proof: 'Proof · Day 7', differentiator: 'Differ. · Day 10', breakup: 'Breakup · Day 14' };
+  document.getElementById('tplSampleTabsRow').innerHTML = samples.map((s, i) =>
+    `<button class="tpl-sample-tab${i === 0 ? ' active' : ''}" onclick="switchPreviewTab(${i})">${SAMPLE_LABELS[s.stage] || s.stage}</button>`
+  ).join('');
+
+  // Reset lang buttons
+  document.getElementById('tplLangEN').classList.add('active');
+  document.getElementById('tplLangZH').classList.remove('active');
+
+  _renderPreviewContent(tmpl, 0);
+  document.getElementById('tplModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function _renderAngleConfig(tmpl) {
+  const grid = document.getElementById('tplConfigGrid');
+  if (!grid) return;
+  const cfg = tmpl.angle_config || {};
+  const tagHtml = (arr) =>
+    `<div class="tpl-tag-list">${(arr || []).map(t => `<span class="tpl-tag">${t}</span>`).join('')}</div>`;
+  grid.innerHTML = `
+    <div class="tpl-config-item full">
+      <div class="tpl-config-key">核心痛点</div>
+      <div class="tpl-config-val">${cfg.pain_point || ''}</div>
+    </div>
+    <div class="tpl-config-item full">
+      <div class="tpl-config-key">我们的价值主张</div>
+      <div class="tpl-config-val">${cfg.value_prop || ''}</div>
+    </div>
+    <div class="tpl-config-item">
+      <div class="tpl-config-key">可用钩子角度（AI 每次变换）</div>
+      ${tagHtml(cfg.hook_angles)}
+    </div>
+    <div class="tpl-config-item">
+      <div class="tpl-config-key">可化解的反对意见（Email 4 选一）</div>
+      ${tagHtml(cfg.common_objections)}
+    </div>
+    <div class="tpl-config-item full">
+      <div class="tpl-config-key">社会证明角度（Email 3 选一）</div>
+      ${tagHtml(cfg.proof_angles)}
+    </div>`;
+}
+
+function _renderPreviewContent(tmpl, idx) {
+  const samples = tmpl.preview_samples || [];
+  const sample  = samples[idx];
+  if (!sample) return;
+  const content = sample[_previewLang] || sample.en;
+
+  document.getElementById('tplSubjectBox').innerHTML = _highlightPlaceholders(content.subject);
+  document.getElementById('tplBodyBox').innerHTML    = _highlightPlaceholders(content.body);
+  document.getElementById('tplPurposeText').textContent = sample.purpose || '';
+
+  const isSel = _selectedTemplateKey === _previewKey;
+  const selBtn = document.getElementById('tplSelectBtn');
+  if (selBtn) {
+    selBtn.textContent = isSel ? '✓ 已选择此角度' : '✓ 选择此角度';
+    selBtn.style.background = isSel ? '#10b981' : '';
+  }
+}
+
+function _highlightPlaceholders(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\{(\w+)\}/g, '<span class="tpl-placeholder">{$1}</span>');
+}
+
+function switchPreviewTab(idx) {
+  _previewTabIdx = idx;
+  document.querySelectorAll('.tpl-sample-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  const tmpl = _templates.find(t => t.key === _previewKey);
+  if (tmpl) _renderPreviewContent(tmpl, idx);
+}
+
+function setPreviewLang(lang) {
+  _previewLang = lang;
+  document.getElementById('tplLangEN').classList.toggle('active', lang === 'en');
+  document.getElementById('tplLangZH').classList.toggle('active', lang === 'zh');
+  const tmpl = _templates.find(t => t.key === _previewKey);
+  if (tmpl) _renderPreviewContent(tmpl, _previewTabIdx);
+}
+
+function selectTemplateFromModal() {
+  if (_previewKey) { selectTemplate(_previewKey); closeTemplatePreview(); }
+}
+
+function closeTemplatePreview() {
+  const modal = document.getElementById('tplModal');
+  if (modal) modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Email generation ───────────────────────────────────────────────────────────
+
+async function startEmailGeneration() {
+  if (!_selectedFrameworkKey) { _showToast('请先选择写作框架'); return; }
+  if (!_selectedTemplateKey)  { _showToast('请先选择客户角度'); return; }
+  const qualified = (_allLeads || []).filter(l => _isLeadQualified(l));
+  if (!qualified.length) { _showToast('没有合格线索可生成邮件'); return; }
+
+  const btn      = document.getElementById('generateEmailsBtn');
+  const progEl   = document.getElementById('emailGenProgress');
+  const progText = document.getElementById('emailGenProgressText');
+  btn.disabled = true;
+  if (progEl) progEl.style.display = 'flex';
+
+  try {
+    const res = await fetch('/api/leads/generate-emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getStoredToken()}` },
+      body: JSON.stringify({
+        companies:       qualified,
+        template_key:    _selectedTemplateKey,
+        framework_key:   _selectedFrameworkKey,
+        custom_framework:_selectedFrameworkKey === 'custom' ? _selectedCustomFramework : null,
+        searchId:        _currentSearchId,
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let genResults = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+      for (const part of parts) {
+        if (!part.startsWith('data: ')) continue;
+        let data;
+        try { data = JSON.parse(part.slice(6)); } catch { continue; }
+
+        if (data.type === 'progress') {
+          if (progText) progText.textContent = `正在为 ${data.lead?.companyName || '…'} 生成邮件（${data.done}/${data.total}）`;
+          if (data.lead) {
+            const idx = _allLeads.findIndex(l => l.companyName === data.lead.companyName);
+            if (idx >= 0) _allLeads[idx] = { ..._allLeads[idx], ...data.lead };
+            genResults.push(data.lead);
+          }
+        } else if (data.type === 'done') {
+          (data.results || []).forEach(r => {
+            const idx = _allLeads.findIndex(l => l.companyName === r.companyName);
+            if (idx >= 0) _allLeads[idx] = { ..._allLeads[idx], ...r };
+          });
+          renderResults(_allLeads);
+          const n = (data.results || []).length;
+          setStatus(`✅ 邮件生成完成：${n} 条线索已生成 5 封个性化开发信`, 'success');
+          _showToast(`✓ 已为 ${n} 条线索生成邮件（框架：${_selectedFrameworkKey} · 角度：${_selectedTemplateKey}）`);
+          _updateGenerateBtn();
+        }
+      }
+    }
+  } catch (err) {
+    setStatus(`邮件生成失败：${err.message}`, 'error');
+    _showToast('❌ 邮件生成失败：' + err.message);
+  } finally {
+    btn.disabled = false;
+    if (progEl) progEl.style.display = 'none';
+    _updateGenerateBtn();
+  }
+}
 </script>
 
 <script>

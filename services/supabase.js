@@ -258,4 +258,36 @@ async function appendSearchRunCosts(id, { sonnetCostUsd, firecrawlCostUsd }) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, getCostSummary };
+async function getEmailsSentCount() {
+  const db = getClient();
+  if (!db) return 0;
+  try {
+    const { count, error } = await db
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .not('email_sent_at', 'is', null);
+    if (error) throw error;
+    return count || 0;
+  } catch (err) {
+    console.warn('[Supabase] getEmailsSentCount failed:', err.message);
+    return 0;
+  }
+}
+
+async function deleteSearchRun(searchId) {
+  const db = getClient();
+  if (!db || !searchId) return false;
+  try {
+    const { error: leadsErr } = await db.from('leads').delete().eq('search_id', searchId);
+    if (leadsErr) throw leadsErr;
+    const { error: histErr } = await db.from('search_history').delete().eq('id', searchId);
+    if (histErr) throw histErr;
+    console.log(`[Supabase] Deleted search run ${searchId} + its leads`);
+    return true;
+  } catch (err) {
+    console.warn('[Supabase] deleteSearchRun failed:', err.message);
+    return false;
+  }
+}
+
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun };

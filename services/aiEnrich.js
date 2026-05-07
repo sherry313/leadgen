@@ -3,28 +3,20 @@ const Anthropic = require('@anthropic-ai/sdk');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 120000 });
 
-// Claude Sonnet 4.6 pricing (USD per 1M tokens)
-const AI_INPUT_PRICE_PER_M  = 3.00;
-const AI_OUTPUT_PRICE_PER_M = 15.00;
+// ── ICP Analysis (no email generation) ────────────────────────────────────────
+// Returns: { intentScore, intentReasoning, icpScore, icpReasoning, usage }
 
-const SYSTEM_PROMPT = `You are an expert B2B sales analyst and copywriter helping a Chinese building materials manufacturer
-reach overseas buyers (builders, developers, renovators, contractors, importers, wholesalers, distributors).
+const SYSTEM_PROMPT_ICP = `You are an expert B2B sales analyst helping a Chinese building materials manufacturer
+identify ideal prospects among Australian buyers (builders, developers, renovators, contractors, importers, wholesalers, distributors).
 
 Your job:
 1. Score the prospect's buying intent based on their website content
 2. Score how well this prospect matches the seller's Ideal Customer Profile (ICP)
-3. Write a 5-email outreach sequence ONLY if the ICP score is 5 or above
 
-Rules:
-- All emails must be in English
-- Reference the prospect's actual business details from their website when possible
-- Make each follow-up clearly different in angle (not just "following up on my last email")
-- Emails must feel personal and researched, not templated
-- If icpScore <= 4, return empty strings for ALL email fields — do not waste tokens
-- Always respond with valid JSON only — no markdown code fences, no explanation outside the JSON`;
+Always respond with valid JSON only — no markdown code fences, no explanation outside the JSON.`;
 
-async function enrichLead(company, websiteContent, companyProfile = {}, icp = '', keepSignals = [], lowSignal = false) {
-  console.log(`[AI] Enriching lead: ${company.companyName}`);
+async function analyzeICP(company, websiteContent, companyProfile = {}, icp = '', keepSignals = [], lowSignal = false) {
+  console.log(`[AI] Analyzing ICP: ${company.companyName}`);
 
   const sellerName = companyProfile.sellerName || 'our company';
   const products   = companyProfile.products   || 'windows & doors, kitchen cabinets, and bathtubs';
@@ -40,11 +32,9 @@ ICP scoring guide:
 - 7-8:  Matches most criteria, minor gaps
 - 5-6:  Partial match — some criteria fit, some don't
 - 3-4:  Poor match — mostly doesn't fit the ICP
-- 1-2:  Completely wrong type of customer
-CRITICAL: If icpScore is 4 or below, set ALL email fields to empty string "". Do not write any emails.`
+- 1-2:  Completely wrong type of customer`
     : `=== IDEAL CUSTOMER PROFILE (ICP) ===
-No ICP specified. Set icpScore to 7 and icpReasoning to "未设置ICP筛选条件。" for all leads.
-Still generate all 5 emails normally.`;
+No ICP specified. Set icpScore to 7 and icpReasoning to "未设置ICP筛选条件。" for all leads.`;
 
   const userPrompt = `Analyze this prospect and return a JSON object.
 
@@ -82,37 +72,21 @@ ${websiteContent || 'No website content available.'}
 - icpScore: integer 1-10 (how well this prospect matches the ICP above)
 - icpReasoning: 用中文写1-2句话解释ICP匹配度原因
 
-- EMAIL_1_SUBJECT: Cold intro subject (max 55 chars) — EMPTY STRING if icpScore <= 4
-- EMAIL_1_BODY: Cold intro — reference their website, explain value of ${products}, mention ${advantage}. 130-160 words. — EMPTY STRING if icpScore <= 4
-
-- EMAIL_2_SUBJECT: Follow-up #1 subject — EMPTY STRING if icpScore <= 4
-- EMAIL_2_BODY: Different angle, specific product benefit or pain point. 100-130 words. — EMPTY STRING if icpScore <= 4
-
-- EMAIL_3_SUBJECT: Follow-up #2 subject — EMPTY STRING if icpScore <= 4
-- EMAIL_3_BODY: Social proof — similar companies already sourcing from China. 100-130 words. — EMPTY STRING if icpScore <= 4
-
-- EMAIL_4_SUBJECT: Follow-up #3 subject — EMPTY STRING if icpScore <= 4
-- EMAIL_4_BODY: Offer something tangible — samples, catalogue, price list. 80-100 words. — EMPTY STRING if icpScore <= 4
-
-- EMAIL_5_SUBJECT: Follow-up #4 subject — EMPTY STRING if icpScore <= 4
-- EMAIL_5_BODY: Soft breakup email, low pressure, leave door open. 60-80 words. — EMPTY STRING if icpScore <= 4
-
 Return only valid JSON. No markdown, no extra text.`;
 
   let rawText = '';
   try {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 8000,
-      system: SYSTEM_PROMPT,
+      max_tokens: 800,
+      system: SYSTEM_PROMPT_ICP,
       messages: [{ role: 'user', content: userPrompt }],
     });
 
     const { input_tokens, output_tokens } = response.usage;
     rawText = response.content[0].text;
-    console.log(`[AI] ${company.companyName}: raw response length=${rawText.length} stop_reason=${response.stop_reason} tokens=${input_tokens}in/${output_tokens}out`);
+    console.log(`[AI] ${company.companyName}: tokens=${input_tokens}in/${output_tokens}out`);
 
-    // Strip accidental markdown fences before parsing
     const cleaned = rawText
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')
@@ -120,24 +94,169 @@ Return only valid JSON. No markdown, no extra text.`;
       .trim();
 
     const result = JSON.parse(cleaned);
-    console.log(`[AI] ${company.companyName}: intent=${result.intentScore}/10  icp=${result.icpScore}/10  email1_subject="${String(result.EMAIL_1_SUBJECT || '').slice(0, 60)}"`);
+    console.log(`[AI] ${company.companyName}: intent=${result.intentScore}/10  icp=${result.icpScore}/10`);
 
-    // Small delay to stay within Claude rate limits
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 300));
 
     return {
-      ...result,
+      intentScore:     result.intentScore     || 0,
+      intentReasoning: result.intentReasoning || '',
+      icpScore:        result.icpScore        || 0,
+      icpReasoning:    result.icpReasoning    || '',
       usage: { input_tokens, output_tokens },
     };
   } catch (err) {
-    console.error(`[AI] Enrichment FAILED for ${company.companyName}: ${err.message}`);
-    if (rawText) {
-      console.error(`[AI] Raw response (first 500 chars): ${rawText.slice(0, 500)}`);
-      console.error(`[AI] Raw response (last 200 chars): ${rawText.slice(-200)}`);
-    }
+    console.error(`[AI] ICP analysis FAILED for ${company.companyName}: ${err.message}`);
+    if (rawText) console.error(`[AI] Raw (first 300): ${rawText.slice(0, 300)}`);
     return {
       intentScore: 0, intentReasoning: 'AI分析失败。',
       icpScore: 0,    icpReasoning:    'AI分析失败。',
+      usage: { input_tokens: 0, output_tokens: 0 },
+    };
+  }
+}
+
+// ── Email generation using a chosen customer-type angle + writing framework ────
+// Returns: { EMAIL_1_SUBJECT, EMAIL_1_BODY, ..., EMAIL_5_SUBJECT, EMAIL_5_BODY, usage }
+
+function _buildEmailSystemPrompt(frameworkInstructions) {
+  return `You are an expert B2B cold email copywriter for Lens, a Chinese building materials manufacturer (aluminium/uPVC windows & doors, custom kitchen cabinetry, freestanding & built-in bathtubs) targeting Australian businesses.
+
+Write a 5-email cold outreach sequence following this framework:
+
+${frameworkInstructions}
+
+SUBJECT LINE IRON RULES (apply to ALL frameworks):
+1. The Snippet: the first few words must create curiosity — make the reader want to open
+2. The Experiment: you may use emoji or write "[No Subject]" if it feels right
+3. Casual: NEVER capitalise every word. ✅ "can you spare 5 minutes?" ❌ "Can You Spare 5 Minutes?"
+4. Length: 3-7 words. Hyper-specific — NEVER use "Quick question", "Following up", "Touching base", "Partnership opportunity"
+5. All 5 subject lines must feel different from each other
+
+BODY IRON RULES:
+1. Each email body: UNDER 100 words (body only, not counting sign-off)
+2. Write like a real person who researched the company, not a marketing template
+3. Reference specific details from the prospect's website
+4. Reference specific Australian cities, company names, or numbers
+5. Sign every email with "— Lens"
+6. Use {first_name} as salutation placeholder; {company} and {website} where natural
+
+Return valid JSON only — no markdown fences, no text outside the JSON object.`;
+}
+
+async function generateEmails(lead, templateKey, websiteContent, frameworkKey, customFrameworkData) {
+  const templates   = require('./emailTemplates');
+  const frameworks  = require('./emailFrameworks');
+  const template    = templates[templateKey];
+  if (!template) throw new Error(`Unknown template key: ${templateKey}`);
+
+  // Resolve framework instructions
+  let frameworkInstructions;
+  const resolvedKey = frameworkKey || 'cold_5_step';
+
+  if (resolvedKey === 'custom' && customFrameworkData) {
+    const cf = customFrameworkData;
+    frameworkInstructions = `SEQUENCE STRUCTURE — ${cf.name || 'Custom Framework'}:
+${cf.structure || ''}
+${cf.rules ? `\nWriting requirements: ${cf.rules}` : ''}
+${cf.sample ? `\nStyle example to emulate:\n${cf.sample}` : ''}
+
+Generate 5 emails on Days 1, 4, 7, 10, 14 following the structure above.`;
+  } else {
+    const fw = frameworks[resolvedKey] || frameworks['cold_5_step'];
+    frameworkInstructions = `SEQUENCE STRUCTURE — ${fw.en_name} (${fw.description}):
+${fw.sequence_prompt || ''}`;
+  }
+
+  console.log(`[AI] Generating emails for ${lead.companyName} | angle="${templateKey}" | framework="${resolvedKey}"`);
+
+  const cfg = template.angle_config || {};
+
+  const userPrompt = `Write 5 personalized cold emails for this Australian prospect. Be creative — vary your hook angle, the specific pain point you address, the case study you cite, and the objection you handle. Don't default to the obvious first option.
+
+=== SELLER ===
+Company: Lens
+Products: aluminium/uPVC windows & doors, custom kitchen cabinetry, freestanding & built-in bathtubs
+Advantage: factory-direct pricing, custom sizing, 3-4 week lead times, low MOQ
+
+=== CUSTOMER TYPE: ${template.en_label} (${templateKey}) ===
+Pain points: ${cfg.pain_point || ''}
+Our value for this type: ${cfg.value_prop || ''}
+
+Hook angle options — choose the most relevant ONE for THIS specific company (don't always use option 1):
+${(cfg.hook_angles || []).map((a, i) => `${i + 1}. ${a}`).join('\n')}
+
+Social proof angles — pick ONE and adapt it (specific numbers, AU location):
+${(cfg.proof_angles || []).map((a, i) => `${i + 1}. ${a}`).join('\n')}
+
+Common objections — handle ONE in the objection-handling email:
+${(cfg.common_objections || []).map((a, i) => `${i + 1}. ${a}`).join('\n')}
+
+=== THIS SPECIFIC PROSPECT ===
+Company: ${lead.companyName}
+Industry: ${lead.industry || 'Unknown'}
+Location: ${[lead.city, lead.state].filter(Boolean).join(', ')}, Australia
+Website: ${lead.website || ''}
+Google Rating: ${lead.googleRating || ''} (${lead.reviewCount || ''} reviews)
+ICP analysis: ${lead.icpReasoning || ''}
+Intent analysis: ${lead.intentReasoning || ''}
+
+Website content (reference specific details from this):
+${websiteContent || 'No website content available.'}
+
+=== OUTPUT ===
+Return this exact JSON structure with no extra text:
+{
+  "EMAIL_1_SUBJECT": "...",
+  "EMAIL_1_BODY": "...",
+  "EMAIL_2_SUBJECT": "...",
+  "EMAIL_2_BODY": "...",
+  "EMAIL_3_SUBJECT": "...",
+  "EMAIL_3_BODY": "...",
+  "EMAIL_4_SUBJECT": "...",
+  "EMAIL_4_BODY": "...",
+  "EMAIL_5_SUBJECT": "...",
+  "EMAIL_5_BODY": "..."
+}
+
+Follow the framework structure above strictly for all 5 emails. Each body under 100 words. Valid JSON only.`;
+
+  let rawText = '';
+  try {
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      system: _buildEmailSystemPrompt(frameworkInstructions),
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const { input_tokens, output_tokens } = response.usage;
+    rawText = response.content[0].text;
+    console.log(`[AI] ${lead.companyName} emails: tokens=${input_tokens}in/${output_tokens}out`);
+
+    const cleaned = rawText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim();
+
+    const result = JSON.parse(cleaned);
+    console.log(`[AI] ${lead.companyName}: email1="${String(result.EMAIL_1_SUBJECT || '').slice(0, 60)}"`);
+
+    await new Promise(r => setTimeout(r, 300));
+
+    return {
+      EMAIL_1_SUBJECT: result.EMAIL_1_SUBJECT || '',  EMAIL_1_BODY: result.EMAIL_1_BODY || '',
+      EMAIL_2_SUBJECT: result.EMAIL_2_SUBJECT || '',  EMAIL_2_BODY: result.EMAIL_2_BODY || '',
+      EMAIL_3_SUBJECT: result.EMAIL_3_SUBJECT || '',  EMAIL_3_BODY: result.EMAIL_3_BODY || '',
+      EMAIL_4_SUBJECT: result.EMAIL_4_SUBJECT || '',  EMAIL_4_BODY: result.EMAIL_4_BODY || '',
+      EMAIL_5_SUBJECT: result.EMAIL_5_SUBJECT || '',  EMAIL_5_BODY: result.EMAIL_5_BODY || '',
+      usage: { input_tokens, output_tokens },
+    };
+  } catch (err) {
+    console.error(`[AI] Email gen FAILED for ${lead.companyName}: ${err.message}`);
+    if (rawText) console.error(`[AI] Raw (first 300): ${rawText.slice(0, 300)}`);
+    return {
       EMAIL_1_SUBJECT: '', EMAIL_1_BODY: '',
       EMAIL_2_SUBJECT: '', EMAIL_2_BODY: '',
       EMAIL_3_SUBJECT: '', EMAIL_3_BODY: '',
@@ -148,6 +267,7 @@ Return only valid JSON. No markdown, no extra text.`;
   }
 }
 
+// ── Haiku pre-filter (unchanged) ───────────────────────────────────────────────
 async function preFilterLead(company) {
   try {
     const response = await client.messages.create({
@@ -183,4 +303,4 @@ Google评分：${company.googleRating}（${company.reviewCount}条评价）
   }
 }
 
-module.exports = { enrichLead, preFilterLead };
+module.exports = { analyzeICP, generateEmails, preFilterLead };

@@ -26,6 +26,36 @@
     .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
     .hamburger span { display: block; width: 24px; height: 2px; background: var(--text-white); border-radius: 2px; }
 
+    .nav-primary { color: var(--text-white) !important; font-weight: 700; }
+    .nav-cost-icon { font-size: 1.05rem; line-height: 1; text-decoration: none; opacity: 0.85; transition: opacity 0.15s; }
+    .nav-cost-icon:hover { opacity: 1; }
+    .nav-user-btn {
+      display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; color: var(--text-white); font-size: 0.84rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap;
+    }
+    .nav-user-btn:hover { background: rgba(255,255,255,0.13); }
+    .nav-dropdown { position: relative; }
+    .nav-dropdown-menu {
+      display: none; position: absolute; right: 0; top: calc(100% + 10px);
+      background: rgba(13,20,38,0.98); border: 1px solid rgba(148,163,184,0.15);
+      border-radius: 10px; padding: 5px; min-width: 155px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.55); z-index: 500;
+      backdrop-filter: blur(14px);
+    }
+    .nav-dropdown-menu.open { display: block; }
+    .nav-dd-item {
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 7px;
+      color: var(--text-muted); font-size: 0.83rem; cursor: pointer; text-decoration: none;
+      transition: all 0.12s; white-space: nowrap; background: none; border: none;
+      width: 100%; font-family: inherit; text-align: left;
+    }
+    .nav-dd-item:hover { background: rgba(255,255,255,0.07); color: var(--text-white); }
+    .nav-dd-item.danger { color: #f87171; }
+    .nav-dd-item.danger:hover { background: rgba(239,68,68,0.1); color: #f87171; }
+    .nav-dd-sep { height: 1px; background: rgba(148,163,184,0.12); margin: 4px 0; }
+
     /* AUTH OVERLAY */
     #authOverlay { position: fixed; inset: 0; background: var(--bg-dark); z-index: 200; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 1.5rem; text-align: center; padding: 2rem; }
     #authOverlay h2 { font-size: 1.4rem; font-weight: 800; }
@@ -170,14 +200,24 @@
 </div>
 
 <nav id="navbar">
-  <a href="landing.html" class="nav-logo">智拓客</a>
+  <a href="index.html" class="nav-logo">智拓客</a>
   <ul class="nav-links" id="navLinks">
-    <li><a href="landing.html">首页</a></li>
-    <li><a href="pricing.html">定价</a></li>
-    <li><a href="tutorial.html">教程</a></li>
-    <li><a href="about.html">关于我们</a></li>
+    <li><a href="index.html">找客户</a></li>
     <li><a href="dashboard.html">仪表盘</a></li>
-    <li><a href="index.html" class="btn-nav">立即登录</a></li>
+    <li><a href="index.html" style="font-size:0.88rem;color:var(--text-muted,#94a3b8);text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap" title="邮件发送中心（在找客户页面操作）">📬 邮件</a></li>
+    <li id="navCostLink" style="display:none">
+      <a href="dashboard.html" class="nav-cost-icon" title="查看成本详情">💰</a>
+    </li>
+    <li class="nav-dropdown" id="navUserMenu">
+      <button class="nav-user-btn" onclick="toggleUserMenu()" title="账户菜单">👤 ▾</button>
+      <div class="nav-dropdown-menu" id="userDropdown">
+        <a href="tutorial.html" class="nav-dd-item">📚 教程</a>
+        <a href="about.html" class="nav-dd-item">ℹ️ 关于我们</a>
+        <a href="index.html" class="nav-dd-item">⚙️ 设置</a>
+        <div class="nav-dd-sep"></div>
+        <button class="nav-dd-item danger" onclick="logout()">🚪 退出</button>
+      </div>
+    </li>
   </ul>
   <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
 </nav>
@@ -268,6 +308,32 @@ const hamburger = document.getElementById('hamburger');
 const navLinks = document.getElementById('navLinks');
 hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
 navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+function toggleUserMenu() {
+  document.getElementById('userDropdown').classList.toggle('open');
+}
+function logout() {
+  localStorage.removeItem('leadgen_accessToken');
+  location.href = 'landing.html';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#navUserMenu')) {
+    document.getElementById('userDropdown')?.classList.remove('open');
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('userDropdown')?.classList.remove('open');
+});
+
+// Show cost link for admins
+(async function() {
+  if (!token) return;
+  try {
+    const r = await fetch('/api/me', { headers: { Authorization: `Bearer ${token}` } });
+    const d = await r.json();
+    if (d.isAdmin) { const cl = document.getElementById('navCostLink'); if (cl) cl.style.display = ''; }
+  } catch {}
+})();
 
 /* DATA */
 let allLeads = [];
