@@ -322,6 +322,7 @@
       margin-bottom: 14px; font-size: 0.84rem;
     }
     #statusBar.info    { background: #eff6ff; color: #1d4ed8; border: 1px solid var(--blue-light); }
+    #statusBar.done    { background: #eff6ff; color: #1d4ed8; border: 1px solid var(--blue-light); border-left: 3px solid #10b981; }
     #statusBar.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
     #statusBar.error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
     .spinner {
@@ -407,6 +408,19 @@
     .btn-sm:hover { border-color: var(--blue); color: var(--blue); }
     .btn-sm.active-filter { background: var(--blue); color: white !important; border-color: var(--blue); }
     .empty-state { text-align: center; padding: 36px; color: var(--sub); font-size: 0.85rem; }
+
+    /* ── Results table: sticky action column + compact cells ─── */
+    .tbl-results th:last-child,
+    .tbl-results td:last-child { position: sticky; right: 0; z-index: 2; }
+    .tbl-results th:last-child { background: #f8fafc; }
+    .tbl-results td:last-child { background: #fff; box-shadow: -3px 0 8px rgba(0,0,0,0.06); }
+    .addr-cell { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; cursor: default; }
+    .contact-icons { display: flex; gap: 7px; align-items: center; }
+    .contact-icon { font-size: 0.9rem; text-decoration: none; opacity: 0.72; transition: opacity 0.15s; }
+    .contact-icon:hover { opacity: 1; }
+    .score-group { display: flex; gap: 3px; flex-wrap: nowrap; align-items: center; }
+    .score-xs { padding: 1px 5px; border-radius: 8px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
+    .act-btns { display: flex; gap: 3px; align-items: center; }
 
     /* ── Email detail rows ── */
     .email-detail-row { display: none; }
@@ -867,6 +881,11 @@
     th { background: rgba(15,23,42,0.6) !important; color: var(--sub) !important; border-bottom-color: var(--border) !important; }
     td { border-bottom-color: rgba(99,179,237,0.07) !important; color: var(--text) !important; }
     tr:hover td { background: rgba(37,99,235,0.05) !important; }
+    .tbl-results th:last-child { background: rgba(15,23,42,0.97) !important; }
+    .tbl-results td:last-child { background: rgba(15,23,42,0.95) !important; box-shadow: -3px 0 10px rgba(0,0,0,0.5) !important; }
+    tr:hover .tbl-results td:last-child { background: rgba(20,30,58,0.98) !important; }
+    .contact-icon { color: var(--sub) !important; }
+    .contact-icon:hover { color: var(--text) !important; }
     .company-name { color: var(--text) !important; }
     .website-link { color: #60a5fa !important; }
     .score.high { background: rgba(21,128,61,0.2) !important; color: #6ee7b7 !important; }
@@ -899,6 +918,7 @@
     .run-notice { background: rgba(37,99,235,0.1) !important; color: #93c5fd !important; border-color: rgba(37,99,235,0.25) !important; }
     .run-notice.warn { background: rgba(185,28,28,0.1) !important; color: #fca5a5 !important; border-color: rgba(239,68,68,0.22) !important; }
     #statusBar.info    { background: rgba(37,99,235,0.12) !important; color: #93c5fd !important; border-color: rgba(37,99,235,0.25) !important; }
+    #statusBar.done    { background: rgba(37,99,235,0.12) !important; color: #93c5fd !important; border-color: rgba(37,99,235,0.25) !important; border-left: 3px solid #10b981 !important; }
     #statusBar.success { background: rgba(21,128,61,0.12) !important; color: #6ee7b7 !important; border-color: rgba(16,185,129,0.25) !important; }
     #statusBar.error   { background: rgba(185,28,28,0.12) !important; color: #fca5a5 !important; border-color: rgba(239,68,68,0.22) !important; }
 
@@ -928,6 +948,8 @@
     .admin-header:hover { background: rgba(251,191,36,0.05) !important; }
     .admin-cost-card { background: rgba(15,23,42,0.6) !important; border-color: rgba(251,191,36,0.2) !important; }
     .cost-table th { background: rgba(15,23,42,0.6) !important; color: var(--sub) !important; }
+    #hubDrawer { background: rgba(15,23,42,0.98) !important; border-color: rgba(37,99,235,0.2) !important; }
+    .hub-drawer-head { border-color: rgba(37,99,235,0.15) !important; }
     .cost-table td { border-bottom-color: rgba(99,179,237,0.07) !important; color: var(--text) !important; }
     .cost-table tfoot td { background: rgba(37,99,235,0.1) !important; color: #93c5fd !important; }
 
@@ -946,6 +968,63 @@
       }
       .hamburger { display: flex; }
     }
+
+    /* ── Hub Drawer (Email Center) ─────────────────────────────── */
+    .btn-hub-trigger {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 0.38rem 0.9rem; background: rgba(37,99,235,0.12);
+      border: 1px solid rgba(37,99,235,0.3); border-radius: 20px; color: #93c5fd;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: all 0.18s; white-space: nowrap; position: relative;
+    }
+    .btn-hub-trigger:hover { background: rgba(37,99,235,0.22); border-color: rgba(99,179,237,0.5); color: #f1f5f9; }
+
+    #hubOverlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.52); backdrop-filter: blur(2px);
+    }
+    #hubDrawer {
+      position: fixed; top: 0; right: 0; height: 100dvh; width: 680px;
+      max-width: 100vw; z-index: 201; background: var(--card);
+      border-left: 1px solid var(--border); display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+      overflow: hidden;
+    }
+    #hubDrawer.open { transform: translateX(0); }
+    .hub-drawer-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .hub-drawer-head h3 { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .hub-drawer-body { flex: 1; overflow-y: auto; padding: 0 20px 24px; }
+    .hub-close-btn {
+      background: none; border: none; color: var(--sub); font-size: 1.1rem;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 1;
+      transition: color 0.15s;
+    }
+    .hub-close-btn:hover { color: var(--text); }
+    @media (max-width: 720px) { #hubDrawer { width: 100vw; } }
+
+    /* ── Adaptive step progress ─────────────────────────────────── */
+    .step-label.done { display: none; }
+    .step-item.step-done { flex: 0; cursor: pointer; }
+    .step-item.step-done .step-num { width: 22px; height: 22px; font-size: 0.72rem; }
+
+    /* ── History view banner ────────────────────────────────── */
+    #histViewBanner {
+      display: none; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 8px; padding: 10px 16px; margin-bottom: 14px;
+      background: rgba(37,99,235,0.09); border: 1px solid rgba(37,99,235,0.22);
+      border-left: 3px solid #3b82f6; border-radius: 9px;
+      font-size: 0.82rem; color: #93c5fd;
+    }
+    .hist-exit-btn {
+      padding: 4px 11px; border-radius: 6px; border: 1px solid rgba(99,179,237,0.22);
+      background: transparent; color: #64748b; font-size: 0.74rem;
+      cursor: pointer; font-family: inherit; transition: all 0.15s; flex-shrink: 0;
+    }
+    .hist-exit-btn:hover { border-color: #94a3b8; color: #f1f5f9; }
+
   </style>
 </head>
 <body>
@@ -957,7 +1036,9 @@
     <li><a href="pricing.html">定价</a></li>
     <li><a href="tutorial.html">教程</a></li>
     <li><a href="about.html">关于我们</a></li>
-    <li><a href="dashboard.html">仪表盘</a></li>
+    <li><a href="dashboard.html" style="color:var(--text);font-weight:600" title="查看历史搜索记录">仪表盘</a></li>
+    <li><button class="btn-hub-trigger" onclick="openHubDrawer()" title="邮件发送中心">📬 邮件</button></li>
+    <li id="navCostLink" style="display:none"><a href="dashboard.html">💰 成本</a></li>
     <li class="nav-login-status">
       <div class="login-dot offline" id="loginDot"></div>
       <span id="loginStatusText">未登录</span>
@@ -1235,6 +1316,19 @@
       <span id="dedupSkipped" style="color:#fbbf24;font-weight:700"></span>
     </div>
 
+    <!-- Quick filter bar -->
+    <div id="rawFilterBar" style="margin-bottom:12px">
+      <div style="font-size:0.82rem;color:var(--sub);margin-bottom:8px">先用快速筛选过滤无效条目，再决定要深度分析哪些</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <button id="rawFW" class="btn-ghost btn-sm" onclick="toggleRawFilter('website')" title="只显示有官网的公司">🌐 有官网</button>
+        <button id="rawFE" class="btn-ghost btn-sm" onclick="toggleRawFilter('email')"   title="只显示有邮箱的公司">✉️ 有邮箱</button>
+        <button id="rawFP" class="btn-ghost btn-sm" onclick="toggleRawFilter('phone')"   title="只显示有电话的公司">📞 有电话</button>
+        <button id="rawFR" class="btn-ghost btn-sm" onclick="toggleRawFilter('rating')"  title="只显示评分≥4的公司">⭐ 评分≥4</button>
+        <button class="btn-ghost btn-sm" onclick="clearRawFilters()" style="color:var(--sub)">✕ 清除</button>
+        <span id="rawFilterCount" style="font-size:0.78rem;color:var(--sub);margin-left:2px"></span>
+      </div>
+    </div>
+
     <!-- Results table -->
     <div class="table-wrap">
       <table>
@@ -1350,6 +1444,12 @@
     </div>
   </div>
 
+  <!-- History view banner -->
+  <div id="histViewBanner">
+    <span id="histBannerText">正在查看历史搜索</span>
+    <button class="hist-exit-btn" onclick="exitHistView()">← 返回仪表盘</button>
+  </div>
+
   <!-- Results -->
   <div class="results-section" id="resultsSection" style="display:none">
     <div class="results-header">
@@ -1366,42 +1466,74 @@
       <span style="font-size:0.75rem;color:var(--sub)">仅发送有邮箱且未发送过的线索</span>
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="tbl-results">
         <thead>
           <tr>
             <th style="width:36px"><input type="checkbox" id="resultCheckAll" onchange="toggleAllResults(this)" style="accent-color:var(--blue);width:15px;height:15px;cursor:pointer"></th>
-            <th>#</th>
+            <th style="width:28px">#</th>
             <th>公司名称</th>
             <th>地址</th>
-            <th>电话</th>
-            <th>邮箱</th>
-            <th>评分</th>
-            <th>意向分</th>
-            <th>匹配分</th>
-            <th>开发信主题</th>
-            <th>详情</th>
+            <th>联系</th>
+            <th>分数</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody id="resultsBody">
-          <tr><td colspan="11" class="empty-state">暂无数据</td></tr>
+          <tr><td colspan="7" class="empty-state">暂无数据</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- 邮件发送中心 -->
-  <div class="instantly-hub" id="instantlyHub">
-    <div class="hub-header" onclick="toggleInstantlyHub()">
+
+</div><!-- /container -->
+
+<!-- Email drawer -->
+<div id="drawerOverlay" onclick="closeEmailDrawer()"></div>
+<div id="emailDrawer">
+  <div class="drawer-header">
+    <div id="drawerCompanyName" class="drawer-company"></div>
+    <button id="drawerSendBtn" class="btn-send-instantly-drawer" onclick="sendSequenceToInstantly()" title="Add to Instantly lead list">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Add to lead list
+    </button>
+    <button class="drawer-close" onclick="closeEmailDrawer()">✕</button>
+  </div>
+  <div class="drawer-tabs-bar" id="drawerTabsBar"></div>
+  <div class="drawer-scroll" id="drawerScroll"></div>
+</div>
+
+<!-- Create Campaign Modal -->
+<div id="createCampaignModal" onclick="if(event.target===this)closeCreateCampaignModal()">
+  <div class="hub-modal-box">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">+ 新建 Campaign</h3>
+    <label style="display:block;font-size:0.71rem;font-weight:700;color:var(--sub);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em">Campaign 名称</label>
+    <input type="text" id="newCampaignName" placeholder="例：AU-Builders-2025-Q2" style="margin-bottom:16px"
+      onkeydown="if(event.key==='Enter')createCampaign()">
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="hub-btn ghost" onclick="closeCreateCampaignModal()">取消</button>
+      <button class="hub-btn primary" onclick="createCampaign()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Hub Drawer (Email Center) ─────────────────────────────── -->
+<div id="hubOverlay" onclick="closeHubDrawer()"></div>
+<div id="hubDrawer" role="dialog" aria-label="邮件发送中心">
+  <div class="hub-drawer-head">
+    <div>
       <h3>📬 邮件发送中心
         <span id="hubHeaderCampaignName" style="font-size:0.82rem;font-weight:400;color:var(--sub)">未选择 Campaign</span>
         <span id="hubHeaderBadge"></span>
       </h3>
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="hub-btn ghost" id="hubRefreshBtn" onclick="event.stopPropagation();loadInstantlyData()" style="padding:4px 12px;font-size:0.74rem">↻ 刷新</button>
-        <span id="hubToggleIcon" style="font-size:0.82rem;color:var(--sub)">▾ 展开</span>
-      </div>
     </div>
-    <div class="hub-body" id="hubBody" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="hub-btn ghost" id="hubRefreshBtn" onclick="loadInstantlyData()" style="padding:4px 12px;font-size:0.74rem">↻ 刷新</button>
+      <button class="hub-close-btn" onclick="closeHubDrawer()" title="关闭">✕</button>
+    </div>
+  </div>
+  <div class="hub-drawer-body">
+    <div class="hub-body" id="hubBody">
       <div class="hub-grid">
 
         <!-- Card 1: Campaign selector -->
@@ -1413,7 +1545,6 @@
             </select>
             <button class="hub-btn ghost" onclick="openCreateCampaignModal()" title="新建 Campaign" style="padding:6px 12px;flex-shrink:0">+</button>
           </div>
-          <div id="hubCampaignDetail" style="font-size:0.78rem;color:var(--sub)">请先选择一个 Campaign</div>
         </div>
 
         <!-- Card 2: Email accounts -->
@@ -1466,82 +1597,6 @@
         </div>
 
       </div>
-    </div>
-  </div>
-
-  <!-- Admin: Cost Overview (admin token only) -->
-  <div class="admin-section" id="adminCostPanel">
-    <div class="admin-header" onclick="toggleAdminPanel()">
-      <h3>⭐ 管理员 · 成本概览</h3>
-      <span style="font-size:0.82rem;color:var(--sub)" id="adminPanelIcon">▾ 展开</span>
-    </div>
-    <div class="admin-body" id="adminBody">
-      <div class="admin-cost-cards">
-        <div class="admin-cost-card">
-          <div class="acc-label">本月总成本</div>
-          <div class="acc-value" id="costMonthTotal">—</div>
-        </div>
-        <div class="admin-cost-card">
-          <div class="acc-label">累计总成本</div>
-          <div class="acc-value" id="costGrandTotal">—</div>
-        </div>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="cost-table">
-          <thead>
-            <tr>
-              <th>日期</th>
-              <th>搜索关键词</th>
-              <th>地区</th>
-              <th style="text-align:center">条数</th>
-              <th style="text-align:right">Apify费</th>
-              <th style="text-align:right">AI费</th>
-              <th style="text-align:right">合计</th>
-            </tr>
-          </thead>
-          <tbody id="costRows">
-            <tr><td colspan="7" class="empty-state">正在加载…</td></tr>
-          </tbody>
-          <tfoot id="costFooter" style="display:none">
-            <tr>
-              <td colspan="4">累计总成本</td>
-              <td style="text-align:right" id="footApify">—</td>
-              <td style="text-align:right" id="footAi">—</td>
-              <td style="text-align:right" id="footTotal">—</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /container -->
-
-<!-- Email drawer -->
-<div id="drawerOverlay" onclick="closeEmailDrawer()"></div>
-<div id="emailDrawer">
-  <div class="drawer-header">
-    <div id="drawerCompanyName" class="drawer-company"></div>
-    <button id="drawerSendBtn" class="btn-send-instantly-drawer" onclick="sendSequenceToInstantly()" title="Add to Instantly lead list">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      Add to lead list
-    </button>
-    <button class="drawer-close" onclick="closeEmailDrawer()">✕</button>
-  </div>
-  <div class="drawer-tabs-bar" id="drawerTabsBar"></div>
-  <div class="drawer-scroll" id="drawerScroll"></div>
-</div>
-
-<!-- Create Campaign Modal -->
-<div id="createCampaignModal" onclick="if(event.target===this)closeCreateCampaignModal()">
-  <div class="hub-modal-box">
-    <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">+ 新建 Campaign</h3>
-    <label style="display:block;font-size:0.71rem;font-weight:700;color:var(--sub);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em">Campaign 名称</label>
-    <input type="text" id="newCampaignName" placeholder="例：AU-Builders-2025-Q2" style="margin-bottom:16px"
-      onkeydown="if(event.key==='Enter')createCampaign()">
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="hub-btn ghost" onclick="closeCreateCampaignModal()">取消</button>
-      <button class="hub-btn primary" onclick="createCampaign()">创建</button>
     </div>
   </div>
 </div>
@@ -1650,10 +1705,25 @@ function nextStep(n) { goToStep(n); }
 
 function updateStepProgress() {
   for (let i = 1; i <= 4; i++) {
-    document.getElementById(`snum-${i}`).className =
-      'step-num' + (i === currentStep ? ' active' : i < currentStep ? ' done' : '');
-    document.getElementById(`slbl-${i}`).className =
-      'step-label' + (i === currentStep ? ' active' : '');
+    const numEl = document.getElementById(`snum-${i}`);
+    const lblEl = document.getElementById(`slbl-${i}`);
+    const item  = numEl.parentElement;
+    if (i < currentStep) {
+      numEl.className   = 'step-num done';
+      numEl.textContent = '✓';
+      lblEl.className   = 'step-label done';
+      item.classList.add('step-done');
+    } else if (i === currentStep) {
+      numEl.className   = 'step-num active';
+      numEl.textContent = String(i);
+      lblEl.className   = 'step-label active';
+      item.classList.remove('step-done');
+    } else {
+      numEl.className   = 'step-num';
+      numEl.textContent = String(i);
+      lblEl.className   = 'step-label';
+      item.classList.remove('step-done');
+    }
     if (i < 4) document.getElementById(`scon-${i}`).className =
       'step-connector' + (i < currentStep ? ' done' : '');
   }
@@ -1780,7 +1850,13 @@ function setStatus(msg, type = 'info') {
   const bar = document.getElementById('statusBar');
   bar.style.display = 'block';
   bar.className = type;
-  bar.innerHTML = type === 'info' ? `<span class="spinner"></span>${msg}` : msg;
+  if (type === 'info') {
+    bar.innerHTML = `<span class="spinner"></span>${msg}`;
+  } else if (type === 'done') {
+    bar.innerHTML = `<span style="color:#10b981;font-weight:700;margin-right:7px;font-size:1rem;vertical-align:middle">✓</span>${msg}`;
+  } else {
+    bar.innerHTML = msg;
+  }
 }
 
 // ── ICP input & vagueness check ───────────────────────────────────────────────
@@ -1830,7 +1906,8 @@ function toggleEmails(idx) {
   const row = document.getElementById(`detail-${idx}`);
   const btn = document.getElementById(`toggle-${idx}`);
   const open = row.classList.toggle('open');
-  btn.textContent = open ? '▾ 收起' : '▸ 详情';
+  btn.textContent = open ? '▾' : '▸';
+  btn.title = open ? '收起' : '展开详情/开发信';
 }
 function switchTab(idx, n) {
   for (let i = 1; i <= 5; i++) {
@@ -1883,7 +1960,7 @@ function renderResults(leads) {
   count.textContent = `找到 ${displayItems.length} 条合格线索`;
 
   if (!displayItems.length) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty-state">暂无合格线索</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无合格线索</td></tr>';
     return;
   }
 
@@ -1898,13 +1975,11 @@ function renderResults(leads) {
     const tagsHtml = (lead.keepSignals||[]).length
       ? `<div class="keep-tags">${lead.keepSignals.map(s=>`<span class="keep-tag">${s}</span>`).join('')}</div>` : '';
 
-    const socialHtml = (() => {
-      const links = [];
-      if (lead.facebook)  links.push(`<a class="social-link fb" href="${lead.facebook}"  target="_blank">f</a>`);
-      if (lead.instagram) links.push(`<a class="social-link ig" href="${lead.instagram}" target="_blank">ig</a>`);
-      if (lead.linkedin)  links.push(`<a class="social-link li" href="${lead.linkedin}"  target="_blank">in</a>`);
-      return links.length ? `<div class="social-links">${links.join('')}</div>` : '—';
-    })();
+    const socialLinks = [];
+    if (lead.facebook)  socialLinks.push(`<a class="social-link fb" href="${lead.facebook}"  target="_blank">f</a>`);
+    if (lead.instagram) socialLinks.push(`<a class="social-link ig" href="${lead.instagram}" target="_blank">ig</a>`);
+    if (lead.linkedin)  socialLinks.push(`<a class="social-link li" href="${lead.linkedin}"  target="_blank">in</a>`);
+    const socialHtml = socialLinks.length ? `<div class="social-links">${socialLinks.join('')}</div>` : '';
 
     const icpReasoningHtml = lead.icpReasoning
       ? `<div class="collapsible-toggle" onclick="toggleAnalysis('icp-${origIdx}')">
@@ -1946,13 +2021,30 @@ function renderResults(leads) {
       </div>`;
     }).join('');
 
-    const emailCell = lead.email
-      ? `<a class="website-link" href="mailto:${lead.email}" style="max-width:160px">${lead.email}</a>` : '—';
-
     const hasDetail = hasEmails || lead.intentReasoning || lead.icpReasoning;
 
-    const detailBtn     = hasDetail ? `<button class="btn-sm" id="toggle-${origIdx}" onclick="toggleEmails(${origIdx})">▸ 详情</button>` : '';
-    const viewEmailsBtn = hasEmails ? `<button class="btn-sm btn-view-emails" onclick="openEmailDrawer(${origIdx})">查看开发信</button>` : '';
+    // ── Compact cells ──────────────────────────────────────────
+    const addrFull = [lead.city, lead.state].filter(Boolean).join(', ') || '—';
+
+    const contactCell = `<div class="contact-icons">${
+      lead.phone ? `<a href="tel:${lead.phone}" class="contact-icon" title="${lead.phone}">📞</a>` : ''
+    }${
+      lead.email ? `<a href="mailto:${lead.email}" class="contact-icon" title="${lead.email}">✉️</a>` : ''
+    }${!lead.phone && !lead.email ? '<span style="color:var(--sub);font-size:0.75rem">—</span>' : ''}</div>`;
+
+    const ratingPill = lead.googleRating
+      ? `<span class="score-xs score mid" style="background:rgba(251,191,36,0.13);color:#fbbf24;border:1px solid rgba(251,191,36,0.25)" title="Google评分">⭐${lead.googleRating}</span>`
+      : '';
+    const intentN = Number(lead.intentScore);
+    const intentPill = (lead.intentScore !== undefined && lead.intentScore !== null)
+      ? `<span class="score-xs score ${intentN>=7?'high':intentN>=4?'mid':'low'}" title="意向分">💡${intentN}</span>` : '';
+    const icpN = Number(lead.icpScore);
+    const icpPill = (lead.icpScore !== undefined && lead.icpScore !== null)
+      ? `<span class="score-xs score ${icpN>=7?'high':icpN>=4?'mid':'low'}" title="ICP匹配分">🎯${icpN}</span>` : '';
+    const scoreCell = `<div class="score-group">${ratingPill}${intentPill}${icpPill}</div>`;
+
+    const detailBtn     = hasDetail ? `<button class="btn-sm" id="toggle-${origIdx}" onclick="toggleEmails(${origIdx})" title="展开详情/开发信">▸</button>` : '';
+    const viewEmailsBtn = hasEmails ? `<button class="btn-sm btn-view-emails" onclick="openEmailDrawer(${origIdx})" title="查看开发信">📝</button>` : '';
     const leadKey = getLeadKey(lead);
     const alreadySent = _isSentLS(leadKey);
     const noCampaign  = !getSelectedCampaignId();
@@ -1961,25 +2053,21 @@ function renderResults(leads) {
           ${alreadySent ? 'disabled title="已加入 Instantly"'
             : noCampaign ? 'disabled title="请先在下方选择 Campaign"'
             : 'title="加入 Instantly 序列"'}
-          onclick="sendLeadToInstantly(${origIdx})">${alreadySent ? '✓ 已加入' : '📧 Instantly'}</button>`
+          onclick="sendLeadToInstantly(${origIdx})">${alreadySent ? '✓' : '✉'}</button>`
       : '';
-    const actionCell    = [detailBtn, viewEmailsBtn, instantlyBtn].filter(Boolean).join(' ') || '—';
+    const actionCell = `<div class="act-btns">${[detailBtn, viewEmailsBtn, instantlyBtn].filter(Boolean).join('')}</div>`;
 
     return `<tr id="row-${origIdx}">
       <td><input type="checkbox" class="result-check" data-idx="${origIdx}" onchange="updateBulkBar()" style="accent-color:var(--blue);width:15px;height:15px;cursor:pointer"></td>
       <td style="color:var(--sub);font-size:0.76rem">${origIdx+1}</td>
       <td><div class="company-name">${lead.companyName||'—'}</div>${websiteCell}${tagsHtml}${sourceBadgeHtml(lead.source)}</td>
-      <td style="white-space:nowrap;font-size:0.78rem">${[lead.city,lead.state].filter(Boolean).join(', ')||'—'}</td>
-      <td style="white-space:nowrap;font-size:0.78rem">${lead.phone||'—'}</td>
-      <td>${emailCell}</td>
-      <td style="white-space:nowrap;font-size:0.78rem">${lead.googleRating?`⭐ ${lead.googleRating}`:'—'}</td>
-      <td>${scoreBadge(lead.intentScore)}</td>
-      <td>${icpBadge(lead.icpScore)}</td>
-      <td style="max-width:180px;font-size:0.8rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${lead.EMAIL_1_SUBJECT||'—'}</td>
-      <td style="white-space:nowrap">${actionCell}</td>
+      <td><div class="addr-cell" title="${addrFull}">${addrFull}</div></td>
+      <td>${contactCell}</td>
+      <td>${scoreCell}</td>
+      <td>${actionCell || '—'}</td>
     </tr>
     <tr class="email-detail-row" id="detail-${origIdx}">
-      <td class="email-detail-cell" colspan="11">
+      <td class="email-detail-cell" colspan="7">
         ${icpReasoningHtml}${reasoningHtml}
         <div style="${(icpReasoningHtml||reasoningHtml)?'margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9':''}">
           <div style="font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:10px">📧 开发信序列</div>
@@ -2147,7 +2235,7 @@ async function startScrapeRaw() {
       document.getElementById('dedupNew').textContent     = `✅ 找到 0 条新公司`;
       document.getElementById('dedupSkipped').textContent = `⏭ 跳过 ${_totalSkipped} 条（已在历史记录中）`;
       document.getElementById('dedupBanner').style.display = 'flex';
-      setStatus(`ℹ️ Apify 抓到 ${_totalRaw} 条，但全部已在历史记录中（已跳过 ${_totalSkipped} 条）。请换关键词或地区重新搜索。`, 'info');
+      setStatus(`ℹ️ Apify 抓到 ${_totalRaw} 条，但全部已在历史记录中（已跳过 ${_totalSkipped} 条）。请换关键词或地区重新搜索。`, 'done');
     } else {
       setStatus('未找到任何公司，请调整搜索关键词或地区', 'error');
     }
@@ -2155,7 +2243,15 @@ async function startScrapeRaw() {
 }
 
 function renderRawResults(companies) {
+  _rawFilters.clear();
+  ['rawFW','rawFE','rawFP','rawFR'].forEach(id => document.getElementById(id)?.classList.remove('active-filter'));
+  const countEl = document.getElementById('rawFilterCount');
+  if (countEl) countEl.textContent = '';
   document.getElementById('rawCountHeader').textContent = `找到 ${companies.length} 条结果`;
+  _renderRawBody(companies);
+}
+
+function _renderRawBody(companies) {
   document.getElementById('rawBody').innerHTML = companies.map(c => {
     let websiteCell = '—';
     if (c.website) {
@@ -2173,6 +2269,39 @@ function renderRawResults(companies) {
       <td>${websiteCell}</td>
     </tr>`;
   }).join('');
+}
+
+const _rawFilters = new Set();
+
+function toggleRawFilter(key) {
+  if (_rawFilters.has(key)) _rawFilters.delete(key);
+  else _rawFilters.add(key);
+  const idMap = { website: 'rawFW', email: 'rawFE', phone: 'rawFP', rating: 'rawFR' };
+  document.getElementById(idMap[key])?.classList.toggle('active-filter', _rawFilters.has(key));
+  applyRawFilters();
+}
+
+function clearRawFilters() {
+  _rawFilters.clear();
+  ['rawFW','rawFE','rawFP','rawFR'].forEach(id => document.getElementById(id)?.classList.remove('active-filter'));
+  applyRawFilters();
+}
+
+function applyRawFilters() {
+  const filtered = _rawFilters.size === 0 ? _rawResults : _rawResults.filter(c => {
+    if (_rawFilters.has('website') && !c.website) return false;
+    if (_rawFilters.has('email')   && !c.email)   return false;
+    if (_rawFilters.has('phone')   && !c.phone)   return false;
+    if (_rawFilters.has('rating')  && parseFloat(c.googleRating) < 4) return false;
+    return true;
+  });
+  _renderRawBody(filtered);
+  const countEl = document.getElementById('rawFilterCount');
+  if (countEl) {
+    countEl.textContent = _rawFilters.size > 0
+      ? `共 ${_rawResults.length} 条，筛选后 ${filtered.length} 条`
+      : '';
+  }
 }
 
 function exportRawCSV() {
@@ -2578,101 +2707,72 @@ async function startPipeline() {
   setTimeout(() => document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'}), 300);
 }
 
-// ── History ───────────────────────────────────────────────────────────────────
-let _historyOpen = false;
-function toggleHistory() {
-  _historyOpen = !_historyOpen;
-  document.getElementById('historyBody').classList.toggle('open', _historyOpen);
-  document.getElementById('historyToggleIcon').textContent = _historyOpen ? '▴ 收起' : '▾ 展开';
-  if (_historyOpen) loadHistory();
+function exitHistView() {
+  location.href = 'dashboard.html';
 }
-function _fmtDate(iso) {
-  const d = new Date(iso);
-  return `${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-async function loadHistory() {
+
+async function loadSearchById(searchId) {
   const token = getStoredToken();
-  if (!token) {
-    document.getElementById('historyRows').innerHTML = '<div class="history-empty">请先输入访问令牌</div>';
-    return;
-  }
+  if (!token || !searchId) return;
   try {
-    const res  = await fetch('/api/history', { headers: { Authorization:`Bearer ${token}` } });
+    setStatus('正在加载历史搜索线索…', 'info');
+    const res  = await fetch(`/api/history/${searchId}`, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
-    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
-    renderHistoryRows(data.history);
-  } catch(err) {
-    document.getElementById('historyRows').innerHTML =
-      `<div class="history-empty" style="color:#b91c1c">加载失败：${err.message}</div>`;
-  }
-}
-function renderHistoryRows(history) {
-  if (!history.length) {
-    document.getElementById('historyRows').innerHTML = '<div class="history-empty">暂无搜索记录</div>';
-    return;
-  }
-  document.getElementById('historyRows').innerHTML = history.map(h => `
-    <div class="history-row">
-      <span class="h-date">${_fmtDate(h.created_at)}</span>
-      <span class="h-query">${h.query||'—'}</span>
-      <span class="h-loc">${h.location||'—'}</span>
-      <span class="h-scraped">${h.total_scraped??'—'}条</span>
-      <span class="h-qualified">${h.total_qualified??'—'}</span>
-      <button class="btn-load-history" onclick="loadHistoryRun('${h.id}', this)">加载</button>
-    </div>`).join('');
-}
-async function loadHistoryRun(id, btn) {
-  console.log('[History] 点击加载，ID:', id);
-  if (btn) { btn.disabled = true; btn.textContent = '加载中…'; }
-  const token = getStoredToken();
-  try {
-    const res  = await fetch(`/api/history/${id}`, { headers: { Authorization:`Bearer ${token}` } });
-    const data = await res.json();
-    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
-    console.log('[History] 返回 leads:', data.leads.length);
+    if (!data.success || !data.leads?.length) {
+      setStatus('未找到该搜索记录或暂无线索', 'done');
+      return;
+    }
     const mapped = data.leads.map(r => ({
-      dbId: r.id,
-      companyName: r.company_name, website: r.website, phone: r.phone, email: r.email,
-      city: r.city, googleRating: r.rating,
-      intentScore: r.intent_score ? Number(r.intent_score) : 10,
-      icpScore:    r.icp_score    ? Number(r.icp_score)    : 10,
+      dbId:            r.id,
+      companyName:     r.company_name,
+      website:         r.website,
+      phone:           r.phone,
+      email:           r.email,
+      city:            r.city,
+      googleRating:    r.rating,
+      intentScore:     r.intent_score  ? Number(r.intent_score)  : 10,
+      icpScore:        r.icp_score     ? Number(r.icp_score)     : 10,
       intentReasoning: r.reasoning,
       EMAIL_1_SUBJECT: r.email1_subject || '', EMAIL_1_BODY: r.email1_body || '',
       EMAIL_2_SUBJECT: r.email2_subject || '', EMAIL_2_BODY: r.email2_body || '',
       EMAIL_3_SUBJECT: r.email3_subject || '', EMAIL_3_BODY: r.email3_body || '',
       EMAIL_4_SUBJECT: r.email4_subject || '', EMAIL_4_BODY: r.email4_body || '',
       EMAIL_5_SUBJECT: r.email5_subject || '', EMAIL_5_BODY: r.email5_body || '',
-      status: 'enriched', dateAdded: r.created_at?.split('T')[0],
+      status:          'enriched',
+      dateAdded:       r.created_at?.split('T')[0],
     }));
     renderResults(mapped);
-    showDownloadBar(mapped, null);
-    setTimeout(() => document.getElementById('resultsSection').scrollIntoView({behavior:'smooth', block:'start'}), 100);
-    _showToast(`✅ 已加载历史记录，共 ${mapped.length} 条线索`);
+    document.getElementById('resultsSection').style.display   = 'block';
+    document.getElementById('histViewBanner').style.display   = 'flex';
+    document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
+    setTimeout(() => document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    setStatus(`已加载 ${mapped.length} 条历史线索`, 'success');
   } catch(err) {
-    console.error('[History] 加载失败:', err.message);
-    alert('加载失败：' + err.message);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '加载'; }
+    setStatus(`加载历史线索失败：${err.message}`, 'error');
   }
 }
-window.addEventListener('pipelineDone', () => {
-  if (_historyOpen) loadHistory();
-  if (document.getElementById('adminBody').classList.contains('open')) loadCosts();
+
+// Keyboard close
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (_hubDrawerOpen) closeHubDrawer();
+  }
 });
 
 // ── Admin cost panel ──────────────────────────────────────────────────────────
 let _adminPanelOpen = false;
+let _isAdmin = false;
 
 async function checkAdminAndShow() {
   const token = getStoredToken();
-  const panel = document.getElementById('adminCostPanel');
-  if (!token) { panel.classList.remove('visible'); return; }
+  const costLink = document.getElementById('navCostLink');
+  if (!token) { _isAdmin = false; if (costLink) costLink.style.display = 'none'; return; }
   try {
     const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
-    if (data.isAdmin) { panel.classList.add('visible'); }
-    else              { panel.classList.remove('visible'); }
-  } catch { panel.classList.remove('visible'); }
+    _isAdmin = !!data.isAdmin;
+    if (costLink) costLink.style.display = data.isAdmin ? '' : 'none';
+  } catch { _isAdmin = false; if (costLink) costLink.style.display = 'none'; }
 }
 
 function toggleAdminPanel() {
@@ -2765,7 +2865,7 @@ function openEmailDrawer(leadIdx) {
     : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Add to lead list`;
   sendBtn.title = alreadySent   ? 'Already in Instantly'
     : !hasEmail   ? 'No email address — cannot add to Instantly'
-    : !hasCampaign ? '请先在下方"邮件发送中心"选择 Campaign'
+    : !hasCampaign ? '请先点击导航栏「📬 邮件」选择 Campaign'
     : 'Add all 5 emails to Instantly campaign';
   document.getElementById('drawerScroll').innerHTML = [1,2,3,4,5].map(n => {
     const subj = lead[`EMAIL_${n}_SUBJECT`] || '';
@@ -2841,7 +2941,7 @@ async function sendSequenceToInstantly() {
   if (!campaignId) {
     btn.disabled = false;
     btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Add to lead list`;
-    _showToast('请先在下方"邮件发送中心"选择 Campaign');
+    _showToast('请先点击导航栏「📬 邮件」选择 Campaign');
     return;
   }
   try {
@@ -2912,7 +3012,7 @@ async function sendLeadToInstantly(origIdx) {
 
   const campaignId = getSelectedCampaignId();
   if (!campaignId) {
-    _showToast('请先在下方"邮件发送中心"选择 Campaign');
+    _showToast('请先点击导航栏「📬 邮件」选择 Campaign');
     return;
   }
 
@@ -2965,7 +3065,7 @@ async function bulkSendInstantly() {
   if (!targets.length) { _showToast('没有待发送的线索（无邮箱或全已发送）'); return; }
 
   const campaignId = getSelectedCampaignId();
-  if (!campaignId) { _showToast('请先在下方"邮件发送中心"选择 Campaign'); return; }
+  if (!campaignId) { _showToast('请先点击导航栏「📬 邮件」选择 Campaign'); return; }
 
   _bulkSendRunning = true;
   const btn = document.getElementById('btnBulkInstantly');
@@ -3042,14 +3142,24 @@ function getSelectedCampaignId() {
   return localStorage.getItem(_LS_CAMPAIGN) || '';
 }
 
-function toggleInstantlyHub() {
-  const body = document.getElementById('hubBody');
-  const icon = document.getElementById('hubToggleIcon');
-  const isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : 'block';
-  icon.textContent = isOpen ? '▾ 展开' : '▴ 收起';
-  if (!isOpen && !_hubLoaded) loadInstantlyData();
+let _hubDrawerOpen = false;
+
+function openHubDrawer() {
+  _hubDrawerOpen = true;
+  document.getElementById('hubOverlay').style.display = 'block';
+  document.getElementById('hubDrawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (!_hubLoaded) loadInstantlyData();
 }
+
+function closeHubDrawer() {
+  _hubDrawerOpen = false;
+  document.getElementById('hubOverlay').style.display = 'none';
+  document.getElementById('hubDrawer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function toggleInstantlyHub() { openHubDrawer(); }
 
 async function loadInstantlyData() {
   _hubLoaded = true;
@@ -3109,12 +3219,6 @@ function onCampaignSelect(id, silent = false) {
     nameEl.textContent = ' · ' + _hubSelectedCampaign.name;
     badgeEl.innerHTML  = `<span class="campaign-badge ${cls}">${label}</span>`;
 
-    // Detail card
-    document.getElementById('hubCampaignDetail').innerHTML =
-      `<span style="color:var(--text);font-weight:600">${_hubSelectedCampaign.name}</span>
-       &nbsp;·&nbsp; ${_hubSelectedCampaign.email_list?.length || 0} 个发件邮箱
-       &nbsp;·&nbsp; <span class="campaign-badge ${cls}" style="font-size:0.69rem">${label}</span>`;
-
     // Controls card
     document.getElementById('hubCampaignStatus').innerHTML =
       `当前状态：<span class="campaign-badge ${cls}">${label}</span>`;
@@ -3127,7 +3231,6 @@ function onCampaignSelect(id, silent = false) {
   } else {
     nameEl.textContent  = id ? '' : ' — 未选择 Campaign';
     badgeEl.innerHTML   = '';
-    document.getElementById('hubCampaignDetail').textContent  = id ? `Campaign ID: ${id} (未在列表中找到)` : '请先选择一个 Campaign';
     document.getElementById('hubCampaignStatus').textContent  = '请先选择 Campaign';
     document.getElementById('btnActivate').disabled = true;
     document.getElementById('btnPause').disabled    = true;
@@ -3403,6 +3506,49 @@ if (savedMax) {
 // ── Init ──────────────────────────────────────────────────────────────────────
 updateLoginStatus();
 checkAdminAndShow();
+
+// Deep-link: index.html?search=<id> loads that search's leads directly
+// Deep-link: index.html?query=X&location=Y re-runs a scrape directly
+(function() {
+  const p   = new URLSearchParams(location.search);
+  const sid = p.get('search');
+  const q   = p.get('query');
+  const loc = p.get('location');
+  if (sid) {
+    loadSearchById(sid);
+  } else if (q && loc) {
+    // Auto-rerun scrape, bypassing wizard
+    (async () => {
+      const token = getStoredToken();
+      if (!token) return;
+      document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
+      setStatus(`正在重新抓取：${q} @ ${loc}`, 'info');
+      document.getElementById('rawSection').style.display = 'none';
+      try {
+        const res  = await fetch('/api/scrape-raw', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ searchQuery: q, location: loc, maxResults: 10, dataSource: 'apify' }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+        _rawResults      = data.companies || [];
+        _currentSearchId = data.searchId;
+        _pTimers         = [];
+        if (_rawResults.length) {
+          renderRawResults(_rawResults);
+          document.getElementById('rawSection').style.display = 'block';
+          setStatus(`✅ 重新抓取完成，共找到 ${_rawResults.length} 条结果`, 'success');
+          setTimeout(() => document.getElementById('rawSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        } else {
+          setStatus('未找到新结果，可能已全部去重', 'done');
+        }
+      } catch(err) {
+        setStatus(`重新抓取失败：${err.message}`, 'error');
+      }
+    })();
+  }
+})();
 
 // ── Nav hamburger ─────────────────────────────────────────────────────────────
 (function() {
