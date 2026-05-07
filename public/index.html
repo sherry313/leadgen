@@ -711,6 +711,14 @@
     .fwcard-btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
     .fwcard-btn.primary:hover { background: var(--blue-dark); }
     .fwcard.selected .fwcard-btn.primary { background: #10b981; border-color: #10b981; }
+    .fwcard-number {
+      position: absolute; top: 8px; right: 8px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--blue); color: #fff;
+      font-size: 0.7rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1; pointer-events: none;
+    }
 
     /* ── Framework example modal ──────────────────────────────────────────── */
     #fwExModal {
@@ -828,6 +836,21 @@
     }
     #generateEmailsBtn:hover:not(:disabled) { background: var(--blue-dark); }
     #generateEmailsBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+    #emailPreview { margin-top: 16px; display: none; }
+    .epv-row { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+    .epv-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; background: var(--card); user-select: none; }
+    .epv-header:hover { background: rgba(37,99,235,0.07); }
+    .epv-company { font-weight: 700; font-size: 0.85rem; color: var(--text); }
+    .epv-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; }
+    .epv-arrow { font-size: 0.72rem; color: var(--sub); transition: transform 0.2s; display: inline-block; }
+    .epv-row.open .epv-arrow { transform: rotate(90deg); }
+    .epv-content { display: none; padding: 0 14px 12px; background: var(--card); }
+    .epv-row.open .epv-content { display: block; }
+    .epv-email { border-top: 1px solid var(--border); padding: 10px 0; }
+    .epv-email:first-child { border-top: none; padding-top: 6px; }
+    .epv-day { font-size: 0.68rem; color: var(--blue); font-weight: 700; letter-spacing: 0.05em; margin-bottom: 3px; }
+    .epv-subject { font-size: 0.78rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .epv-bodytext { font-size: 0.72rem; color: var(--sub); line-height: 1.5; white-space: pre-wrap; }
 
     /* ── Template Preview Modal ───────────────────────────────────────────── */
     #tplModal {
@@ -1825,6 +1848,7 @@
         </div>
         <span id="selectedTemplateLabel" style="font-size:0.8rem;color:#34d399;display:none"></span>
       </div>
+      <div id="emailPreview"></div>
     </div>
 
     <div style="border-top:1px solid var(--border);margin:20px 0"></div>
@@ -2185,6 +2209,7 @@ function goToStep(n) {
 function nextStep(n) { goToStep(n); }
 
 function updateStepProgress() {
+  localStorage.setItem('leadgen_current_step', currentStep);
   for (let i = 1; i <= 5; i++) {
     const numEl = document.getElementById(`snum-${i}`);
     const lblEl = document.getElementById(`slbl-${i}`);
@@ -4027,9 +4052,27 @@ if (savedMax) {
   }
 }
 
+function _restoreStep() {
+  console.log('[RestoreStep] 触发, saved=', localStorage.getItem('leadgen_current_step'), 'token存在?', !!getStoredToken());
+  if (!getStoredToken()) return;
+  const params = new URLSearchParams(location.search);
+  if (params.get('search') || params.get('query')) return;
+  const saved = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
+  if (saved <= 1 || saved > 5) return;
+  const target = saved === 5 ? 4 : saved;
+  const panel = document.getElementById('wizard-step-' + target);
+  if (!panel) return;
+  document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
+  panel.classList.remove('hidden');
+  currentStep = target;
+  updateStepProgress();
+  console.log('[RestoreStep] 恢复到 step', target, '成功, wizard-step-' + target + ' hidden?', panel.classList.contains('hidden'));
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 updateLoginStatus();
 checkAdminAndShow();
+setTimeout(_restoreStep, 0);
 
 // Deep-link: index.html?search=<id> loads that search's leads directly
 // Deep-link: index.html?query=X&location=Y re-runs a scrape directly
@@ -4142,20 +4185,18 @@ function _sourceClass(source) {
   return 'user';
 }
 function _sourceBadge(fw) {
-  if (fw.is_custom) return `<span class="fwcard-source user">您自己创建</span>`;
-  if (fw.source && fw.source.includes('方法论')) return `<span class="fwcard-source method">专业方法论</span>`;
-  return `<span class="fwcard-source udemy">Udemy 课程</span>`;
+  return '';
 }
 
 function _renderFrameworkCards() {
   const grid = document.getElementById('frameworkCardsGrid');
   if (!grid) return;
 
-  const presetCards = _frameworks.filter(fw => !fw.is_custom).map(fw => {
+  const presetCards = _frameworks.filter(fw => !fw.is_custom).map((fw, idx) => {
     const sel = fw.key === _selectedFrameworkKey;
     const structShort = (fw.structure || []).map(s => s.stage).join(' → ') || fw.description;
     return `<div class="fwcard${sel ? ' selected' : ''}" id="fwcard-${CSS.escape(fw.key)}" onclick="selectFramework('${fw.key.replace(/'/g,"\\'")}')">
-      ${_sourceBadge(fw)}
+      <span class="fwcard-number">${idx + 1}</span>
       <div class="fwcard-icon">${fw.icon || '📋'}</div>
       <div class="fwcard-name">${fw.en_name}</div>
       <div class="fwcard-en">${fw.name}</div>
@@ -4172,7 +4213,6 @@ function _renderFrameworkCards() {
     const sel = _selectedFrameworkKey === 'custom' && _selectedCustomFramework && _selectedCustomFramework.id === cf.id;
     const structShort = (cf.structure || '').split('\n').slice(0,2).join(' → ');
     return `<div class="fwcard${sel ? ' selected' : ''}" id="fwcard-cus-${CSS.escape(String(cf.id))}">
-      <span class="fwcard-source user">您自己创建</span>
       <div class="fwcard-icon">✏️</div>
       <div class="fwcard-name">${_esc(cf.name)}</div>
       <div class="fwcard-en">Custom Framework</div>
@@ -4190,6 +4230,7 @@ function _renderFrameworkCards() {
   const canCreate = _customFrameworks.length < 5;
   const createCard = canCreate
     ? `<div class="fwcard" style="cursor:default;border-style:dashed;opacity:0.75;align-items:center;text-align:center;justify-content:center" onclick="openCustomFwModal(null)">
+        <span class="fwcard-number">8</span>
         <div style="font-size:2rem">✏️</div>
         <div class="fwcard-name">自定义框架</div>
         <div class="fwcard-en">Custom Framework</div>
@@ -4598,6 +4639,38 @@ function closeTemplatePreview() {
 
 // ── Email generation ───────────────────────────────────────────────────────────
 
+function _renderEmailPreview(results) {
+  const el = document.getElementById('emailPreview');
+  if (!el || !results || !results.length) return;
+  const DAYS = ['Day 1', 'Day 4', 'Day 7', 'Day 10', 'Day 14'];
+  el.innerHTML = `<div style="font-size:0.78rem;font-weight:700;color:var(--sub);margin-bottom:8px;letter-spacing:0.04em">📬 邮件预览（点击展开）</div>` +
+    results.map((lead, i) => {
+      const emails = [1,2,3,4,5].map(n => ({
+        subject: lead[`email_${n}_subject`] || '',
+        body:    lead[`email_${n}_body`]    || '',
+        day:     DAYS[n - 1]
+      }));
+      const ok = emails.some(e => e.subject);
+      return `<div class="epv-row" id="epv-${i}">
+        <div class="epv-header" onclick="document.getElementById('epv-${i}').classList.toggle('open')">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="epv-company">${_esc(lead.companyName || '未知公司')}</span>
+            <span class="epv-badge" style="${ok ? 'color:#34d399;background:rgba(16,185,129,0.12)' : 'color:#f87171;background:rgba(239,68,68,0.1)'}">${ok ? '✓ 5 封' : '生成失败'}</span>
+          </div>
+          <span class="epv-arrow">▶</span>
+        </div>
+        <div class="epv-content">
+          ${emails.map(e => `<div class="epv-email">
+            <div class="epv-day">${e.day}</div>
+            <div class="epv-subject">${e.subject ? _esc(e.subject) : '<span style="color:var(--sub);font-weight:400">（无主题）</span>'}</div>
+            <div class="epv-bodytext">${e.body ? _esc(e.body) : '<span style="color:var(--sub)">（无正文）</span>'}</div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  el.style.display = 'block';
+}
+
 async function startEmailGeneration() {
   if (!_selectedFrameworkKey) { _showToast('请先选择写作框架'); return; }
   if (!_selectedTemplateKey)  { _showToast('请先选择客户角度'); return; }
@@ -4657,6 +4730,7 @@ async function startEmailGeneration() {
           setStatus(`✅ 邮件生成完成：${n} 条线索已生成 5 封个性化开发信`, 'success');
           _showToast(`✓ 已为 ${n} 条线索生成邮件（框架：${_selectedFrameworkKey} · 角度：${_selectedTemplateKey}）`);
           _updateGenerateBtn();
+          _renderEmailPreview(data.results || []);
         }
       }
     }
