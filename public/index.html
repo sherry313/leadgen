@@ -1054,6 +1054,23 @@
       border-bottom: 1px solid var(--border); font-size: 0.83rem;
     }
 
+    #bulkEmailPreview { margin-top: 12px; }
+    #bulkEmailModal {
+      display: none; position: fixed; inset: 0; z-index: 400;
+      background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
+    }
+    #bulkEmailModalBox {
+      background: var(--card); border: 1.5px solid var(--border); border-radius: 16px;
+      padding: 24px; width: min(480px, 92vw); position: relative;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    .bem-label { font-size: 0.78rem; font-weight: 700; color: var(--sub); display: block; margin-bottom: 6px; }
+    .bem-select {
+      width: 100%; padding: 8px 10px; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 0.82rem; font-family: inherit; cursor: pointer;
+    }
+    .bem-select:focus { outline: none; border-color: var(--blue); }
+
     /* ── Instantly Hub panel ── */
     .instantly-hub { background: rgba(30,41,59,0.85); border: 1px solid rgba(37,99,235,0.25); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
     .hub-header { display:flex; align-items:center; justify-content:space-between; padding:13px 20px; cursor:pointer; user-select:none; }
@@ -1780,12 +1797,13 @@
     <!-- Bulk Instantly bar — appears when ≥1 row checked -->
     <div id="instantlyBulkBar">
       <span id="instantlyBulkCount" style="color:var(--sub)">已选 0 条</span>
-      <button id="btnBulkInstantly" onclick="bulkSendInstantly()"
+      <button id="btnBulkInstantly" onclick="openBulkEmailModal()"
         style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:7px;font-size:0.81rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s">
-        📧 批量加入 Instantly
+        📧 批量生成开发信
       </button>
-      <span style="font-size:0.75rem;color:var(--sub)">仅发送有邮箱且未发送过的线索</span>
+      <span style="font-size:0.75rem;color:var(--sub)">生成后可在第五步配置发送</span>
     </div>
+    <div id="bulkEmailPreview"></div>
     <div class="table-wrap">
       <table class="tbl-results">
         <thead>
@@ -2000,6 +2018,9 @@
         <div class="tpl-section-label" style="margin-bottom:8px">框架结构</div>
         <div class="fw-struct-row" id="fwExStructRow"></div>
       </div>
+      <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.76rem;color:#93c5fd;line-height:1.6">
+        💡 这是该框架的经典案例。AI 会读取你的产品信息和目标客户类型，生成完全个性化的建材行业开发信——结构遵循框架，内容根据每个客户量身创作。
+      </div>
       <div>
         <div class="tpl-section-label" style="margin-bottom:8px">原版示例邮件</div>
         <div class="fw-sample-subj" id="fwExSubj"></div>
@@ -2061,6 +2082,35 @@
     <div id="customFwModalFooter">
       <button class="hub-btn ghost" onclick="closeCustomFwModal()" style="padding:7px 18px">取消</button>
       <button class="hub-btn primary" onclick="saveCustomFramework()" style="padding:7px 18px">💾 保存模板</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk email generate modal -->
+<div id="bulkEmailModal" onclick="if(event.target===this)closeBulkEmailModal()">
+  <div id="bulkEmailModalBox">
+    <button onclick="closeBulkEmailModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--sub);font-size:1.3rem;cursor:pointer;line-height:1;padding:0">✕</button>
+    <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px">📧 批量生成开发信</div>
+    <div id="bulkEmailModalCount" style="font-size:0.8rem;color:var(--sub);margin-bottom:16px"></div>
+    <div style="margin-bottom:14px">
+      <label class="bem-label">✍️ 写作框架</label>
+      <select id="bulkFwSelect" class="bem-select" onchange="updateBulkCost()">
+        <option value="">— 选择框架 —</option>
+      </select>
+    </div>
+    <div style="margin-bottom:16px">
+      <label class="bem-label">🎯 客户类型角度</label>
+      <select id="bulkTplSelect" class="bem-select" onchange="updateBulkCost()">
+        <option value="">— 选择角度 —</option>
+      </select>
+    </div>
+    <div id="bulkCostEst" style="font-size:0.8rem;color:#93c5fd;background:rgba(37,99,235,0.07);padding:8px 12px;border-radius:8px;margin-bottom:16px"></div>
+    <div id="bulkEmailProgress" style="display:none;font-size:0.82rem;color:var(--sub);margin-bottom:12px;align-items:center;gap:8px">
+      <span class="spinner"></span><span id="bulkEmailProgressText">生成中…</span>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeBulkEmailModal()" style="flex:1;padding:9px;background:transparent;border:1.5px solid var(--border);border-radius:8px;color:var(--sub);font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit">取消</button>
+      <button id="bulkEmailConfirmBtn" onclick="confirmBulkGenerate()" style="flex:2;padding:9px;background:var(--blue);border:none;border-radius:8px;color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit">确认生成</button>
     </div>
   </div>
 </div>
@@ -3571,6 +3621,128 @@ async function sendLeadToInstantly(origIdx) {
 
 // ── Instantly bulk send ───────────────────────────────────────────────────────
 let _bulkSendRunning = false;
+function openBulkEmailModal() {
+  const checked = [...document.querySelectorAll('.result-check:checked')];
+  if (!checked.length) { _showToast('请先勾选线索'); return; }
+
+  const fwSel = document.getElementById('bulkFwSelect');
+  fwSel.innerHTML = '<option value="">— 选择框架 —</option>' +
+    (_frameworks || []).filter(f => !f.is_custom).map(f =>
+      `<option value="${f.key}">${f.en_name} — ${f.name}</option>`
+    ).join('') +
+    (_customFrameworks || []).map(cf =>
+      `<option value="custom:${cf.id}">${_esc(cf.name)} (自定义)</option>`
+    ).join('');
+  if (_selectedFrameworkKey && !_selectedFrameworkKey.startsWith('custom'))
+    fwSel.value = _selectedFrameworkKey;
+
+  const tplSel = document.getElementById('bulkTplSelect');
+  tplSel.innerHTML = '<option value="">— 选择角度 —</option>' +
+    (_templates || []).map(t =>
+      `<option value="${t.key}">${t.zh_label || t.key}</option>`
+    ).join('');
+  if (_selectedTemplateKey) tplSel.value = _selectedTemplateKey;
+
+  document.getElementById('bulkEmailModalCount').textContent = `已勾选 ${checked.length} 条线索`;
+  document.getElementById('bulkEmailProgress').style.display = 'none';
+  document.getElementById('bulkEmailConfirmBtn').disabled = false;
+  updateBulkCost();
+  document.getElementById('bulkEmailModal').style.display = 'flex';
+}
+
+function closeBulkEmailModal() {
+  document.getElementById('bulkEmailModal').style.display = 'none';
+}
+
+function updateBulkCost() {
+  const n = [...document.querySelectorAll('.result-check:checked')].length;
+  const fwVal  = document.getElementById('bulkFwSelect').value;
+  const tplVal = document.getElementById('bulkTplSelect').value;
+  const el = document.getElementById('bulkCostEst');
+  if (fwVal && tplVal) {
+    el.textContent = `预估生成 ${n} 条 × 5 封邮件，费用约 $${(n * 0.025).toFixed(3)}`;
+  } else {
+    el.textContent = '请选择框架和角度以查看预估费用';
+  }
+}
+
+async function confirmBulkGenerate() {
+  const fwVal  = document.getElementById('bulkFwSelect').value;
+  const tplVal = document.getElementById('bulkTplSelect').value;
+  if (!fwVal)  { _showToast('请选择写作框架'); return; }
+  if (!tplVal) { _showToast('请选择客户类型角度'); return; }
+
+  const idxList = [...document.querySelectorAll('.result-check:checked')]
+    .map(cb => parseInt(cb.dataset.idx));
+  const leads = idxList.map(i => _allLeads[i]).filter(Boolean);
+  if (!leads.length) { _showToast('所选线索无效'); return; }
+
+  let frameworkKey = fwVal;
+  let customFw = null;
+  if (fwVal.startsWith('custom:')) {
+    const cfId = parseInt(fwVal.slice(7));
+    customFw = (_customFrameworks || []).find(cf => cf.id === cfId) || null;
+    frameworkKey = 'custom';
+  }
+
+  const progEl   = document.getElementById('bulkEmailProgress');
+  const progText = document.getElementById('bulkEmailProgressText');
+  const confirmBtn = document.getElementById('bulkEmailConfirmBtn');
+  confirmBtn.disabled = true;
+  progEl.style.display = 'flex';
+
+  try {
+    const res = await fetch('/api/leads/generate-emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getStoredToken()}` },
+      body: JSON.stringify({
+        companies:        leads,
+        template_key:     tplVal,
+        framework_key:    frameworkKey,
+        custom_framework: customFw,
+        searchId:         _currentSearchId,
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const parts = buf.split('\n\n');
+      buf = parts.pop();
+      for (const part of parts) {
+        if (!part.startsWith('data:')) continue;
+        let data;
+        try { data = JSON.parse(part.slice(5).trim()); } catch { continue; }
+        if (data.type === 'progress') {
+          progText.textContent = `正在为 ${data.lead?.companyName || '…'} 生成邮件（${data.done}/${data.total}）`;
+          if (data.lead) {
+            const idx = _allLeads.findIndex(l => l.companyName === data.lead.companyName);
+            if (idx >= 0) _allLeads[idx] = { ..._allLeads[idx], ...data.lead };
+          }
+        } else if (data.type === 'done') {
+          (data.results || []).forEach(r => {
+            const idx = _allLeads.findIndex(l => l.companyName === r.companyName);
+            if (idx >= 0) _allLeads[idx] = { ..._allLeads[idx], ...r };
+          });
+          const n = (data.results || []).length;
+          closeBulkEmailModal();
+          _showToast(`✓ 已生成 ${n} 条 × 5 封邮件，可前往第五步配置发送`);
+          _renderEmailPreview(data.results || [], 'bulkEmailPreview');
+        }
+      }
+    }
+  } catch (err) {
+    _showToast('❌ 生成失败：' + err.message);
+  } finally {
+    confirmBtn.disabled = false;
+    progEl.style.display = 'none';
+  }
+}
+
 async function bulkSendInstantly() {
   if (_bulkSendRunning) return;
   const idxList = [...document.querySelectorAll('.result-check:checked')]
@@ -4059,14 +4231,26 @@ function _restoreStep() {
   if (params.get('search') || params.get('query')) return;
   const saved = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
   if (saved <= 1 || saved > 5) return;
-  const target = saved === 5 ? 4 : saved;
-  const panel = document.getElementById('wizard-step-' + target);
+  const panel = document.getElementById('wizard-step-' + saved);
   if (!panel) return;
   document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
   panel.classList.remove('hidden');
-  currentStep = target;
+  currentStep = saved;
   updateStepProgress();
-  console.log('[RestoreStep] 恢复到 step', target, '成功, wizard-step-' + target + ' hidden?', panel.classList.contains('hidden'));
+  console.log('[RestoreStep] 恢复到 step', saved, '成功, wizard-step-' + saved + ' hidden?', panel.classList.contains('hidden'));
+  if (saved >= 4 && _allLeads.length === 0) _showRefreshWarning(panel);
+}
+
+function _showRefreshWarning(panel) {
+  if (document.getElementById('refresh-warning-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'refresh-warning-banner';
+  banner.style.cssText = 'margin:12px 0 10px;padding:12px 16px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:0.83rem;color:#fbbf24;line-height:1.5';
+  banner.innerHTML =
+    `<span style="flex:1;min-width:200px">⚠️ 检测到您刷新了页面，搜索数据未恢复。请前往第三步重新跑搜索来加载线索。</span>` +
+    `<button onclick="goToStep(3);document.getElementById('refresh-warning-banner').remove()" style="padding:5px 14px;background:rgba(245,158,11,0.18);border:1px solid rgba(245,158,11,0.45);border-radius:6px;color:#fbbf24;font-size:0.8rem;cursor:pointer;white-space:nowrap">前往第 3 步</button>` +
+    `<button onclick="document.getElementById('refresh-warning-banner').remove()" style="padding:4px 8px;background:transparent;border:none;color:#94a3b8;font-size:1rem;cursor:pointer;line-height:1" title="关闭">✕</button>`;
+  panel.prepend(banner);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -4639,20 +4823,22 @@ function closeTemplatePreview() {
 
 // ── Email generation ───────────────────────────────────────────────────────────
 
-function _renderEmailPreview(results) {
-  const el = document.getElementById('emailPreview');
+function _renderEmailPreview(results, containerId) {
+  const cid = containerId || 'emailPreview';
+  const el = document.getElementById(cid);
   if (!el || !results || !results.length) return;
   const DAYS = ['Day 1', 'Day 4', 'Day 7', 'Day 10', 'Day 14'];
   el.innerHTML = `<div style="font-size:0.78rem;font-weight:700;color:var(--sub);margin-bottom:8px;letter-spacing:0.04em">📬 邮件预览（点击展开）</div>` +
     results.map((lead, i) => {
+      const rowId = cid + '-r' + i;
       const emails = [1,2,3,4,5].map(n => ({
-        subject: lead[`email_${n}_subject`] || '',
-        body:    lead[`email_${n}_body`]    || '',
+        subject: lead[`EMAIL_${n}_SUBJECT`] || lead[`email_${n}_subject`] || '',
+        body:    lead[`EMAIL_${n}_BODY`]    || lead[`email_${n}_body`]    || '',
         day:     DAYS[n - 1]
       }));
       const ok = emails.some(e => e.subject);
-      return `<div class="epv-row" id="epv-${i}">
-        <div class="epv-header" onclick="document.getElementById('epv-${i}').classList.toggle('open')">
+      return `<div class="epv-row" id="${rowId}">
+        <div class="epv-header" onclick="document.getElementById('${rowId}').classList.toggle('open')">
           <div style="display:flex;align-items:center;gap:8px">
             <span class="epv-company">${_esc(lead.companyName || '未知公司')}</span>
             <span class="epv-badge" style="${ok ? 'color:#34d399;background:rgba(16,185,129,0.12)' : 'color:#f87171;background:rgba(239,68,68,0.1)'}">${ok ? '✓ 5 封' : '生成失败'}</span>
