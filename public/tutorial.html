@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>使用教程 - 智拓客</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue-primary: #2563eb; --blue-light: #3b82f6; --blue-dark: #1d4ed8;
+      --bg-dark: #0f172a; --bg-mid: #1e3a5f; --text-white: #f8fafc;
+      --text-muted: #94a3b8; --border-subtle: rgba(148,163,184,0.12);
+      --card-bg: rgba(30,41,59,0.6);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: var(--bg-dark); color: var(--text-white); overflow-x: hidden; }
+
+    /* NAV */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 6%; height: 64px; background: rgba(15,23,42,0.82); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 1px 0 rgba(255,255,255,0.06); }
+    .nav-logo { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, #60a5fa, #2563eb, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px; user-select: none; text-decoration: none; }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--text-muted); font-size: 0.88rem; transition: color 0.2s; white-space: nowrap; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text-white); }
+    .btn-nav { display: inline-flex; align-items: center; padding: 0.45rem 1.2rem; background: var(--blue-primary); color: #fff !important; border-radius: 8px; font-weight: 600; font-size: 0.88rem; transition: background 0.2s, transform 0.15s; }
+    .btn-nav:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--text-white); border-radius: 2px; }
+
+    /* PAGE HEADER */
+    .page-header { padding: 110px 6% 60px; background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-mid) 55%, var(--bg-dark) 100%); text-align: center; border-bottom: 1px solid var(--border-subtle); }
+    .page-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.9rem; background: rgba(37,99,235,0.18); border: 1px solid rgba(59,130,246,0.3); border-radius: 99px; font-size: 0.8rem; color: #93c5fd; margin-bottom: 1.4rem; }
+    .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; letter-spacing: -1px; background: linear-gradient(135deg, #f8fafc 0%, #93c5fd 60%, #60a5fa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1rem; }
+    .page-sub { font-size: 1rem; color: var(--text-muted); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+
+    /* LAYOUT */
+    .doc-layout { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 400px); max-width: 1200px; margin: 0 auto; padding: 0 6% 5rem; gap: 3rem; }
+
+    /* SIDEBAR */
+    .sidebar { padding-top: 3rem; }
+    .sidebar-sticky { position: sticky; top: 84px; }
+    .sidebar-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 1rem; }
+    .sidebar-nav { list-style: none; display: flex; flex-direction: column; gap: 0.15rem; }
+    .sidebar-nav a { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.8rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; color: var(--text-muted); transition: all 0.2s; border-left: 2px solid transparent; }
+    .sidebar-nav a:hover { color: var(--text-white); background: rgba(37,99,235,0.08); }
+    .sidebar-nav a.active { color: #93c5fd; background: rgba(37,99,235,0.1); border-left-color: var(--blue-primary); }
+    .sidebar-sep { height: 1px; background: var(--border-subtle); margin: 0.8rem 0; }
+    .sidebar-nav .nav-icon { font-size: 0.95rem; }
+
+    /* CONTENT */
+    .doc-content { padding-top: 3rem; }
+    .doc-section { margin-bottom: 4rem; scroll-margin-top: 90px; }
+    .section-anchor { display: block; visibility: hidden; height: 90px; margin-top: -90px; }
+
+    .doc-h2 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.6rem; }
+    .doc-h2 span { font-size: 1.2rem; }
+    .doc-lead { font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 2rem; max-width: 640px; }
+    .doc-h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.8rem; margin-top: 1.8rem; color: #e2e8f0; }
+    .doc-p { font-size: 0.9rem; color: #94a3b8; line-height: 1.8; margin-bottom: 1rem; }
+
+    /* STEP CARDS */
+    .step-cards { display: flex; flex-direction: column; gap: 1rem; }
+    .step-card { display: flex; gap: 1.2rem; background: var(--card-bg); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1.2rem 1.4rem; }
+    .step-num-big { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--blue-primary), #7c3aed); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; }
+    .step-card-body { flex: 1; }
+    .step-card-title { font-size: 0.92rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .step-card-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* CALLOUT */
+    .callout { display: flex; gap: 0.8rem; padding: 1rem 1.2rem; border-radius: 10px; margin: 1.2rem 0; font-size: 0.88rem; line-height: 1.6; }
+    .callout-tip { background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #93c5fd; }
+    .callout-warn { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #fde68a; }
+    .callout-success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #6ee7b7; }
+    .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+    /* COUNTRIES TABLE */
+    .mini-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin: 1rem 0; }
+    .mini-table th { text-align: left; padding: 0.5rem 0.8rem; background: rgba(30,41,59,0.8); color: var(--text-muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mini-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border-subtle); color: #cbd5e1; }
+    .mini-table tr:last-child td { border-bottom: none; }
+    .flag-cell { font-size: 1rem; }
+
+    /* FAQ */
+    .faq-item { border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; margin-bottom: 0.6rem; background: var(--card-bg); }
+    .faq-q { padding: 1rem 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 0.88rem; color: #e2e8f0; user-select: none; }
+    .faq-q svg { flex-shrink: 0; transition: transform 0.3s; }
+    .faq-item.open .faq-q svg { transform: rotate(180deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+    .faq-item.open .faq-a { max-height: 300px; }
+    .faq-a-inner { padding: 0 1.2rem 1rem; font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; }
+
+    /* DIVIDER */
+    .doc-divider { height: 1px; background: var(--border-subtle); margin: 3rem 0; }
+
+    /* FOOTER */
+    footer { background: #070e1a; border-top: 1px solid var(--border-subtle); padding: 2.5rem 6%; text-align: center; }
+    .footer-logo { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, #60a5fa, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.6rem; }
+    .footer-copy { font-size: 0.82rem; color: #475569; margin-bottom: 0.3rem; }
+    .footer-sub { font-size: 0.78rem; color: #334155; }
+
+    @media (max-width: 860px) {
+      .doc-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-links.open { display: flex; flex-direction: column; position: fixed; top: 64px; left: 0; right: 0; background: rgba(15,23,42,0.97); padding: 1.5rem 6%; gap: 1.2rem; backdrop-filter: blur(18px); border-bottom: 1px solid var(--border-subtle); }
+      .hamburger { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+<nav id="navbar">
+  <a href="landing.html" class="nav-logo">智拓客</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="landing.html">首页</a></li>
+    <li><a href="pricing.html">定价</a></li>
+    <li><a href="tutorial.html" class="active">教程</a></li>
+    <li><a href="about.html">关于我们</a></li>
+    <li><a href="dashboard.html">仪表盘</a></li>
+    <li><a href="index.html" class="btn-nav">立即登录</a></li>
+  </ul>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="page-header">
+  <div class="page-badge">📖 使用文档</div>
+  <h1 class="page-title">使用教程</h1>
+  <p class="page-sub">从入门到精通，5 分钟掌握智拓客核心功能，开启您的海外拓客之旅</p>
+</div>
+
+<div class="doc-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-sticky">
+      <div class="sidebar-title">目录</div>
+      <ul class="sidebar-nav">
+        <li><a href="#quickstart" class="active"><span class="nav-icon">🚀</span>快速开始</a></li>
+        <li><a href="#market"><span class="nav-icon">🌏</span>选择目标市场</a></li>
+        <li><a href="#customer-type"><span class="nav-icon">🏢</span>筛选客户类型</a></li>
+        <li><a href="#search"><span class="nav-icon">🔍</span>配置搜索参数</a></li>
+        <li><a href="#emails"><span class="nav-icon">✉️</span>查看开发信</a></li>
+        <li><a href="#leads"><span class="nav-icon">📊</span>管理线索数据</a></li>
+        <div class="sidebar-sep"></div>
+        <li><a href="#faq"><span class="nav-icon">❓</span>常见问题</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="doc-content">
+
+    <!-- QUICK START -->
+    <div class="doc-section" id="quickstart">
+      <a class="section-anchor" id="quickstart-anchor"></a>
+      <h2 class="doc-h2"><span>🚀</span> 快速开始</h2>
+      <p class="doc-lead">欢迎使用智拓客！按照以下步骤，您将在 5 分钟内完成第一次 AI 驱动的海外客户搜索。</p>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>首次使用建议选择「澳大利亚」作为目标市场，数据覆盖最全，适合新手入门测试。</span>
+      </div>
+
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-num-big">1</div>
+          <div class="step-card-body">
+            <div class="step-card-title">登录账号</div>
+            <div class="step-card-desc">点击右上角「立即登录」，输入您的访问令牌（Token）。令牌可在购买套餐后通过邮件获取。</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num-big">2</div>
+          <div class="step-card-body">
+            <div class="step-card-title">选择目标市场</div>
+            <div class="step-card-desc">在第一步中，从下拉列表选择您的目标国家。支持 50+ 个国家，可多选。</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num-big">3</div>
+          <div class="step-card-body">
+            <div class="step-card-title">选择客户类型并配置参数</div>
+            <div class="step-card-desc">选择目标客户类型（如进口商、批发商），填写产品关键词（如「ceramic tile」）和公司信息。</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num-big">4</div>
+          <div class="step-card-body">
+            <div class="step-card-title">启动 AI 搜索</div>
+            <div class="step-card-desc">点击「开始搜索」，AI 将自动搜索目标买家、分析官网、评估意向度，并生成个性化开发信。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <!-- MARKET -->
+    <div class="doc-section" id="market">
+      <a class="section-anchor"></a>
+      <h2 class="doc-h2"><span>🌏</span> 如何选择目标市场</h2>
+      <p class="doc-lead">选择正确的目标市场是拓客成功的关键。智拓客覆盖全球 50+ 个国家，以下是建材行业推荐的核心市场。</p>
+
+      <h3 class="doc-h3">推荐优先拓展市场</h3>
+      <table class="mini-table">
+        <thead>
+          <tr><th>🏳️ 国家</th><th>推荐理由</th><th>数据覆盖</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="flag-cell">🇦🇺 澳大利亚</td><td>建材需求旺盛，进口依赖度高</td><td>⭐⭐⭐⭐⭐</td></tr>
+          <tr><td class="flag-cell">🇺🇸 美国</td><td>全球最大建材市场，采购力强</td><td>⭐⭐⭐⭐⭐</td></tr>
+          <tr><td class="flag-cell">🇬🇧 英国</td><td>高端建材需求，价格敏感度低</td><td>⭐⭐⭐⭐</td></tr>
+          <tr><td class="flag-cell">🇩🇪 德国</td><td>欧洲核心市场，分销网络广</td><td>⭐⭐⭐⭐</td></tr>
+          <tr><td class="flag-cell">🇨🇦 加拿大</td><td>房地产市场活跃，建材进口稳定</td><td>⭐⭐⭐⭐</td></tr>
+          <tr><td class="flag-cell">🇳🇿 新西兰</td><td>高采购单价，竞争相对少</td><td>⭐⭐⭐</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <span>基础版每次搜索限 15 个国家，建议优先选择数据覆盖最好的市场，避免搜索结果稀少。</span>
+      </div>
+
+      <h3 class="doc-h3">如何判断市场潜力</h3>
+      <p class="doc-p">选择市场时，考虑以下几个维度：当地建筑业活跃度、对中国建材的接受度、时区与沟通便利性。澳大利亚和英国是建材工厂最容易切入的市场。</p>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <!-- CUSTOMER TYPE -->
+    <div class="doc-section" id="customer-type">
+      <a class="section-anchor"></a>
+      <h2 class="doc-h2"><span>🏢</span> 如何筛选客户类型</h2>
+      <p class="doc-lead">精准的客户类型筛选可以大幅提升线索质量。智拓客提供 8 大核心客户类型。</p>
+
+      <div class="step-cards">
+        <div class="step-card"><div class="step-num-big" style="background:linear-gradient(135deg,#0891b2,#0e7490)">📦</div><div class="step-card-body"><div class="step-card-title">建材进口商 / Importer</div><div class="step-card-desc">直接从中国采购建材的贸易公司，采购量大，是最优质的客户类型。</div></div></div>
+        <div class="step-card"><div class="step-num-big" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">🏪</div><div class="step-card-body"><div class="step-card-title">批发商 / Wholesaler</div><div class="step-card-desc">向零售商和工程商供货的中间商，采购频率高，是长期稳定客户的重要来源。</div></div></div>
+        <div class="step-card"><div class="step-num-big" style="background:linear-gradient(135deg,#059669,#047857)">🏗️</div><div class="step-card-body"><div class="step-card-title">装修公司 / Renovation Company</div><div class="step-card-desc">直接使用建材的终端客户，需求多样，单次采购量相对较小但利润空间较大。</div></div></div>
+        <div class="step-card"><div class="step-num-big" style="background:linear-gradient(135deg,#d97706,#b45309)">🏢</div><div class="step-card-body"><div class="step-card-title">建筑商 / Builder & Developer</div><div class="step-card-desc">大型楼盘开发商，采购量巨大，一旦合作可带来持续稳定的大订单。</div></div></div>
+      </div>
+
+      <div class="callout callout-success">
+        <span class="callout-icon">✅</span>
+        <span>建议同一次搜索只选择 1-2 种客户类型，结果更精准。可以多次搜索覆盖不同类型。</span>
+      </div>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <!-- SEARCH CONFIG -->
+    <div class="doc-section" id="search">
+      <a class="section-anchor"></a>
+      <h2 class="doc-h2"><span>🔍</span> 配置搜索参数</h2>
+      <p class="doc-lead">搜索参数决定 AI 的搜索方向，填写得越精准，线索质量越高。</p>
+
+      <h3 class="doc-h3">产品关键词（英文）</h3>
+      <p class="doc-p">填写您的产品的英文名称。使用具体的行业术语效果更好。</p>
+      <div style="background:rgba(15,23,42,0.6);border:1px solid var(--border-subtle);border-radius:10px;padding:1rem 1.2rem;font-size:0.83rem;margin-bottom:1rem;">
+        <div style="color:var(--text-muted);font-size:0.72rem;margin-bottom:0.5rem;">✅ 好的关键词示例：</div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+          <span style="background:rgba(37,99,235,0.15);color:#93c5fd;padding:0.2rem 0.7rem;border-radius:6px;font-size:0.8rem">ceramic tile</span>
+          <span style="background:rgba(37,99,235,0.15);color:#93c5fd;padding:0.2rem 0.7rem;border-radius:6px;font-size:0.8rem">porcelain flooring</span>
+          <span style="background:rgba(37,99,235,0.15);color:#93c5fd;padding:0.2rem 0.7rem;border-radius:6px;font-size:0.8rem">building materials importer</span>
+          <span style="background:rgba(37,99,235,0.15);color:#93c5fd;padding:0.2rem 0.7rem;border-radius:6px;font-size:0.8rem">stone supplier</span>
+        </div>
+      </div>
+
+      <h3 class="doc-h3">公司信息填写</h3>
+      <p class="doc-p">AI 在生成开发信时会使用您的公司信息。建议填写：公司英文名、主打产品、优势（如最低起订量、认证、交期）。信息越完整，开发信越有说服力。</p>
+
+      <h3 class="doc-h3">最大线索数</h3>
+      <p class="doc-p">建议首次搜索设置 10-20 条，以便快速验证效果。配额充足后可设置更大数量进行批量开发。</p>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <!-- EMAILS -->
+    <div class="doc-section" id="emails">
+      <a class="section-anchor"></a>
+      <h2 class="doc-h2"><span>✉️</span> 如何查看和使用开发信</h2>
+      <p class="doc-lead">AI 为每位目标客户生成专属的 5 封开发信序列，覆盖从初次接触到跟进的完整邮件策略。</p>
+
+      <h3 class="doc-h3">在哪里找到开发信</h3>
+      <div class="step-cards">
+        <div class="step-card">
+          <div class="step-num-big">1</div>
+          <div class="step-card-body">
+            <div class="step-card-title">搜索完成后查看</div>
+            <div class="step-card-desc">搜索结果页面，点击任意线索卡片右侧的「展开开发信」按钮。</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num-big">2</div>
+          <div class="step-card-body">
+            <div class="step-card-title">在线索管理页查看</div>
+            <div class="step-card-desc">进入「线索管理」页，找到目标客户，点击「开发信」按钮展开邮件序列。</div>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num-big">3</div>
+          <div class="step-card-body">
+            <div class="step-card-title">导出 Word 文档</div>
+            <div class="step-card-desc">点击「导出开发信」，生成包含所有开发信的 Word 文档，方便直接复制使用。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>建议在发送前根据最新市场动态适当修改开发信内容，加入个人化细节，提升回复率。</span>
+      </div>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <!-- LEADS MANAGEMENT -->
+    <div class="doc-section" id="leads">
+      <a class="section-anchor"></a>
+      <h2 class="doc-h2"><span>📊</span> 管理线索数据</h2>
+      <p class="doc-lead">所有搜索结果均自动保存至云端，可随时在「线索管理」页面查看和筛选。</p>
+
+      <h3 class="doc-h3">意向度评分说明</h3>
+      <table class="mini-table">
+        <thead><tr><th>评分区间</th><th>意向等级</th><th>建议操作</th></tr></thead>
+        <tbody>
+          <tr><td>7-10 分</td><td style="color:#34d399;font-weight:600">高意向 ⭐</td><td>立即发送第 1 封开发信</td></tr>
+          <tr><td>4-6 分</td><td style="color:#fbbf24;font-weight:600">中等意向</td><td>加入跟进计划，月度联系</td></tr>
+          <tr><td>0-3 分</td><td style="color:#94a3b8;font-weight:600">低意向</td><td>暂时归档，季度回顾</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="doc-h3">筛选与搜索</h3>
+      <p class="doc-p">线索管理页提供多维度筛选：按国家、客户类型、意向度区间，以及公司名关键字搜索。组合使用可快速定位目标客户。</p>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <!-- FAQ -->
+    <div class="doc-section" id="faq">
+      <a class="section-anchor"></a>
+      <h2 class="doc-h2"><span>❓</span> 常见问题</h2>
+
+      <div class="faq-item">
+        <div class="faq-q">搜索一次需要多长时间？<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9"/></svg></div>
+        <div class="faq-a"><div class="faq-a-inner">搜索时间取决于线索数量和目标国家。通常，搜索 10-20 条线索需要 2-5 分钟，50 条约需 10-15 分钟。搜索完成后会自动展示结果。</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">开发信是中文还是英文？<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9"/></svg></div>
+        <div class="faq-a"><div class="faq-a-inner">AI 默认根据目标客户所在国家生成对应语言的开发信。英语国家（澳洲、美国、英国等）生成英文，德国生成德文，其他欧洲国家默认英文。</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">意向度评分是如何计算的？<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9"/></svg></div>
+        <div class="faq-a"><div class="faq-a-inner">AI 通过分析客户官网的多个维度来评估意向度，包括：官网是否有采购/进口信息、产品类别匹配度、企业规模、近期更新频率等，综合打分（0-10 分）。</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">搜索到的邮箱地址准确吗？<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9"/></svg></div>
+        <div class="faq-a"><div class="faq-a-inner">AI 从公开网络信息中提取联系方式，准确率约 70-85%。建议发送前进行邮件验证，或通过 LinkedIn 等渠道进行二次确认。</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">可以重新搜索同一个国家吗？<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9"/></svg></div>
+        <div class="faq-a"><div class="faq-a-inner">可以，每次搜索的结果可能不同（AI 使用不同的搜索路径），建议更换不同的产品关键词或客户类型组合，以覆盖更多潜在买家。</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">如何联系客服？<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9"/></svg></div>
+        <div class="faq-a"><div class="faq-a-inner">您可以通过「关于我们」页面的联系方式与我们联系，或发送邮件至 support@zhizhoke.com。专业版及以上套餐提供专属客服支持，工作日响应时间 ≤ 4 小时。</div></div>
+      </div>
+    </div>
+
+  </div><!-- end doc-content -->
+</div><!-- end doc-layout -->
+
+<footer>
+  <div class="footer-logo">智拓客</div>
+  <p class="footer-copy">智拓客 © 2026 版权所有</p>
+  <p class="footer-sub">专为中国建材工厂打造的海外客户开发平台</p>
+</footer>
+
+<script>
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
+navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+/* FAQ */
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => {
+    const item = q.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+
+/* SIDEBAR ACTIVE on scroll */
+const sections = document.querySelectorAll('.doc-section[id]');
+const sideLinks = document.querySelectorAll('.sidebar-nav a');
+const onScroll = () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  sideLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+};
+window.addEventListener('scroll', onScroll, { passive: true });
+</script>
+</body>
+</html>

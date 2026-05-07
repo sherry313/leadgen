@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>线索管理 - 智拓客</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue-primary: #2563eb; --blue-light: #3b82f6; --blue-dark: #1d4ed8;
+      --bg-dark: #0f172a; --bg-mid: #1e3a5f; --text-white: #f8fafc;
+      --text-muted: #94a3b8; --border-subtle: rgba(148,163,184,0.12);
+      --card-bg: rgba(30,41,59,0.7);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: var(--bg-dark); color: var(--text-white); overflow-x: hidden; min-height: 100vh; }
+
+    /* NAV */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 6%; height: 64px; background: rgba(15,23,42,0.82); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 1px 0 rgba(255,255,255,0.06); }
+    .nav-logo { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, #60a5fa, #2563eb, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px; user-select: none; text-decoration: none; }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--text-muted); font-size: 0.88rem; transition: color 0.2s; white-space: nowrap; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text-white); }
+    .btn-nav { display: inline-flex; align-items: center; padding: 0.45rem 1.2rem; background: var(--blue-primary); color: #fff !important; border-radius: 8px; font-weight: 600; font-size: 0.88rem; transition: background 0.2s, transform 0.15s; }
+    .btn-nav:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--text-white); border-radius: 2px; }
+
+    /* AUTH OVERLAY */
+    #authOverlay { position: fixed; inset: 0; background: var(--bg-dark); z-index: 200; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 1.5rem; text-align: center; padding: 2rem; }
+    #authOverlay h2 { font-size: 1.4rem; font-weight: 800; }
+    #authOverlay p { color: var(--text-muted); font-size: 0.9rem; }
+    .auth-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 2rem; background: var(--blue-primary); color: #fff; border-radius: 10px; font-weight: 700; text-decoration: none; box-shadow: 0 4px 20px rgba(37,99,235,0.4); }
+
+    /* MAIN */
+    .main { padding: 88px 6% 4rem; max-width: 1200px; margin: 0 auto; }
+
+    /* PAGE TITLE ROW */
+    .page-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.8rem; flex-wrap: wrap; gap: 1rem; }
+    .page-top h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+    .leads-count { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+    /* FILTERS */
+    .filters-bar { background: var(--card-bg); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1rem 1.4rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    .search-box { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 200px; background: rgba(15,23,42,0.5); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.5rem 0.9rem; }
+    .search-box input { background: none; border: none; outline: none; color: var(--text-white); font-size: 0.88rem; width: 100%; }
+    .search-box input::placeholder { color: var(--text-muted); }
+    .search-box svg { color: var(--text-muted); flex-shrink: 0; }
+    .filter-select { background: rgba(15,23,42,0.5); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.5rem 0.9rem; color: var(--text-white); font-size: 0.82rem; outline: none; cursor: pointer; min-width: 130px; }
+    .filter-select option { background: #1e293b; }
+    .filter-clear { font-size: 0.78rem; color: var(--text-muted); cursor: pointer; white-space: nowrap; padding: 0.4rem 0.8rem; border-radius: 6px; transition: color 0.2s, background 0.2s; }
+    .filter-clear:hover { color: var(--text-white); background: rgba(255,255,255,0.06); }
+
+    /* LEADS TABLE */
+    .leads-table { background: var(--card-bg); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; }
+    .table-header { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 90px; gap: 0; padding: 0.8rem 1.4rem; background: rgba(15,23,42,0.4); border-bottom: 1px solid var(--border-subtle); }
+    .th { font-size: 0.73rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .lead-row { border-bottom: 1px solid var(--border-subtle); transition: background 0.15s; }
+    .lead-row:last-child { border-bottom: none; }
+    .lead-main { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 90px; gap: 0; padding: 0.9rem 1.4rem; cursor: pointer; align-items: center; }
+    .lead-row:hover .lead-main { background: rgba(37,99,235,0.05); }
+    .lead-company { display: flex; align-items: center; gap: 0.7rem; min-width: 0; }
+    .company-avatar { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #2563eb, #7c3aed); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; flex-shrink: 0; }
+    .company-name { font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .company-site { font-size: 0.72rem; color: var(--text-muted); }
+    .lead-cell { font-size: 0.82rem; color: #cbd5e1; align-self: center; }
+    .intent-badge { display: inline-flex; padding: 0.2rem 0.65rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; }
+    .intent-high { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+    .intent-mid { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+    .intent-low { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); }
+    .expand-btn { display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: var(--text-muted); cursor: pointer; padding: 0.3rem 0.6rem; border-radius: 6px; transition: all 0.2s; white-space: nowrap; }
+    .expand-btn:hover { background: rgba(37,99,235,0.1); color: #93c5fd; }
+    .expand-btn svg { transition: transform 0.3s; }
+    .lead-row.expanded .expand-btn svg { transform: rotate(180deg); }
+
+    /* EXPANDED EMAILS */
+    .lead-emails { display: none; padding: 0 1.4rem 1.2rem; border-top: 1px solid var(--border-subtle); }
+    .lead-row.expanded .lead-emails { display: block; }
+    .emails-title { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 1rem 0 0.8rem; }
+    .email-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .email-tab { padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border-subtle); color: var(--text-muted); transition: all 0.2s; }
+    .email-tab.active { background: var(--blue-primary); color: #fff; border-color: transparent; }
+    .email-content { background: rgba(15,23,42,0.5); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1rem 1.2rem; }
+    .field-tag { display: inline-block; font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 0.66rem; font-weight: 600; color: #60a5fa; background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.25); padding: 0.1rem 0.4rem; border-radius: 4px; margin-right: 0.5rem; vertical-align: middle; letter-spacing: 0.3px; }
+    .email-subject { font-size: 0.82rem; font-weight: 700; margin-bottom: 0.6rem; color: #93c5fd; }
+    .email-body { font-size: 0.8rem; color: #94a3b8; line-height: 1.7; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+    .email-body-wrap { margin-top: 0.4rem; }
+    .email-body-wrap .field-tag { margin-bottom: 0.4rem; display: inline-block; }
+    .email-body::-webkit-scrollbar { width: 4px; }
+    .email-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    /* SEND TO INSTANTLY */
+    .send-instantly-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1.1rem;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff; border: none; border-radius: 8px;
+      font-size: 0.8rem; font-weight: 700; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+      flex-shrink: 0;
+    }
+    .send-instantly-btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.45); }
+    .send-instantly-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .send-instantly-btn.sent {
+      background: linear-gradient(135deg, #059669, #047857);
+      box-shadow: 0 4px 14px rgba(5,150,105,0.35);
+    }
+    .email-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 0.8rem; }
+    .no-email-warn { font-size: 0.75rem; color: #f87171; }
+
+    /* TOAST */
+    #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; }
+    .toast { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1.1rem; border-radius: 10px; font-size: 0.82rem; font-weight: 600; color: #fff; backdrop-filter: blur(12px); pointer-events: auto; animation: slideIn 0.3s ease; max-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .toast.success { background: rgba(5,150,105,0.9); border: 1px solid rgba(52,211,153,0.3); }
+    .toast.error   { background: rgba(220,38,38,0.9);  border: 1px solid rgba(248,113,113,0.3); }
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
+
+    /* EMPTY / LOADING */
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-white); }
+    .loading-spinner { display: flex; align-items: center; justify-content: center; padding: 3rem; gap: 1rem; color: var(--text-muted); font-size: 0.88rem; }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--border-subtle); border-top-color: var(--blue-primary); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* FOOTER */
+    footer { background: #070e1a; border-top: 1px solid var(--border-subtle); padding: 2.5rem 6%; text-align: center; }
+    .footer-logo { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, #60a5fa, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.6rem; }
+    .footer-copy { font-size: 0.82rem; color: #475569; margin-bottom: 0.3rem; }
+    .footer-sub { font-size: 0.78rem; color: #334155; }
+
+    /* SEQUENCE SETTINGS */
+    .seq-panel { background: var(--card-bg); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 0.9rem 1.4rem; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+    .seq-panel-title { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    .seq-fields { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; flex: 1; }
+    .seq-field { display: flex; align-items: center; gap: 0.4rem; }
+    .seq-field label { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+    .seq-field input { width: 52px; background: rgba(15,23,42,0.5); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0.35rem 0.5rem; color: var(--text-white); font-size: 0.82rem; text-align: center; outline: none; }
+    .seq-field input:focus { border-color: var(--blue-light); }
+    .seq-field span { font-size: 0.72rem; color: var(--text-muted); }
+    .seq-save-btn { padding: 0.4rem 1rem; background: var(--blue-primary); color: #fff; border: none; border-radius: 7px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: background 0.2s, opacity 0.2s; white-space: nowrap; flex-shrink: 0; }
+    .seq-save-btn:hover { background: var(--blue-dark); }
+    .seq-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .seq-status { font-size: 0.72rem; color: #34d399; white-space: nowrap; }
+    .seq-status.error { color: #f87171; }
+
+    @media (max-width: 768px) {
+      .table-header { display: none; }
+      .lead-main { grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 0.3rem; }
+      .lead-cell:not(:last-child) { display: none; }
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-links.open { display: flex; flex-direction: column; position: fixed; top: 64px; left: 0; right: 0; background: rgba(15,23,42,0.97); padding: 1.5rem 6%; gap: 1.2rem; backdrop-filter: blur(18px); border-bottom: 1px solid var(--border-subtle); }
+      .hamburger { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+<div id="authOverlay">
+  <div style="font-size:3rem">🔒</div>
+  <h2>需要登录才能查看</h2>
+  <p>请先登录您的智拓客账号</p>
+  <a href="index.html" class="auth-btn">前往登录</a>
+</div>
+
+<nav id="navbar">
+  <a href="landing.html" class="nav-logo">智拓客</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="landing.html">首页</a></li>
+    <li><a href="pricing.html">定价</a></li>
+    <li><a href="tutorial.html">教程</a></li>
+    <li><a href="about.html">关于我们</a></li>
+    <li><a href="dashboard.html">仪表盘</a></li>
+    <li><a href="index.html" class="btn-nav">立即登录</a></li>
+  </ul>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="main" id="mainContent">
+  <div class="page-top">
+    <div>
+      <h1>线索管理</h1>
+      <div class="leads-count" id="leadsCount">正在加载…</div>
+    </div>
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.6rem 1.2rem;background:var(--blue-primary);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:0.88rem">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      新建搜索
+    </a>
+  </div>
+
+  <!-- SEQUENCE SETTINGS -->
+  <div class="seq-panel" id="seqPanel">
+    <span class="seq-panel-title">序列间隔</span>
+    <div class="seq-fields">
+      <div class="seq-field"><label>邮件一</label><input type="number" id="delay1" min="0" max="90" value="0" /><span>天</span></div>
+      <div class="seq-field"><label>跟进一</label><input type="number" id="delay2" min="1" max="90" value="2" /><span>天后</span></div>
+      <div class="seq-field"><label>跟进二</label><input type="number" id="delay3" min="1" max="90" value="4" /><span>天后</span></div>
+      <div class="seq-field"><label>跟进三</label><input type="number" id="delay4" min="1" max="90" value="6" /><span>天后</span></div>
+      <div class="seq-field"><label>跟进四</label><input type="number" id="delay5" min="1" max="90" value="9" /><span>天后</span></div>
+    </div>
+    <span id="seqStatus" class="seq-status" style="display:none"></span>
+    <button class="seq-save-btn" id="seqSaveBtn" onclick="saveSequence()">保存序列</button>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters-bar">
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="搜索公司名称…" />
+    </div>
+    <select class="filter-select" id="filterCountry">
+      <option value="">全部国家</option>
+      <option>澳大利亚</option><option>美国</option><option>英国</option>
+      <option>德国</option><option>加拿大</option><option>新西兰</option>
+      <option>法国</option><option>日本</option><option>韩国</option>
+    </select>
+    <select class="filter-select" id="filterType">
+      <option value="">全部类型</option>
+      <option>建材进口商</option><option>瓷砖批发商</option><option>地板进口商</option>
+      <option>装修公司</option><option>建筑商</option><option>零售商</option>
+    </select>
+    <select class="filter-select" id="filterIntent">
+      <option value="">全部意向</option>
+      <option value="high">高意向</option>
+      <option value="mid">中等意向</option>
+      <option value="low">低意向</option>
+    </select>
+    <span class="filter-clear" id="clearFilters">清除筛选</span>
+  </div>
+
+  <!-- TABLE -->
+  <div class="leads-table">
+    <div class="table-header">
+      <div class="th">公司信息</div>
+      <div class="th">国家</div>
+      <div class="th">客户类型</div>
+      <div class="th">意向度</div>
+      <div class="th">操作</div>
+    </div>
+    <div id="leadsBody">
+      <div class="loading-spinner"><div class="spinner"></div>正在加载线索数据…</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo">智拓客</div>
+  <p class="footer-copy">智拓客 © 2026 版权所有</p>
+  <p class="footer-sub">专为中国建材工厂打造的海外客户开发平台</p>
+</footer>
+
+<script>
+/* AUTH */
+const token = localStorage.getItem('leadgen_accessToken');
+if (!token) {
+  document.getElementById('authOverlay').style.display = 'flex';
+  document.getElementById('mainContent').style.visibility = 'hidden';
+}
+
+/* NAV */
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
+navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+/* DATA */
+let allLeads = [];
+const sentLeads = new Set(); // tracks emails already added to Instantly
+
+/* TOAST */
+function showToast(msg, type = 'success') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => {
+    t.style.animation = 'slideOut 0.3s ease forwards';
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
+}
+
+/* SEND TO INSTANTLY */
+async function sendToInstantly(idx) {
+  const actualLead = _filteredLeads[idx];
+  if (!actualLead) return;
+
+  const btn = document.getElementById(`send-btn-${idx}`);
+  if (btn) { btn.disabled = true; btn.textContent = '发送中…'; }
+
+  try {
+    const res = await fetch('/api/instantly/add-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ lead: actualLead }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || '未知错误');
+
+    const key = actualLead.email?.trim() || `idx-${idx}`;
+    sentLeads.add(key);
+    if (btn) { btn.textContent = '✓ 已加入序列'; btn.classList.add('sent'); btn.disabled = true; }
+    showToast(`✓ ${actualLead.companyName || actualLead.email} 已加入 Instantly 序列`);
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.textContent = '发送至 Instantly'; }
+    showToast(`发送失败：${err.message}`, 'error');
+  }
+}
+
+let _filteredLeads = []; // current visible leads, indexed by row idx
+
+const intentMap = {
+  high: { label: '高意向', cls: 'intent-high' },
+  mid:  { label: '中等意向', cls: 'intent-mid' },
+  low:  { label: '低意向', cls: 'intent-low' },
+};
+
+function getIntentKey(score) {
+  if (!score && score !== 0) return 'mid';
+  if (score >= 7) return 'high';
+  if (score >= 4) return 'mid';
+  return 'low';
+}
+
+function initials(name) {
+  return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
+function renderLeads(leads) {
+  _filteredLeads = leads;
+  const body = document.getElementById('leadsBody');
+  if (!leads.length) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">没有找到匹配的线索</div><div>尝试调整筛选条件</div></div>`;
+    return;
+  }
+  body.innerHTML = leads.map((lead, idx) => {
+    const intentKey = getIntentKey(lead.intentScore);
+    const intent = intentMap[intentKey];
+    const emails = lead.emails || [];
+    const hasEmails = emails.length > 0;
+    return `<div class="lead-row" id="row-${idx}">
+      <div class="lead-main" onclick="toggleRow(${idx})">
+        <div class="lead-company">
+          <div class="company-avatar">${initials(lead.companyName)}</div>
+          <div>
+            <div class="company-name">${lead.companyName || '未知公司'}</div>
+            <div class="company-site">${lead.website || lead.email || '—'}</div>
+          </div>
+        </div>
+        <div class="lead-cell">${lead.country || '—'}</div>
+        <div class="lead-cell">${lead.type || '—'}</div>
+        <div class="lead-cell"><span class="intent-badge ${intent.cls}">${intent.label}</span></div>
+        <div class="lead-cell">
+          ${hasEmails ? `<span class="expand-btn" onclick="event.stopPropagation();toggleRow(${idx})">
+            开发信 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9"/></svg>
+          </span>` : '<span style="font-size:0.72rem;color:var(--text-muted)">暂无</span>'}
+        </div>
+      </div>
+      ${hasEmails ? renderEmails(emails, idx, lead) : ''}
+    </div>`;
+  }).join('');
+}
+
+const EMAIL_TAB_LABELS = ['邮件一', '跟进一', '跟进二', '跟进三', '跟进四'];
+
+function renderEmails(emails, idx, lead) {
+  const tabs = emails.map((e, i) => `<div class="email-tab ${i===0?'active':''}" onclick="switchTab(${idx},${i})" id="tab-${idx}-${i}">${EMAIL_TAB_LABELS[i] || `第 ${i+1} 封`}</div>`).join('');
+  const contents = emails.map((e, i) => `<div id="econtent-${idx}-${i}" style="display:${i===0?'block':'none'}">
+    <div class="email-subject"><span class="field-tag">email_${i+1}_subject</span>${e.subject || e.EMAIL_SUBJECT || '（无主题）'}</div>
+    <div class="email-body-wrap">
+      <span class="field-tag">email_${i+1}_body</span>
+      <div class="email-body">${e.body || e.EMAIL_BODY || '（无内容）'}</div>
+    </div>
+  </div>`).join('');
+
+  const hasEmail = !!lead.email?.trim();
+  const sentKey = lead.email?.trim() || `idx-${idx}`;
+  const isSent = sentLeads.has(sentKey);
+  const btnLabel = isSent ? '✓ 已加入序列' : '发送至 Instantly';
+  const btnClass = `send-instantly-btn${isSent ? ' sent' : ''}`;
+
+  return `<div class="lead-emails">
+    <div class="emails-title">个性化开发信序列</div>
+    <div class="email-tabs">${tabs}</div>
+    <div class="email-content">${contents}</div>
+    <div class="email-actions">
+      ${hasEmail
+        ? `<button class="${btnClass}" id="send-btn-${idx}" onclick="sendToInstantly(${idx})" ${isSent ? 'disabled' : ''}>
+             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+             ${btnLabel}
+           </button>`
+        : `<span class="no-email-warn">⚠ 该线索无邮箱，无法发送</span>`
+      }
+      <span style="font-size:0.72rem;color:var(--text-muted)">${emails.length} 封序列邮件</span>
+    </div>
+  </div>`;
+}
+
+function switchTab(rowIdx, tabIdx) {
+  const row = document.getElementById(`row-${rowIdx}`);
+  row.querySelectorAll('.email-tab').forEach((t, i) => t.classList.toggle('active', i === tabIdx));
+  row.querySelectorAll('[id^="econtent-"]').forEach(el => el.style.display = 'none');
+  const target = document.getElementById(`econtent-${rowIdx}-${tabIdx}`);
+  if (target) target.style.display = 'block';
+}
+
+function toggleRow(idx) {
+  document.getElementById(`row-${idx}`).classList.toggle('expanded');
+}
+
+function filterLeads() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const country = document.getElementById('filterCountry').value;
+  const type = document.getElementById('filterType').value;
+  const intent = document.getElementById('filterIntent').value;
+  const filtered = allLeads.filter(l => {
+    if (q && !(l.companyName||'').toLowerCase().includes(q)) return false;
+    if (country && l.country !== country) return false;
+    if (type && l.type !== type) return false;
+    if (intent && getIntentKey(l.intentScore) !== intent) return false;
+    return true;
+  });
+  renderLeads(filtered);
+  document.getElementById('leadsCount').textContent = `共 ${filtered.length} 条线索${filtered.length !== allLeads.length ? `（全部 ${allLeads.length} 条）` : ''}`;
+}
+
+['searchInput','filterCountry','filterType','filterIntent'].forEach(id => {
+  document.getElementById(id).addEventListener('input', filterLeads);
+  document.getElementById(id).addEventListener('change', filterLeads);
+});
+document.getElementById('clearFilters').addEventListener('click', () => {
+  document.getElementById('searchInput').value = '';
+  ['filterCountry','filterType','filterIntent'].forEach(id => document.getElementById(id).value = '');
+  filterLeads();
+});
+
+/* LOAD */
+async function loadLeads() {
+  if (!token) return;
+  try {
+    const res = await fetch('/api/history', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error('failed');
+    const data = await res.json();
+    const runs = Array.isArray(data) ? data : (data.items || data.history || []);
+
+    /* flatten all leads from all runs */
+    const fetchRun = async (run) => {
+      if (!run.id) return [];
+      try {
+        const r = await fetch(`/api/history/${run.id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!r.ok) return [];
+        const d = await r.json();
+        const leads = d.leads || d.data?.leads || [];
+        return leads.map(l => ({
+          companyName: l.companyName || l.company_name || l.company || '',
+          website: l.website || '',
+          email: l.email || '',
+          phone: l.phone || '',
+          country: run.country || run.targetCountry || l.country || '',
+          type: l.type || run.customerType || '',
+          intentScore: l.intentScore || l.intent_score || l.score || null,
+          EMAIL_1_SUBJECT: l.email1_subject || l.EMAIL_1_SUBJECT || '',
+          EMAIL_1_BODY:    l.email1_body    || l.EMAIL_1_BODY    || '',
+          EMAIL_2_SUBJECT: l.email2_subject || l.EMAIL_2_SUBJECT || '',
+          EMAIL_2_BODY:    l.email2_body    || l.EMAIL_2_BODY    || '',
+          EMAIL_3_SUBJECT: l.email3_subject || l.EMAIL_3_SUBJECT || '',
+          EMAIL_3_BODY:    l.email3_body    || l.EMAIL_3_BODY    || '',
+          EMAIL_4_SUBJECT: l.email4_subject || l.EMAIL_4_SUBJECT || '',
+          EMAIL_4_BODY:    l.email4_body    || l.EMAIL_4_BODY    || '',
+          EMAIL_5_SUBJECT: l.email5_subject || l.EMAIL_5_SUBJECT || '',
+          EMAIL_5_BODY:    l.email5_body    || l.EMAIL_5_BODY    || '',
+          emails: l.emails || buildEmails(l),
+          dbId: l.id || l.dbId || null,
+        }));
+      } catch { return []; }
+    };
+
+    const all = await Promise.all(runs.slice(0, 20).map(fetchRun));
+    allLeads = all.flat();
+
+    if (!allLeads.length) {
+      /* show demo data if no real leads */
+      allLeads = demoLeads();
+    }
+
+    document.getElementById('leadsCount').textContent = `共 ${allLeads.length} 条线索`;
+    renderLeads(allLeads);
+  } catch {
+    allLeads = demoLeads();
+    document.getElementById('leadsCount').textContent = `共 ${allLeads.length} 条演示线索`;
+    renderLeads(allLeads);
+  }
+}
+
+function buildEmails(l) {
+  const emails = [];
+  for (let i = 1; i <= 5; i++) {
+    const s = l[`EMAIL_${i}_SUBJECT`] || l[`email${i}_subject`];
+    const b = l[`EMAIL_${i}_BODY`]    || l[`email${i}_body`];
+    if (s || b) emails.push({ subject: s, body: b });
+  }
+  return emails;
+}
+
+function demoLeads() {
+  return [
+    { companyName: 'BuildPro Australia Pty Ltd', website: 'buildpro.com.au', email: 'contact@buildpro.com.au', country: '澳大利亚', type: '建材进口商', intentScore: 8.5, emails: [{ subject: 'Premium Tiles from China Factory — Special Offer', body: 'Dear BuildPro Team,\n\nI hope this email finds you well. My name is [Your Name] from [Factory Name], and we specialize in high-quality ceramic and porcelain tiles.\n\nWe noticed your company imports premium building materials, and we believe our products would be a perfect fit for your portfolio...' }, { subject: 'Following Up — China Tile Factory Partnership', body: 'Dear Team,\n\nI wanted to follow up on my previous email regarding our tile products. We have been supplying major retailers across Australia for the past decade...' }] },
+    { companyName: 'Pacific Tile & Stone Ltd', website: 'pacifictile.co.nz', country: '新西兰', type: '瓷砖批发商', intentScore: 5.2, emails: [{ subject: 'Wholesale Tile Inquiry — Direct from Manufacturer', body: 'Dear Pacific Tile Team,\n\nWe are a leading tile manufacturer based in Foshan, China...' }] },
+    { companyName: 'Meridian Flooring Group', website: 'meridianflooring.co.uk', country: '英国', type: '地板进口商', intentScore: 9.1, emails: [{ subject: 'Hardwood & Engineered Flooring — OEM Available', body: 'Dear Meridian Flooring,\n\nAs a specialist in engineered hardwood flooring, we believe there is a strong synergy between our manufacturing capabilities and your distribution network...' }] },
+    { companyName: 'Continental Décor GmbH', website: 'continental-decor.de', country: '德国', type: '装修公司', intentScore: 3.8, emails: [] },
+    { companyName: 'Summit Building Supply Inc', website: 'summitbuildingsupply.com', country: '美国', type: '建材进口商', intentScore: 7.2, emails: [{ subject: 'Quality Building Materials — Factory Direct Pricing', body: 'Dear Summit Team,\n\nI am reaching out from [Factory], one of the top-rated building material manufacturers in China...' }] },
+    { companyName: 'Maple Construction Ltd', website: 'mapleconstruction.ca', country: '加拿大', type: '建筑商', intentScore: 6.0, emails: [] },
+  ];
+}
+
+if (token) loadLeads();
+
+/* SEQUENCE SETTINGS */
+async function loadSequenceDelays() {
+  try {
+    const res = await fetch('/api/instantly/sequence', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.delays?.length === 5) {
+      ['delay1','delay2','delay3','delay4','delay5'].forEach((id, i) => {
+        document.getElementById(id).value = data.delays[i];
+      });
+    }
+  } catch {}
+}
+
+async function saveSequence() {
+  const btn = document.getElementById('seqSaveBtn');
+  const status = document.getElementById('seqStatus');
+  const delays = ['delay1','delay2','delay3','delay4','delay5'].map(id => parseInt(document.getElementById(id).value) || 0);
+  btn.disabled = true; btn.textContent = '保存中…';
+  status.style.display = 'none';
+  try {
+    const res = await fetch('/api/instantly/sequence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ delays }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || '未知错误');
+    status.textContent = '✓ 已保存';
+    status.className = 'seq-status';
+    status.style.display = 'inline';
+    setTimeout(() => { status.style.display = 'none'; }, 3000);
+  } catch (err) {
+    status.textContent = `保存失败：${err.message}`;
+    status.className = 'seq-status error';
+    status.style.display = 'inline';
+  } finally {
+    btn.disabled = false; btn.textContent = '保存序列';
+  }
+}
+
+if (token) loadSequenceDelays();
+</script>
+</body>
+</html>

@@ -1,0 +1,3503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>建材拓客系统</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🏗️</text></svg>">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2563eb; --blue-dark: #1d4ed8;
+      --blue-light: rgba(59,130,246,0.25); --blue-bg: rgba(37,99,235,0.12);
+      /* legacy aliases — JS inline styles reference these */
+      --green: #2563eb; --green-dark: #1d4ed8;
+      --green-light: rgba(59,130,246,0.25); --green-bg: rgba(37,99,235,0.12);
+      --border: rgba(99,179,237,0.15);
+      --text: #f8fafc; --sub: #94a3b8; --bg: #0f172a; --white: rgba(30,41,59,0.85);
+      --card: rgba(30,41,59,0.85);
+      --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
+      --header-bg: rgba(15,23,42,0.82);
+    }
+    body {
+      font-family: -apple-system,'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+
+    /* ── Nav (glassmorphism, matches landing.html) ── */
+    nav#navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 6%; height: 64px;
+      background: rgba(15,23,42,0.82);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .nav-logo {
+      font-size: 1.5rem; font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #2563eb, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: -0.5px; user-select: none;
+      text-decoration: none;
+    }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--sub); font-size: 0.88rem; transition: color 0.2s; white-space: nowrap; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .btn-nav {
+      display: inline-flex; align-items: center; padding: 0.45rem 1.2rem;
+      background: var(--blue); color: #fff !important; border-radius: 8px;
+      font-weight: 600; font-size: 0.88rem; transition: background 0.2s, transform 0.15s;
+    }
+    .btn-nav:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .nav-login-status { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--sub); }
+    .login-dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; flex-shrink: 0; }
+    .login-dot.offline { background: rgba(255,255,255,0.2); }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--text); border-radius: 2px; }
+
+    /* ── Layout ── */
+    .container { max-width: 1060px; margin: 0 auto; padding: 88px 18px 56px; }
+
+    /* ── Step progress ── */
+    .step-progress {
+      display: flex; align-items: center; background: rgba(30,41,59,0.7);
+      border-radius: 10px; padding: 14px 24px; margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+    .step-item { display: flex; align-items: center; flex: 1; cursor: pointer; }
+    .step-item:last-child { flex: 0; }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(148,163,184,0.1); color: var(--sub);
+      border: 1px solid rgba(148,163,184,0.18);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; transition: all 0.2s;
+    }
+    .step-num.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .step-num.done   { background: rgba(37,99,235,0.18); color: #93c5fd; border-color: rgba(37,99,235,0.35); }
+    .step-label { margin-left: 8px; font-size: 0.8rem; color: var(--sub); white-space: nowrap; }
+    .step-label.active { color: var(--blue); font-weight: 600; }
+    .step-connector { flex: 1; height: 1.5px; background: var(--border); margin: 0 10px; transition: background 0.2s; }
+    .step-connector.done { background: var(--blue-light); }
+    @media(max-width:560px){ .step-label { display:none; } }
+
+    /* ── Wizard panels ── */
+    .wizard-panel {
+      background: rgba(30,41,59,0.85); border-radius: 10px; padding: 28px 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3); border: 1px solid var(--border); margin-bottom: 16px;
+    }
+    .wizard-panel.hidden { display: none; }
+    .panel-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.01em; }
+    .panel-sub { font-size: 0.82rem; color: var(--sub); margin-bottom: 22px; }
+    .panel-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+    .sel-hint { font-size: 0.8rem; color: var(--sub); }
+
+    /* ── Selection cards ── */
+    .cards-grid {
+      display: grid; grid-template-columns: repeat(auto-fill,minmax(110px,1fr));
+      gap: 8px; margin-bottom: 6px;
+    }
+    .type-grid {
+      display: grid; grid-template-columns: repeat(auto-fill,minmax(140px,1fr));
+      gap: 8px; margin-bottom: 6px;
+    }
+    .select-card {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px 10px; text-align: center; cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.15s ease;
+      user-select: none; background: rgba(30,41,59,0.9); transform: translateY(0);
+    }
+    .select-card:hover {
+      border-color: var(--blue); transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(37,99,235,0.15);
+    }
+    .select-card.selected { border-color: var(--blue); background: var(--blue-bg); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .select-card.selected:hover { box-shadow: 0 8px 24px rgba(37,99,235,0.2), 0 0 0 3px rgba(37,99,235,0.1); }
+    .card-icon { font-size: 2rem; line-height: 1; margin-bottom: 8px; }
+    .card-label { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+    .select-card.selected .card-label { color: var(--blue); }
+    /* Customer type cards — Lucide SVG icons */
+    .select-card.type-card {
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 8px 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: all 0.25s ease;
+      position: relative;
+    }
+    .select-card.type-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 32px rgba(59,130,246,0.25);
+      border-color: #3b82f6;
+    }
+    .select-card.type-card.selected {
+      background: rgba(37,99,235,0.15);
+      border-color: #2563eb;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.2);
+    }
+    .select-card.type-card.selected::after {
+      content: '✓';
+      position: absolute; top: 8px; right: 8px;
+      width: 20px; height: 20px; line-height: 20px; text-align: center;
+      background: #2563eb; color: white;
+      border-radius: 50%; font-size: 0.7rem; font-weight: 700;
+    }
+    .type-icon-wrap {
+      width: 36px; height: 36px;
+      margin: 0 auto 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: #3b82f6;
+    }
+    .type-icon-wrap svg {
+      width: 36px; height: 36px; stroke-width: 1.5;
+      transition: filter 0.25s ease;
+    }
+    .select-card.type-card:hover .type-icon-wrap { color: #2563eb; }
+    .select-card.type-card:hover .type-icon-wrap svg {
+      filter: drop-shadow(0 0 8px rgba(59,130,246,0.6));
+    }
+    .select-card.type-card.selected .type-icon-wrap { color: #1d4ed8; }
+    .select-card.type-card.selected .type-icon-wrap svg {
+      filter: drop-shadow(0 0 6px rgba(59,130,246,0.45));
+    }
+
+    /* Country cards — flag via <img> (Windows doesn't render flag emoji) */
+    .flag-img { width: 44px; height: 30px; object-fit: cover; border-radius: 4px; display: block; margin: 0 auto 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+    .country-card .name { font-size: 0.82rem; font-weight: 600; display: block; }
+    .country-card.selected .name { color: var(--blue); }
+
+    /* ── Keyword tags ── */
+    .kw-section { margin-bottom: 22px; }
+    .section-title { font-size: 0.71rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--sub); margin-bottom: 10px; }
+    .keyword-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; }
+    .kw-tag {
+      display: flex; align-items: center; gap: 5px; padding: 5px 13px;
+      border-radius: 20px; border: 1px solid var(--border);
+      font-size: 0.78rem; cursor: pointer; transition: all 0.15s; user-select: none; background: white;
+    }
+    .kw-tag:hover { border-color: var(--blue); color: var(--blue); }
+    .kw-tag.selected { border-color: var(--blue); background: var(--blue-bg); color: var(--blue); font-weight: 600; }
+
+    /* ── Form ── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-row.single { grid-template-columns: 1fr; }
+    .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+    @media(max-width:640px){ .form-row,.form-row.triple { grid-template-columns:1fr; } }
+    label { display: block; font-size: 0.72rem; font-weight: 700; color: var(--sub); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+    input[type="text"], input[type="password"], textarea, select {
+      width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 0.87rem; color: var(--text); font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s; background: white;
+    }
+    select { cursor: pointer; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    textarea { resize: vertical; line-height: 1.6; }
+
+    /* ── Source toggle (replaces big source cards) ── */
+    .source-toggle { display: flex; gap: 8px; }
+    .src-btn {
+      flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      border: 1px solid var(--border); border-radius: 8px; background: rgba(30,41,59,0.9);
+      cursor: pointer; font-family: inherit; font-size: 0.84rem; font-weight: 600;
+      color: var(--sub); transition: all 0.18s; text-align: left;
+    }
+    .src-btn span { font-size: 0.72rem; font-weight: 400; color: var(--sub); }
+    .src-btn:hover { border-color: var(--blue); color: var(--text); }
+    .src-btn.selected { border-color: var(--blue); background: var(--blue-bg); color: var(--text); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .src-btn.selected span { color: #93c5fd; }
+    @media(max-width:480px){ .source-toggle { flex-direction: column; } }
+
+    /* ── Depth segmented control (replaces gold cards) ── */
+    .depth-seg { display: flex; gap: 6px; flex-wrap: wrap; }
+    .dseg-btn {
+      flex: 1; min-width: 70px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px;
+      background: rgba(30,41,59,0.9); cursor: pointer; font-family: inherit;
+      font-size: 0.84rem; font-weight: 700; color: var(--sub); transition: all 0.18s;
+    }
+    .dseg-btn span { font-size: 0.68rem; font-weight: 400; color: var(--sub); }
+    .dseg-btn:hover { border-color: var(--blue); color: var(--text); }
+    .dseg-btn.selected { border-color: var(--blue); background: var(--blue-bg); color: var(--text); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .dseg-btn.selected span { color: #93c5fd; }
+    .dseg-custom { position: relative; }
+    .dseg-custom-input {
+      width: 64px; padding: 3px 6px; margin-top: 3px;
+      border: 1px solid var(--border); border-radius: 5px;
+      background: rgba(15,23,42,0.6); color: var(--text);
+      font-size: 0.8rem; font-weight: 700; text-align: center; outline: none;
+      transition: border-color 0.15s;
+    }
+    .dseg-custom-input:focus { border-color: var(--blue); }
+    .dseg-custom-input::placeholder { color: #475569; }
+
+    /* ── Checkboxes ── */
+    .check-group { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+    .check-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; cursor: pointer; }
+    .check-item input[type="checkbox"] { accent-color: var(--blue); width: 15px; height: 15px; cursor: pointer; }
+    /* ── Field option cards ── */
+    .field-opt { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:7px; border:1px solid var(--border); background:var(--card); cursor:pointer; transition:border-color 0.15s; }
+    .field-opt:hover { border-color: var(--blue); }
+    .field-opt-locked { opacity:0.7; cursor:default; }
+    .field-opt input[type="checkbox"] { accent-color:var(--blue); width:15px; height:15px; flex-shrink:0; cursor:pointer; }
+    .field-opt-locked input[type="checkbox"] { cursor:default; }
+    .field-opt-info { flex:1; display:flex; flex-direction:column; gap:1px; }
+    .field-opt-name { font-size:0.85rem; font-weight:600; color:var(--text); }
+    .field-opt-desc { font-size:0.75rem; color:var(--sub); }
+    .field-badge { font-size:0.7rem; font-weight:700; padding:2px 7px; border-radius:10px; white-space:nowrap; }
+    .field-badge.free { background:rgba(22,163,74,0.12); color:#16a34a; border:1px solid rgba(22,163,74,0.25); }
+    .field-badge.paid { background:rgba(234,88,12,0.12); color:#ea580c; border:1px solid rgba(234,88,12,0.25); }
+
+    /* ── Advanced section ── */
+    .advanced-toggle {
+      font-size: 0.79rem; color: var(--sub); cursor: pointer; display: inline-flex;
+      align-items: center; gap: 5px; margin-top: 14px; margin-bottom: 12px; user-select: none;
+    }
+    .advanced-toggle:hover { color: var(--blue); }
+    .advanced-body { display: none; padding-top: 4px; }
+    .advanced-body.open { display: block; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      padding: 8px 20px; background: var(--blue); color: white;
+      border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s; font-family: inherit;
+    }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    .btn-ghost {
+      padding: 8px 16px; background: white; color: var(--sub);
+      border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem;
+      cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .btn-ghost:hover { border-color: #94a3b8; color: var(--text); }
+    .btn-start {
+      width: 100%; padding: 14px; background: var(--blue); color: white;
+      border: none; border-radius: 8px; font-size: 0.97rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em; font-family: inherit;
+    }
+    .btn-start:hover { background: var(--blue-dark); box-shadow: 0 4px 16px rgba(37,99,235,0.35); }
+    .btn-start:disabled { background: #9ca3af; box-shadow: none; cursor: not-allowed; }
+    .btn-analyzing {
+      position: relative; overflow: hidden;
+      background: var(--blue) !important; color: white !important;
+    }
+    .btn-analyzing::after {
+      content: '';
+      position: absolute; top: 0; left: -60%;
+      width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      animation: btn-shimmer 1.4s ease-in-out infinite;
+    }
+    @keyframes btn-shimmer {
+      0%   { left: -60%; }
+      100% { left: 130%; }
+    }
+
+    /* ── Run summary combos ── */
+    .run-notice {
+      background: var(--blue-bg); border: 1px solid var(--blue-light); border-radius: 8px;
+      padding: 10px 14px; font-size: 0.82rem; color: var(--blue-dark); margin-bottom: 14px;
+    }
+    .run-notice.warn { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+    .combo-list { margin-bottom: 18px; }
+    .run-combo {
+      display: flex; align-items: center; gap: 10px; padding: 7px 12px;
+      border-radius: 6px; margin-bottom: 4px; font-size: 0.83rem;
+      background: var(--bg); border: 1px solid var(--border);
+    }
+    .combo-dot {
+      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 0.68rem;
+    }
+    .combo-dot.pending { background: #f1f5f9; color: var(--sub); }
+    .combo-dot.running { background: #fef3c7; color: #d97706; }
+    .combo-dot.done    { background: var(--blue-light); color: var(--blue); }
+    .combo-dot.error   { background: #fee2e2; color: #dc2626; }
+
+    /* ── Status bar ── */
+    #statusBar {
+      display: none; padding: 10px 14px; border-radius: 7px;
+      margin-bottom: 14px; font-size: 0.84rem;
+    }
+    #statusBar.info    { background: #eff6ff; color: #1d4ed8; border: 1px solid var(--blue-light); }
+    #statusBar.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    #statusBar.error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .spinner {
+      display: inline-block; width: 13px; height: 13px;
+      border: 2px solid currentColor; border-top-color: transparent;
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+      margin-right: 7px; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Download bar ── */
+    #downloadBar {
+      display: none; background: white; border-radius: 8px; padding: 12px 18px;
+      margin-bottom: 16px; box-shadow: var(--shadow); border: 1px solid var(--border);
+      align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .dl-label { font-size: 0.84rem; font-weight: 600; color: var(--sub); }
+    .btn-dl {
+      padding: 6px 14px; border: none; border-radius: 6px; font-size: 0.8rem;
+      font-weight: 600; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 4px; font-family: inherit;
+    }
+    .btn-dl.csv   { background: #16a34a; color: white; }
+    .btn-dl.docx  { background: #7c3aed; color: white; }
+    .btn-dl.sheet { background: var(--blue); color: white; }
+
+    /* ── Results ── */
+    .results-section {
+      background: white; border-radius: 10px; overflow: hidden;
+      box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 16px;
+    }
+    .results-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+    }
+    .results-header h2 { font-size: 0.9rem; font-weight: 700; letter-spacing: -0.01em; }
+    #resultCount { font-size: 0.77rem; color: var(--sub); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.81rem; }
+    th {
+      background: #f8fafc; padding: 9px 12px; text-align: left;
+      font-size: 0.7rem; font-weight: 700; color: var(--sub);
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tr:hover td { background: #fafbfc; }
+
+    .company-name {
+      font-weight: 600; font-size: 0.85rem;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .website-link {
+      display: block; font-size: 0.73rem; color: var(--blue); text-decoration: none;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;
+    }
+    .website-link:hover { text-decoration: underline; }
+    .score { padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
+    .score.high { background: #dcfce7; color: #15803d; }
+    .score.mid  { background: #fef9c3; color: #854d0e; }
+    .score.low  { background: #fee2e2; color: #b91c1c; }
+    .status-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+    .status-sent     { background: #dcfce7; color: #15803d; }
+    .status-filtered { background: #f1f5f9; color: #64748b; }
+    .status-skipped  { background: #fef9c3; color: #854d0e; }
+    .status-error    { background: #fee2e2; color: #b91c1c; }
+    .social-links { display: flex; gap: 3px; }
+    .social-link {
+      width: 20px; height: 20px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 700; text-decoration: none; color: white;
+    }
+    .social-link.fb { background: #1877f2; }
+    .social-link.ig { background: #e1306c; }
+    .social-link.li { background: #0a66c2; }
+    .keep-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
+    .keep-tag { background: #e0f2fe; color: #0369a1; border-radius: 4px; padding: 1px 5px; font-size: 0.67rem; }
+    .btn-sm {
+      padding: 3px 10px; background: white; border: 1px solid var(--border);
+      border-radius: 5px; font-size: 0.73rem; cursor: pointer; font-weight: 600;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .btn-sm:hover { border-color: var(--blue); color: var(--blue); }
+    .btn-sm.active-filter { background: var(--blue); color: white !important; border-color: var(--blue); }
+    .empty-state { text-align: center; padding: 36px; color: var(--sub); font-size: 0.85rem; }
+
+    /* ── Email detail rows ── */
+    .email-detail-row { display: none; }
+    .email-detail-row.open { display: table-row; }
+    .email-detail-cell { padding: 16px 20px; background: #fafafa; border-bottom: 1px solid var(--border); }
+    .email-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 4px 13px; border: 1px solid var(--border); background: white;
+      border-radius: 20px; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .tab-btn.active { background: var(--blue); border-color: var(--blue); color: white; font-weight: 600; }
+    .email-panel { display: none; }
+    .email-panel.active { display: block; }
+    .email-field-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--sub); margin-top: 10px; margin-bottom: 4px;
+    }
+    .email-field-label:first-child { margin-top: 0; }
+    .email-subject-box {
+      font-weight: 600; font-size: 0.86rem; padding: 8px 12px;
+      background: white; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px;
+    }
+    .email-body-box {
+      font-size: 0.82rem; color: #374151; line-height: 1.7; white-space: pre-wrap;
+      padding: 10px 12px; background: white; border: 1px solid var(--border);
+      border-radius: 6px; max-height: 240px; overflow-y: auto;
+    }
+    .copy-btn {
+      margin-top: 8px; padding: 4px 13px; background: white;
+      border: 1px solid var(--border); border-radius: 6px; font-size: 0.76rem;
+      cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .copy-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .analysis-box {
+      font-size: 0.84rem; color: #374151; line-height: 1.65;
+      background: white; border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 12px; margin-bottom: 14px;
+    }
+    .hours-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(170px,1fr)); gap: 4px; }
+    .hours-row { font-size: 0.78rem; color: #374151; padding: 3px 8px; background: white; border-radius: 4px; border: 1px solid var(--border); }
+
+    /* ── History ── */
+    .history-section {
+      background: white; border-radius: 10px; overflow: hidden;
+      box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 16px;
+    }
+    .history-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; cursor: pointer; user-select: none;
+    }
+    .history-header:hover { background: #fafafa; }
+    .history-header h3 { font-size: 0.9rem; font-weight: 700; letter-spacing: -0.01em; }
+    .history-body { display: none; }
+    .history-body.open { display: block; }
+    .history-row {
+      display: grid; grid-template-columns: 82px 1fr 90px 48px 40px auto;
+      align-items: center; gap: 12px; padding: 10px 20px;
+      border-bottom: 1px solid var(--border); transition: background 0.15s;
+    }
+    .history-row:last-child { border-bottom: none; }
+    .history-row:hover { background: #f8fafc; }
+    .h-date { font-size: 0.74rem; color: var(--sub); white-space: nowrap; }
+    .h-query { font-weight: 700; font-size: 0.84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .h-loc { font-size: 0.79rem; color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .h-scraped { font-size: 0.79rem; color: var(--sub); text-align: right; white-space: nowrap; }
+    .h-qualified { font-size: 0.84rem; font-weight: 700; color: var(--green); text-align: right; }
+    .btn-load-history {
+      padding: 4px 12px; font-size: 0.74rem; font-weight: 600;
+      border: 1.5px solid var(--blue); border-radius: 5px;
+      background: transparent; color: var(--blue);
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-load-history:hover { background: var(--blue); color: white; }
+    .history-empty { padding: 20px; text-align: center; color: var(--sub); font-size: 0.84rem; }
+
+    /* ── Admin cost panel ── */
+    .admin-section {
+      background: white; border-radius: 10px; overflow: hidden;
+      box-shadow: var(--shadow); border: 1px solid rgba(251,191,36,0.4); margin-bottom: 16px;
+      display: none;
+    }
+    .admin-section.visible { display: block; }
+    .admin-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; cursor: pointer; user-select: none;
+    }
+    .admin-header h3 { font-size: 0.9rem; font-weight: 700; letter-spacing: -0.01em; }
+    .admin-body { display: none; padding: 16px 20px; }
+    .admin-body.open { display: block; }
+    .admin-cost-cards { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .admin-cost-card {
+      flex: 1; min-width: 140px; padding: 14px 18px; border-radius: 10px;
+      border: 1px solid rgba(251,191,36,0.3); background: #fffbeb;
+    }
+    .admin-cost-card .acc-label { font-size: 0.72rem; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .admin-cost-card .acc-value { font-size: 1.5rem; font-weight: 800; color: #b45309; }
+    .cost-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .cost-table th { padding: 8px 10px; text-align: left; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .cost-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .cost-table tfoot td { padding: 10px; font-weight: 700; background: #eff6ff; color: #1d4ed8; border-top: 2px solid var(--blue-light); }
+
+    /* ── Animation layer ─────────────────────────────────────────────────── */
+
+    /* Card click bounce keyframe */
+    @keyframes card-bounce-anim {
+      0%   { transform: translateY(0) scale(1); }
+      30%  { transform: translateY(-5px) scale(1.06); }
+      65%  { transform: translateY(1px) scale(0.97); }
+      100% { transform: translateY(0) scale(1); }
+    }
+    .select-card.card-bounce-anim {
+      animation: card-bounce-anim 0.38s ease-out !important;
+    }
+
+    /* Step panel fade-up enter */
+    @keyframes panel-enter {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .wizard-panel.panel-enter { animation: panel-enter 0.3s ease-out; }
+
+    /* btn-start breathing glow */
+    @keyframes btn-glow {
+      0%, 100% { box-shadow: 0 4px 16px rgba(37,99,235,0.4); }
+      50%       { box-shadow: 0 6px 32px rgba(37,99,235,0.7), 0 0 0 6px rgba(37,99,235,0.12); }
+    }
+    .btn-start { transition: background 0.2s ease; }
+    .btn-start:hover:not(:disabled) {
+      background: var(--blue-dark) !important;
+      animation: btn-glow 1.8s ease-in-out infinite;
+    }
+
+    /* btn-primary (下一步) pulse glow */
+    @keyframes btn-primary-glow {
+      0%, 100% { box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+      50%       { box-shadow: 0 4px 20px rgba(37,99,235,0.6), 0 0 0 4px rgba(37,99,235,0.1); }
+    }
+    .btn-primary { transition: background 0.2s ease; }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--blue-dark) !important;
+      animation: btn-primary-glow 1.8s ease-in-out infinite;
+    }
+
+    .progress-fill-indeterminate {
+      height: 100%; width: 40%;
+      background: linear-gradient(90deg, var(--blue) 0%, #60a5fa 100%);
+      border-radius: 10px;
+      animation: indeterminate-slide 1.6s ease-in-out infinite;
+    }
+    @keyframes indeterminate-slide {
+      0%   { transform: translateX(-120%); }
+      100% { transform: translateX(320%); }
+    }
+
+    /* Result row stagger */
+    @keyframes row-enter {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .row-enter { animation: row-enter 0.3s ease-out both; }
+
+    /* Toast */
+    #toast {
+      position: fixed; right: 24px; bottom: 32px; z-index: 9999;
+      background: #0f172a; color: white; border-radius: 10px;
+      padding: 13px 20px; font-size: 0.875rem; font-weight: 500;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+      transform: translateX(140%); opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+      pointer-events: none; display: flex; align-items: center; gap: 8px;
+      max-width: 300px;
+    }
+    #toast.show { transform: translateX(0); opacity: 1; pointer-events: auto; }
+
+    /* ── Email Drawer ─────────────────────────────────────────────────────── */
+    #drawerOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15,23,42,0.35); z-index: 300;
+    }
+    #drawerOverlay.open { display: block; }
+    #emailDrawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 500px; max-width: 100vw;
+      background: white; z-index: 301;
+      box-shadow: -8px 0 32px rgba(15,23,42,0.15);
+      transform: translateX(100%);
+      transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    #emailDrawer.open { transform: translateX(0); }
+    .drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .drawer-company { font-size: 1rem; font-weight: 700; color: var(--text); flex: 1; margin-right: 12px; }
+    .btn-send-instantly-drawer {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 0.38rem 0.85rem; margin-right: 8px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff; border: none; border-radius: 7px;
+      font-size: 0.76rem; font-weight: 700; cursor: pointer; flex-shrink: 0;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 3px 10px rgba(37,99,235,0.3);
+    }
+    .btn-send-instantly-drawer:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .btn-send-instantly-drawer:disabled { opacity: 0.4; cursor: not-allowed; transform: none; background: #9ca3af; box-shadow: none; }
+    .btn-send-instantly-drawer.sent { background: linear-gradient(135deg, #059669, #047857); box-shadow: 0 3px 10px rgba(5,150,105,0.3); }
+    .drawer-close {
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      border: none; background: #f1f5f9; border-radius: 6px; cursor: pointer;
+      font-size: 1rem; color: var(--sub); transition: all 0.15s; flex-shrink: 0;
+    }
+    .drawer-close:hover { background: #e2e8f0; color: var(--text); }
+    .drawer-tabs-bar {
+      display: flex; padding: 0 20px; gap: 2px; border-bottom: 1px solid var(--border);
+      flex-shrink: 0; overflow-x: auto;
+    }
+    .drawer-tab {
+      padding: 10px 14px; border: none; background: transparent;
+      border-bottom: 2px solid transparent; font-size: 0.82rem; font-weight: 600;
+      color: var(--sub); cursor: pointer; white-space: nowrap;
+      transition: all 0.15s; font-family: inherit; margin-bottom: -1px;
+    }
+    .drawer-tab:hover { color: var(--blue); }
+    .drawer-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .drawer-scroll { flex: 1; overflow-y: auto; padding: 20px; }
+    .drawer-panel { display: none; }
+    .drawer-panel.active { display: block; }
+    .drawer-subject-box {
+      font-weight: 600; font-size: 0.9rem; padding: 10px 12px;
+      background: #f8fafc; border: 1px solid var(--border);
+      border-radius: 6px; line-height: 1.5; user-select: text;
+    }
+    .drawer-body-box {
+      font-size: 0.84rem; color: #374151; line-height: 1.75;
+      white-space: pre-wrap; padding: 12px;
+      background: #f8fafc; border: 1px solid var(--border);
+      border-radius: 6px; max-height: 280px; overflow-y: auto; user-select: text;
+    }
+    .drawer-actions {
+      display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .btn-copy-drawer {
+      padding: 5px 14px; background: white; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 0.78rem; cursor: pointer;
+      transition: all 0.15s; font-family: inherit; font-weight: 500;
+    }
+    .btn-copy-drawer:hover { border-color: var(--blue); color: var(--blue); }
+    .btn-copy-all {
+      padding: 5px 14px; background: white; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 0.78rem; cursor: pointer;
+      transition: all 0.15s; font-family: inherit; font-weight: 500;
+    }
+    .btn-copy-all:hover { border-color: var(--blue); color: var(--blue); }
+    .btn-send-email {
+      padding: 7px 18px; background: var(--blue); color: white;
+      border: none; border-radius: 6px; font-size: 0.84rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; font-family: inherit; margin-left: auto;
+    }
+    .btn-send-email:hover:not(:disabled) { background: var(--blue-dark); }
+    .btn-send-email:disabled { background: #9ca3af; cursor: not-allowed; }
+    .btn-view-emails {
+      background: var(--blue-bg) !important; border-color: var(--blue) !important;
+      color: var(--blue) !important; font-weight: 600;
+    }
+    .btn-view-emails:hover { background: var(--blue-light) !important; }
+
+    /* ── Instantly per-row button ── */
+    .btn-instantly {
+      padding: 3px 8px; border-radius: 5px; font-size: 0.71rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap;
+      background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.35);
+      color: #93c5fd; display: inline-flex; align-items: center; gap: 3px;
+    }
+    .btn-instantly:hover:not(:disabled) { background: rgba(37,99,235,0.22); border-color: rgba(37,99,235,0.6); }
+    .btn-instantly:disabled { cursor: default; }
+    .btn-instantly.sent  { background: rgba(5,150,105,0.13) !important; border-color: rgba(5,150,105,0.45) !important; color: #34d399 !important; }
+    .btn-instantly.error { background: rgba(239,68,68,0.1)  !important; border-color: rgba(239,68,68,0.35) !important; color: #fca5a5 !important; }
+
+    /* ── Instantly bulk bar ── */
+    #instantlyBulkBar {
+      display: none; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 9px 20px; background: rgba(37,99,235,0.06);
+      border-bottom: 1px solid var(--border); font-size: 0.83rem;
+    }
+
+    /* ── Instantly Hub panel ── */
+    .instantly-hub { background: rgba(30,41,59,0.85); border: 1px solid rgba(37,99,235,0.25); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+    .hub-header { display:flex; align-items:center; justify-content:space-between; padding:13px 20px; cursor:pointer; user-select:none; }
+    .hub-header:hover { background: rgba(37,99,235,0.04); }
+    .hub-header h3 { font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+    .hub-body { padding: 0 20px 20px; }
+    .hub-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; }
+    @media(max-width:640px){ .hub-grid { grid-template-columns:1fr; } }
+    .hub-card { background:rgba(15,23,42,0.5); border:1px solid var(--border); border-radius:8px; padding:15px; }
+    .hub-card-title { font-size:0.69rem; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:11px; }
+    .campaign-badge { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:10px; font-size:0.71rem; font-weight:700; white-space:nowrap; }
+    .campaign-badge.active    { background:rgba(5,150,105,0.15); color:#34d399; border:1px solid rgba(5,150,105,0.3); }
+    .campaign-badge.draft     { background:rgba(251,191,36,0.12); color:#fcd34d; border:1px solid rgba(251,191,36,0.3); }
+    .campaign-badge.paused    { background:rgba(100,116,139,0.15); color:#94a3b8; border:1px solid rgba(100,116,139,0.3); }
+    .campaign-badge.completed { background:rgba(37,99,235,0.12); color:#93c5fd; border:1px solid rgba(37,99,235,0.25); }
+    .hub-select { width:100%; padding:7px 10px; border-radius:7px; background:rgba(15,23,42,0.6); border:1px solid var(--border); color:var(--text); font-family:inherit; font-size:0.83rem; cursor:pointer; }
+    .hub-select:focus { outline:none; border-color:var(--blue); }
+    .hub-select option { background:#1e293b; }
+    .hub-btn { padding:6px 14px; border-radius:7px; font-size:0.79rem; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.15s; border:1px solid; }
+    .hub-btn.primary { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .hub-btn.primary:hover:not(:disabled) { background:var(--blue-dark); }
+    .hub-btn.ghost { background:rgba(30,41,59,0.7); border-color:var(--border); color:var(--sub); }
+    .hub-btn.ghost:hover:not(:disabled) { border-color:#94a3b8; color:var(--text); }
+    .hub-btn.success { background:rgba(5,150,105,0.15); border-color:rgba(5,150,105,0.4); color:#34d399; }
+    .hub-btn.success:hover:not(:disabled) { background:rgba(5,150,105,0.25); }
+    .hub-btn.danger { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.35); color:#fca5a5; }
+    .hub-btn.danger:hover:not(:disabled) { background:rgba(239,68,68,0.2); }
+    .hub-btn:disabled { opacity:0.4; cursor:not-allowed; }
+    .account-item { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:6px; border:1px solid var(--border); margin-bottom:6px; cursor:pointer; transition:border-color 0.15s; }
+    .account-item:hover { border-color:var(--blue); }
+    .account-item.selected { border-color:var(--blue); background:rgba(37,99,235,0.08); }
+    .account-item input[type="checkbox"] { accent-color:var(--blue); width:14px; height:14px; flex-shrink:0; cursor:pointer; }
+    .seq-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+    .seq-input-wrap { text-align:center; }
+    .seq-day-label { font-size:0.65rem; color:var(--sub); margin-bottom:3px; }
+    .seq-input { width:100%; padding:6px 4px; text-align:center; border:1px solid var(--border); border-radius:6px; background:rgba(15,23,42,0.6); color:var(--text); font-size:0.85rem; font-weight:700; font-family:inherit; }
+    .seq-input:focus { outline:none; border-color:var(--blue); }
+    .analytics-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:8px; }
+    .analytics-card { background:rgba(37,99,235,0.05); border:1px solid rgba(37,99,235,0.1); border-radius:7px; padding:10px 12px; text-align:center; }
+    .analytics-num { font-size:1.25rem; font-weight:800; color:var(--text); line-height:1.2; }
+    .analytics-lbl { font-size:0.65rem; color:var(--sub); margin-top:3px; text-transform:uppercase; letter-spacing:0.04em; }
+    /* Campaign create modal */
+    #createCampaignModal { display:none; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+    #createCampaignModal.open { display:flex; }
+    .hub-modal-box { background:rgba(22,32,52,0.98); border:1px solid var(--border); border-radius:12px; padding:28px; width:360px; max-width:92vw; box-shadow:0 16px 48px rgba(0,0,0,0.5); }
+
+    /* ── Keyword tag cards ───────────────────────────────────────────────── */
+    @keyframes kwFloat {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-4px); }
+    }
+    .tag-cards-grid { display: flex; flex-wrap: wrap; gap: 8px; min-height: 36px; }
+    .keyword-tag {
+      padding: 6px 16px; border: 1.5px solid var(--border);
+      border-radius: 20px; background: white; font-size: 0.82rem;
+      cursor: pointer; user-select: none; font-family: inherit; font-weight: 500;
+      color: var(--text); transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, transform 0.15s;
+    }
+    .keyword-tag:not(.selected) {
+      animation: kwFloat 3s ease-in-out infinite;
+      animation-delay: calc(var(--i) * 0.18s);
+    }
+    .keyword-tag:hover:not(.selected) {
+      animation: none;
+      transform: translateY(-3px);
+      border-color: var(--blue);
+      box-shadow: 0 6px 16px rgba(37,99,235,0.18);
+    }
+    .keyword-tag.selected {
+      border-color: var(--blue); background: var(--blue-bg);
+      color: var(--blue); font-weight: 600; animation: none;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15), 0 4px 12px rgba(37,99,235,0.2);
+    }
+    .kw-section-label {
+      font-size: 0.72rem; font-weight: 700; color: var(--sub); margin-bottom: 10px;
+      text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;
+    }
+    .kw-sel-count {
+      font-size: 0.72rem; font-weight: 600; color: var(--blue);
+      background: var(--blue-bg); border-radius: 10px; padding: 1px 8px;
+      text-transform: none; letter-spacing: 0;
+    }
+
+    /* ── Filter bar ───────────────────────────────────────────────────────── */
+    .filter-bar { display: flex; gap: 4px; align-items: center; }
+    .filter-btn {
+      padding: 4px 14px; border: 1px solid var(--border);
+      border-radius: 20px; background: white; font-size: 0.76rem;
+      cursor: pointer; transition: all 0.15s; font-family: inherit;
+      font-weight: 500; color: var(--sub);
+    }
+    .filter-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .filter-btn.active { background: var(--blue); border-color: var(--blue); color: white; font-weight: 600; }
+    .filter-count { font-size: 0.76rem; color: var(--sub); }
+
+    /* ── Collapsible analysis ─────────────────────────────────────────────── */
+    .collapsible-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; padding: 6px 0; border-bottom: 1px solid rgba(99,179,237,0.1);
+      margin-bottom: 4px; user-select: none;
+    }
+    .collapsible-toggle:hover .collapse-icon { color: #93c5fd; }
+    .collapse-icon { font-size: 0.73rem; color: var(--sub); white-space: nowrap; }
+    .collapsible-body { margin-bottom: 10px; }
+
+    /* ═══ DARK THEME OVERRIDES ═══ */
+    /* Step progress */
+    .step-progress { background: rgba(30,41,59,0.7) !important; box-shadow: none !important; }
+    .step-num { background: rgba(148,163,184,0.1) !important; color: var(--sub) !important; border: 1px solid rgba(148,163,184,0.18); }
+    .step-num.active { background: var(--blue) !important; color: #fff !important; border-color: var(--blue) !important; }
+    .step-num.done { background: rgba(37,99,235,0.18) !important; color: #93c5fd !important; border-color: rgba(37,99,235,0.35) !important; }
+    .step-label { color: var(--sub) !important; }
+    .step-label.active { color: #93c5fd !important; }
+    .step-connector { background: rgba(148,163,184,0.12) !important; }
+    .step-connector.done { background: rgba(37,99,235,0.35) !important; }
+
+    /* Wizard panels & cards */
+    .wizard-panel { background: rgba(30,41,59,0.85) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.3) !important; }
+    .select-card { background: rgba(30,41,59,0.9) !important; border-color: rgba(99,179,237,0.18) !important; }
+    .select-card:hover { box-shadow: 0 8px 24px rgba(37,99,235,0.25), 0 0 0 1px rgba(37,99,235,0.3) !important; }
+    .select-card.selected { background: rgba(37,99,235,0.15) !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.18) !important; }
+    .select-card.type-card { background: rgba(30,41,59,0.9) !important; border-color: rgba(99,179,237,0.2) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important; }
+    .select-card.type-card.selected { background: rgba(37,99,235,0.15) !important; }
+    .card-label { color: var(--text) !important; }
+    .select-card.selected .card-label { color: #93c5fd !important; }
+    .country-card .name { color: var(--text) !important; }
+    .country-card.selected .name { color: #93c5fd !important; }
+
+    /* Keyword tags */
+    .kw-tag, .keyword-tag { background: rgba(59,130,246,0.2) !important; border-color: rgba(59,130,246,0.6) !important; color: #93c5fd !important; }
+    .kw-tag:hover:not(.selected), .keyword-tag:hover:not(.selected) { background: rgba(59,130,246,0.4) !important; color: #fff !important; }
+    .kw-tag.selected, .keyword-tag.selected { background: #2563eb !important; border-color: #2563eb !important; color: #fff !important; }
+    .keyword-tag.priority-tag { background: rgba(251,191,36,0.12) !important; border-color: rgba(251,191,36,0.6) !important; color: #fcd34d !important; }
+    .keyword-tag.priority-tag:hover:not(.selected) { background: rgba(251,191,36,0.28) !important; color: #fff !important; }
+    .keyword-tag.priority-tag.selected { background: #d97706 !important; border-color: #d97706 !important; color: #fff !important; }
+    /* Pre-filter level badges */
+    .pf-badge { display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:700;white-space:nowrap }
+    .pf-badge.priority  { background:rgba(251,191,36,0.18);color:#d97706;border:1px solid rgba(251,191,36,0.5) }
+    .pf-badge.recommend { background:rgba(34,197,94,0.15);color:#16a34a;border:1px solid rgba(34,197,94,0.4) }
+    .pf-badge.skip      { background:rgba(148,163,184,0.1);color:var(--sub);border:1px solid var(--border) }
+    .dark-mode .pf-badge.priority  { background:rgba(251,191,36,0.2);color:#fcd34d }
+    .dark-mode .pf-badge.recommend { background:rgba(34,197,94,0.2);color:#4ade80 }
+    .pf-row.priority td:first-child { border-left:3px solid #d97706 }
+    .pf-row.recommend td:first-child { border-left:3px solid #16a34a }
+    .bulk-bar { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px }
+    .kw-sel-count { background: rgba(37,99,235,0.15) !important; color: #93c5fd !important; }
+    .kw-section-label { color: #e2e8f0 !important; }
+    .wizard-panel label { color: #e2e8f0 !important; }
+
+    /* Form inputs */
+    input[type="text"], input[type="password"], textarea, select {
+      background: rgba(30,41,59,0.8) !important; color: #f8fafc !important;
+      border-color: rgba(99,179,237,0.3) !important;
+    }
+    select option { background: #1e293b; color: var(--text); }
+    input[type="text"]::placeholder, input[type="password"]::placeholder, textarea::placeholder { color: #64748b !important; }
+    input[type="text"]:focus, textarea:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.25) !important; outline: none !important; }
+
+    /* Buttons */
+    .btn-ghost { background: rgba(30,41,59,0.7) !important; color: var(--sub) !important; border-color: var(--border) !important; }
+    .btn-ghost:hover { color: var(--text) !important; border-color: #94a3b8 !important; }
+    .btn-primary:disabled, .btn-start:disabled { background: rgba(100,116,139,0.35) !important; color: #64748b !important; }
+    .btn-start.btn-analyzing, .btn-start.btn-analyzing:disabled { background: var(--blue) !important; color: white !important; cursor: default !important; }
+    .btn-sm { background: rgba(30,41,59,0.8) !important; color: var(--sub) !important; border-color: var(--border) !important; }
+    .btn-sm:hover { border-color: var(--blue) !important; color: #93c5fd !important; }
+    .btn-view-emails { background: rgba(37,99,235,0.15) !important; border-color: var(--blue) !important; color: #93c5fd !important; }
+    .btn-view-emails:hover { background: rgba(37,99,235,0.25) !important; }
+
+    /* Results table */
+    .results-section { background: rgba(30,41,59,0.85) !important; }
+    th { background: rgba(15,23,42,0.6) !important; color: var(--sub) !important; border-bottom-color: var(--border) !important; }
+    td { border-bottom-color: rgba(99,179,237,0.07) !important; color: var(--text) !important; }
+    tr:hover td { background: rgba(37,99,235,0.05) !important; }
+    .company-name { color: var(--text) !important; }
+    .website-link { color: #60a5fa !important; }
+    .score.high { background: rgba(21,128,61,0.2) !important; color: #6ee7b7 !important; }
+    .score.mid  { background: rgba(133,77,14,0.2) !important; color: #fde68a !important; }
+    .score.low  { background: rgba(185,28,28,0.2) !important; color: #fca5a5 !important; }
+    .status-sent     { background: rgba(21,128,61,0.2) !important; color: #6ee7b7 !important; }
+    .status-filtered { background: rgba(100,116,139,0.12) !important; color: #94a3b8 !important; }
+    .status-skipped  { background: rgba(133,77,14,0.2) !important; color: #fde68a !important; }
+    .status-error    { background: rgba(185,28,28,0.2) !important; color: #fca5a5 !important; }
+    .keep-tag { background: rgba(3,105,161,0.2) !important; color: #7dd3fc !important; }
+
+    /* Email detail rows */
+    .email-detail-cell { background: rgba(15,23,42,0.5) !important; border-bottom-color: var(--border) !important; }
+    .tab-btn { background: rgba(30,41,59,0.6) !important; color: var(--sub) !important; border-color: var(--border) !important; }
+    .tab-btn.active { background: var(--blue) !important; border-color: var(--blue) !important; color: #fff !important; }
+    .email-subject-box { background: rgba(15,23,42,0.6) !important; border-color: var(--border) !important; color: var(--text) !important; }
+    .email-body-box { background: rgba(15,23,42,0.6) !important; border-color: var(--border) !important; color: #cbd5e1 !important; }
+    .copy-btn { background: rgba(30,41,59,0.7) !important; border-color: var(--border) !important; color: var(--sub) !important; }
+    .copy-btn:hover { border-color: var(--blue) !important; color: #93c5fd !important; }
+    .analysis-box { background: rgba(15,23,42,0.5) !important; border-color: var(--border) !important; color: #cbd5e1 !important; }
+    .hours-row { background: rgba(15,23,42,0.5) !important; border-color: var(--border) !important; color: #cbd5e1 !important; }
+
+    /* Download, progress, status bars */
+    #downloadBar { background: rgba(30,41,59,0.85) !important; }
+    .run-combo { background: rgba(15,23,42,0.5) !important; border-color: var(--border) !important; color: var(--text) !important; }
+    .combo-dot.pending { background: rgba(148,163,184,0.12) !important; color: var(--sub) !important; }
+    .combo-dot.running { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+    .combo-dot.done    { background: rgba(37,99,235,0.18) !important; color: #93c5fd !important; }
+    .combo-dot.error   { background: rgba(220,38,38,0.18) !important; color: #fca5a5 !important; }
+    .run-notice { background: rgba(37,99,235,0.1) !important; color: #93c5fd !important; border-color: rgba(37,99,235,0.25) !important; }
+    .run-notice.warn { background: rgba(185,28,28,0.1) !important; color: #fca5a5 !important; border-color: rgba(239,68,68,0.22) !important; }
+    #statusBar.info    { background: rgba(37,99,235,0.12) !important; color: #93c5fd !important; border-color: rgba(37,99,235,0.25) !important; }
+    #statusBar.success { background: rgba(21,128,61,0.12) !important; color: #6ee7b7 !important; border-color: rgba(16,185,129,0.25) !important; }
+    #statusBar.error   { background: rgba(185,28,28,0.12) !important; color: #fca5a5 !important; border-color: rgba(239,68,68,0.22) !important; }
+
+    /* Email drawer */
+    #emailDrawer { background: #1e293b !important; border-left: 1px solid var(--border); }
+    #drawerOverlay { background: rgba(0,0,0,0.55) !important; backdrop-filter: blur(3px); }
+    .drawer-header { border-bottom-color: var(--border) !important; }
+    .drawer-company { color: var(--text) !important; }
+    .drawer-close { background: rgba(148,163,184,0.1) !important; color: var(--sub) !important; }
+    .drawer-close:hover { background: rgba(148,163,184,0.18) !important; color: var(--text) !important; }
+    .drawer-tabs-bar { border-bottom-color: var(--border) !important; }
+    .drawer-tab { color: var(--sub) !important; }
+    .drawer-tab:hover { color: #93c5fd !important; }
+    .drawer-tab.active { color: #93c5fd !important; border-bottom-color: var(--blue) !important; }
+    .drawer-subject-box { background: rgba(15,23,42,0.6) !important; border-color: var(--border) !important; color: var(--text) !important; }
+    .drawer-body-box { background: rgba(15,23,42,0.6) !important; border-color: var(--border) !important; color: #cbd5e1 !important; }
+    .btn-copy-drawer, .btn-copy-all { background: rgba(30,41,59,0.7) !important; border-color: var(--border) !important; color: var(--sub) !important; }
+    .btn-copy-drawer:hover, .btn-copy-all:hover { border-color: var(--blue) !important; color: #93c5fd !important; }
+    .btn-send-email:disabled { background: rgba(100,116,139,0.35) !important; }
+
+    /* History & Admin */
+    .history-section { background: rgba(30,41,59,0.85) !important; }
+    .history-header:hover { background: rgba(37,99,235,0.05) !important; }
+    .history-header h3 { color: var(--text) !important; }
+    .history-row:hover { background: rgba(37,99,235,0.06) !important; }
+    .admin-section { background: rgba(30,41,59,0.85) !important; border-color: rgba(251,191,36,0.25) !important; }
+    .admin-header:hover { background: rgba(251,191,36,0.05) !important; }
+    .admin-cost-card { background: rgba(15,23,42,0.6) !important; border-color: rgba(251,191,36,0.2) !important; }
+    .cost-table th { background: rgba(15,23,42,0.6) !important; color: var(--sub) !important; }
+    .cost-table td { border-bottom-color: rgba(99,179,237,0.07) !important; color: var(--text) !important; }
+    .cost-table tfoot td { background: rgba(37,99,235,0.1) !important; color: #93c5fd !important; }
+
+    /* Filter bar */
+    .filter-bar .filter-btn { background: rgba(30,41,59,0.6) !important; color: var(--sub) !important; border-color: var(--border) !important; }
+    .filter-bar .filter-btn:hover { border-color: var(--blue) !important; color: #93c5fd !important; }
+    .filter-bar .filter-btn.active { background: var(--blue) !important; color: #fff !important; }
+
+    /* Mobile nav */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex; flex-direction: column; position: fixed; top: 64px; left: 0; right: 0;
+        background: rgba(15,23,42,0.97); padding: 1.5rem 6%; gap: 1.2rem; z-index: 99;
+        backdrop-filter: blur(18px); border-bottom: 1px solid var(--border);
+      }
+      .hamburger { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+<nav id="navbar">
+  <a href="landing.html" class="nav-logo">智拓客</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="landing.html">首页</a></li>
+    <li><a href="pricing.html">定价</a></li>
+    <li><a href="tutorial.html">教程</a></li>
+    <li><a href="about.html">关于我们</a></li>
+    <li><a href="dashboard.html">仪表盘</a></li>
+    <li class="nav-login-status">
+      <div class="login-dot offline" id="loginDot"></div>
+      <span id="loginStatusText">未登录</span>
+    </li>
+  </ul>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="container">
+
+  <!-- Step progress bar -->
+  <div class="step-progress">
+    <div class="step-item" onclick="goToStep(1)">
+      <div class="step-num active" id="snum-1">1</div>
+      <span class="step-label active" id="slbl-1">目标市场</span>
+    </div>
+    <div class="step-connector" id="scon-1"></div>
+    <div class="step-item" onclick="goToStep(2)">
+      <div class="step-num" id="snum-2">2</div>
+      <span class="step-label" id="slbl-2">客户类型</span>
+    </div>
+    <div class="step-connector" id="scon-2"></div>
+    <div class="step-item" onclick="goToStep(3)">
+      <div class="step-num" id="snum-3">3</div>
+      <span class="step-label" id="slbl-3">搜索配置</span>
+    </div>
+    <div class="step-connector" id="scon-3"></div>
+    <div class="step-item" onclick="goToStep(4)">
+      <div class="step-num" id="snum-4">4</div>
+      <span class="step-label" id="slbl-4">开始搜索</span>
+    </div>
+  </div>
+
+  <!-- Step 1: Country selection -->
+  <div class="wizard-panel" id="wizard-step-1">
+    <div class="panel-title">第一步：选择目标国家/地区</div>
+    <div class="panel-sub">可多选，系统将为每个国家依次搜索客户</div>
+    <div class="cards-grid" id="countryGrid">
+      <div class="country-card select-card" id="cc-0" onclick="toggleCountry(0)">
+        <img class="flag-img" src="https://flagcdn.com/w80/au.png" alt="AU">
+        <span class="name">澳大利亚</span>
+      </div>
+      <div class="country-card select-card" id="cc-1" onclick="toggleCountry(1)">
+        <img class="flag-img" src="https://flagcdn.com/w80/us.png" alt="US">
+        <span class="name">美国</span>
+      </div>
+      <div class="country-card select-card" id="cc-2" onclick="toggleCountry(2)">
+        <img class="flag-img" src="https://flagcdn.com/w80/gb.png" alt="GB">
+        <span class="name">英国</span>
+      </div>
+      <div class="country-card select-card" id="cc-3" onclick="toggleCountry(3)">
+        <img class="flag-img" src="https://flagcdn.com/w80/ca.png" alt="CA">
+        <span class="name">加拿大</span>
+      </div>
+      <div class="country-card select-card" id="cc-4" onclick="toggleCountry(4)">
+        <img class="flag-img" src="https://flagcdn.com/w80/de.png" alt="DE">
+        <span class="name">德国</span>
+      </div>
+      <div class="country-card select-card" id="cc-5" onclick="toggleCountry(5)">
+        <img class="flag-img" src="https://flagcdn.com/w80/ae.png" alt="AE">
+        <span class="name">阿联酋</span>
+      </div>
+      <div class="country-card select-card" id="cc-6" onclick="toggleCountry(6)">
+        <img class="flag-img" src="https://flagcdn.com/w80/sg.png" alt="SG">
+        <span class="name">新加坡</span>
+      </div>
+      <div class="country-card select-card" id="cc-7" onclick="toggleCountry(7)">
+        <img class="flag-img" src="https://flagcdn.com/w80/jp.png" alt="JP">
+        <span class="name">日本</span>
+      </div>
+    </div>
+    <div class="panel-nav">
+      <span class="sel-hint" id="countrySelHint">请至少选择一个国家</span>
+      <button class="btn-primary" onclick="nextStep(2)">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Customer type -->
+  <div class="wizard-panel hidden" id="wizard-step-2">
+    <div class="panel-title">第二步：选择目标客户类型</div>
+    <div class="panel-sub">可多选，选择您建材产品的目标买家群体</div>
+    <div class="type-grid" id="typeGrid"></div>
+    <div class="panel-nav">
+      <button class="btn-ghost" onclick="goToStep(1)">← 上一步</button>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span class="sel-hint" id="typeSelHint">请至少选择一个类型</span>
+        <button class="btn-primary" onclick="nextStep(3)">下一步 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Config -->
+  <div class="wizard-panel hidden" id="wizard-step-3">
+    <div class="panel-title">第三步：配置搜索参数</div>
+    <div class="panel-sub">填写关键词和目标城市即可开始</div>
+
+    <!-- Keyword + City side by side -->
+    <div class="form-row" style="margin-bottom:20px">
+      <div>
+        <label>搜索关键词</label>
+        <input type="text" id="kwInput" placeholder="如：renovation contractor">
+        <div style="margin-top:4px;font-size:0.75rem;color:var(--sub)">建议英文，如 tile importer / renovation contractor</div>
+      </div>
+      <div>
+        <label>目标城市</label>
+        <input type="text" id="locInput" placeholder="如：Sydney Australia">
+      </div>
+    </div>
+
+    <!-- Search source (pill toggle) -->
+    <div style="margin-bottom:20px">
+      <label>搜索来源</label>
+      <div class="source-toggle">
+        <button class="src-btn selected" id="src-google_maps" onclick="selectSource('google_maps')">
+          🗺️ Google 地图 <span>本地商家·含电话评分</span>
+        </button>
+        <button class="src-btn" id="src-google_search" onclick="selectSource('google_search')">
+          🔍 Google 搜索 <span>进口商·贸易商·批发商</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Depth (segmented control) -->
+    <div style="margin-bottom:20px">
+      <label>每次最多抓取</label>
+      <input type="hidden" id="maxResults" value="20">
+      <div class="depth-seg">
+        <button class="dseg-btn" data-count="5" onclick="selectDepth(5,this)">5条<span>~1分钟</span></button>
+        <button class="dseg-btn selected" data-count="20" onclick="selectDepth(20,this)">20条<span>~4分钟</span></button>
+        <button class="dseg-btn" data-count="50" onclick="selectDepth(50,this)">50条<span>~10分钟</span></button>
+        <button class="dseg-btn" data-count="100" onclick="selectDepth(100,this)">100条<span>~20分钟</span></button>
+        <button class="dseg-btn dseg-custom" data-count="custom" onclick="selectDepthCustom(this)">
+          自定义
+          <input type="number" class="dseg-custom-input" id="customDepthInput"
+                 min="1" max="500" placeholder="数量"
+                 onclick="event.stopPropagation()"
+                 oninput="onCustomDepthInput(this)">
+          <span id="customDepthMeta" style="display:none"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Access token -->
+    <div style="margin-bottom:20px">
+      <label>访问令牌 Access Token</label>
+      <input type="password" id="accessToken" placeholder="请输入您的访问令牌" oninput="onTokenInput()">
+    </div>
+
+    <!-- Advanced (ICP + seller info) collapsed by default -->
+    <div class="advanced-toggle" onclick="toggleAdvanced()">
+      <span id="advIcon">▸</span> 高级选项（ICP 筛选 & 卖家信息）
+    </div>
+    <div class="advanced-body" id="advancedBody">
+      <div style="margin-bottom:16px">
+        <label style="text-transform:none;letter-spacing:0;font-size:0.84rem;color:var(--text)">
+          理想客户画像（ICP）
+          <span style="font-weight:400;color:var(--sub);font-size:0.76rem;margin-left:6px">越具体，AI 筛选越精准</span>
+        </label>
+        <textarea id="icpInput" rows="3" oninput="onIcpInput()"
+          placeholder="例：中型装修承包商，员工10人以上，年承接项目超过500万澳元，主要做住宅改建，有稳定的材料采购需求，决策人是老板或采购经理。"></textarea>
+        <div id="icpWarning" style="display:none;margin-top:6px;padding:8px 12px;background:rgba(185,28,28,0.1);border:1px solid rgba(239,68,68,0.22);border-radius:6px;font-size:0.8rem;color:#fca5a5">
+          描述太模糊，请补充：<strong>客户规模、项目类型、采购预算、决策人职位</strong>
+        </div>
+        <div id="icpGood" style="display:none;margin-top:6px;padding:8px 12px;background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:6px;font-size:0.8rem;color:#93c5fd">
+          ICP 描述清晰，AI 将据此评估每条线索的匹配度
+        </div>
+      </div>
+      <div class="form-row triple">
+        <div>
+          <label>公司/品牌名称</label>
+          <input type="text" id="sellerName" placeholder="例：华建建材">
+        </div>
+        <div>
+          <label>主要产品</label>
+          <input type="text" id="products" placeholder="例：瓷砖、石材、地板">
+        </div>
+        <div>
+          <label>产品优势</label>
+          <input type="text" id="advantage" placeholder="例：20年经验，支持定制">
+        </div>
+      </div>
+      <div>
+        <label>选择数据字段</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+
+          <label class="field-opt field-opt-locked">
+            <input type="checkbox" checked disabled>
+            <div class="field-opt-info">
+              <span class="field-opt-name">基础信息</span>
+              <span class="field-opt-desc">公司名、地址、Google地图链接</span>
+            </div>
+            <span class="field-badge free">免费</span>
+          </label>
+
+          <label class="field-opt">
+            <input type="checkbox" id="optWebsite" checked onchange="updateFieldCost()">
+            <div class="field-opt-info">
+              <span class="field-opt-name">官网 URL</span>
+            </div>
+            <span class="field-badge free">免费</span>
+          </label>
+
+          <label class="field-opt">
+            <input type="checkbox" id="optPhone" checked onchange="updateFieldCost()">
+            <div class="field-opt-info">
+              <span class="field-opt-name">电话号码</span>
+            </div>
+            <span class="field-badge free">免费</span>
+          </label>
+
+          <label class="field-opt">
+            <input type="checkbox" id="optRating" checked onchange="updateFieldCost()">
+            <div class="field-opt-info">
+              <span class="field-opt-name">评分 &amp; 评论数</span>
+            </div>
+            <span class="field-badge free">免费</span>
+          </label>
+
+          <label class="field-opt">
+            <input type="checkbox" id="optEmail" onchange="updateFieldCost()">
+            <div class="field-opt-info">
+              <span class="field-opt-name">邮箱地址</span>
+              <span class="field-opt-desc">需要额外费用，从官网抓取</span>
+            </div>
+            <span class="field-badge paid">+$0.002/条</span>
+          </label>
+
+        </div>
+        <div id="fieldCostEst" style="margin-top:10px;font-size:0.8rem;color:var(--sub)">预计费用：~$0.004/条</div>
+      </div>
+    </div>
+
+    <div class="panel-nav" style="margin-top:24px">
+      <button class="btn-ghost" onclick="goToStep(2)">← 上一步</button>
+      <button class="btn-primary" onclick="nextStep(4)">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Start -->
+  <div class="wizard-panel hidden" id="wizard-step-4">
+    <div class="panel-title">第四步：抓取原始数据</div>
+    <div class="panel-sub">先查看所有原始公司数据，再决定是否使用 AI 预筛选</div>
+
+    <div id="runSummary" style="margin-bottom:18px"></div>
+
+    <div id="statusBar"></div>
+
+    <button class="btn-start" id="btnStart" onclick="startScrapeRaw()">🔍 开始抓取</button>
+
+    <div class="panel-nav" style="margin-top:14px">
+      <button class="btn-ghost" onclick="goToStep(3)">← 修改配置</button>
+      <span></span>
+    </div>
+  </div>
+
+  <!-- Download bar -->
+  <div id="downloadBar">
+    <span class="dl-label">导出结果</span>
+    <button class="btn-dl csv" onclick="downloadCSV()">下载 CSV</button>
+    <button class="btn-dl docx" id="btnDocx" onclick="downloadDOCX()">下载 Word</button>
+    <a class="btn-dl sheet" id="sheetLink" href="#" target="_blank" style="display:none">打开 Google Sheets</a>
+  </div>
+
+  <!-- Raw scrape results -->
+  <div id="rawSection" style="display:none;margin-top:24px">
+
+    <!-- Header -->
+    <div class="results-header" style="margin-bottom:16px">
+      <h2 id="rawCountHeader">找到 0 条结果</h2>
+    </div>
+
+    <!-- Dedup banner (shown only when duplicates were skipped) -->
+    <div id="dedupBanner" style="display:none;margin-bottom:14px;padding:10px 16px;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:0.83rem;">
+      <span id="dedupNew" style="color:#34d399;font-weight:700"></span>
+      <span id="dedupSkipped" style="color:#fbbf24;font-weight:700"></span>
+    </div>
+
+    <!-- Results table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>公司名</th><th>地址</th><th>电话</th><th>邮箱</th>
+            <th>评分</th><th>评论数</th><th>官网</th>
+          </tr>
+        </thead>
+        <tbody id="rawBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Step A: Download -->
+    <div style="margin-top:20px;padding:18px 20px;background:rgba(30,41,59,0.85);border:1px solid var(--border);border-radius:12px">
+      <div style="font-size:0.78rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px">下载原始数据</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button onclick="exportRawCSV()"
+          style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.4);border-radius:8px;color:#93c5fd;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s"
+          onmouseover="this.style.background='rgba(37,99,235,0.25)'" onmouseout="this.style.background='rgba(37,99,235,0.15)'">
+          ⬇ 下载 CSV
+        </button>
+        <button id="btnRawDocx" onclick="downloadRawDOCX()"
+          style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.4);border-radius:8px;color:#93c5fd;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s"
+          onmouseover="this.style.background='rgba(37,99,235,0.25)'" onmouseout="this.style.background='rgba(37,99,235,0.15)'">
+          ⬇ 下载 Word
+        </button>
+      </div>
+    </div>
+
+    <!-- Step B: AI Pre-filter (user choice) -->
+    <div style="margin-top:12px;padding:18px 20px;background:rgba(30,41,59,0.85);border:1px solid var(--border);border-radius:12px">
+      <div style="font-size:0.78rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">下一步（可选）</div>
+      <div style="font-size:0.84rem;color:var(--sub);margin-bottom:14px">用 AI 快速筛掉明显不符合的公司，保留高质量线索后再进行深度分析</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button class="btn-start" id="btnAIFilter" onclick="startAIFilter()"
+          style="padding:11px 28px;font-size:0.92rem;flex-shrink:0">
+          🤖 AI 预筛选 <span id="btnAIFilterCost" style="font-size:0.8rem;opacity:0.8"></span>
+        </button>
+        <span style="font-size:0.8rem;color:var(--sub)">或</span>
+        <button id="btnManualSelect" onclick="startManualSelect()"
+          style="padding:11px 24px;font-size:0.88rem;font-weight:600;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--sub);cursor:pointer;font-family:inherit;transition:all 0.15s"
+          onmouseover="this.style.borderColor='#94a3b8';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--sub)'">
+          手动选择
+        </button>
+      </div>
+    </div>
+
+    <div id="aiFilterProgress" style="display:none;margin-top:12px">
+      <div class="progress-text" style="margin-bottom:8px"><span class="spinner"></span>AI 正在分析每家公司，请稍候...</div>
+      <div class="progress-track"><div class="progress-fill-indeterminate"></div></div>
+    </div>
+  </div>
+
+  <!-- Selection results (AI-filtered or manual) -->
+  <div id="preFilterSection" style="display:none;margin-top:24px">
+    <div class="results-header" style="margin-bottom:14px">
+      <h2 id="preFilterSectionTitle">预筛选结果</h2>
+      <span class="filter-count" id="preFilterCount"></span>
+    </div>
+
+    <div class="bulk-bar" id="bulkBarAI">
+      <button class="btn-ghost btn-sm" onclick="selectByLevel('priority')">⭐ 全选优先</button>
+      <button class="btn-ghost btn-sm" onclick="selectByLevel('recommend')">✅ 全选推荐</button>
+      <button class="btn-ghost btn-sm" onclick="deselectByLevel('skip')">☐ 取消跳过</button>
+      <button class="btn-ghost btn-sm" onclick="pfSelectNone()">取消全选</button>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+      <span style="font-size:0.78rem;color:var(--sub);margin-right:2px">快速筛选：</span>
+      <button id="pfFilterWebsite" class="btn-ghost btn-sm" onclick="togglePfFilter('website')" title="只显示有官网的公司">🌐 有官网</button>
+      <button id="pfFilterEmail"   class="btn-ghost btn-sm" onclick="togglePfFilter('email')"   title="只显示有邮箱的公司">✉️ 有邮箱</button>
+      <button id="pfFilterPhone"   class="btn-ghost btn-sm" onclick="togglePfFilter('phone')"   title="只显示有电话的公司">📞 有电话</button>
+      <button id="pfFilterRating"  class="btn-ghost btn-sm" onclick="togglePfFilter('rating')"  title="只显示评分≥4的公司">⭐ 评分≥4</button>
+      <button class="btn-ghost btn-sm" onclick="clearPfFilters()" style="color:var(--sub)">✕ 清除</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px"><input type="checkbox" id="pfCheckAll" onchange="toggleAllPf(this)"></th>
+            <th>公司名称</th>
+            <th>地址</th>
+            <th>评分</th>
+            <th>评论数</th>
+            <th id="pfColBadge">预筛标签</th>
+            <th id="pfColReason">原因</th>
+          </tr>
+        </thead>
+        <tbody id="preFilterBody"></tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:16px;padding:14px 18px;background:var(--card);border-radius:10px;border:1px solid var(--border)">
+      <div>
+        <span id="enrichSelCount" style="font-weight:700;font-size:0.95rem;color:var(--text)">已勾选 0 条</span>
+        <span id="enrichCostEst" style="color:var(--sub);font-size:0.84rem;margin-left:14px">预计深度分析费用：$0.00</span>
+      </div>
+      <button class="btn-start" id="btnEnrich" onclick="startEnrich()"
+        style="padding:10px 28px;font-size:0.92rem;opacity:0.45;cursor:not-allowed" disabled>
+        🤖 开始深度分析选中公司
+      </button>
+      <button id="btnEnrichCancel" onclick="cancelEnrich()"
+        style="display:none;padding:10px 20px;font-size:0.92rem;font-weight:600;background:#ef4444;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-left:10px">
+        ⏹ 停止分析
+      </button>
+    </div>
+
+    <div id="enrichProgress" style="display:none;margin-top:14px">
+      <div class="progress-text" id="enrichProgressText" style="margin-bottom:6px;font-size:0.85rem;color:var(--sub)"></div>
+      <div class="progress-track"><div class="progress-fill" id="enrichProgressFill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection" style="display:none">
+    <div class="results-header">
+      <h2>线索列表</h2>
+      <span class="filter-count" id="resultCount">暂无结果</span>
+    </div>
+    <!-- Bulk Instantly bar — appears when ≥1 row checked -->
+    <div id="instantlyBulkBar">
+      <span id="instantlyBulkCount" style="color:var(--sub)">已选 0 条</span>
+      <button id="btnBulkInstantly" onclick="bulkSendInstantly()"
+        style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:7px;font-size:0.81rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s">
+        📧 批量加入 Instantly
+      </button>
+      <span style="font-size:0.75rem;color:var(--sub)">仅发送有邮箱且未发送过的线索</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px"><input type="checkbox" id="resultCheckAll" onchange="toggleAllResults(this)" style="accent-color:var(--blue);width:15px;height:15px;cursor:pointer"></th>
+            <th>#</th>
+            <th>公司名称</th>
+            <th>地址</th>
+            <th>电话</th>
+            <th>邮箱</th>
+            <th>评分</th>
+            <th>意向分</th>
+            <th>匹配分</th>
+            <th>开发信主题</th>
+            <th>详情</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody">
+          <tr><td colspan="11" class="empty-state">暂无数据</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 邮件发送中心 -->
+  <div class="instantly-hub" id="instantlyHub">
+    <div class="hub-header" onclick="toggleInstantlyHub()">
+      <h3>📬 邮件发送中心
+        <span id="hubHeaderCampaignName" style="font-size:0.82rem;font-weight:400;color:var(--sub)">未选择 Campaign</span>
+        <span id="hubHeaderBadge"></span>
+      </h3>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="hub-btn ghost" id="hubRefreshBtn" onclick="event.stopPropagation();loadInstantlyData()" style="padding:4px 12px;font-size:0.74rem">↻ 刷新</button>
+        <span id="hubToggleIcon" style="font-size:0.82rem;color:var(--sub)">▾ 展开</span>
+      </div>
+    </div>
+    <div class="hub-body" id="hubBody" style="display:none">
+      <div class="hub-grid">
+
+        <!-- Card 1: Campaign selector -->
+        <div class="hub-card">
+          <div class="hub-card-title">Campaign 选择</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <select id="hubCampaignSelect" class="hub-select" onchange="onCampaignSelect(this.value)">
+              <option value="">— 选择 Campaign —</option>
+            </select>
+            <button class="hub-btn ghost" onclick="openCreateCampaignModal()" title="新建 Campaign" style="padding:6px 12px;flex-shrink:0">+</button>
+          </div>
+          <div id="hubCampaignDetail" style="font-size:0.78rem;color:var(--sub)">请先选择一个 Campaign</div>
+        </div>
+
+        <!-- Card 2: Email accounts -->
+        <div class="hub-card">
+          <div class="hub-card-title">发件邮箱（多选）</div>
+          <div id="hubAccountsList" style="max-height:170px;overflow-y:auto;margin-bottom:10px">
+            <div style="color:var(--sub);font-size:0.8rem">展开后自动加载…</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="hub-btn primary" onclick="syncAccountsToCampaign()" style="padding:5px 12px;font-size:0.77rem">同步到 Campaign</button>
+            <a href="https://app.instantly.ai/app/accounts" target="_blank" style="font-size:0.74rem;color:#93c5fd;text-decoration:none" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">在 Instantly 添加邮箱 →</a>
+          </div>
+        </div>
+
+        <!-- Card 3: Sequence timing -->
+        <div class="hub-card">
+          <div class="hub-card-title">发送序列间隔（天）</div>
+          <div class="seq-grid">
+            <div class="seq-input-wrap"><div class="seq-day-label">第1封</div><input class="seq-input" id="seqDelay0" type="number" min="0" max="999" value="0"></div>
+            <div class="seq-input-wrap"><div class="seq-day-label">第2封</div><input class="seq-input" id="seqDelay1" type="number" min="0" max="999" value="2"></div>
+            <div class="seq-input-wrap"><div class="seq-day-label">第3封</div><input class="seq-input" id="seqDelay2" type="number" min="0" max="999" value="4"></div>
+            <div class="seq-input-wrap"><div class="seq-day-label">第4封</div><input class="seq-input" id="seqDelay3" type="number" min="0" max="999" value="6"></div>
+            <div class="seq-input-wrap"><div class="seq-day-label">第5封</div><input class="seq-input" id="seqDelay4" type="number" min="0" max="999" value="9"></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+            <button class="hub-btn primary" onclick="saveSequenceDelays()" style="padding:5px 12px;font-size:0.77rem">保存时间设置</button>
+            <span id="seqSaveStatus" style="font-size:0.74rem;color:var(--sub)"></span>
+          </div>
+        </div>
+
+        <!-- Card 4: Campaign controls -->
+        <div class="hub-card">
+          <div class="hub-card-title">Campaign 控制</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <button class="hub-btn success" id="btnActivate" onclick="activateCampaign()" disabled>🚀 激活</button>
+            <button class="hub-btn danger"  id="btnPause"    onclick="pauseCampaign()"    disabled>⏸ 暂停</button>
+          </div>
+          <div id="hubCampaignStatus" style="font-size:0.78rem;color:var(--sub)">请先选择 Campaign</div>
+        </div>
+
+        <!-- Card 5: Analytics (full width) -->
+        <div class="hub-card" style="grid-column:1/-1">
+          <div class="hub-card-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>数据看板</span>
+            <span id="hubAnalyticsTime" style="font-size:0.68rem;color:var(--sub);text-transform:none;letter-spacing:0;font-weight:400"></span>
+          </div>
+          <div class="analytics-grid" id="hubAnalyticsGrid">
+            <div style="color:var(--sub);font-size:0.8rem;grid-column:1/-1">请先选择 Campaign</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin: Cost Overview (admin token only) -->
+  <div class="admin-section" id="adminCostPanel">
+    <div class="admin-header" onclick="toggleAdminPanel()">
+      <h3>⭐ 管理员 · 成本概览</h3>
+      <span style="font-size:0.82rem;color:var(--sub)" id="adminPanelIcon">▾ 展开</span>
+    </div>
+    <div class="admin-body" id="adminBody">
+      <div class="admin-cost-cards">
+        <div class="admin-cost-card">
+          <div class="acc-label">本月总成本</div>
+          <div class="acc-value" id="costMonthTotal">—</div>
+        </div>
+        <div class="admin-cost-card">
+          <div class="acc-label">累计总成本</div>
+          <div class="acc-value" id="costGrandTotal">—</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>搜索关键词</th>
+              <th>地区</th>
+              <th style="text-align:center">条数</th>
+              <th style="text-align:right">Apify费</th>
+              <th style="text-align:right">AI费</th>
+              <th style="text-align:right">合计</th>
+            </tr>
+          </thead>
+          <tbody id="costRows">
+            <tr><td colspan="7" class="empty-state">正在加载…</td></tr>
+          </tbody>
+          <tfoot id="costFooter" style="display:none">
+            <tr>
+              <td colspan="4">累计总成本</td>
+              <td style="text-align:right" id="footApify">—</td>
+              <td style="text-align:right" id="footAi">—</td>
+              <td style="text-align:right" id="footTotal">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- Email drawer -->
+<div id="drawerOverlay" onclick="closeEmailDrawer()"></div>
+<div id="emailDrawer">
+  <div class="drawer-header">
+    <div id="drawerCompanyName" class="drawer-company"></div>
+    <button id="drawerSendBtn" class="btn-send-instantly-drawer" onclick="sendSequenceToInstantly()" title="Add to Instantly lead list">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Add to lead list
+    </button>
+    <button class="drawer-close" onclick="closeEmailDrawer()">✕</button>
+  </div>
+  <div class="drawer-tabs-bar" id="drawerTabsBar"></div>
+  <div class="drawer-scroll" id="drawerScroll"></div>
+</div>
+
+<!-- Create Campaign Modal -->
+<div id="createCampaignModal" onclick="if(event.target===this)closeCreateCampaignModal()">
+  <div class="hub-modal-box">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">+ 新建 Campaign</h3>
+    <label style="display:block;font-size:0.71rem;font-weight:700;color:var(--sub);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em">Campaign 名称</label>
+    <input type="text" id="newCampaignName" placeholder="例：AU-Builders-2025-Q2" style="margin-bottom:16px"
+      onkeydown="if(event.key==='Enter')createCampaign()">
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="hub-btn ghost" onclick="closeCreateCampaignModal()">取消</button>
+      <button class="hub-btn primary" onclick="createCampaign()">创建</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Static data ───────────────────────────────────────────────────────────────
+const CITY_OPTIONS = {
+  0: ['Sydney Australia', 'Melbourne Australia', 'Brisbane Australia', 'Perth Australia'],
+  1: ['New York USA', 'Los Angeles USA', 'Houston USA', 'Chicago USA'],
+  2: ['London UK', 'Manchester UK', 'Birmingham UK'],
+  3: ['Toronto Canada', 'Vancouver Canada', 'Calgary Canada'],
+  4: ['Berlin Germany', 'Munich Germany', 'Hamburg Germany'],
+  5: ['Dubai UAE', 'Abu Dhabi UAE'],
+  6: ['Singapore'],
+  7: ['Tokyo Japan', 'Osaka Japan'],
+};
+
+const COUNTRIES = [
+  { flag:'🇦🇺', zh:'澳大利亚', en:'Australia' },
+  { flag:'🇺🇸', zh:'美国',     en:'United States' },
+  { flag:'🇬🇧', zh:'英国',     en:'United Kingdom' },
+  { flag:'🇨🇦', zh:'加拿大',   en:'Canada' },
+  { flag:'🇩🇪', zh:'德国',     en:'Germany' },
+  { flag:'🇦🇪', zh:'阿联酋',   en:'UAE' },
+  { flag:'🇸🇬', zh:'新加坡',   en:'Singapore' },
+  { flag:'🇯🇵', zh:'日本',     en:'Japan' },
+];
+const CUSTOMER_TYPES = [
+  { icon:'🔨', zh:'装修承包商',   en:'renovation contractor',      lucide:'hammer' },
+  { icon:'🎨', zh:'室内设计师',   en:'interior designer',           lucide:'paintbrush' },
+  { icon:'🏢', zh:'房产开发商',   en:'property developer',          lucide:'building-2' },
+  { icon:'🏪', zh:'建材经销商',   en:'building materials supplier', lucide:'store' },
+  { icon:'🏗', zh:'工程承包商',   en:'construction contractor',     lucide:'settings-2' },
+  { icon:'🪑', zh:'家具制造商',   en:'furniture manufacturer',      lucide:'armchair' },
+  { icon:'🏨', zh:'酒店装修采购', en:'hotel renovation',            lucide:'bed-double' },
+  { icon:'🛒', zh:'超市建材采购', en:'hardware store',              lucide:'shopping-cart' },
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const selectedCountries = new Set();
+const selectedTypes     = new Set();
+let generatedKeywords     = []; // { query, location, label, selected }
+let _selectedDataSource   = 'google_maps';
+let currentStep           = 1;
+let _lastResults        = [];
+let _allLeads           = [];
+let _preFilterResults = [];
+let _currentSearchId  = null;
+let _showAll            = false;
+let _rawResults         = [];   // raw Apify companies before any filter
+let _pfMode             = null; // 'ai' | 'manual'
+let _pTimers            = [];   // progress animation timer handles
+
+// ── Init cards ────────────────────────────────────────────────────────────────
+// Country cards are hardcoded in HTML (flag emoji requires static HTML on Windows)
+document.getElementById('typeGrid').innerHTML = CUSTOMER_TYPES.map((t,i) =>
+  `<div class="select-card type-card" id="ct-${i}" onclick="toggleType(${i})">
+     <div class="type-icon-wrap"><i data-lucide="${t.lucide}"></i></div>
+     <div class="card-label">${t.zh}</div>
+   </div>`).join('');
+lucide.createIcons();
+
+// ── Selection toggles ─────────────────────────────────────────────────────────
+function toggleCountry(i) {
+  selectedCountries.has(i) ? selectedCountries.delete(i) : selectedCountries.add(i);
+  document.getElementById(`cc-${i}`).classList.toggle('selected', selectedCountries.has(i));
+  const n = selectedCountries.size;
+  document.getElementById('countrySelHint').textContent = n ? `已选 ${n} 个国家` : '请至少选择一个国家';
+}
+function toggleType(i) {
+  selectedTypes.has(i) ? selectedTypes.delete(i) : selectedTypes.add(i);
+  document.getElementById(`ct-${i}`).classList.toggle('selected', selectedTypes.has(i));
+  const n = selectedTypes.size;
+  document.getElementById('typeSelHint').textContent = n ? `已选 ${n} 个类型` : '请至少选择一个类型';
+}
+
+// ── Step navigation ───────────────────────────────────────────────────────────
+function goToStep(n) {
+  if (n > 1 && selectedCountries.size === 0) { alert('请至少选择一个目标国家'); goToStep(1); return; }
+  if (n > 2 && selectedTypes.size === 0)     { alert('请至少选择一种客户类型'); goToStep(2); return; }
+  document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById(`wizard-step-${n}`).classList.remove('hidden');
+  currentStep = n;
+  updateStepProgress();
+  if (n === 3) { buildKeywords(); restoreIcp(); }
+  if (n === 4) {
+    const icpText = document.getElementById('icpInput').value.trim();
+    if (icpText && isIcpVague(icpText)) {
+      document.getElementById('icpWarning').style.display = 'block';
+      document.getElementById('icpGood').style.display = 'none';
+      document.getElementById('icpInput').focus();
+      document.getElementById('icpInput').style.borderColor = '#ef4444';
+      currentStep = 3;
+      document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('wizard-step-3').classList.remove('hidden');
+      updateStepProgress();
+      return;
+    }
+    if (!updateSelectedCombo()) return;
+    buildRunSummary();
+  }
+}
+function nextStep(n) { goToStep(n); }
+
+function updateStepProgress() {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`snum-${i}`).className =
+      'step-num' + (i === currentStep ? ' active' : i < currentStep ? ' done' : '');
+    document.getElementById(`slbl-${i}`).className =
+      'step-label' + (i === currentStep ? ' active' : '');
+    if (i < 4) document.getElementById(`scon-${i}`).className =
+      'step-connector' + (i < currentStep ? ' done' : '');
+  }
+}
+
+// ── Keyword / location tag cards ─────────────────────────────────────────────
+const keywordMap = {
+  '装修承包商': ['renovation contractor', 'home renovation company', 'residential builder', 'custom home builder', 'project home builder'],
+  '室内设计师': ['interior designer', 'kitchen bathroom designer', 'fit-out contractor'],
+  '房产开发商': ['property developer', 'townhouse developer', 'duplex builder'],
+  '建材经销商': ['kitchen showroom', 'bathroom showroom', 'tile and bathroom retailer'],
+  '工程承包商': ['commercial fit-out contractor', 'commercial builder', 'general contractor'],
+  '家具制造商': ['kitchen cabinet retailer', 'custom cabinet maker', 'bathroom retailer'],
+  '酒店装修采购': ['hotel renovation contractor', 'hospitality fit-out company'],
+  '超市建材采购': ['plumbing supplies store', 'hardware store', 'home improvement store'],
+};
+
+const PRIORITY_KEYWORDS = new Set([
+  'renovation contractor',
+  'residential builder',
+  'kitchen showroom',
+]);
+
+function buildKeywords() { /* no-op: inputs are static HTML */ }
+
+function selectSource(src) {
+  _selectedDataSource = src;
+  document.querySelectorAll('.src-btn').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`src-${src}`).classList.add('selected');
+}
+
+function updateSelectedCombo() {
+  const query    = (document.getElementById('kwInput')?.value  || '').trim();
+  const location = (document.getElementById('locInput')?.value || '').trim();
+  if (!query) {
+    alert('请输入搜索关键词');
+    goToStep(3);
+    return false;
+  }
+  const label = [query, location].filter(Boolean).join(' · ');
+  generatedKeywords = [{ query, location, label, selected: true }];
+  return true;
+}
+
+// ── Run summary (step 4) ──────────────────────────────────────────────────────
+function buildRunSummary() {
+  const sel  = generatedKeywords.filter(k => k.selected);
+  const maxR = parseInt(document.getElementById('maxResults').value) || 10;
+  document.getElementById('runSummary').innerHTML =
+    `<div class="run-notice">将依次搜索 <strong>${sel.length}</strong> 个关键词，每个最多 <strong>${maxR}</strong> 条，共约 <strong>${sel.length * maxR}</strong> 条线索</div>
+     <div class="combo-list">${sel.map((k, i) =>
+       `<div class="run-combo">
+          <div class="combo-dot pending" id="combo-dot-${i}">○</div>
+          <span>${k.label}</span>
+        </div>`).join('')}</div>`;
+}
+
+function updateFieldCost() {
+  const hasEmail = document.getElementById('optEmail')?.checked;
+  const cost = hasEmail ? '~$0.006/条' : '~$0.004/条';
+  const el = document.getElementById('fieldCostEst');
+  if (el) el.textContent = `预计费用：${cost}`;
+}
+
+// ── Depth preset cards ───────────────────────────────────────────────────────
+function selectDepth(value, el) {
+  document.querySelectorAll('.dseg-btn').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('maxResults').value = value;
+  localStorage.setItem('leadgen_maxResults', value);
+}
+
+function selectDepthCustom(el) {
+  document.querySelectorAll('.dseg-btn').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const input = document.getElementById('customDepthInput');
+  const val = parseInt(input.value);
+  if (val >= 1 && val <= 500) {
+    document.getElementById('maxResults').value = val;
+    localStorage.setItem('leadgen_maxResults', val);
+  }
+  input.focus();
+}
+
+function onCustomDepthInput(input) {
+  const val = parseInt(input.value);
+  const meta = document.getElementById('customDepthMeta');
+  if (val >= 1 && val <= 500) {
+    const mins = Math.round(val * 0.2);
+    const cost = (val * 0.006).toFixed(2);
+    meta.textContent = `约${mins}分钟 · ~$${cost}`;
+    document.getElementById('maxResults').value = val;
+    localStorage.setItem('leadgen_maxResults', val);
+    document.querySelectorAll('.dseg-btn').forEach(c => c.classList.remove('selected'));
+    input.closest('.dseg-btn').classList.add('selected');
+  } else {
+    meta.textContent = '请输入 1-500';
+  }
+}
+
+// ── Token & login ─────────────────────────────────────────────────────────────
+function onTokenInput() {
+  localStorage.setItem('leadgen_accessToken', document.getElementById('accessToken').value);
+  updateLoginStatus();
+  checkAdminAndShow();
+}
+function updateLoginStatus() {
+  const token = getStoredToken();
+  document.getElementById('loginDot').className = 'login-dot' + (token ? '' : ' offline');
+  document.getElementById('loginStatusText').textContent = token ? '已登录' : '未登录';
+}
+function getStoredToken() {
+  return localStorage.getItem('leadgen_accessToken') || document.getElementById('accessToken').value.trim();
+}
+
+// ── Advanced toggle ───────────────────────────────────────────────────────────
+function toggleAdvanced() {
+  const open = document.getElementById('advancedBody').classList.toggle('open');
+  document.getElementById('advIcon').textContent = open ? '▾' : '▸';
+}
+
+// ── Status bar ────────────────────────────────────────────────────────────────
+function setStatus(msg, type = 'info') {
+  const bar = document.getElementById('statusBar');
+  bar.style.display = 'block';
+  bar.className = type;
+  bar.innerHTML = type === 'info' ? `<span class="spinner"></span>${msg}` : msg;
+}
+
+// ── ICP input & vagueness check ───────────────────────────────────────────────
+function onIcpInput() {
+  const text = document.getElementById('icpInput').value.trim();
+  localStorage.setItem('leadgen_icp', text);
+  const warn = document.getElementById('icpWarning');
+  const good = document.getElementById('icpGood');
+  warn.style.display = 'none';
+  good.style.display = 'none';
+  if (!text) return;
+  if (isIcpVague(text)) { warn.style.display = 'block'; }
+  else                  { good.style.display = 'block'; }
+}
+function isIcpVague(text) {
+  if (text.trim().length < 30) return true; // character count — works for Chinese
+  const hasSize    = /员工|规模|\d+人|中型|大型|小型|年营业|万澳|百万/.test(text);
+  const hasProject = /项目|装修|建筑|工程|住宅|商业|工厂|酒店|改建|新建/.test(text);
+  const hasBudget  = /预算|采购|万|金额|每年|年均|订单/.test(text);
+  const hasDM      = /老板|决策|采购|经理|负责人|业主/.test(text);
+  return [hasSize, hasProject, hasBudget, hasDM].filter(Boolean).length < 2;
+}
+
+// ── Badges ────────────────────────────────────────────────────────────────────
+function scoreBadge(score) {
+  if (!score && score !== 0) return '—';
+  const cls = score >= 7 ? 'high' : score >= 4 ? 'mid' : 'low';
+  return `<span class="score ${cls}">${score}/10</span>`;
+}
+function icpBadge(score) {
+  if (!score && score !== 0) return '—';
+  if (score >= 7) return `<span class="score high">🟢 ${score}/10</span>`;
+  if (score >= 5) return `<span class="score mid">🟡 ${score}/10</span>`;
+  return `<span class="score low">🔴 ${score}/10</span>`;
+}
+function statusBadge(s) {
+  if (!s) return '—';
+  if (s === 'enriched')          return `<span class="status-badge status-sent">✓ 已分析</span>`;
+  if (s === 'sent')              return `<span class="status-badge status-sent">✓ 已发送</span>`;
+  if (s.startsWith('filtered'))  return `<span class="status-badge status-filtered">⊘ 已过滤</span>`;
+  if (s.startsWith('skipped'))   return `<span class="status-badge status-skipped">— 已跳过</span>`;
+  return `<span class="status-badge status-error">✗ 错误</span>`;
+}
+
+// ── Email detail helpers ──────────────────────────────────────────────────────
+function toggleEmails(idx) {
+  const row = document.getElementById(`detail-${idx}`);
+  const btn = document.getElementById(`toggle-${idx}`);
+  const open = row.classList.toggle('open');
+  btn.textContent = open ? '▾ 收起' : '▸ 详情';
+}
+function switchTab(idx, n) {
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`ep-${idx}-${i}`)?.classList.remove('active');
+    document.getElementById(`et-${idx}-${i}`)?.classList.remove('active');
+  }
+  document.getElementById(`ep-${idx}-${n}`).classList.add('active');
+  document.getElementById(`et-${idx}-${n}`).classList.add('active');
+}
+function copyText(idx, n) {
+  const subj = document.getElementById(`es-${idx}-${n}`)?.textContent || '';
+  const body = document.getElementById(`eb-${idx}-${n}`)?.textContent || '';
+  navigator.clipboard.writeText(`Subject: ${subj}\n\n${body}`).then(() => {
+    const btn = document.getElementById(`ecopy-${idx}-${n}`);
+    const orig = btn.textContent;
+    btn.textContent = '已复制！';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+// ── Instantly sent-state (persisted in localStorage) ─────────────────────────
+const _INSTANTLY_SENT_KEY = 'leadgen_instantly_sent';
+function _isSentLS(key) {
+  try { return JSON.parse(localStorage.getItem(_INSTANTLY_SENT_KEY) || '[]').includes(key); }
+  catch { return false; }
+}
+function _markSentLS(key) {
+  try {
+    const arr = JSON.parse(localStorage.getItem(_INSTANTLY_SENT_KEY) || '[]');
+    if (!arr.includes(key)) { arr.push(key); localStorage.setItem(_INSTANTLY_SENT_KEY, JSON.stringify(arr)); }
+  } catch {}
+}
+function getLeadKey(lead) { return String(lead.dbId || lead.email || lead.companyName || ''); }
+
+// ── Render results ────────────────────────────────────────────────────────────
+function renderResults(leads) {
+  _allLeads = leads || [];
+  document.getElementById('resultsSection').style.display = 'block';
+  const tbody = document.getElementById('resultsBody');
+  const count = document.getElementById('resultCount');
+
+  const displayItems = _allLeads
+    .map((lead, origIdx) => ({ lead, origIdx }))
+    .filter(({ lead }) =>
+      !lead.status?.startsWith('filtered') &&
+      Number(lead.icpScore || 0) >= 5 &&
+      Number(lead.intentScore || 0) >= 5
+    );
+
+  count.textContent = `找到 ${displayItems.length} 条合格线索`;
+
+  if (!displayItems.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state">暂无合格线索</td></tr>';
+    return;
+  }
+
+  const TAB_LABELS = ['第1封（开场）','跟进1','跟进2','跟进3','跟进4'];
+
+  tbody.innerHTML = displayItems.map(({ lead, origIdx }) => {
+    const websiteCell = lead.website ? (() => {
+      try { return `<a class="website-link" href="${lead.website}" target="_blank">${new URL(lead.website).hostname}</a>`; }
+      catch(e) { return lead.website; }
+    })() : '';
+
+    const tagsHtml = (lead.keepSignals||[]).length
+      ? `<div class="keep-tags">${lead.keepSignals.map(s=>`<span class="keep-tag">${s}</span>`).join('')}</div>` : '';
+
+    const socialHtml = (() => {
+      const links = [];
+      if (lead.facebook)  links.push(`<a class="social-link fb" href="${lead.facebook}"  target="_blank">f</a>`);
+      if (lead.instagram) links.push(`<a class="social-link ig" href="${lead.instagram}" target="_blank">ig</a>`);
+      if (lead.linkedin)  links.push(`<a class="social-link li" href="${lead.linkedin}"  target="_blank">in</a>`);
+      return links.length ? `<div class="social-links">${links.join('')}</div>` : '—';
+    })();
+
+    const icpReasoningHtml = lead.icpReasoning
+      ? `<div class="collapsible-toggle" onclick="toggleAnalysis('icp-${origIdx}')">
+           <span class="email-field-label" style="margin-bottom:0">ICP匹配分析 ${icpBadge(lead.icpScore)}</span>
+           <span class="collapse-icon" id="icp-${origIdx}-icon">▸ 展开</span>
+         </div>
+         <div class="collapsible-body" id="icp-${origIdx}" style="display:none">
+           <div class="analysis-box" style="margin-top:6px">${lead.icpReasoning}</div>
+         </div>` : '';
+
+    const reasoningHtml = lead.intentReasoning
+      ? `<div class="collapsible-toggle" onclick="toggleAnalysis('reasoning-${origIdx}')">
+           <span class="email-field-label" style="margin-bottom:0">意向分析</span>
+           <span class="collapse-icon" id="reasoning-${origIdx}-icon">▸ 展开</span>
+         </div>
+         <div class="collapsible-body" id="reasoning-${origIdx}" style="display:none">
+           <div class="analysis-box" style="margin-top:6px">${lead.intentReasoning}</div>
+         </div>` : '';
+
+    const hasEmails = lead.status === 'enriched' || !!(lead.EMAIL_1_SUBJECT || lead.EMAIL_1_BODY);
+
+    const tabsHtml = [1,2,3,4,5].map(n =>
+      `<button class="tab-btn${n===1?' active':''}" id="et-${origIdx}-${n}" onclick="switchTab(${origIdx},${n})">${TAB_LABELS[n-1]}</button>`
+    ).join('');
+
+    const panelsHtml = [1,2,3,4,5].map(n => {
+      const subj = lead[`EMAIL_${n}_SUBJECT`]||'';
+      const body = lead[`EMAIL_${n}_BODY`]||'';
+      const copyBtn = subj||body
+        ? `<button class="copy-btn" id="ecopy-${origIdx}-${n}" onclick="copyText(${origIdx},${n})" style="margin-top:0;padding:3px 10px;font-size:0.72rem">📋 复制</button>`
+        : '';
+      return `<div class="email-panel${n===1?' active':''}" id="ep-${origIdx}-${n}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span class="email-field-label" style="margin-bottom:0">主题</span>${copyBtn}
+        </div>
+        <div class="email-subject-box" id="es-${origIdx}-${n}">${subj||'—'}</div>
+        <div class="email-field-label" style="margin-top:10px">正文</div>
+        <div class="email-body-box" id="eb-${origIdx}-${n}">${body||'—'}</div>
+      </div>`;
+    }).join('');
+
+    const emailCell = lead.email
+      ? `<a class="website-link" href="mailto:${lead.email}" style="max-width:160px">${lead.email}</a>` : '—';
+
+    const hasDetail = hasEmails || lead.intentReasoning || lead.icpReasoning;
+
+    const detailBtn     = hasDetail ? `<button class="btn-sm" id="toggle-${origIdx}" onclick="toggleEmails(${origIdx})">▸ 详情</button>` : '';
+    const viewEmailsBtn = hasEmails ? `<button class="btn-sm btn-view-emails" onclick="openEmailDrawer(${origIdx})">查看开发信</button>` : '';
+    const leadKey = getLeadKey(lead);
+    const alreadySent = _isSentLS(leadKey);
+    const noCampaign  = !getSelectedCampaignId();
+    const instantlyBtn = lead.email
+      ? `<button class="btn-instantly${alreadySent ? ' sent' : ''}" id="ibtn-${origIdx}"
+          ${alreadySent ? 'disabled title="已加入 Instantly"'
+            : noCampaign ? 'disabled title="请先在下方选择 Campaign"'
+            : 'title="加入 Instantly 序列"'}
+          onclick="sendLeadToInstantly(${origIdx})">${alreadySent ? '✓ 已加入' : '📧 Instantly'}</button>`
+      : '';
+    const actionCell    = [detailBtn, viewEmailsBtn, instantlyBtn].filter(Boolean).join(' ') || '—';
+
+    return `<tr id="row-${origIdx}">
+      <td><input type="checkbox" class="result-check" data-idx="${origIdx}" onchange="updateBulkBar()" style="accent-color:var(--blue);width:15px;height:15px;cursor:pointer"></td>
+      <td style="color:var(--sub);font-size:0.76rem">${origIdx+1}</td>
+      <td><div class="company-name">${lead.companyName||'—'}</div>${websiteCell}${tagsHtml}${sourceBadgeHtml(lead.source)}</td>
+      <td style="white-space:nowrap;font-size:0.78rem">${[lead.city,lead.state].filter(Boolean).join(', ')||'—'}</td>
+      <td style="white-space:nowrap;font-size:0.78rem">${lead.phone||'—'}</td>
+      <td>${emailCell}</td>
+      <td style="white-space:nowrap;font-size:0.78rem">${lead.googleRating?`⭐ ${lead.googleRating}`:'—'}</td>
+      <td>${scoreBadge(lead.intentScore)}</td>
+      <td>${icpBadge(lead.icpScore)}</td>
+      <td style="max-width:180px;font-size:0.8rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${lead.EMAIL_1_SUBJECT||'—'}</td>
+      <td style="white-space:nowrap">${actionCell}</td>
+    </tr>
+    <tr class="email-detail-row" id="detail-${origIdx}">
+      <td class="email-detail-cell" colspan="11">
+        ${icpReasoningHtml}${reasoningHtml}
+        <div style="${(icpReasoningHtml||reasoningHtml)?'margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9':''}">
+          <div style="font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:10px">📧 开发信序列</div>
+          ${hasEmails ? `<div class="email-tabs">${tabsHtml}</div>${panelsHtml}` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Analysis helpers ──────────────────────────────────────────────────────────
+function toggleAnalysis(id) {
+  const body = document.getElementById(id);
+  const icon = document.getElementById(id + '-icon');
+  if (!body) return;
+  const willOpen = body.style.display !== 'block';
+  body.style.display = willOpen ? 'block' : 'none';
+  if (icon) icon.textContent = willOpen ? '▾ 收起' : '▸ 展开';
+}
+
+// ── Download bar ──────────────────────────────────────────────────────────────
+function showDownloadBar(results, sheetUrl) {
+  _lastResults = results || [];
+  document.getElementById('downloadBar').style.display = 'flex';
+  const link = document.getElementById('sheetLink');
+  if (sheetUrl) { link.href = sheetUrl; link.style.display = 'inline-flex'; }
+  else { link.style.display = 'none'; }
+}
+
+function downloadCSV() {
+  if (!_lastResults.length) return;
+  const headers = [
+    '公司名称','网站','电话','邮箱','Facebook','Instagram','LinkedIn','负责人',
+    '地址','行业','谷歌评分','评论数','营业时间','意向评分','意向分析',
+    '开发信主题','开发信正文','跟进1主题','跟进1正文','跟进2主题','跟进2正文',
+    '跟进3主题','跟进3正文','跟进4主题','跟进4正文','状态','添加日期'
+  ];
+  const esc = v => { const s=String(v??'').replace(/"/g,'""'); return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s}"`:s; };
+  const rows = _lastResults.map(l => [
+    l.companyName, l.website, l.phone, l.email,
+    l.facebook, l.instagram, l.linkedin, l.ownerName,
+    l.address, l.industry, l.googleRating, l.reviewCount, l.businessHours,
+    l.intentScore, l.intentReasoning,
+    l.EMAIL_1_SUBJECT, l.EMAIL_1_BODY,
+    l.EMAIL_2_SUBJECT, l.EMAIL_2_BODY,
+    l.EMAIL_3_SUBJECT, l.EMAIL_3_BODY,
+    l.EMAIL_4_SUBJECT, l.EMAIL_4_BODY,
+    l.EMAIL_5_SUBJECT, l.EMAIL_5_BODY,
+    l.status, l.dateAdded,
+  ].map(esc).join(','));
+  const csv  = [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {href:url, download:`线索-${new Date().toISOString().split('T')[0]}.csv`});
+  a.click(); URL.revokeObjectURL(url);
+}
+
+async function downloadDOCX() {
+  if (!_lastResults.length) return;
+  const btn = document.getElementById('btnDocx');
+  btn.disabled = true; btn.textContent = '⏳ 生成中…';
+  try {
+    const res = await fetch('/api/export/docx', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${getStoredToken()}` },
+      body: JSON.stringify({ results: _lastResults }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {href:url, download:`线索-${new Date().toISOString().split('T')[0]}.docx`});
+    a.click(); URL.revokeObjectURL(url);
+  } catch(err) {
+    alert('Word 导出失败：' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '⬇ 下载 Word';
+  }
+}
+
+// ── Step 1: Generate (Apify + Haiku pre-filter) ───────────────────────────────
+// ── Phase 1: Raw scrape ───────────────────────────────────────────────────────
+async function startScrapeRaw() {
+  const token = getStoredToken();
+  if (!token) { alert('请先在第三步输入访问令牌'); goToStep(3); return; }
+
+  const selectedCombos = generatedKeywords.filter(k => k.selected);
+  if (!selectedCombos.length) { alert('请先生成并选择搜索关键词'); return; }
+
+  const maxResults = parseInt(document.getElementById('maxResults').value) || 10;
+  const dataOptions = {
+    includeWebsite: document.getElementById('optWebsite').checked,
+    includePhone:   document.getElementById('optPhone').checked,
+    includeRating:  document.getElementById('optRating').checked,
+    includeEmail:   document.getElementById('optEmail').checked,
+  };
+
+  const btn = document.getElementById('btnStart');
+  btn.disabled = true;
+  btn.style.display = '';
+  btn.textContent = '抓取中...';
+  _rawResults = [];
+  _currentSearchId = null;
+  _pfMode = null;
+  let _totalRaw = 0, _totalSkipped = 0;
+  document.getElementById('rawSection').style.display = 'none';
+  document.getElementById('preFilterSection').style.display = 'none';
+  document.getElementById('dedupBanner').style.display = 'none';
+
+  for (let ci = 0; ci < selectedCombos.length; ci++) {
+    const combo = selectedCombos[ci];
+    const dot = document.getElementById(`combo-dot-${ci}`);
+    if (dot) { dot.className = 'combo-dot running'; dot.textContent = '…'; }
+    setStatus(`正在抓取 ${ci + 1}/${selectedCombos.length}：${combo.label}`);
+
+    try {
+      const res = await fetch('/api/scrape-raw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ searchQuery: combo.query, location: combo.location, maxResults, dataOptions, dataSource: _selectedDataSource }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+
+      if (!_currentSearchId) _currentSearchId = data.searchId;
+      _rawResults = _rawResults.concat(data.companies || []);
+      _totalRaw     += data.totalRaw     ?? (data.companies?.length ?? 0);
+      _totalSkipped += data.skippedCount ?? 0;
+      if (dot) { dot.className = 'combo-dot done'; dot.textContent = '✓'; }
+    } catch (err) {
+      if (dot) { dot.className = 'combo-dot error'; dot.textContent = '✗'; }
+      setStatus(`抓取失败：${combo.label} — ${err.message}`, 'error');
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🔍 开始抓取';
+
+  if (_rawResults.length) {
+    _pTimers.forEach(clearTimeout); _pTimers = [];
+    const wrap = document.getElementById('searchProgress');
+    if (wrap) wrap.style.display = 'none';
+    btn.style.display = 'none';
+    renderRawResults(_rawResults);
+    const aiCost = (_rawResults.length * 0.003).toFixed(2);
+    const costSpan = document.getElementById('btnAIFilterCost');
+    if (costSpan) costSpan.textContent = `约 $${aiCost}`;
+    document.getElementById('rawSection').style.display = 'block';
+
+    // Show dedup banner if any duplicates were skipped
+    if (_totalSkipped > 0) {
+      document.getElementById('dedupNew').textContent     = `✅ 找到 ${_rawResults.length} 条新公司`;
+      document.getElementById('dedupSkipped').textContent = `⏭ 跳过 ${_totalSkipped} 条（已在历史记录中）`;
+      document.getElementById('dedupBanner').style.display = 'flex';
+    }
+
+    const dedupNote = _totalSkipped > 0 ? `（已自动跳过 ${_totalSkipped} 条重复）` : '';
+    setStatus(`✅ 抓取完成，共找到 ${_rawResults.length} 条新公司${dedupNote}。请选择下一步操作。`, 'success');
+    setTimeout(() => document.getElementById('rawSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  } else {
+    _pTimers.forEach(clearTimeout); _pTimers = [];
+    const wrap = document.getElementById('searchProgress');
+    if (wrap) wrap.style.display = 'none';
+    if (_totalSkipped > 0) {
+      // Apify DID return results but all were deduped — show the banner and a clear message
+      document.getElementById('dedupNew').textContent     = `✅ 找到 0 条新公司`;
+      document.getElementById('dedupSkipped').textContent = `⏭ 跳过 ${_totalSkipped} 条（已在历史记录中）`;
+      document.getElementById('dedupBanner').style.display = 'flex';
+      setStatus(`ℹ️ Apify 抓到 ${_totalRaw} 条，但全部已在历史记录中（已跳过 ${_totalSkipped} 条）。请换关键词或地区重新搜索。`, 'info');
+    } else {
+      setStatus('未找到任何公司，请调整搜索关键词或地区', 'error');
+    }
+  }
+}
+
+function renderRawResults(companies) {
+  document.getElementById('rawCountHeader').textContent = `找到 ${companies.length} 条结果`;
+  document.getElementById('rawBody').innerHTML = companies.map(c => {
+    let websiteCell = '—';
+    if (c.website) {
+      try { websiteCell = `<a class="website-link" href="${c.website}" target="_blank">${new URL(c.website).hostname}</a>`; }
+      catch { websiteCell = c.website; }
+    }
+    const addr = c.address || [c.city, c.state].filter(Boolean).join(', ') || '—';
+    return `<tr>
+      <td><div class="company-name">${c.companyName || '—'}</div>${sourceBadgeHtml(c.source)}</td>
+      <td style="font-size:0.78rem;color:var(--sub)">${addr}</td>
+      <td style="font-size:0.78rem">${c.phone || '—'}</td>
+      <td style="font-size:0.78rem">${c.email ? `<a href="mailto:${c.email}" style="color:var(--blue)">${c.email}</a>` : '—'}</td>
+      <td style="white-space:nowrap;font-size:0.82rem">${c.googleRating ? `⭐ ${c.googleRating}` : '—'}</td>
+      <td style="text-align:center;font-size:0.82rem">${c.reviewCount ?? 0}</td>
+      <td>${websiteCell}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportRawCSV() {
+  if (!_rawResults.length) return;
+  const esc = v => { const s = String(v ?? '').replace(/"/g,'""'); return (s.includes(',')||s.includes('"')||s.includes('\n')) ? `"${s}"` : s; };
+  const headers = ['公司名称','地址','电话','邮箱','评分','评论数','官网'];
+  const rows = _rawResults.map(c => [
+    c.companyName,
+    c.address || [c.city, c.state].filter(Boolean).join(', '),
+    c.phone, c.email, c.googleRating, c.reviewCount, c.website,
+  ].map(esc).join(','));
+  const csv  = '﻿' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  Object.assign(document.createElement('a'), { href: url, download: `原始数据-${new Date().toISOString().split('T')[0]}.csv` }).click();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadRawDOCX() {
+  if (!_rawResults.length) return;
+  const btn = document.getElementById('btnRawDocx');
+  if (btn) { btn.disabled = true; btn.textContent = '生成中…'; }
+  try {
+    const res = await fetch('/api/export/docx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getStoredToken()}` },
+      body: JSON.stringify({ results: _rawResults.map(c => ({
+        companyName: c.companyName, website: c.website, phone: c.phone,
+        email: c.email || '', city: c.city || c.address || '', googleRating: c.googleRating,
+        intentScore: '', status: 'raw',
+      })) }),
+    });
+    if (!res.ok) throw new Error('export failed');
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    Object.assign(document.createElement('a'), { href: url, download: `原始数据-${new Date().toISOString().split('T')[0]}.docx` }).click();
+    URL.revokeObjectURL(url);
+  } catch (e) { alert('Word 导出失败：' + e.message); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '⬇ 下载 Word'; } }
+}
+
+// ── Phase 2A: AI pre-filter ───────────────────────────────────────────────────
+async function startAIFilter() {
+  const token = getStoredToken();
+  if (!_rawResults.length) return;
+  _pfMode = 'ai';
+
+  const btnAI    = document.getElementById('btnAIFilter');
+  const btnMan   = document.getElementById('btnManualSelect');
+  const prog     = document.getElementById('aiFilterProgress');
+  const progText = prog.querySelector('.progress-text');
+  btnAI.disabled = true;  btnAI.classList.add('btn-analyzing');  btnAI.innerHTML = 'AI 分析中...';
+  btnMan.disabled = true;
+  prog.style.display = 'block';
+
+  try {
+    const res = await fetch('/api/prefilter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ companies: _rawResults, searchId: _currentSearchId }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let doneData = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const evt = JSON.parse(line.slice(6));
+        if (evt.type === 'heartbeat') {
+          if (progText) progText.innerHTML = `<span class="spinner"></span>AI 正在分析，已等待 ${evt.elapsed}s...`;
+          btnAI.innerHTML = `AI 分析中 &nbsp;<strong>${evt.elapsed}s</strong>`;
+        } else if (evt.type === 'progress') {
+          if (progText) progText.innerHTML = `<span class="spinner"></span>已分析 ${evt.done}/${evt.total} 家公司...`;
+          btnAI.innerHTML = `AI 分析中 &nbsp;<strong>${evt.done}/${evt.total}</strong>`;
+        } else if (evt.type === 'done') {
+          doneData = evt;
+        }
+      }
+    }
+
+    if (!doneData) throw new Error('未收到完成数据');
+    _preFilterResults = doneData.companies || [];
+    const visible = _preFilterResults.filter(c => c.level !== 'skip');
+    const skipped = _preFilterResults.length - visible.length;
+    showPreFilterSection('ai', visible);
+    setStatus(`✅ AI预筛选完成！筛掉 ${skipped} 家不相关公司，剩余 ${visible.length} 家值得联系。请勾选后开始深度分析。`, 'success');
+  } catch (err) {
+    setStatus(`AI预筛选失败：${err.message}`, 'error');
+    _pfMode = null;
+  } finally {
+    btnAI.disabled = false;  btnAI.classList.remove('btn-analyzing');
+    btnAI.textContent = `🤖 AI预筛选（推荐）约$${(_rawResults.length * 0.003).toFixed(2)}`;
+    btnMan.disabled = false;
+    prog.style.display = 'none';
+  }
+}
+
+// ── Phase 2B: Manual select ───────────────────────────────────────────────────
+function startManualSelect() {
+  if (!_rawResults.length) return;
+  _pfMode = 'manual';
+  _preFilterResults = _rawResults.map(c => ({ ...c, level: 'recommend', reason: '' }));
+  showPreFilterSection('manual', _preFilterResults);
+  setStatus('请勾选需要深度分析的公司，然后点击「开始深度分析」。', 'success');
+}
+
+function showPreFilterSection(mode, companies) {
+  document.getElementById('preFilterSectionTitle').textContent =
+    mode === 'ai' ? 'AI预筛选结果（已隐藏不推荐公司）' : '请手动选择要深度分析的公司';
+  ['bulkBarAI', 'pfColBadge', 'pfColReason'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = mode === 'ai' ? '' : 'none';
+  });
+  clearPfFilters();
+  renderPreFilter(companies);
+  document.getElementById('preFilterSection').style.display = 'block';
+  setTimeout(() => document.getElementById('preFilterSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function sourceBadgeHtml(source) {
+  if (source === 'google_search') return '<span style="display:inline-block;font-size:0.7rem;padding:1px 6px;border-radius:10px;background:rgba(139,92,246,0.12);color:#7c3aed;border:1px solid rgba(139,92,246,0.3);margin-top:3px">🔍 Google搜索</span>';
+  if (source === 'google_maps')   return '<span style="display:inline-block;font-size:0.7rem;padding:1px 6px;border-radius:10px;background:rgba(59,130,246,0.1);color:#2563eb;border:1px solid rgba(59,130,246,0.25);margin-top:3px">🗺️ Google地图</span>';
+  return '';
+}
+
+function pfLevelBadge(level) {
+  if (level === 'priority')  return '<span class="pf-badge priority">⭐ 优先</span>';
+  if (level === 'recommend') return '<span class="pf-badge recommend">✅ 推荐</span>';
+  return '<span class="pf-badge skip">❌ 跳过</span>';
+}
+
+const _pfActiveFilters = new Set();
+
+function togglePfFilter(key) {
+  if (_pfActiveFilters.has(key)) _pfActiveFilters.delete(key);
+  else _pfActiveFilters.add(key);
+  document.getElementById('pfFilter' + key.charAt(0).toUpperCase() + key.slice(1))
+    ?.classList.toggle('active-filter', _pfActiveFilters.has(key));
+  applyPfFilters();
+}
+
+function clearPfFilters() {
+  _pfActiveFilters.clear();
+  ['pfFilterWebsite','pfFilterEmail','pfFilterPhone','pfFilterRating'].forEach(id =>
+    document.getElementById(id)?.classList.remove('active-filter'));
+  applyPfFilters();
+}
+
+function applyPfFilters() {
+  let list = _pfMode === 'ai'
+    ? _preFilterResults.filter(c => c.level !== 'skip')
+    : _preFilterResults;
+  if (_pfActiveFilters.has('website')) list = list.filter(c => c.website);
+  if (_pfActiveFilters.has('email'))   list = list.filter(c => c.email);
+  if (_pfActiveFilters.has('phone'))   list = list.filter(c => c.phone);
+  if (_pfActiveFilters.has('rating'))  list = list.filter(c => parseFloat(c.googleRating) >= 4);
+  renderPreFilter(list);
+}
+
+function renderPreFilter(companies) {
+  const tbody   = document.getElementById('preFilterBody');
+  const countEl = document.getElementById('preFilterCount');
+  if (_pfMode === 'ai') {
+    const p = companies.filter(c => c.level === 'priority').length;
+    const r = companies.filter(c => c.level === 'recommend').length;
+    countEl.textContent = `共 ${companies.length} 家：⭐${p} 优先 · ✅${r} 推荐`;
+  } else {
+    countEl.textContent = `共 ${companies.length} 家公司`;
+  }
+
+  tbody.innerHTML = companies.map((c, i) => {
+    const checked = 'checked'; // in both modes all shown companies are pre-checked
+    let websiteCell = '—';
+    if (c.website) {
+      try { websiteCell = `<a class="website-link" href="${c.website}" target="_blank">${new URL(c.website).hostname}</a>`; }
+      catch { websiteCell = c.website; }
+    }
+    const addr = c.address || [c.city, c.state].filter(Boolean).join(', ') || '—';
+    const aiCells = _pfMode === 'ai'
+      ? `<td>${pfLevelBadge(c.level)}</td><td style="font-size:0.79rem;color:var(--sub)">${c.reason || ''}</td>`
+      : '';
+    return `<tr class="pf-row ${c.level}" id="pf-row-${i}">
+      <td><input type="checkbox" class="pf-check" data-idx="${i}" ${checked} onchange="onPfCheck()"></td>
+      <td><div class="company-name">${c.companyName || '—'}</div>${websiteCell}${sourceBadgeHtml(c.source)}</td>
+      <td style="font-size:0.78rem;color:var(--sub);max-width:160px">${addr}</td>
+      <td style="white-space:nowrap;font-size:0.82rem">${c.googleRating ? `⭐ ${c.googleRating}` : '—'}</td>
+      <td style="text-align:center;font-size:0.82rem">${c.reviewCount ?? 0}</td>
+      ${aiCells}
+    </tr>`;
+  }).join('');
+
+  onPfCheck();
+}
+
+function onPfCheck() {
+  const checked = document.querySelectorAll('.pf-check:checked').length;
+  const cost    = (checked * 0.033).toFixed(2);
+  document.getElementById('enrichSelCount').textContent = `已勾选 ${checked} 条`;
+  document.getElementById('enrichCostEst').textContent  = `预计深度分析费用约 $${cost}`;
+  const btn = document.getElementById('btnEnrich');
+  btn.disabled = checked === 0;
+  btn.style.opacity  = checked === 0 ? '0.45' : '1';
+  btn.style.cursor   = checked === 0 ? 'not-allowed' : 'pointer';
+}
+
+function toggleAllPf(el) {
+  document.querySelectorAll('.pf-check').forEach(cb => { cb.checked = el.checked; });
+  onPfCheck();
+}
+
+function selectByLevel(level) {
+  // 'recommend' means keep priority + recommend; 'priority' means only priority
+  const keep = level === 'recommend' ? ['priority', 'recommend'] : ['priority'];
+  document.querySelectorAll('.pf-check').forEach(cb => {
+    cb.checked = keep.includes(_preFilterResults[parseInt(cb.dataset.idx)]?.level);
+  });
+  onPfCheck();
+}
+
+function deselectByLevel(level) {
+  document.querySelectorAll('.pf-check').forEach(cb => {
+    if (_preFilterResults[parseInt(cb.dataset.idx)]?.level === level) cb.checked = false;
+  });
+  onPfCheck();
+}
+
+function pfSelectNone() {
+  document.querySelectorAll('.pf-check').forEach(cb => { cb.checked = false; });
+  onPfCheck();
+}
+
+// ── Step 2: Enrich selected companies (SSE) ───────────────────────────────────
+async function startEnrich() {
+  const token = getStoredToken();
+  if (!token) { alert('请先输入访问令牌'); return; }
+
+  const selected = [];
+  document.querySelectorAll('.pf-check:checked').forEach(cb => {
+    const idx = parseInt(cb.dataset.idx);
+    if (_preFilterResults[idx]) selected.push(_preFilterResults[idx]);
+  });
+  if (!selected.length) return;
+
+  const companyProfile = {
+    sellerName: document.getElementById('sellerName').value.trim(),
+    products:   document.getElementById('products').value.trim(),
+    advantage:  document.getElementById('advantage').value.trim(),
+  };
+  const icp = document.getElementById('icpInput').value.trim();
+
+  const btn = document.getElementById('btnEnrich');
+  const cancelBtn = document.getElementById('btnEnrichCancel');
+  btn.disabled = true;
+  btn.classList.add('btn-analyzing');
+  btn.innerHTML = '分析中...';
+  cancelBtn.style.display = 'inline-block';
+  document.getElementById('enrichProgress').style.display   = 'block';
+  document.getElementById('enrichProgressFill').style.width = '0%';
+  document.getElementById('enrichProgressText').textContent = `正在分析 0/${selected.length}...`;
+
+  let allResults = [];
+
+  try {
+    const res = await fetch('/api/enrich', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ searchId: _currentSearchId, companies: selected, companyProfile, icp }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer    = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+
+      for (const part of parts) {
+        if (!part.startsWith('data: ')) continue;
+        let data;
+        try { data = JSON.parse(part.slice(6)); } catch { continue; }
+
+        if (data.type === 'progress') {
+          const pct = Math.round(data.done / data.total * 100);
+          document.getElementById('enrichProgressText').textContent = `正在分析 ${data.done}/${data.total}...`;
+          document.getElementById('enrichProgressFill').style.width = pct + '%';
+          btn.innerHTML = `分析中 &nbsp;<strong>${data.done}/${data.total}</strong>`;
+          if (data.lead) { allResults.push(data.lead); renderResults(allResults); }
+        } else if (data.type === 'done') {
+          document.getElementById('enrichProgress').style.display = 'none';
+          const doneResults = data.results || allResults;
+          if (data.cancelled) {
+            setStatus(`⏹ 已停止，共分析了 ${doneResults.filter(r => r).length} 家公司`, 'info');
+          } else {
+            setStatus(`✅ 深度分析完成，找到 ${data.qualified} 条高意向线索`, 'success');
+          }
+          if (data.results) renderResults(data.results);
+          showDownloadBar(data.results || allResults, data.sheetUrl || null);
+          window.dispatchEvent(new Event('pipelineDone'));
+          setTimeout(() => document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+        }
+      }
+    }
+  } catch (err) {
+    setStatus(`深度分析失败：${err.message}`, 'error');
+  }
+
+  btn.disabled      = false;
+  btn.classList.remove('btn-analyzing');
+  btn.textContent   = '🤖 开始深度分析选中公司';
+  btn.style.opacity = '1';
+  btn.style.cursor  = 'pointer';
+  document.getElementById('btnEnrichCancel').style.display = 'none';
+}
+
+async function cancelEnrich() {
+  const token = getStoredToken();
+  document.getElementById('btnEnrichCancel').disabled = true;
+  document.getElementById('btnEnrichCancel').textContent = '正在停止...';
+  try {
+    await fetch('/api/enrich/cancel', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+  } catch { /* ignore */ }
+}
+
+// ── Pipeline ──────────────────────────────────────────────────────────────────
+async function startPipeline() {
+  const token = getStoredToken();
+  if (!token) { alert('请先在第三步输入访问令牌'); goToStep(3); return; }
+
+  const selectedCombos = generatedKeywords.filter(k => k.selected);
+
+  const maxResults = parseInt(document.getElementById('maxResults').value) || 10;
+  const companyProfile = {
+    sellerName: document.getElementById('sellerName').value.trim(),
+    products:   document.getElementById('products').value.trim(),
+    advantage:  document.getElementById('advantage').value.trim(),
+  };
+  const dataOptions = {
+    includeWebsite: document.getElementById('optWebsite').checked,
+    includePhone:   document.getElementById('optPhone').checked,
+    includeRating:  document.getElementById('optRating').checked,
+    includeEmail:   document.getElementById('optEmail').checked,
+  };
+
+  const btn = document.getElementById('btnStart');
+  btn.disabled = true;
+  let allResults = [];
+  let lastSheetUrl = null;
+  for (let ci = 0; ci < selectedCombos.length; ci++) {
+    const combo = selectedCombos[ci];
+    const dot = document.getElementById(`combo-dot-${ci}`);
+    if (dot) { dot.className = 'combo-dot running'; dot.textContent = '…'; }
+    setStatus(`正在搜索（${ci+1}/${selectedCombos.length}）：${combo.label}`);
+
+    try {
+      const res  = await fetch('/api/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body: JSON.stringify({ searchQuery: combo.query, location: combo.location, maxResults, companyProfile, dataOptions, icp: document.getElementById('icpInput').value.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+
+      allResults = allResults.concat(data.results || []);
+      renderResults(allResults);
+      if (data.sheetUrl) lastSheetUrl = data.sheetUrl;
+      if (dot) { dot.className = 'combo-dot done'; dot.textContent = '✓'; }
+
+    } catch(err) {
+      if (dot) { dot.className = 'combo-dot error'; dot.textContent = '✗'; }
+      setStatus(`搜索失败：${combo.label} — ${err.message}`, 'error');
+    }
+  }
+
+  showDownloadBar(allResults, lastSheetUrl);
+  const q = allResults.filter(r =>
+    !r.status?.startsWith('filtered') &&
+    Number(r.icpScore || 0) >= 5 && Number(r.intentScore || 0) >= 5
+  ).length;
+  setStatus(`✅ 全部完成！找到 ${q} 条合格线索。`, 'success');
+  btn.disabled = false;
+  window.dispatchEvent(new Event('pipelineDone'));
+  setTimeout(() => document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'}), 300);
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+let _historyOpen = false;
+function toggleHistory() {
+  _historyOpen = !_historyOpen;
+  document.getElementById('historyBody').classList.toggle('open', _historyOpen);
+  document.getElementById('historyToggleIcon').textContent = _historyOpen ? '▴ 收起' : '▾ 展开';
+  if (_historyOpen) loadHistory();
+}
+function _fmtDate(iso) {
+  const d = new Date(iso);
+  return `${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+async function loadHistory() {
+  const token = getStoredToken();
+  if (!token) {
+    document.getElementById('historyRows').innerHTML = '<div class="history-empty">请先输入访问令牌</div>';
+    return;
+  }
+  try {
+    const res  = await fetch('/api/history', { headers: { Authorization:`Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+    renderHistoryRows(data.history);
+  } catch(err) {
+    document.getElementById('historyRows').innerHTML =
+      `<div class="history-empty" style="color:#b91c1c">加载失败：${err.message}</div>`;
+  }
+}
+function renderHistoryRows(history) {
+  if (!history.length) {
+    document.getElementById('historyRows').innerHTML = '<div class="history-empty">暂无搜索记录</div>';
+    return;
+  }
+  document.getElementById('historyRows').innerHTML = history.map(h => `
+    <div class="history-row">
+      <span class="h-date">${_fmtDate(h.created_at)}</span>
+      <span class="h-query">${h.query||'—'}</span>
+      <span class="h-loc">${h.location||'—'}</span>
+      <span class="h-scraped">${h.total_scraped??'—'}条</span>
+      <span class="h-qualified">${h.total_qualified??'—'}</span>
+      <button class="btn-load-history" onclick="loadHistoryRun('${h.id}', this)">加载</button>
+    </div>`).join('');
+}
+async function loadHistoryRun(id, btn) {
+  console.log('[History] 点击加载，ID:', id);
+  if (btn) { btn.disabled = true; btn.textContent = '加载中…'; }
+  const token = getStoredToken();
+  try {
+    const res  = await fetch(`/api/history/${id}`, { headers: { Authorization:`Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+    console.log('[History] 返回 leads:', data.leads.length);
+    const mapped = data.leads.map(r => ({
+      dbId: r.id,
+      companyName: r.company_name, website: r.website, phone: r.phone, email: r.email,
+      city: r.city, googleRating: r.rating,
+      intentScore: r.intent_score ? Number(r.intent_score) : 10,
+      icpScore:    r.icp_score    ? Number(r.icp_score)    : 10,
+      intentReasoning: r.reasoning,
+      EMAIL_1_SUBJECT: r.email1_subject || '', EMAIL_1_BODY: r.email1_body || '',
+      EMAIL_2_SUBJECT: r.email2_subject || '', EMAIL_2_BODY: r.email2_body || '',
+      EMAIL_3_SUBJECT: r.email3_subject || '', EMAIL_3_BODY: r.email3_body || '',
+      EMAIL_4_SUBJECT: r.email4_subject || '', EMAIL_4_BODY: r.email4_body || '',
+      EMAIL_5_SUBJECT: r.email5_subject || '', EMAIL_5_BODY: r.email5_body || '',
+      status: 'enriched', dateAdded: r.created_at?.split('T')[0],
+    }));
+    renderResults(mapped);
+    showDownloadBar(mapped, null);
+    setTimeout(() => document.getElementById('resultsSection').scrollIntoView({behavior:'smooth', block:'start'}), 100);
+    _showToast(`✅ 已加载历史记录，共 ${mapped.length} 条线索`);
+  } catch(err) {
+    console.error('[History] 加载失败:', err.message);
+    alert('加载失败：' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '加载'; }
+  }
+}
+window.addEventListener('pipelineDone', () => {
+  if (_historyOpen) loadHistory();
+  if (document.getElementById('adminBody').classList.contains('open')) loadCosts();
+});
+
+// ── Admin cost panel ──────────────────────────────────────────────────────────
+let _adminPanelOpen = false;
+
+async function checkAdminAndShow() {
+  const token = getStoredToken();
+  const panel = document.getElementById('adminCostPanel');
+  if (!token) { panel.classList.remove('visible'); return; }
+  try {
+    const res  = await fetch('/api/me', { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (data.isAdmin) { panel.classList.add('visible'); }
+    else              { panel.classList.remove('visible'); }
+  } catch { panel.classList.remove('visible'); }
+}
+
+function toggleAdminPanel() {
+  _adminPanelOpen = !_adminPanelOpen;
+  document.getElementById('adminBody').classList.toggle('open', _adminPanelOpen);
+  document.getElementById('adminPanelIcon').textContent = _adminPanelOpen ? '▴ 收起' : '▾ 展开';
+  if (_adminPanelOpen) loadCosts();
+}
+
+async function loadCosts() {
+  const token = getStoredToken();
+  try {
+    const res  = await fetch('/api/admin/costs', { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+    renderCosts(data);
+  } catch(err) {
+    document.getElementById('costRows').innerHTML =
+      `<tr><td colspan="7" class="empty-state" style="color:#b91c1c">加载失败：${err.message}</td></tr>`;
+  }
+}
+
+function renderCosts({ runs, totalCostUsd, monthCostUsd }) {
+  const fmt  = v => v != null ? `$${Number(v).toFixed(4)}` : '—';
+  const fmt2 = v => v != null ? `$${Number(v).toFixed(2)}` : '—';
+
+  document.getElementById('costMonthTotal').textContent = fmt2(monthCostUsd);
+  document.getElementById('costGrandTotal').textContent = fmt2(totalCostUsd);
+
+  if (!runs.length) {
+    document.getElementById('costRows').innerHTML = '<tr><td colspan="7" class="empty-state">暂无记录</td></tr>';
+    document.getElementById('costFooter').style.display = 'none';
+    return;
+  }
+
+  let sumApify = 0, sumAi = 0, sumTotal = 0;
+  document.getElementById('costRows').innerHTML = runs.map(r => {
+    const d = new Date(r.created_at).toLocaleString('zh-CN', { dateStyle: 'short', timeStyle: 'short' });
+    sumApify += r.apify_cost_usd || 0;
+    sumAi    += r.ai_cost_usd    || 0;
+    sumTotal += r.total_cost_usd || 0;
+    return `<tr>
+      <td style="color:var(--sub);font-size:0.78rem;white-space:nowrap">${d}</td>
+      <td style="font-weight:600;font-size:0.83rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.query||'—'}</td>
+      <td style="font-size:0.78rem;color:var(--sub)">${r.location||'—'}</td>
+      <td style="text-align:center;font-size:0.81rem">${r.max_results??'—'}</td>
+      <td style="text-align:right;font-size:0.81rem;font-family:monospace">${fmt(r.apify_cost_usd)}</td>
+      <td style="text-align:right;font-size:0.81rem;font-family:monospace">${fmt(r.ai_cost_usd)}</td>
+      <td style="text-align:right;font-size:0.81rem;font-family:monospace;font-weight:700">${fmt(r.total_cost_usd)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('footApify').textContent = fmt(sumApify);
+  document.getElementById('footAi').textContent    = fmt(sumAi);
+  document.getElementById('footTotal').textContent = fmt(sumTotal);
+  document.getElementById('costFooter').style.display = '';
+}
+
+function restoreIcp() {
+  const saved = localStorage.getItem('leadgen_icp');
+  if (saved) { document.getElementById('icpInput').value = saved; onIcpInput(); }
+}
+
+// ── Email Drawer ──────────────────────────────────────────────────────────────
+const _sentEmails = new Set(); // key: `${dbId||companyName}-${emailNum}`
+let _drawerLead = null;
+const DRAWER_TAB_LABELS = ['第1封', '跟进1', '跟进2', '跟进3', '跟进4'];
+
+function openEmailDrawer(leadIdx) {
+  const lead = _allLeads[leadIdx];
+  if (!lead) return;
+  _drawerLead = lead;
+
+  document.getElementById('drawerCompanyName').textContent = lead.companyName || '—';
+
+  document.getElementById('drawerTabsBar').innerHTML = DRAWER_TAB_LABELS.map((label, i) =>
+    `<button class="drawer-tab${i===0?' active':''}" onclick="switchDrawerTab(${i+1})">${label}</button>`
+  ).join('');
+
+  const leadKey = getLeadKey(lead);
+
+  const sendBtn = document.getElementById('drawerSendBtn');
+  const alreadySent  = _isSentLS(leadKey);
+  const hasEmail     = !!lead.email?.trim();
+  const hasCampaign  = !!getSelectedCampaignId();
+  sendBtn.disabled = alreadySent || !hasEmail || !hasCampaign;
+  sendBtn.classList.toggle('sent', alreadySent);
+  sendBtn.innerHTML = alreadySent
+    ? '✓ Added to list'
+    : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Add to lead list`;
+  sendBtn.title = alreadySent   ? 'Already in Instantly'
+    : !hasEmail   ? 'No email address — cannot add to Instantly'
+    : !hasCampaign ? '请先在下方"邮件发送中心"选择 Campaign'
+    : 'Add all 5 emails to Instantly campaign';
+  document.getElementById('drawerScroll').innerHTML = [1,2,3,4,5].map(n => {
+    const subj = lead[`EMAIL_${n}_SUBJECT`] || '';
+    const body = lead[`EMAIL_${n}_BODY`] || '';
+    const sent = _sentEmails.has(`${leadKey}-${n}`);
+    const hasContent = subj || body;
+    const canSend = !!(lead.email && hasContent);
+    return `<div class="drawer-panel${n===1?' active':''}" id="dpanel-${n}">
+      <div class="email-field-label">主题</div>
+      <div class="drawer-subject-box" id="dsubj-${n}">${subj || '（无）'}</div>
+      <div class="email-field-label" style="margin-top:12px">正文</div>
+      <div class="drawer-body-box" id="dbody-${n}">${body || '（无）'}</div>
+      ${hasContent ? `<div class="drawer-actions">
+        <button class="btn-copy-drawer" onclick="copyDrawerSubject(${n})">复制主题</button>
+        <button class="btn-copy-drawer" onclick="copyDrawerBody(${n})">复制正文</button>
+        <button class="btn-copy-all" onclick="copyDrawerAll(${n})">复制全部</button>
+        ${canSend ? `<button class="btn-send-email" id="dsend-${n}" ${sent?'disabled':''} onclick="sendEmailFromDrawer(${n})" style="${sent?'background:#9ca3af;cursor:not-allowed':''}">${sent?'✅ 已加入发送队列':'发送此邮件'}</button>` : ''}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('emailDrawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEmailDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('emailDrawer').classList.remove('open');
+  document.body.style.overflow = '';
+  _drawerLead = null;
+}
+
+function switchDrawerTab(n) {
+  document.querySelectorAll('.drawer-tab').forEach((t, i) => t.classList.toggle('active', i + 1 === n));
+  for (let i = 1; i <= 5; i++) document.getElementById(`dpanel-${i}`)?.classList.toggle('active', i === n);
+  document.getElementById('drawerScroll').scrollTop = 0;
+}
+
+function copyDrawerSubject(n) {
+  const text = document.getElementById(`dsubj-${n}`)?.textContent || '';
+  navigator.clipboard.writeText(text).then(() => _showToast('主题已复制'));
+}
+
+function copyDrawerBody(n) {
+  const text = document.getElementById(`dbody-${n}`)?.textContent || '';
+  navigator.clipboard.writeText(text).then(() => _showToast('正文已复制'));
+}
+
+function copyDrawerAll(n) {
+  const subj = document.getElementById(`dsubj-${n}`)?.textContent || '';
+  const body = document.getElementById(`dbody-${n}`)?.textContent || '';
+  navigator.clipboard.writeText(`Subject: ${subj}\n\n${body}`).then(() => _showToast('邮件已复制'));
+}
+
+async function sendSequenceToInstantly() {
+  if (!_drawerLead) return;
+  const btn = document.getElementById('drawerSendBtn');
+  if (!btn || btn.disabled) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '发送中…';
+
+  const lead = {
+    ..._drawerLead,
+    emails: [1,2,3,4,5].map(n => ({
+      subject: _drawerLead[`EMAIL_${n}_SUBJECT`] || '',
+      body:    _drawerLead[`EMAIL_${n}_BODY`]    || '',
+    })).filter(e => e.subject || e.body),
+  };
+
+  const campaignId = getSelectedCampaignId();
+  if (!campaignId) {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Add to lead list`;
+    _showToast('请先在下方"邮件发送中心"选择 Campaign');
+    return;
+  }
+  try {
+    const res = await fetch('/api/instantly/add-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getStoredToken()}` },
+      body: JSON.stringify({ lead, campaignId }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+
+    _markSentLS(getLeadKey(_drawerLead));
+    btn.classList.add('sent');
+    btn.innerHTML = '✓ Added to list';
+    _showToast(`✅ ${_drawerLead.companyName || _drawerLead.email} added to Instantly`);
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> 加入 Instantly`;
+    _showToast('发送失败：' + err.message);
+  }
+}
+
+async function sendEmailFromDrawer(n) {
+  if (!_drawerLead) return;
+  const subj = document.getElementById(`dsubj-${n}`)?.textContent || '';
+  const body = document.getElementById(`dbody-${n}`)?.textContent || '';
+  const btn = document.getElementById(`dsend-${n}`);
+  if (!btn || btn.disabled) return;
+
+  btn.disabled = true;
+  btn.textContent = '发送中…';
+
+  try {
+    const res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getStoredToken()}` },
+      body: JSON.stringify({
+        lead_id: _drawerLead.dbId || null,
+        email_number: n,
+        to_email: _drawerLead.email,
+        subject: subj,
+        body,
+        company_name: _drawerLead.companyName,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+
+    btn.textContent = '✅ 已加入发送队列';
+    btn.style.background = '#9ca3af';
+    btn.style.cursor = 'not-allowed';
+    const leadKey = _drawerLead.dbId || _drawerLead.companyName || '';
+    _sentEmails.add(`${leadKey}-${n}`);
+    _showToast(`✅ 已加入 Instantly 发送队列：${_drawerLead.email}`);
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '发送此邮件';
+    _showToast('发送失败：' + err.message);
+  }
+}
+
+// ── Instantly row send ────────────────────────────────────────────────────────
+async function sendLeadToInstantly(origIdx) {
+  const lead = _allLeads[origIdx];
+  if (!lead?.email?.trim()) return;
+  const btn = document.getElementById(`ibtn-${origIdx}`);
+  if (!btn || btn.disabled) return;
+
+  const campaignId = getSelectedCampaignId();
+  if (!campaignId) {
+    _showToast('请先在下方"邮件发送中心"选择 Campaign');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:1.5px;margin-right:3px"></span>发送中';
+
+  try {
+    const res = await fetch('/api/instantly/add-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getStoredToken()}` },
+      body: JSON.stringify({
+        campaignId,
+        lead: {
+          email: lead.email, companyName: lead.companyName,
+          website: lead.website || '', phone: lead.phone || '',
+          emails: [1,2,3,4,5].map(n => ({
+            subject: lead[`EMAIL_${n}_SUBJECT`] || '',
+            body:    lead[`EMAIL_${n}_BODY`]    || '',
+          })),
+        }
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+
+    _markSentLS(getLeadKey(lead));
+    btn.innerHTML = '✓ 已加入';
+    btn.classList.add('sent');
+    btn.title = '已加入 Instantly';
+    _showToast(`✅ ${lead.companyName || lead.email} 已加入 Instantly`);
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = '📧 Instantly';
+    btn.classList.add('error');
+    btn.title = '发送失败：' + err.message;
+    _showToast('❌ 发送失败：' + err.message);
+  }
+}
+
+// ── Instantly bulk send ───────────────────────────────────────────────────────
+let _bulkSendRunning = false;
+async function bulkSendInstantly() {
+  if (_bulkSendRunning) return;
+  const idxList = [...document.querySelectorAll('.result-check:checked')]
+    .map(cb => parseInt(cb.dataset.idx));
+  const targets = idxList
+    .map(i => ({ i, lead: _allLeads[i] }))
+    .filter(({ lead }) => lead?.email?.trim() && !_isSentLS(getLeadKey(lead)));
+
+  if (!targets.length) { _showToast('没有待发送的线索（无邮箱或全已发送）'); return; }
+
+  const campaignId = getSelectedCampaignId();
+  if (!campaignId) { _showToast('请先在下方"邮件发送中心"选择 Campaign'); return; }
+
+  _bulkSendRunning = true;
+  const btn = document.getElementById('btnBulkInstantly');
+  if (btn) btn.disabled = true;
+
+  let ok = 0, fail = 0;
+  for (let t = 0; t < targets.length; t++) {
+    const { i, lead } = targets[t];
+    if (btn) btn.textContent = `发送中 ${t + 1}/${targets.length}…`;
+    const ibtn = document.getElementById(`ibtn-${i}`);
+    if (ibtn) { ibtn.disabled = true; ibtn.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span>'; }
+    try {
+      const res = await fetch('/api/instantly/add-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getStoredToken()}` },
+        body: JSON.stringify({
+          campaignId,
+          lead: {
+            email: lead.email, companyName: lead.companyName,
+            website: lead.website || '', phone: lead.phone || '',
+            emails: [1,2,3,4,5].map(n => ({
+              subject: lead[`EMAIL_${n}_SUBJECT`] || '',
+              body:    lead[`EMAIL_${n}_BODY`]    || '',
+            })),
+          }
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+      ok++;
+      _markSentLS(getLeadKey(lead));
+      if (ibtn) { ibtn.innerHTML = '✓ 已加入'; ibtn.classList.add('sent'); ibtn.title = '已加入 Instantly'; }
+    } catch (err) {
+      fail++;
+      if (ibtn) { ibtn.disabled = false; ibtn.innerHTML = '📧 Instantly'; ibtn.classList.add('error'); ibtn.title = '失败：' + err.message; }
+    }
+    await new Promise(r => setTimeout(r, 350));
+  }
+
+  _bulkSendRunning = false;
+  if (btn) { btn.disabled = false; btn.textContent = '📧 批量加入 Instantly'; }
+  _showToast(`✅ 批量发送完成：${ok} 成功${fail ? `，${fail} 失败` : ''}`);
+  updateBulkBar();
+}
+
+function toggleAllResults(el) {
+  document.querySelectorAll('.result-check').forEach(cb => { cb.checked = el.checked; });
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const checks = document.querySelectorAll('.result-check');
+  const checkedCount = [...checks].filter(c => c.checked).length;
+  const bar = document.getElementById('instantlyBulkBar');
+  const cnt = document.getElementById('instantlyBulkCount');
+  if (bar) bar.style.display = checkedCount > 0 ? 'flex' : 'none';
+  if (cnt) cnt.textContent = `已选 ${checkedCount} 条`;
+  const checkAll = document.getElementById('resultCheckAll');
+  if (checkAll) {
+    checkAll.checked = checks.length > 0 && checkedCount === checks.length;
+    checkAll.indeterminate = checkedCount > 0 && checkedCount < checks.length;
+  }
+}
+
+// ── Instantly Hub ─────────────────────────────────────────────────────────────
+const _LS_CAMPAIGN = 'selected_campaign_id';
+const _LS_ACCOUNTS = 'selected_email_accounts';
+let _hubCampaigns = [];
+let _hubAccounts  = [];
+let _hubSelectedCampaign = null;
+let _hubLoaded = false;
+
+function getSelectedCampaignId() {
+  return localStorage.getItem(_LS_CAMPAIGN) || '';
+}
+
+function toggleInstantlyHub() {
+  const body = document.getElementById('hubBody');
+  const icon = document.getElementById('hubToggleIcon');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  icon.textContent = isOpen ? '▾ 展开' : '▴ 收起';
+  if (!isOpen && !_hubLoaded) loadInstantlyData();
+}
+
+async function loadInstantlyData() {
+  _hubLoaded = true;
+  const token = getStoredToken();
+  if (!token) { console.warn('[Hub] No token'); return; }
+
+  // Load campaigns
+  try {
+    const r = await fetch('/api/instantly/campaigns', { headers: { Authorization: `Bearer ${token}` } });
+    const d = await r.json();
+    if (d.success) { _hubCampaigns = d.campaigns; renderCampaignSelect(); }
+    else console.warn('[Hub] campaigns:', d.error);
+  } catch (e) { console.warn('[Hub] campaigns fetch failed:', e.message); }
+
+  // Load accounts
+  try {
+    const r = await fetch('/api/instantly/accounts', { headers: { Authorization: `Bearer ${token}` } });
+    const d = await r.json();
+    if (d.success) { _hubAccounts = d.accounts; renderAccountsList(); }
+    else console.warn('[Hub] accounts:', d.error);
+  } catch (e) { console.warn('[Hub] accounts fetch failed:', e.message); }
+
+  // Restore saved campaign selection
+  const savedId = getSelectedCampaignId();
+  if (savedId) onCampaignSelect(savedId, true);
+}
+
+function renderCampaignSelect() {
+  const sel = document.getElementById('hubCampaignSelect');
+  const saved = getSelectedCampaignId();
+  sel.innerHTML = '<option value="">— 选择 Campaign —</option>';
+  _hubCampaigns.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name || c.id;
+    if (c.id === saved) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function getCampaignStatusInfo(status) {
+  if (status === 1 || status === 'active')    return { label: '🟢 Active',    cls: 'active' };
+  if (status === 2 || status === 'paused')    return { label: '⏸ Paused',    cls: 'paused' };
+  if (status === 3 || status === 'completed') return { label: '✅ Completed', cls: 'completed' };
+  return { label: '🟡 Draft', cls: 'draft' };
+}
+
+function onCampaignSelect(id, silent = false) {
+  if (!silent) localStorage.setItem(_LS_CAMPAIGN, id);
+  _hubSelectedCampaign = _hubCampaigns.find(c => c.id === id) || null;
+
+  const nameEl  = document.getElementById('hubHeaderCampaignName');
+  const badgeEl = document.getElementById('hubHeaderBadge');
+
+  if (_hubSelectedCampaign) {
+    const { label, cls } = getCampaignStatusInfo(_hubSelectedCampaign.status);
+    nameEl.textContent = ' · ' + _hubSelectedCampaign.name;
+    badgeEl.innerHTML  = `<span class="campaign-badge ${cls}">${label}</span>`;
+
+    // Detail card
+    document.getElementById('hubCampaignDetail').innerHTML =
+      `<span style="color:var(--text);font-weight:600">${_hubSelectedCampaign.name}</span>
+       &nbsp;·&nbsp; ${_hubSelectedCampaign.email_list?.length || 0} 个发件邮箱
+       &nbsp;·&nbsp; <span class="campaign-badge ${cls}" style="font-size:0.69rem">${label}</span>`;
+
+    // Controls card
+    document.getElementById('hubCampaignStatus').innerHTML =
+      `当前状态：<span class="campaign-badge ${cls}">${label}</span>`;
+    document.getElementById('btnActivate').disabled = (_hubSelectedCampaign.status === 1 || _hubSelectedCampaign.status === 'active');
+    document.getElementById('btnPause').disabled    = (_hubSelectedCampaign.status !== 1 && _hubSelectedCampaign.status !== 'active');
+
+    // Load sequence delays and analytics
+    loadSequenceDelays(id);
+    loadAnalytics(id);
+  } else {
+    nameEl.textContent  = id ? '' : ' — 未选择 Campaign';
+    badgeEl.innerHTML   = '';
+    document.getElementById('hubCampaignDetail').textContent  = id ? `Campaign ID: ${id} (未在列表中找到)` : '请先选择一个 Campaign';
+    document.getElementById('hubCampaignStatus').textContent  = '请先选择 Campaign';
+    document.getElementById('btnActivate').disabled = true;
+    document.getElementById('btnPause').disabled    = true;
+    document.getElementById('hubAnalyticsGrid').innerHTML =
+      `<div style="color:var(--sub);font-size:0.8rem;grid-column:1/-1">请先选择 Campaign</div>`;
+  }
+
+  // Update disabled state on all unset Instantly buttons
+  updateInstantlyButtons();
+}
+
+function updateInstantlyButtons() {
+  const hasCampaign = !!getSelectedCampaignId();
+  document.querySelectorAll('.btn-instantly:not(.sent):not(.error)').forEach(btn => {
+    if (btn.id?.startsWith('ibtn-')) {
+      btn.disabled = !hasCampaign;
+      if (!hasCampaign) btn.title = '请先在上方选择 Campaign';
+    }
+  });
+  // Also update drawer button if open
+  const drawerBtn = document.getElementById('drawerSendBtn');
+  if (drawerBtn && !drawerBtn.classList.contains('sent') && _drawerLead) {
+    const hasEmail = !!_drawerLead.email?.trim();
+    drawerBtn.disabled = !hasEmail || !hasCampaign;
+    if (!hasCampaign) drawerBtn.title = '请先选择 Campaign';
+    else if (!hasEmail) drawerBtn.title = 'No email address — cannot add to Instantly';
+    else drawerBtn.title = 'Add all 5 emails to Instantly campaign';
+  }
+}
+
+function renderAccountsList() {
+  const saved = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]');
+  const container = document.getElementById('hubAccountsList');
+  if (!_hubAccounts.length) {
+    container.innerHTML = `<div style="color:var(--sub);font-size:0.79rem">未找到邮箱账户。<a href="https://app.instantly.ai/app/accounts" target="_blank" style="color:#93c5fd">前往 Instantly 添加 →</a></div>`;
+    return;
+  }
+  container.innerHTML = _hubAccounts.map(acc => {
+    const email = acc.email || acc.address || '';
+    const isSelected = saved.includes(email);
+    const warmupRaw = acc.warmup_status ?? acc.warmupStatus;
+    const warmupLabel = warmupRaw === 1 || warmupRaw === 'active' ? '🔥 热身中'
+      : warmupRaw === 2 || warmupRaw === 'completed' ? '✅ 已完成'
+      : warmupRaw === 0 || warmupRaw === 'inactive' ? '' : '';
+    const sentToday = acc.sent_count_today ?? '';
+    return `<label class="account-item${isSelected ? ' selected' : ''}">
+      <input type="checkbox" ${isSelected ? 'checked' : ''} value="${email}" onchange="onAccountToggle(this)">
+      <span style="font-size:0.81rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${email}</span>
+      ${warmupLabel ? `<span style="font-size:0.68rem;color:#fbbf24">${warmupLabel}</span>` : ''}
+      ${sentToday !== '' ? `<span style="font-size:0.68rem;color:var(--sub)">${sentToday}/d</span>` : ''}
+    </label>`;
+  }).join('');
+}
+
+function onAccountToggle(checkbox) {
+  const email = checkbox.value;
+  const saved = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]');
+  const idx = saved.indexOf(email);
+  if (checkbox.checked && idx === -1) saved.push(email);
+  if (!checkbox.checked && idx !== -1) saved.splice(idx, 1);
+  localStorage.setItem(_LS_ACCOUNTS, JSON.stringify(saved));
+  checkbox.closest('.account-item').classList.toggle('selected', checkbox.checked);
+}
+
+async function syncAccountsToCampaign() {
+  const id = getSelectedCampaignId();
+  if (!id) { _showToast('请先选择 Campaign'); return; }
+  const selected = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]');
+  if (!selected.length) { _showToast('请先勾选发件邮箱'); return; }
+  try {
+    const r = await fetch(`/api/instantly/campaign/${id}/accounts`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${getStoredToken()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emails: selected }),
+    });
+    const d = await r.json();
+    if (d.success) _showToast(`✅ 已同步 ${selected.length} 个邮箱到 Campaign`);
+    else _showToast('同步失败：' + JSON.stringify(d.error));
+  } catch (e) { _showToast('同步失败：' + e.message); }
+}
+
+async function loadSequenceDelays(campaignId) {
+  try {
+    const r = await fetch(`/api/instantly/sequence?campaignId=${campaignId}`, {
+      headers: { Authorization: `Bearer ${getStoredToken()}` }
+    });
+    const d = await r.json();
+    if (d.success && Array.isArray(d.delays)) {
+      d.delays.forEach((delay, i) => {
+        const el = document.getElementById(`seqDelay${i}`);
+        if (el) el.value = delay;
+      });
+    }
+  } catch (e) { console.warn('[Hub] sequence load failed:', e.message); }
+}
+
+async function saveSequenceDelays() {
+  const id = getSelectedCampaignId();
+  if (!id) { _showToast('请先选择 Campaign'); return; }
+  const delays = [0,1,2,3,4].map(i => parseInt(document.getElementById(`seqDelay${i}`)?.value) || 0);
+  const statusEl = document.getElementById('seqSaveStatus');
+  statusEl.style.color = 'var(--sub)';
+  statusEl.textContent = '保存中…';
+  try {
+    const r = await fetch('/api/instantly/sequence', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getStoredToken()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ delays, campaignId: id }),
+    });
+    const d = await r.json();
+    if (d.success) {
+      statusEl.style.color = '#34d399';
+      statusEl.textContent = '✓ 已保存';
+      setTimeout(() => { statusEl.textContent = ''; }, 2500);
+    } else {
+      statusEl.style.color = '#fca5a5';
+      statusEl.textContent = '失败：' + JSON.stringify(d.error).slice(0, 60);
+    }
+  } catch (e) {
+    statusEl.style.color = '#fca5a5';
+    statusEl.textContent = '保存失败';
+  }
+}
+
+async function activateCampaign() {
+  const id = getSelectedCampaignId();
+  if (!id) return;
+  try {
+    const r = await fetch(`/api/instantly/campaign/${id}/activate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getStoredToken()}`, 'Content-Type': 'application/json' },
+    });
+    const d = await r.json();
+    if (d.success) {
+      _showToast('🚀 Campaign 已激活');
+      _hubLoaded = false;
+      await loadInstantlyData();
+    } else {
+      _showToast('激活失败：' + JSON.stringify(d.error).slice(0, 80));
+    }
+  } catch (e) { _showToast('激活失败：' + e.message); }
+}
+
+async function pauseCampaign() {
+  const id = getSelectedCampaignId();
+  if (!id) return;
+  try {
+    const r = await fetch(`/api/instantly/campaign/${id}/pause`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getStoredToken()}`, 'Content-Type': 'application/json' },
+    });
+    const d = await r.json();
+    if (d.success) {
+      _showToast('⏸ Campaign 已暂停');
+      _hubLoaded = false;
+      await loadInstantlyData();
+    } else {
+      _showToast('暂停失败：' + JSON.stringify(d.error).slice(0, 80));
+    }
+  } catch (e) { _showToast('暂停失败：' + e.message); }
+}
+
+async function loadAnalytics(campaignId) {
+  const grid = document.getElementById('hubAnalyticsGrid');
+  grid.innerHTML = `<div style="color:var(--sub);font-size:0.79rem;grid-column:1/-1"><span class="spinner"></span> 加载中…</div>`;
+  try {
+    const r = await fetch(`/api/instantly/campaign/${campaignId}/analytics`, {
+      headers: { Authorization: `Bearer ${getStoredToken()}` }
+    });
+    const d = await r.json();
+    if (d.success) {
+      const a = d.analytics || {};
+      const stats = [
+        { num: a.emails_sent_count   ?? a.total_sent   ?? a.sent   ?? 0,   lbl: '已发送' },
+        { num: a.open_count          ?? a.total_opened ?? a.opened  ?? 0,   lbl: '打开数' },
+        { num: a.open_rate  != null  ? (a.open_rate  * 100).toFixed(1) + '%' : '—', lbl: '打开率' },
+        { num: a.reply_count         ?? a.total_replied ?? a.replied ?? 0,   lbl: '回复数' },
+        { num: a.reply_rate != null  ? (a.reply_rate * 100).toFixed(1) + '%' : '—', lbl: '回复率' },
+        { num: a.unsubscribed        ?? a.unsubscribe_count ?? 0,            lbl: '退订' },
+        { num: a.bounced             ?? a.bounce_count ?? 0,                 lbl: '弹回' },
+        { num: a.leads_count         ?? a.total_leads  ?? a.new_leads ?? 0,  lbl: '线索数' },
+      ];
+      grid.innerHTML = stats.map(s =>
+        `<div class="analytics-card"><div class="analytics-num">${s.num}</div><div class="analytics-lbl">${s.lbl}</div></div>`
+      ).join('');
+      document.getElementById('hubAnalyticsTime').textContent = `更新于 ${new Date().toLocaleTimeString('zh-CN')}`;
+    } else {
+      grid.innerHTML = `<div style="color:#fca5a5;font-size:0.79rem;grid-column:1/-1">Analytics 返回错误：${JSON.stringify(d.error).slice(0,100)}</div>`;
+    }
+  } catch (e) {
+    grid.innerHTML = `<div style="color:#fca5a5;font-size:0.79rem;grid-column:1/-1">加载失败：${e.message}</div>`;
+  }
+}
+
+function openCreateCampaignModal() {
+  document.getElementById('createCampaignModal').classList.add('open');
+  setTimeout(() => document.getElementById('newCampaignName').focus(), 50);
+}
+function closeCreateCampaignModal() {
+  document.getElementById('createCampaignModal').classList.remove('open');
+}
+
+async function createCampaign() {
+  const name = document.getElementById('newCampaignName').value.trim();
+  if (!name) { _showToast('请输入 Campaign 名称'); return; }
+  try {
+    const r = await fetch('/api/instantly/campaigns', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getStoredToken()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    const d = await r.json();
+    if (d.success) {
+      _showToast(`✅ Campaign "${name}" 创建成功`);
+      closeCreateCampaignModal();
+      document.getElementById('newCampaignName').value = '';
+      _hubLoaded = false;
+      await loadInstantlyData();
+      if (d.campaign?.id) {
+        document.getElementById('hubCampaignSelect').value = d.campaign.id;
+        onCampaignSelect(d.campaign.id);
+      }
+    } else {
+      _showToast('创建失败：' + JSON.stringify(d.error).slice(0, 80));
+    }
+  } catch (e) { _showToast('创建失败：' + e.message); }
+}
+
+// Auto-refresh analytics every 60s when hub is open
+setInterval(() => {
+  const body = document.getElementById('hubBody');
+  if (body?.style.display !== 'none') {
+    const id = getSelectedCampaignId();
+    if (id) loadAnalytics(id);
+  }
+}, 60000);
+
+// ── Persist localStorage ──────────────────────────────────────────────────────
+['sellerName','products','advantage','accessToken'].forEach(id => {
+  const el = document.getElementById(id); if (!el) return;
+  const v = localStorage.getItem('leadgen_' + id);
+  if (v !== null) el.value = v;
+  el.addEventListener('input', () => localStorage.setItem('leadgen_' + id, el.value));
+});
+['optEmail','optSocial','optHours','optOwner'].forEach(id => {
+  const el = document.getElementById(id); if (!el) return;
+  const v = localStorage.getItem('leadgen_' + id);
+  if (v !== null) el.checked = v === 'true';
+  el.addEventListener('change', () => localStorage.setItem('leadgen_' + id, el.checked));
+});
+// Restore depth card selection
+const savedMax = localStorage.getItem('leadgen_maxResults');
+if (savedMax) {
+  const v = parseInt(savedMax);
+  document.getElementById('maxResults').value = v;
+  let matched = false;
+  document.querySelectorAll('.depth-card').forEach(c => {
+    if (parseInt(c.dataset.count) === v) { c.classList.add('selected'); matched = true; }
+  });
+  if (!matched) {
+    const customCard = document.querySelector('.depth-card[data-count="custom"]');
+    if (customCard) {
+      customCard.classList.add('selected');
+      const inp = document.getElementById('customDepthInput');
+      inp.value = v;
+      const mins = Math.round(v * 0.2);
+      const cost = (v * 0.006).toFixed(2);
+      document.getElementById('customDepthMeta').textContent = `约${mins}分钟 · ~$${cost}`;
+    }
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+updateLoginStatus();
+checkAdminAndShow();
+
+// ── Nav hamburger ─────────────────────────────────────────────────────────────
+(function() {
+  const hb = document.getElementById('hamburger');
+  const nl = document.getElementById('navLinks');
+  if (hb && nl) {
+    hb.addEventListener('click', () => nl.classList.toggle('open'));
+    nl.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nl.classList.remove('open')));
+  }
+})();
+</script>
+
+<script>
+// ── Animation layer ──────────────────────────────────────────────────────────
+
+// 1. Click sound — Web Audio API, 440hz ding, no external files needed
+let _audioCtx = null;
+function _playTick() {
+  try {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = _audioCtx.createOscillator();
+    const gain = _audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(_audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, _audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(440, _audioCtx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.22, _audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + 0.12);
+    osc.start(_audioCtx.currentTime);
+    osc.stop(_audioCtx.currentTime + 0.12);
+  } catch(e) {}
+}
+
+// 2. Card bounce + sound (event delegation — runs after existing onclick, no logic change)
+document.addEventListener('click', e => {
+  const card = e.target.closest('.select-card');
+  if (!card) return;
+  _playTick();
+  card.classList.remove('card-bounce-anim');
+  void card.offsetWidth; // force reflow to restart animation
+  card.classList.add('card-bounce-anim');
+  card.addEventListener('animationend', () => card.classList.remove('card-bounce-anim'), { once: true });
+});
+
+// 3. Step panel fade-up — override window.goToStep
+// MutationObserver approach caused infinite loop (modifying observed class triggered re-entry).
+// Override is safe: onclick attrs call goToStep by name → resolved from window at call time.
+(function() {
+  const _orig = window.goToStep;
+  let _lastVisible = null;
+  window.goToStep = function(n) {
+    _orig(n);
+    requestAnimationFrame(() => {
+      const visible = document.querySelector('.wizard-panel:not(.hidden)');
+      if (visible && visible !== _lastVisible) {
+        _lastVisible = visible;
+        visible.classList.remove('panel-enter');
+        void visible.offsetWidth;
+        visible.classList.add('panel-enter');
+      }
+    });
+  };
+})();
+
+
+// 5. Result rows staggered fade-in
+// Safe MutationObserver: watches tbody childList, adds class to tr — not re-observed
+const _rowObs = new MutationObserver(() => {
+  let idx = 0;
+  document.querySelectorAll('#resultsBody tr:not([data-anim])').forEach(tr => {
+    tr.dataset.anim = '1';
+    if (tr.classList.contains('email-detail-row')) return;
+    tr.style.animationDelay = (idx * 0.05) + 's';
+    tr.classList.add('row-enter');
+    idx++;
+  });
+});
+_rowObs.observe(document.getElementById('resultsBody'), { childList: true });
+
+// 6. Toast — slides in from right after pipeline completes
+function _showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+window.addEventListener('pipelineDone', () => {
+  setTimeout(() => {
+    const n = typeof _lastResults !== 'undefined' ? _lastResults.length : 0;
+    if (n > 0) _showToast('✅ 成功找到 ' + n + ' 条线索！');
+  }, 700);
+});
+</script>
+</body>
+</html>

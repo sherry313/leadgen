@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智拓客 - AI 驱动，精准开拓海外市场</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue-primary: #2563eb;
+      --blue-light: #3b82f6;
+      --blue-dark: #1d4ed8;
+      --bg-dark: #0f172a;
+      --bg-mid: #1e3a5f;
+      --text-white: #f8fafc;
+      --text-muted: #94a3b8;
+      --card-bg: #ffffff;
+      --border-subtle: rgba(148,163,184,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-white);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6%;
+      height: 64px;
+      transition: background 0.4s ease, backdrop-filter 0.4s ease, box-shadow 0.4s ease;
+    }
+    nav.scrolled {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .nav-logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #2563eb, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+      user-select: none;
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+    .nav-links a:hover { color: var(--text-white); }
+    .btn-nav {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.45rem 1.2rem;
+      background: var(--blue-primary);
+      color: #fff !important;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-nav:hover { background: var(--blue-dark); transform: translateY(-1px); }
+
+    /* hamburger */
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--text-white); border-radius: 2px; transition: 0.3s; }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-mid) 100%);
+      overflow: hidden;
+      padding: 0 6%;
+    }
+    #hero-canvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      max-width: 600px;
+      padding-top: 64px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.9rem;
+      background: rgba(37,99,235,0.18);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 99px;
+      font-size: 0.8rem;
+      color: #93c5fd;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.3px;
+    }
+    .hero-badge::before { content: '●'; font-size: 0.5rem; color: #60a5fa; }
+    .hero-title {
+      font-size: clamp(2rem, 4.5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 1.2rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #93c5fd 60%, #60a5fa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 2.4rem;
+      max-width: 520px;
+    }
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 2rem;
+      background: var(--blue-primary);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.4);
+    }
+    .btn-primary:hover { background: var(--blue-dark); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(37,99,235,0.5); }
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 2rem;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      color: var(--text-white);
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      backdrop-filter: blur(8px);
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+
+    /* mockup */
+    .hero-mockup {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: 64px;
+      max-width: 520px;
+      margin-left: auto;
+    }
+    .mockup-frame {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(99,179,237,0.2);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-12px); }
+    }
+    .mockup-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .mockup-bar span {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .mockup-bar span:nth-child(1) { background: #ff5f57; }
+    .mockup-bar span:nth-child(2) { background: #febc2e; }
+    .mockup-bar span:nth-child(3) { background: #28c840; }
+    .mockup-row {
+      background: rgba(37,99,235,0.08);
+      border: 1px solid rgba(37,99,235,0.15);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .mockup-avatar {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .mockup-info { flex: 1; }
+    .mockup-name { font-size: 0.8rem; font-weight: 600; color: #e2e8f0; }
+    .mockup-detail { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+    .mockup-badge {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(37,99,235,0.25);
+      color: #93c5fd;
+      border: 1px solid rgba(37,99,235,0.3);
+    }
+    .mockup-badge.green {
+      background: rgba(16,185,129,0.2);
+      color: #6ee7b7;
+      border-color: rgba(16,185,129,0.3);
+    }
+    .mockup-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      padding-left: 2px;
+    }
+    .mockup-pulse {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 8px;
+      font-size: 0.72rem;
+      color: #6ee7b7;
+    }
+    .pulse-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* scroll indicator */
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      z-index: 2;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-6px)} }
+    .scroll-hint svg { opacity: 0.5; }
+
+    /* ── STATS ── */
+    #stats {
+      background: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 3.5rem 6%;
+      display: flex;
+      justify-content: center;
+      gap: 0;
+    }
+    .stat-item {
+      flex: 1;
+      max-width: 220px;
+      text-align: center;
+      padding: 1.5rem 2rem;
+      position: relative;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .stat-item.visible { opacity: 1; transform: translateY(0); }
+    .stat-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 25%; bottom: 25%;
+      width: 1px;
+      background: var(--border-subtle);
+    }
+    .stat-number {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+    .stat-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+
+    /* ── FEATURES ── */
+    #features {
+      background: #f8fafc;
+      padding: 6rem 6%;
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .section-tag {
+      display: inline-block;
+      padding: 0.25rem 0.9rem;
+      background: rgba(37,99,235,0.1);
+      color: var(--blue-primary);
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      letter-spacing: 0.5px;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.8rem;
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: #64748b;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .feature-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 2rem 1.8rem;
+      cursor: default;
+      transition: transform 0.3s cubic-bezier(.22,.68,0,1.2), box-shadow 0.3s ease, border-color 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    .feature-card.visible { opacity: 1; transform: translateY(0); }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: radial-gradient(circle at 50% 0%, rgba(37,99,235,0.07) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-8px); box-shadow: 0 20px 60px rgba(37,99,235,0.12); border-color: rgba(37,99,235,0.3); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 54px; height: 54px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05));
+      margin-bottom: 1.2rem;
+      border: 1px solid rgba(37,99,235,0.12);
+    }
+    .feature-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.6rem;
+    }
+    .feature-desc { font-size: 0.9rem; color: #64748b; line-height: 1.7; }
+
+    /* ── PROCESS ── */
+    #process {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      padding: 6rem 6%;
+    }
+    #process .section-title { color: var(--text-white); }
+    #process .section-sub { color: var(--text-muted); }
+    .process-timeline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0;
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .process-step {
+      flex: 1;
+      text-align: center;
+      padding: 0 1rem;
+      position: relative;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .process-step.visible { opacity: 1; transform: translateY(0); }
+    .process-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: calc(50% + 28px);
+      width: calc(100% - 56px);
+      height: 2px;
+      background: linear-gradient(90deg, rgba(37,99,235,0.8), rgba(37,99,235,0.2));
+    }
+    .step-icon-wrap {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-primary), #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.2rem;
+      font-size: 1.4rem;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 0 0 6px rgba(37,99,235,0.15);
+    }
+    .step-num {
+      position: absolute;
+      top: -4px; right: -4px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #1e3a5f;
+      border: 2px solid var(--blue-primary);
+      font-size: 0.65rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #93c5fd;
+    }
+    .step-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-white); }
+    .step-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #070e1a;
+      border-top: 1px solid var(--border-subtle);
+      padding: 2.5rem 6%;
+      text-align: center;
+    }
+    .footer-logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.6rem;
+    }
+    .footer-copy { font-size: 0.82rem; color: #475569; margin-bottom: 0.3rem; }
+    .footer-sub { font-size: 0.78rem; color: #334155; }
+
+    /* ── REVEAL ── */
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    [data-reveal].visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      #hero { flex-direction: column; justify-content: center; text-align: center; gap: 3rem; }
+      .hero-content { max-width: 100%; }
+      .hero-btns { justify-content: center; }
+      .hero-mockup { width: 100%; margin-left: 0; }
+      .process-step:not(:last-child)::after { display: none; }
+      .process-timeline { flex-direction: column; align-items: center; gap: 2rem; }
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-links.open { display: flex; flex-direction: column; position: fixed; top: 64px; left: 0; right: 0; background: rgba(15,23,42,0.97); padding: 1.5rem 6%; gap: 1.2rem; backdrop-filter: blur(18px); border-bottom: 1px solid var(--border-subtle); }
+      .hamburger { display: flex; }
+      #stats { flex-direction: column; align-items: center; }
+      .stat-item:not(:last-child)::after { display: none; }
+      .stat-item { border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem; }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="landing.html" class="nav-logo">智拓客</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="landing.html" class="active">首页</a></li>
+    <li><a href="pricing.html">定价</a></li>
+    <li><a href="tutorial.html">教程</a></li>
+    <li><a href="about.html">关于我们</a></li>
+    <li><a href="dashboard.html">仪表盘</a></li>
+    <li><a href="index.html" class="btn-nav">立即登录</a></li>
+  </ul>
+  <div class="hamburger" id="hamburger" aria-label="菜单">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+
+  <div class="hero-content">
+    <div class="hero-badge">AI 驱动海外拓客平台</div>
+    <h1 class="hero-title">AI 驱动，精准开拓海外市场</h1>
+    <p class="hero-sub">专为建材工厂打造，智能搜索全球买家，自动生成开发信，让海外订单主动来</p>
+    <div class="hero-btns">
+      <a href="index.html" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        立即开始拓客
+      </a>
+      <a href="#features" class="btn-outline">
+        了解更多
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-mockup">
+    <div class="mockup-frame">
+      <div class="mockup-bar">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="mockup-label">AI 正在搜索匹配买家 · 澳大利亚市场</div>
+      <div class="mockup-row">
+        <div class="mockup-avatar">AU</div>
+        <div class="mockup-info">
+          <div class="mockup-name">BuildPro Australia Pty Ltd</div>
+          <div class="mockup-detail">建材进口商 · 悉尼</div>
+        </div>
+        <span class="mockup-badge green">高意向</span>
+      </div>
+      <div class="mockup-row">
+        <div class="mockup-avatar" style="background:linear-gradient(135deg,#0891b2,#0e7490)">NZ</div>
+        <div class="mockup-info">
+          <div class="mockup-name">Pacific Tile & Stone Ltd</div>
+          <div class="mockup-detail">瓷砖批发商 · 奥克兰</div>
+        </div>
+        <span class="mockup-badge">中等意向</span>
+      </div>
+      <div class="mockup-row">
+        <div class="mockup-avatar" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">UK</div>
+        <div class="mockup-info">
+          <div class="mockup-name">Meridian Flooring Group</div>
+          <div class="mockup-detail">地板进口商 · 伦敦</div>
+        </div>
+        <span class="mockup-badge green">高意向</span>
+      </div>
+      <div class="mockup-pulse">
+        <div class="pulse-dot"></div>
+        AI 正在生成个性化开发信 · 已完成 3/5 封
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    向下探索
+  </div>
+</section>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="stat-item">
+    <div class="stat-number" data-target="50" data-suffix="+">0</div>
+    <div class="stat-label">目标国家</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number" data-target="8" data-suffix="大">0</div>
+    <div class="stat-label">客户类型</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number" data-target="100" data-suffix="%">0</div>
+    <div class="stat-label">AI 智能分析</div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-header" data-reveal>
+    <span class="section-tag">核心功能</span>
+    <h2 class="section-title">一站式海外拓客解决方案</h2>
+    <p class="section-sub">从搜索到触达，AI 全程赋能，让您的产品触及全球每一个潜在买家</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card" style="transition-delay:0.05s">
+      <div class="feature-icon">🔍</div>
+      <div class="feature-title">智能搜索</div>
+      <p class="feature-desc">覆盖全球 50+ 国家，精准定位目标买家，多维度筛选，毫秒级响应</p>
+    </div>
+    <div class="feature-card" style="transition-delay:0.12s">
+      <div class="feature-icon">🤖</div>
+      <div class="feature-title">AI 深度分析</div>
+      <p class="feature-desc">深度分析客户官网，智能评估采购意向，识别高价值潜在客户</p>
+    </div>
+    <div class="feature-card" style="transition-delay:0.19s">
+      <div class="feature-icon">✉️</div>
+      <div class="feature-title">开发信生成</div>
+      <p class="feature-desc">自动生成 5 封个性化开发信序列，多语种支持，提升回复率</p>
+    </div>
+    <div class="feature-card" style="transition-delay:0.26s">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">数据管理</div>
+      <p class="feature-desc">所有线索云端保存，历史记录随时查看，团队协作无缝衔接</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process">
+  <div class="section-header" data-reveal>
+    <span class="section-tag" style="background:rgba(59,130,246,0.15);color:#93c5fd;">使用流程</span>
+    <h2 class="section-title">四步完成智能拓客</h2>
+    <p class="section-sub">简洁的操作流程，让每一位销售都能轻松驾驭 AI 拓客工具</p>
+  </div>
+  <div class="process-timeline">
+    <div class="process-step" style="transition-delay:0s">
+      <div class="step-icon-wrap">
+        🌏
+        <span class="step-num">1</span>
+      </div>
+      <div class="step-title">选择目标市场</div>
+      <p class="step-desc">从 50+ 国家中选定目标市场，聚焦高潜力地区</p>
+    </div>
+    <div class="process-step" style="transition-delay:0.12s">
+      <div class="step-icon-wrap">
+        🏢
+        <span class="step-num">2</span>
+      </div>
+      <div class="step-title">选择客户类型</div>
+      <p class="step-desc">进口商、批发商、装修公司等 8 大类型精准匹配</p>
+    </div>
+    <div class="process-step" style="transition-delay:0.24s">
+      <div class="step-icon-wrap">
+        ⚙️
+        <span class="step-num">3</span>
+      </div>
+      <div class="step-title">配置搜索参数</div>
+      <p class="step-desc">填写产品关键词，设置公司规模和采购偏好</p>
+    </div>
+    <div class="process-step" style="transition-delay:0.36s">
+      <div class="step-icon-wrap">
+        🚀
+        <span class="step-num">4</span>
+      </div>
+      <div class="step-title">AI 自动拓客</div>
+      <p class="step-desc">AI 自动搜索、分析、生成开发信，坐等客户回复</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">智拓客</div>
+  <p class="footer-copy">智拓客 © 2026 版权所有</p>
+  <p class="footer-sub">专为中国建材工厂打造的海外客户开发平台</p>
+</footer>
+
+<script>
+/* ── CANVAS PARTICLES ── */
+(function () {
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [], lines = [];
+  const PARTICLE_COUNT = 72;
+  const LINE_DIST = 130;
+
+  function resize() {
+    w = canvas.width = canvas.offsetWidth;
+    h = canvas.height = canvas.offsetHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function rand(a, b) { return Math.random() * (b - a) + a; }
+
+  function createParticle() {
+    return {
+      x: rand(0, w), y: rand(0, h),
+      vx: rand(-0.3, 0.3), vy: rand(-0.3, 0.3),
+      r: rand(1, 2.5),
+      alpha: rand(0.2, 0.7)
+    };
+  }
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(createParticle());
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+
+    // draw lines
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < LINE_DIST) {
+          const alpha = (1 - dist / LINE_DIST) * 0.22;
+          ctx.strokeStyle = `rgba(59,130,246,${alpha})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // draw particles
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(96,165,250,${p.alpha})`;
+      ctx.fill();
+
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < -10) p.x = w + 10;
+      if (p.x > w + 10) p.x = -10;
+      if (p.y < -10) p.y = h + 10;
+      if (p.y > h + 10) p.y = -10;
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── NAV SCROLL ── */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 20);
+});
+
+/* ── HAMBURGER ── */
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+hamburger.addEventListener('click', () => {
+  navLinks.classList.toggle('open');
+});
+navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+/* ── INTERSECTION OBSERVER ── */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      io.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.stat-item, .feature-card, .process-step, [data-reveal]').forEach(el => io.observe(el));
+
+/* ── COUNT-UP ANIMATION ── */
+const countIO = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target.querySelector('[data-target]');
+    if (!el) return;
+    const target = parseInt(el.dataset.target);
+    const suffix = el.dataset.suffix || '';
+    const duration = 1600;
+    const start = performance.now();
+    function step(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(eased * target) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+    countIO.unobserve(entry.target);
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.stat-item').forEach(el => countIO.observe(el));
+</script>
+</body>
+</html>
