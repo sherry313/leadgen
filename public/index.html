@@ -1969,11 +1969,14 @@
     <!-- State 3: bulk push bar (shown after generation when leads have email) -->
     <div id="bulkPushBar" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(37,99,235,0.07);border:1px solid rgba(37,99,235,0.22);border-radius:10px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <span id="bulkPushCount" style="font-size:0.85rem;color:var(--sub)"></span>
-      <button id="btnBulkPush" onclick="startBulkPush()"
-        style="padding:8px 20px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;white-space:nowrap"
-        onmouseover="this.style.opacity=0.82" onmouseout="this.style.opacity=1">
-        📤 批量推送到 Instantly Campaign
-      </button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="bulkPushDoneIndicator" style="display:none;color:#34d399;font-size:0.82rem;font-weight:600">✓ 已推送</span>
+        <button id="btnBulkPush" onclick="startBulkPush()"
+          style="padding:8px 20px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;white-space:nowrap"
+          onmouseover="this.style.opacity=0.82" onmouseout="this.style.opacity=1">
+          📤 批量推送到 Instantly Campaign
+        </button>
+      </div>
     </div>
 
     <!-- State 3: Instantly section (revealed after generation) -->
@@ -1985,8 +1988,8 @@
     <!-- Hub grid -->
     <div id="step5Grid" class="hub-grid" style="display:none">
 
-      <!-- Card 1: Campaign selector -->
-      <div class="hub-card">
+      <!-- Card 1: Campaign selector (State B) -->
+      <div class="hub-card" id="hubCardCampaign" style="display:none">
         <div class="hub-card-title">Campaign 选择</div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <select id="hubCampaignSelect" class="hub-select" onchange="onCampaignSelect(this.value)">
@@ -1996,20 +1999,21 @@
         </div>
       </div>
 
-      <!-- Card 2: Email accounts -->
-      <div class="hub-card">
+      <!-- Card 2: Email accounts (State B) -->
+      <div class="hub-card" id="hubCardAccounts" style="display:none">
         <div class="hub-card-title">发件邮箱（多选）</div>
         <div id="hubAccountsList" style="max-height:170px;overflow-y:auto;margin-bottom:10px">
           <div style="color:var(--sub);font-size:0.8rem">加载中…</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="hub-btn primary" onclick="syncAccountsToCampaign()" style="padding:5px 12px;font-size:0.77rem">同步到 Campaign</button>
+          <span id="syncDoneIndicator" style="display:none;color:#34d399;font-size:0.75rem;font-weight:600">✓ 已同步</span>
           <a href="https://app.instantly.ai/app/accounts" target="_blank" style="font-size:0.74rem;color:#93c5fd;text-decoration:none" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">在 Instantly 添加邮箱 →</a>
         </div>
       </div>
 
-      <!-- Card 3: Sequence timing -->
-      <div class="hub-card">
+      <!-- Card 3: Sequence timing (State C) -->
+      <div class="hub-card" id="hubCardSequence" style="display:none">
         <div class="hub-card-title">发送序列间隔（天）</div>
         <div class="seq-grid">
           <div class="seq-input-wrap"><div class="seq-day-label">第1封</div><input class="seq-input" id="seqDelay0" type="number" min="0" max="999" value="0"></div>
@@ -2024,8 +2028,8 @@
         </div>
       </div>
 
-      <!-- Card 4: Campaign controls -->
-      <div class="hub-card">
+      <!-- Card 4: Campaign controls (State D) -->
+      <div class="hub-card" id="hubCardControls" style="display:none">
         <div class="hub-card-title">Campaign 控制</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
           <button class="hub-btn success" id="btnActivate" onclick="activateCampaign()" disabled>🚀 激活</button>
@@ -2034,8 +2038,8 @@
         <div id="hubCampaignStatus" style="font-size:0.78rem;color:var(--sub)">请先选择 Campaign</div>
       </div>
 
-      <!-- Card 5: Analytics (collapsed by default) -->
-      <div class="hub-card" style="grid-column:1/-1">
+      <!-- Card 5: Analytics (State E) -->
+      <div class="hub-card" id="hubCardAnalytics" style="grid-column:1/-1;display:none">
         <div class="hub-card-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleAnalyticsDash()">
           <span>数据看板</span>
           <span id="analyticsDashToggle" style="font-size:0.78rem;color:var(--sub);text-transform:none;letter-spacing:0;font-weight:400">▸ 展开</span>
@@ -2799,8 +2803,8 @@ function renderResults(leads) {
     ).join('');
 
     const panelsHtml = [1,2,3,4,5].map(n => {
-      const subj = lead[`EMAIL_${n}_SUBJECT`]||'';
-      const body = lead[`EMAIL_${n}_BODY`]||'';
+      const subj = _substitutePlaceholders(lead[`EMAIL_${n}_SUBJECT`] || '', lead);
+      const body = _substitutePlaceholders(lead[`EMAIL_${n}_BODY`] || '', lead);
       const copyBtn = subj||body
         ? `<button class="copy-btn" id="ecopy-${origIdx}-${n}" onclick="copyText(${origIdx},${n})" style="margin-top:0;padding:3px 10px;font-size:0.72rem">📋 复制</button>`
         : '';
@@ -3623,6 +3627,12 @@ async function loadSearchById(searchId) {
     document.getElementById('resultsSection').style.display   = 'block';
     document.getElementById('histViewBanner').style.display   = 'flex';
     document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
+    // Restore step 4 (email section) if that's where the user was when they refreshed
+    const _savedStep = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
+    if (_savedStep === 4) {
+      showStep5();
+      _updateBulkPushBar();
+    }
     setTimeout(() => document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     setStatus(`已加载 ${mapped.length} 条历史线索`, 'success');
   } catch(err) {
@@ -3687,8 +3697,8 @@ function openEmailDrawer(leadIdx) {
     : !hasCampaign ? '请先点击导航栏「📬 邮件」选择 Campaign'
     : 'Add all 5 emails to Instantly campaign';
   document.getElementById('drawerScroll').innerHTML = [1,2,3,4,5].map(n => {
-    const subj = lead[`EMAIL_${n}_SUBJECT`] || '';
-    const body = lead[`EMAIL_${n}_BODY`] || '';
+    const subj = _substitutePlaceholders(lead[`EMAIL_${n}_SUBJECT`] || '', lead);
+    const body = _substitutePlaceholders(lead[`EMAIL_${n}_BODY`] || '', lead);
     const sent = _sentEmails.has(`${leadKey}-${n}`);
     const hasContent = subj || body;
     const canSend = !!(lead.email && hasContent);
@@ -4116,7 +4126,7 @@ function showStep5() {
   if (!_frameworksLoaded) loadFrameworks();
   _updateGenerateBtn();
 
-  // State 1 on entry: Instantly hidden until emails generate
+  // State 1 on entry: Instantly hidden until emails generate; progressive cards all reset
   const emptyEl   = document.getElementById('step5Empty');
   const gridEl    = document.getElementById('step5Grid');
   const divider   = document.getElementById('step5InstantlyDivider');
@@ -4125,6 +4135,12 @@ function showStep5() {
   if (gridEl)    gridEl.style.display    = 'none';
   if (divider)   divider.style.display   = 'none';
   if (pushBarEl) pushBarEl.style.display = 'none';
+  // Reset all progressive disclosure cards and indicators
+  ['hubCardCampaign','hubCardAccounts','hubCardSequence','hubCardControls','hubCardAnalytics']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  ['bulkPushDoneIndicator','syncDoneIndicator'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
 
   currentStep = 4;
   updateStepProgress();
@@ -4134,11 +4150,10 @@ function _revealInstantlySection() {
   const qualified = (_allLeads || []).filter(l => _isLeadQualified(l)).length;
   const emptyEl = document.getElementById('step5Empty');
   const gridEl  = document.getElementById('step5Grid');
-  const divider = document.getElementById('step5InstantlyDivider');
-  if (divider) divider.style.display = 'block';
+  // Divider and individual cards are revealed progressively by _revealInstantlyState[B-E]
   if (qualified > 0) {
     if (emptyEl) emptyEl.style.display = 'none';
-    if (gridEl)  gridEl.style.display  = 'grid';
+    if (gridEl)  gridEl.style.display  = 'grid'; // container present; cards start hidden
     if (!_hubLoaded) loadInstantlyData();
   } else {
     if (emptyEl) emptyEl.style.display = 'block';
@@ -4163,6 +4178,9 @@ function _updateBulkPushBar() {
 }
 
 async function startBulkPush() {
+  const countBefore = (_allLeads || []).filter(l =>
+    _isLeadQualified(l) && l.email?.trim() && !_isSentLS(getLeadKey(l))
+  ).length;
   // Auto-select all qualified + email + unsent leads, then delegate to bulkSendInstantly
   document.querySelectorAll('.result-check').forEach(cb => {
     const i = parseInt(cb.dataset.idx);
@@ -4172,6 +4190,44 @@ async function startBulkPush() {
   updateBulkBar();
   await bulkSendInstantly();
   _updateBulkPushBar();
+  const countAfter = (_allLeads || []).filter(l =>
+    _isLeadQualified(l) && l.email?.trim() && !_isSentLS(getLeadKey(l))
+  ).length;
+  if (countAfter < countBefore) _revealInstantlyStateB();
+}
+
+function _revealInstantlyStateB() {
+  const divider      = document.getElementById('step5InstantlyDivider');
+  const cardCampaign = document.getElementById('hubCardCampaign');
+  const cardAccounts = document.getElementById('hubCardAccounts');
+  const doneIndicator = document.getElementById('bulkPushDoneIndicator');
+  if (divider)      divider.style.display      = 'block';
+  if (cardCampaign) cardCampaign.style.display = 'block';
+  if (cardAccounts) cardAccounts.style.display = 'block';
+  if (doneIndicator) doneIndicator.style.display = 'inline';
+}
+
+function _revealInstantlyStateC() {
+  const cardSequence = document.getElementById('hubCardSequence');
+  const syncDone     = document.getElementById('syncDoneIndicator');
+  if (cardSequence) cardSequence.style.display = 'block';
+  if (syncDone)     syncDone.style.display     = 'inline';
+}
+
+function _revealInstantlyStateD() {
+  const cardControls = document.getElementById('hubCardControls');
+  if (cardControls) cardControls.style.display = 'block';
+}
+
+function _revealInstantlyStateE() {
+  const cardAnalytics = document.getElementById('hubCardAnalytics');
+  if (cardAnalytics) cardAnalytics.style.display = 'block';
+  const body   = document.getElementById('analyticsDashBody');
+  const toggle = document.getElementById('analyticsDashToggle');
+  if (body)   body.style.display   = 'block';
+  if (toggle) toggle.textContent   = '▾ 收起';
+  const id = getSelectedCampaignId();
+  if (id) loadAnalytics(id);
 }
 
 function toggleAnalyticsDash() {
@@ -4398,7 +4454,7 @@ async function syncAccountsToCampaign() {
       body: JSON.stringify({ emails: selected }),
     });
     const d = await r.json();
-    if (d.success) _showToast(`✅ 已同步 ${selected.length} 个邮箱到 Campaign`);
+    if (d.success) { _showToast(`✅ 已同步 ${selected.length} 个邮箱到 Campaign`); _revealInstantlyStateC(); }
     else _showToast('同步失败：' + JSON.stringify(d.error));
   } catch (e) { _showToast('同步失败：' + e.message); }
 }
@@ -4436,6 +4492,7 @@ async function saveSequenceDelays() {
       statusEl.style.color = '#34d399';
       statusEl.textContent = '✓ 已保存';
       setTimeout(() => { statusEl.textContent = ''; }, 2500);
+      _revealInstantlyStateD();
     } else {
       statusEl.style.color = '#fca5a5';
       statusEl.textContent = '失败：' + JSON.stringify(d.error).slice(0, 60);
@@ -4456,9 +4513,10 @@ async function activateCampaign() {
     });
     const d = await r.json();
     if (d.success) {
-      _showToast('🚀 Campaign 已激活');
+      _showToast('🚀 Campaign 已激活，正在发送邮件');
       _hubLoaded = false;
       await loadInstantlyData();
+      _revealInstantlyStateE();
     } else {
       _showToast('激活失败：' + JSON.stringify(d.error).slice(0, 80));
     }
@@ -4600,7 +4658,13 @@ function _restoreStep() {
   const params = new URLSearchParams(location.search);
   if (params.get('search') || params.get('query')) return;
   const saved = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
-  if (saved <= 1 || saved > 3) return;
+  if (saved <= 1 || saved > 4) return;
+  if (saved === 4) {
+    showStep5();           // shows step5Section, resets bulkPushBar to none
+    _updateBulkPushBar();  // re-show bar if _allLeads already has eligible leads
+    console.log('[RestoreStep] 恢复到 step 4 (step5Section)');
+    return;
+  }
   const panel = document.getElementById('wizard-step-' + saved);
   if (!panel) return;
   document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
@@ -5220,6 +5284,23 @@ function closeTemplatePreview() {
 
 // ── Email generation ───────────────────────────────────────────────────────────
 
+const _GENERIC_EMAIL_PREFIXES = new Set([
+  'admin','info','contact','hello','sales','support','office',
+  'enquiries','enquiry','contactus','mail','email','team','hi',
+  'customer','customers','service','services','reception',
+]);
+
+function _substitutePlaceholders(text, lead) {
+  const prefix = (lead.email || '').split('@')[0].toLowerCase().replace(/[^a-z]/g, '');
+  const firstName = (!prefix || _GENERIC_EMAIL_PREFIXES.has(prefix))
+    ? (lead.companyName || '')
+    : prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  return (text || '')
+    .replace(/\{first_name\}/g, firstName)
+    .replace(/\{company\}/g,    lead.companyName || '')
+    .replace(/\{website\}/g,    lead.website || lead.websiteUrl || '');
+}
+
 function _renderEmailPreview(results, containerId) {
   const cid = containerId || 'emailPreview';
   const el = document.getElementById(cid);
@@ -5229,8 +5310,8 @@ function _renderEmailPreview(results, containerId) {
     results.map((lead, i) => {
       const rowId = cid + '-r' + i;
       const emails = [1,2,3,4,5].map(n => ({
-        subject: lead[`EMAIL_${n}_SUBJECT`] || lead[`email_${n}_subject`] || '',
-        body:    lead[`EMAIL_${n}_BODY`]    || lead[`email_${n}_body`]    || '',
+        subject: _substitutePlaceholders(lead[`EMAIL_${n}_SUBJECT`] || lead[`email_${n}_subject`] || '', lead),
+        body:    _substitutePlaceholders(lead[`EMAIL_${n}_BODY`]    || lead[`email_${n}_body`]    || '', lead),
         day:     DAYS[n - 1]
       }));
       const ok = emails.some(e => e.subject);
