@@ -39,10 +39,10 @@
 
 ## 三、关键密钥
 
-- **ADMIN_TOKEN**：`admintoken456`（管理员；能看到 (Firecrawl) 标识）
-- **USER_TOKEN**：另一个普通用户 token
+- **ADMIN_TOKEN**：`<在 .env 里查看>`（管理员；能看到 (Firecrawl) 标识）
+- **USER_TOKEN**：`<在 .env 里查看>`（普通用户 token）
 - **localStorage key**：`leadgen_accessToken`
-- **Instantly Campaign ID**："Saas Testing" = `bcc05e95-1fa8-40ad-a856-109609525cd9`
+- **Instantly Campaign ID**："Saas Testing" = `<在 .env 或 Instantly 后台查看>`
 
 ---
 
