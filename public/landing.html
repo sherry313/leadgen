@@ -531,6 +531,116 @@
       .stat-item { border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem; }
       .features-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── 6480 MATRIX ── */
+    #matrix6480 {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      padding: 6rem 6%;
+    }
+    #matrix6480 .section-title { color: var(--text-white); }
+    #matrix6480 .section-sub { color: var(--text-muted); }
+    .matrix-intro {
+      text-align: center;
+      max-width: 640px;
+      margin: 0 auto 2.5rem;
+    }
+    .matrix-intro-p {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .matrix-lead {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #93c5fd;
+      margin-top: 1.2rem;
+    }
+    .matrix-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1.25rem;
+      max-width: 1200px;
+      margin: 0 auto 3.5rem;
+    }
+    .matrix-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(148,163,184,0.13);
+      border-radius: 16px;
+      padding: 1.75rem 1.25rem 1.5rem;
+      text-align: center;
+      transition: opacity 0.7s ease, transform 0.7s ease, border-color 0.25s, background 0.25s;
+    }
+    .matrix-card:hover {
+      border-color: rgba(59,130,246,0.4);
+      background: rgba(37,99,235,0.08);
+    }
+    .matrix-num {
+      font-size: clamp(2.8rem, 4vw, 3.75rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .matrix-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 0.7rem;
+      letter-spacing: 0.2px;
+    }
+    .matrix-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+    .matrix-equation {
+      text-align: center;
+      margin: 0 auto 2rem;
+    }
+    .eq-formula {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.15rem;
+      margin-bottom: 0.6rem;
+    }
+    .eq-factors {
+      font-size: clamp(1.3rem, 2.8vw, 2rem);
+      font-weight: 700;
+      color: var(--text-white);
+      letter-spacing: 1px;
+    }
+    .eq-result {
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #60a5fa, #2563eb, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .eq-unit {
+      font-size: clamp(0.9rem, 1.8vw, 1.15rem);
+      color: var(--text-muted);
+    }
+    .matrix-closing {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    @media (max-width: 1024px) {
+      .matrix-cards { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .matrix-cards { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 <body>
@@ -611,6 +721,54 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
     向下探索
   </div>
+</section>
+
+<!-- 6480 MATRIX -->
+<section id="matrix6480">
+  <div class="section-header" data-reveal>
+    <span class="section-tag" style="background:rgba(59,130,246,0.15);color:#93c5fd;">方法论</span>
+    <h2 class="section-title">智拓 6480 矩阵</h2>
+    <p class="section-sub">建材出海精准开发的智能模型</p>
+  </div>
+  <div class="matrix-intro" data-reveal>
+    <p class="matrix-intro-p">我们不写「模板邮件」，也不靠 AI 「随机发挥」——</p>
+    <p class="matrix-intro-p">我们用一套结构化矩阵生成每一封开发信。</p>
+    <p class="matrix-lead">「6480」来自五个维度的精确组合：</p>
+  </div>
+  <div class="matrix-cards">
+    <div class="matrix-card" data-reveal style="transition-delay:0.05s">
+      <div class="matrix-num">8</div>
+      <div class="matrix-name">客户角度</div>
+      <p class="matrix-desc">装修承包商、室内设计师、房产开发商、建材经销商、工程承包商、家具制造商、酒店采购、超市采购——每一类用不同切入角度</p>
+    </div>
+    <div class="matrix-card" data-reveal style="transition-delay:0.1s">
+      <div class="matrix-num">8</div>
+      <div class="matrix-name">邮件框架</div>
+      <p class="matrix-desc">Cold Email 5-Step、AIDA、BAB、PAS、Star-Chain-Hook、3P、BYAF、自定义——结构化的写作骨架</p>
+    </div>
+    <div class="matrix-card" data-reveal style="transition-delay:0.15s">
+      <div class="matrix-num">5</div>
+      <div class="matrix-name">序列邮件</div>
+      <p class="matrix-desc">Day 1 / 4 / 7 / 10 / 14——业内验证的最佳跟进节奏</p>
+    </div>
+    <div class="matrix-card" data-reveal style="transition-delay:0.2s">
+      <div class="matrix-num">4</div>
+      <div class="matrix-name">目标市场</div>
+      <p class="matrix-desc">澳洲 / 美国 / 英国 / 加拿大——主流英语市场专精</p>
+    </div>
+    <div class="matrix-card" data-reveal style="transition-delay:0.25s">
+      <div class="matrix-num">1</div>
+      <div class="matrix-name">您的产品基因</div>
+      <p class="matrix-desc">您的工厂、产品、优势——AI 个性化创作的源材料</p>
+    </div>
+  </div>
+  <div class="matrix-equation" data-reveal>
+    <div class="eq-formula">
+      <span class="eq-factors">8 × 8 × 5 × 4 × 1 =&nbsp;</span><span class="eq-result">6480</span>
+    </div>
+    <div class="eq-unit">种可能的邮件组合</div>
+  </div>
+  <p class="matrix-closing" data-reveal>比起「一封模板群发」，每个客户收到的都是为他角度、产品、市场量身定制的开发信。</p>
 </section>
 
 <!-- STATS -->
