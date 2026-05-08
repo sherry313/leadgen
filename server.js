@@ -18,7 +18,13 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Page routes — explicit handlers before static so '/' isn't captured by index.html default
+app.get('/',            (req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
+app.get('/app',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/landing.html',(req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
+
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/status', (req, res) => {
