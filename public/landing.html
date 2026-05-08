@@ -641,6 +641,56 @@
     @media (max-width: 640px) {
       .matrix-cards { grid-template-columns: repeat(2, 1fr); }
     }
+
+    /* ── PROCESS ENHANCED ── */
+    @keyframes flowLine_4steps {
+      0%   { stroke-dashoffset: 60; opacity: 0; }
+      20%  { opacity: 1; }
+      80%  { opacity: 1; }
+      100% { stroke-dashoffset: -60; opacity: 0; }
+    }
+    .fs-cards-wrap {
+      position: relative;
+    }
+    .fs-line {
+      position: absolute;
+      top: 60px;
+      left: 12.5%;
+      right: 12.5%;
+      height: 2px;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .fs-card-enhanced {
+      position: relative;
+      z-index: 1;
+      transition: transform 0.45s cubic-bezier(.22,.9,.3,1.4),
+                  border-color 0.45s,
+                  box-shadow 0.45s;
+      cursor: default;
+    }
+    .fs-card-enhanced::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 16px;
+      background: radial-gradient(ellipse at center, rgba(91,141,239,0.18) 0%, transparent 65%);
+      z-index: -1;
+      opacity: 0.6;
+      transition: opacity 0.45s;
+      pointer-events: none;
+    }
+    .fs-card-enhanced:hover {
+      transform: translateY(-18px) scale(1.03);
+      border-color: rgba(120,180,255,0.8);
+      box-shadow: 0 40px 80px rgba(91,141,239,0.45);
+    }
+    .fs-card-enhanced:hover::before {
+      opacity: 1;
+    }
+    @media (max-width: 1024px) {
+      .fs-line { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -825,8 +875,12 @@
     <h2 class="section-title">四步完成智能拓客</h2>
     <p class="section-sub">简洁的操作流程，让每一位销售都能轻松驾驭 AI 拓客工具</p>
   </div>
-  <div class="process-timeline">
-    <div class="process-step" style="transition-delay:0s">
+  <div class="process-timeline fs-cards-wrap">
+    <svg class="fs-line" preserveAspectRatio="none" viewBox="0 0 1000 4">
+      <line x1="0" y1="2" x2="1000" y2="2" stroke="rgba(91,141,239,0.18)" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="0" y1="2" x2="1000" y2="2" stroke="#5b8def" stroke-width="2" stroke-dasharray="60 940" style="animation: flowLine_4steps 4s linear infinite;"/>
+    </svg>
+    <div class="process-step fs-card-enhanced" style="transition-delay:0s">
       <div class="step-icon-wrap">
         🌏
         <span class="step-num">1</span>
@@ -834,7 +888,7 @@
       <div class="step-title">选择目标市场</div>
       <p class="step-desc">从 50+ 国家中选定目标市场，聚焦高潜力地区</p>
     </div>
-    <div class="process-step" style="transition-delay:0.12s">
+    <div class="process-step fs-card-enhanced" style="transition-delay:0.12s">
       <div class="step-icon-wrap">
         🏢
         <span class="step-num">2</span>
@@ -842,7 +896,7 @@
       <div class="step-title">选择客户类型</div>
       <p class="step-desc">进口商、批发商、装修公司等 8 大类型精准匹配</p>
     </div>
-    <div class="process-step" style="transition-delay:0.24s">
+    <div class="process-step fs-card-enhanced" style="transition-delay:0.24s">
       <div class="step-icon-wrap">
         ⚙️
         <span class="step-num">3</span>
@@ -850,7 +904,7 @@
       <div class="step-title">配置搜索参数</div>
       <p class="step-desc">填写产品关键词，设置公司规模和采购偏好</p>
     </div>
-    <div class="process-step" style="transition-delay:0.36s">
+    <div class="process-step fs-card-enhanced" style="transition-delay:0.36s">
       <div class="step-icon-wrap">
         🚀
         <span class="step-num">4</span>
