@@ -49,6 +49,12 @@ async function addLeadToCampaign(lead, campaignIdOverride = null) {
 
   const firstName = extractFirstName(lead.email, lead.companyName);
   console.log(`[Instantly] Adding lead to campaign: ${lead.email} (${lead.companyName}) → first_name="${firstName}"`);
+
+  const sub = (s) => (s || '')
+    .replace(/\{first_name\}/g, firstName)
+    .replace(/\{company\}/g,    lead.companyName || '')
+    .replace(/\{website\}/g,    lead.website     || '');
+
   try {
     const res = await axios.post(
       `${BASE}/leads`,
@@ -60,16 +66,16 @@ async function addLeadToCampaign(lead, campaignIdOverride = null) {
         phone:        lead.phone       || '',
         website:      lead.website     || '',
         custom_variables: {
-          email_1_subject: lead.EMAIL_1_SUBJECT || '',
-          email_1_body:    lead.EMAIL_1_BODY    || '',
-          email_2_subject: lead.EMAIL_2_SUBJECT || '',
-          email_2_body:    lead.EMAIL_2_BODY    || '',
-          email_3_subject: lead.EMAIL_3_SUBJECT || '',
-          email_3_body:    lead.EMAIL_3_BODY    || '',
-          email_4_subject: lead.EMAIL_4_SUBJECT || '',
-          email_4_body:    lead.EMAIL_4_BODY    || '',
-          email_5_subject: lead.EMAIL_5_SUBJECT || '',
-          email_5_body:    lead.EMAIL_5_BODY    || '',
+          email_1_subject: sub(lead.EMAIL_1_SUBJECT),
+          email_1_body:    sub(lead.EMAIL_1_BODY),
+          email_2_subject: sub(lead.EMAIL_2_SUBJECT),
+          email_2_body:    sub(lead.EMAIL_2_BODY),
+          email_3_subject: sub(lead.EMAIL_3_SUBJECT),
+          email_3_body:    sub(lead.EMAIL_3_BODY),
+          email_4_subject: sub(lead.EMAIL_4_SUBJECT),
+          email_4_body:    sub(lead.EMAIL_4_BODY),
+          email_5_subject: sub(lead.EMAIL_5_SUBJECT),
+          email_5_body:    sub(lead.EMAIL_5_BODY),
         },
       },
       { headers: authHeaders() }
@@ -89,6 +95,11 @@ async function queueEmail({ toEmail, companyName, subject, body, emailNumber = 1
   if (!campaignId) return { success: false, reason: 'INSTANTLY_CAMPAIGN_ID not set' };
   if (!toEmail?.trim()) return { success: false, reason: 'No email address' };
 
+  const firstName = extractFirstName(toEmail, companyName);
+  const sub = (s) => (s || '')
+    .replace(/\{first_name\}/g, firstName)
+    .replace(/\{company\}/g,    companyName || '');
+
   console.log(`[Instantly] Queuing email #${emailNumber} to: ${toEmail}`);
   try {
     const res = await axios.post(
@@ -96,11 +107,11 @@ async function queueEmail({ toEmail, companyName, subject, body, emailNumber = 1
       {
         campaign:     campaignId,
         email:        toEmail.trim(),
-        first_name:   extractFirstName(toEmail, companyName),
+        first_name:   firstName,
         company_name: companyName || '',
         custom_variables: {
-          [`email_${emailNumber}_subject`]: subject,
-          [`email_${emailNumber}_body`]:    body,
+          [`email_${emailNumber}_subject`]: sub(subject),
+          [`email_${emailNumber}_body`]:    sub(body),
         },
       },
       { headers: authHeaders() }
