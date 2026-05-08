@@ -32,47 +32,6 @@
     .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; letter-spacing: -1px; background: linear-gradient(135deg, #f8fafc 0%, #93c5fd 60%, #60a5fa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1rem; }
     .page-sub { font-size: 1.05rem; color: var(--text-muted); max-width: 520px; margin: 0 auto; line-height: 1.7; }
 
-    /* PRICING SECTION */
-    .pricing-section { padding: 4rem 6% 6rem; max-width: 1200px; margin: 0 auto; }
-    .billing-toggle { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 3.5rem; }
-    .billing-label { font-size: 0.9rem; color: var(--text-muted); }
-    .billing-label.active { color: var(--text-white); font-weight: 600; }
-    .toggle-switch { width: 48px; height: 26px; background: var(--blue-primary); border-radius: 99px; position: relative; cursor: pointer; }
-    .toggle-switch::after { content: ''; position: absolute; width: 20px; height: 20px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.25s; }
-    .save-badge { display: inline-block; padding: 0.15rem 0.55rem; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; border-radius: 99px; font-size: 0.72rem; font-weight: 600; }
-
-    .plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-    .plan-card { background: rgba(30,41,59,0.6); border: 1px solid rgba(148,163,184,0.15); border-radius: 20px; padding: 2.2rem 2rem; position: relative; transition: transform 0.3s ease, border-color 0.3s, box-shadow 0.3s; opacity: 0; transform: translateY(30px); }
-    .plan-card.visible { opacity: 1; transform: translateY(0); }
-    .plan-card:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(0,0,0,0.3); }
-    .plan-card.featured { background: linear-gradient(145deg, rgba(37,99,235,0.2), rgba(30,41,59,0.8)); border-color: rgba(59,130,246,0.5); box-shadow: 0 0 0 1px rgba(37,99,235,0.2), 0 16px 48px rgba(37,99,235,0.15); }
-    .plan-card.featured:hover { transform: translateY(-8px); box-shadow: 0 0 0 1px rgba(37,99,235,0.3), 0 28px 70px rgba(37,99,235,0.25); }
-
-    .popular-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 0.3rem 1.1rem; background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; border-radius: 99px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.3px; box-shadow: 0 4px 16px rgba(37,99,235,0.4); }
-
-    .plan-name { font-size: 1rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
-    .plan-price { display: flex; align-items: baseline; gap: 0.3rem; margin-bottom: 0.4rem; }
-    .price-currency { font-size: 1.3rem; font-weight: 700; color: var(--text-white); }
-    .price-amount { font-size: 3rem; font-weight: 900; color: var(--text-white); line-height: 1; letter-spacing: -2px; }
-    .plan-card.featured .price-amount { background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .price-period { font-size: 0.85rem; color: var(--text-muted); }
-    .plan-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.8rem; line-height: 1.6; padding-bottom: 1.8rem; border-bottom: 1px solid var(--border-subtle); }
-
-    .features-list { list-style: none; display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem; }
-    .features-list li { display: flex; align-items: flex-start; gap: 0.7rem; font-size: 0.88rem; color: #cbd5e1; line-height: 1.5; }
-    .feature-check { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
-    .feature-check.yes { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #34d399; }
-    .feature-check.no { background: rgba(100,116,139,0.1); border: 1px solid rgba(100,116,139,0.2); color: #475569; }
-    .feature-check svg { width: 10px; height: 10px; }
-
-    .btn-subscribe { display: block; width: 100%; padding: 0.85rem; border-radius: 10px; text-align: center; font-weight: 700; font-size: 0.95rem; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; }
-    .btn-subscribe-outline { background: transparent; border: 1.5px solid rgba(148,163,184,0.3); color: var(--text-white); }
-    .btn-subscribe-outline:hover { border-color: rgba(59,130,246,0.6); background: rgba(37,99,235,0.1); }
-    .btn-subscribe-primary { background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; box-shadow: 0 4px 20px rgba(37,99,235,0.35); }
-    .btn-subscribe-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(37,99,235,0.5); }
-    .btn-subscribe-enterprise { background: rgba(255,255,255,0.06); border: 1.5px solid rgba(148,163,184,0.25); color: var(--text-white); }
-    .btn-subscribe-enterprise:hover { background: rgba(255,255,255,0.1); border-color: rgba(148,163,184,0.4); }
-
     /* FAQ */
     .faq-section { padding: 0 6% 6rem; max-width: 760px; margin: 0 auto; }
     .faq-title { font-size: 1.6rem; font-weight: 800; text-align: center; margin-bottom: 2.5rem; color: var(--text-white); }
@@ -94,7 +53,6 @@
     [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
     [data-reveal].visible { opacity: 1; transform: translateY(0); }
 
-    @media (max-width: 900px) { .plans-grid { grid-template-columns: 1fr; max-width: 440px; margin: 0 auto; } }
     @media (max-width: 640px) {
       .nav-links { display: none; }
       .nav-links.open { display: flex; flex-direction: column; position: fixed; top: 64px; left: 0; right: 0; background: rgba(15,23,42,0.97); padding: 1.5rem 6%; gap: 1.2rem; backdrop-filter: blur(18px); border-bottom: 1px solid var(--border-subtle); }
@@ -122,85 +80,283 @@
   <p class="page-sub">无隐藏费用，随时可升级或取消，30 天无理由退款保障</p>
 </div>
 
-<div style="padding: 3rem 6% 0; max-width: 1200px; margin: 0 auto;">
-  <div class="billing-toggle" data-reveal>
-    <span class="billing-label active">按月付费</span>
-    <div class="toggle-switch" id="billingToggle"></div>
-    <span class="billing-label">按年付费 <span class="save-badge">省 20%</span></span>
+<style>
+  .pr-section {
+    padding: 60px 32px;
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+  .pr-eyebrow {
+    font-size: 11px;
+    color: #7d8fb3;
+    letter-spacing: 0.3em;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .pr-title {
+    font-size: 36px;
+    font-weight: 600;
+    color: #e8eef8;
+    text-align: center;
+    margin-bottom: 14px;
+    letter-spacing: 0.02em;
+  }
+  .pr-subtitle {
+    font-size: 15px;
+    color: #9bb0d4;
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .pr-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    background: #0d1729;
+    border: 0.5px solid rgba(120,180,255,0.18);
+    border-radius: 10px;
+    padding: 4px;
+    width: fit-content;
+    margin: 0 auto 56px;
+  }
+  .pr-toggle button {
+    background: transparent;
+    border: none;
+    color: #9bb0d4;
+    padding: 10px 20px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s;
+  }
+  .pr-toggle button.active {
+    background: #5b8def;
+    color: #fff;
+  }
+  .pr-toggle .pr-discount {
+    font-size: 11px;
+    color: #5b8def;
+    margin-left: 4px;
+  }
+  .pr-toggle button.active .pr-discount {
+    color: #c5dafa;
+  }
+  .pr-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .pr-card {
+    position: relative;
+    background: #0d1729;
+    border: 0.5px solid rgba(120,180,255,0.18);
+    border-radius: 14px;
+    padding: 36px 28px 32px;
+    transition: transform 0.45s cubic-bezier(.22,.9,.3,1.4), border-color 0.45s, box-shadow 0.45s;
+    cursor: default;
+  }
+  .pr-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 16px;
+    background: radial-gradient(ellipse at center, rgba(91,141,239,0.18) 0%, transparent 65%);
+    z-index: -1;
+    opacity: 0.6;
+    transition: opacity 0.45s;
+    pointer-events: none;
+  }
+  .pr-card:hover {
+    transform: translateY(-14px) scale(1.02);
+    border-color: rgba(120,180,255,0.6);
+    box-shadow: 0 32px 60px rgba(91,141,239,0.35);
+  }
+  .pr-card:hover::before { opacity: 1; }
+  .pr-card.featured {
+    border: 1.5px solid rgba(91,141,239,0.7);
+    background: linear-gradient(180deg, rgba(91,141,239,0.06), #0d1729);
+  }
+  .pr-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #5b8def, #3b6bcf);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    padding: 6px 14px;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(91,141,239,0.5);
+    white-space: nowrap;
+  }
+  .pr-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e8eef8;
+    margin-bottom: 16px;
+    letter-spacing: 0.05em;
+  }
+  .pr-price {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .pr-price .currency {
+    font-size: 20px;
+    color: #9bb0d4;
+    margin-right: 4px;
+  }
+  .pr-price .num-w { color: #ffffff; font-size: 56px; }
+  .pr-price .num-b { color: #5b8def; font-size: 56px; }
+  .pr-price .unit {
+    font-size: 14px;
+    color: #9bb0d4;
+    font-style: normal;
+    font-family: -apple-system, 'PingFang SC', sans-serif;
+    font-weight: 400;
+    margin-left: 4px;
+  }
+  .pr-tagline {
+    font-size: 13px;
+    color: #9bb0d4;
+    line-height: 1.7;
+    margin-bottom: 24px;
+    min-height: 44px;
+  }
+  .pr-divider {
+    height: 0.5px;
+    background: rgba(120,180,255,0.15);
+    margin: 0 0 20px;
+  }
+  .pr-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 28px;
+  }
+  .pr-features li {
+    font-size: 13px;
+    color: #c5dafa;
+    line-height: 1.7;
+    padding: 6px 0 6px 22px;
+    position: relative;
+  }
+  .pr-features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    color: #5b8def;
+    font-weight: 700;
+  }
+  .pr-cta {
+    width: 100%;
+    background: rgba(91,141,239,0.1);
+    color: #c5dafa;
+    border: 0.5px solid rgba(120,180,255,0.4);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s;
+  }
+  .pr-cta:hover {
+    background: #5b8def;
+    color: #fff;
+    border-color: #5b8def;
+  }
+  .pr-card.featured .pr-cta {
+    background: linear-gradient(135deg, #5b8def, #3b6bcf);
+    color: #fff;
+    border: none;
+  }
+  .pr-card.featured .pr-cta:hover {
+    background: linear-gradient(135deg, #7da7f0, #5b8def);
+  }
+  @media (max-width: 1024px) {
+    .pr-cards { grid-template-columns: 1fr; max-width: 480px; }
+  }
+</style>
+
+<section class="pr-section" data-reveal>
+  <div class="pr-eyebrow">定价方案</div>
+  <div class="pr-title">选择适合您的套餐</div>
+  <div class="pr-subtitle">无隐藏费用，随时可升级或取消，30 天无理由退款保障</div>
+
+  <div class="pr-toggle">
+    <button>按月付费</button>
+    <button class="active">按年付费 <span class="pr-discount">省 20%</span></button>
   </div>
-</div>
 
-<div class="pricing-section">
-  <div class="plans-grid">
-
-    <!-- BASIC -->
-    <div class="plan-card" style="transition-delay:0.05s">
-      <div class="plan-name">基础版</div>
-      <div class="plan-price">
-        <span class="price-currency">¥</span>
-        <span class="price-amount" data-monthly="299" data-yearly="239">299</span>
-        <span class="price-period">/ 月</span>
+  <div class="pr-cards">
+    <div class="pr-card">
+      <div class="pr-name">基础版</div>
+      <div class="pr-price">
+        <span class="currency">¥</span><span class="num-w">2</span><span class="num-b">99</span><span class="unit">/ 月</span>
       </div>
-      <p class="plan-desc">适合个人销售和小型团队，快速起步，开拓第一批海外客户</p>
-      <ul class="features-list">
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>每月 50 次 AI 搜索</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>覆盖 15 个目标国家</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>每次最多 20 条线索</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>AI 生成开发信（3 封/客户）</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>线索云端保存</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>导出 Excel</li>
-        <li><span class="feature-check no"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="2" y1="6" x2="10" y2="6"/></svg></span><span style="opacity:0.4">AI 意向度评分</span></li>
-        <li><span class="feature-check no"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="2" y1="6" x2="10" y2="6"/></svg></span><span style="opacity:0.4">团队协作</span></li>
+      <div class="pr-tagline">适合个人销售和小型团队，快速起步，开拓第一批海外客户</div>
+      <div class="pr-divider"></div>
+      <ul class="pr-features">
+        <li>每月 50 次 AI 搜索</li>
+        <li>覆盖 15 个目标国家</li>
+        <li>每次最多 20 条线索</li>
+        <li>AI 生成开发信（3 封/客户）</li>
+        <li>线索云端保存</li>
+        <li>导出 Excel</li>
       </ul>
-      <button class="btn-subscribe btn-subscribe-outline" onclick="location.href='index.html'">立即订阅</button>
+      <button class="pr-cta" onclick="location.href='index.html'">立即订阅</button>
     </div>
 
-    <!-- PRO (FEATURED) -->
-    <div class="plan-card featured" style="transition-delay:0.12s">
-      <div class="popular-badge">⭐ 最受欢迎</div>
-      <div class="plan-name">专业版</div>
-      <div class="plan-price">
-        <span class="price-currency">¥</span>
-        <span class="price-amount" data-monthly="699" data-yearly="559">699</span>
-        <span class="price-period">/ 月</span>
+    <div class="pr-card featured">
+      <div class="pr-badge">⭐ 最受欢迎</div>
+      <div class="pr-name">专业版</div>
+      <div class="pr-price">
+        <span class="currency">¥</span><span class="num-b">6</span><span class="num-w">9</span><span class="num-b">9</span><span class="unit">/ 月</span>
       </div>
-      <p class="plan-desc">适合外贸团队和中型工厂，全功能解锁，深度 AI 分析助力精准拓客</p>
-      <ul class="features-list">
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>每月 <strong style="color:#93c5fd">300 次</strong> AI 搜索</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>覆盖 <strong style="color:#93c5fd">50+</strong> 目标国家</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>每次最多 <strong style="color:#93c5fd">50 条</strong>线索</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>AI 生成开发信（<strong style="color:#93c5fd">5 封</strong>/客户）</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span><strong style="color:#93c5fd">AI 意向度评分</strong></li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>线索云端保存 + 标签管理</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>导出 Excel / Word</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>优先客服支持</li>
+      <div class="pr-tagline">适合外贸团队和中型工厂，全功能解锁，深度 AI 分析助力精准拓客</div>
+      <div class="pr-divider"></div>
+      <ul class="pr-features">
+        <li>每月 300 次 AI 搜索</li>
+        <li>覆盖 50+ 目标国家</li>
+        <li>每次最多 50 条线索</li>
+        <li>AI 生成开发信（5 封/客户）</li>
+        <li>AI 意向度评分</li>
+        <li>线索云端保存 + 标签管理</li>
+        <li>导出 Excel / Word</li>
+        <li>优先客服支持</li>
       </ul>
-      <button class="btn-subscribe btn-subscribe-primary" onclick="location.href='index.html'">立即订阅</button>
+      <button class="pr-cta" onclick="location.href='index.html'">立即订阅</button>
     </div>
 
-    <!-- ENTERPRISE -->
-    <div class="plan-card" style="transition-delay:0.19s">
-      <div class="plan-name">企业版</div>
-      <div class="plan-price">
-        <span class="price-currency">¥</span>
-        <span class="price-amount" data-monthly="1499" data-yearly="1199">1499</span>
-        <span class="price-period">/ 月</span>
+    <div class="pr-card">
+      <div class="pr-name">企业版</div>
+      <div class="pr-price">
+        <span class="currency">¥</span><span class="num-w">1</span><span class="num-b">4</span><span class="num-w">9</span><span class="num-b">9</span><span class="unit">/ 月</span>
       </div>
-      <p class="plan-desc">适合大型工厂和外贸公司，无限搜索，专属顾问，深度定制服务</p>
-      <ul class="features-list">
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span><strong style="color:#c4b5fd">无限次</strong> AI 搜索</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>覆盖全球所有国家</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>每次最多 <strong style="color:#c4b5fd">200 条</strong>线索</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>开发信 5 封 + 自定义模板</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>AI 深度分析 + 竞品对比</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span><strong style="color:#c4b5fd">团队多账号</strong>（最多 10 人）</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>专属客户成功经理</li>
-        <li><span class="feature-check yes"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1.5,6 4.5,9 10.5,3"/></svg></span>API 接入 + 定制功能开发</li>
+      <div class="pr-tagline">适合大型工厂和外贸公司，无限搜索，专属顾问，深度定制服务</div>
+      <div class="pr-divider"></div>
+      <ul class="pr-features">
+        <li>无限次 AI 搜索</li>
+        <li>覆盖全球所有国家</li>
+        <li>每次最多 200 条线索</li>
+        <li>开发信 5 封 + 自定义模板</li>
+        <li>AI 深度分析 + 竞品对比</li>
+        <li>团队多账号（最多 10 人）</li>
+        <li>专属客户成功经理</li>
+        <li>API 接入 + 定制功能开发</li>
       </ul>
-      <button class="btn-subscribe btn-subscribe-enterprise" onclick="location.href='index.html'">联系我们订阅</button>
+      <button class="pr-cta" onclick="location.href='index.html'">联系我们</button>
     </div>
   </div>
-</div>
+</section>
 
 <!-- FAQ -->
 <div class="faq-section">
@@ -238,24 +394,14 @@ navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => na
 const io = new IntersectionObserver(entries => entries.forEach(e => {
   if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
 }), { threshold: 0.12 });
-document.querySelectorAll('.plan-card, [data-reveal]').forEach(el => io.observe(el));
+document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
 
-/* Billing toggle */
-let yearly = false;
-document.getElementById('billingToggle').addEventListener('click', function() {
-  yearly = !yearly;
-  this.style.background = yearly ? '#7c3aed' : 'var(--blue-primary)';
-  this.style.setProperty('--after-left', yearly ? '25px' : '3px');
-  this.querySelector ? null : null;
-  if (yearly) this.style.setProperty('transform', 'none');
-  document.querySelectorAll('.billing-label').forEach((el, i) => {
-    el.classList.toggle('active', i === (yearly ? 1 : 0));
+/* Pricing toggle */
+document.querySelectorAll('.pr-toggle button').forEach((btn, i, btns) => {
+  btn.addEventListener('click', () => {
+    btns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
   });
-  document.querySelectorAll('.price-amount').forEach(el => {
-    el.textContent = yearly ? el.dataset.yearly : el.dataset.monthly;
-  });
-  const period = document.querySelectorAll('.price-period');
-  period.forEach(el => el.textContent = yearly ? '/ 月（年付）' : '/ 月');
 });
 
 /* FAQ */
