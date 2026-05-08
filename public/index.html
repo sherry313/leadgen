@@ -3426,7 +3426,7 @@ async function startEnrich() {
 
   btn.disabled      = false;
   btn.classList.remove('btn-analyzing');
-  btn.textContent   = '🤖 开始深度分析选中公司';
+  btn.innerHTML     = _deepAnalysisLabel();
   btn.style.opacity = '1';
   btn.style.cursor  = 'pointer';
   document.getElementById('btnEnrichCancel').style.display = 'none';
@@ -3551,6 +3551,11 @@ async function loadSearchById(searchId) {
 
 let _isAdmin = false;
 
+function _deepAnalysisLabel() {
+  if (!_isAdmin) return '🤖 开始深度分析选中公司';
+  return '🤖 开始深度分析选中公司<span style="font-size:0.78em;color:rgba(148,163,184,0.6);margin-left:6px;font-weight:400">(Firecrawl)</span>';
+}
+
 async function checkAdminAndShow() {
   const token = getStoredToken();
   if (!token) { _isAdmin = false; return; }
@@ -3559,6 +3564,8 @@ async function checkAdminAndShow() {
     const data = await res.json();
     _isAdmin = !!data.isAdmin;
   } catch { _isAdmin = false; }
+  const enrichBtn = document.getElementById('btnEnrich');
+  if (enrichBtn) enrichBtn.innerHTML = _deepAnalysisLabel();
 }
 
 function restoreIcp() {
