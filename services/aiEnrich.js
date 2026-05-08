@@ -141,7 +141,7 @@ BODY IRON RULES:
 5. Sign every email with "— Lens"
 6. Use {first_name} as salutation placeholder; {company} and {website} where natural
 
-Return valid JSON only — no markdown fences, no text outside the JSON object.`;
+Return ONLY valid JSON. All string values must escape internal double quotes with a backslash (\\"). No markdown code fences. No extra text before or after the JSON object.`;
 }
 
 async function generateEmails(lead, templateKey, websiteContent, frameworkKey, customFrameworkData) {
@@ -219,9 +219,10 @@ Return this exact JSON structure with no extra text:
   "EMAIL_5_BODY": "..."
 }
 
-Follow the framework structure above strictly for all 5 emails. Each body under 100 words. Valid JSON only.`;
+Follow the framework structure above strictly for all 5 emails. Each body under 100 words. Return ONLY valid JSON. All string values must escape internal double quotes with a backslash (\\"). No markdown code fences. No extra text before or after the JSON object.`;
 
   let rawText = '';
+  let totalIn = 0, totalOut = 0;
   try {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
@@ -230,17 +231,52 @@ Follow the framework structure above strictly for all 5 emails. Each body under 
       messages: [{ role: 'user', content: userPrompt }],
     });
 
-    const { input_tokens, output_tokens } = response.usage;
-    rawText = response.content[0].text;
-    console.log(`[AI] ${lead.companyName} emails: tokens=${input_tokens}in/${output_tokens}out`);
+    totalIn  = response.usage.input_tokens;
+    totalOut = response.usage.output_tokens;
+    rawText  = response.content[0].text;
+    console.log(`[AI] ${lead.companyName} emails: tokens=${totalIn}in/${totalOut}out`);
 
-    const cleaned = rawText
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim();
+    const strip = (s) => s.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
 
-    const result = JSON.parse(cleaned);
+    let result;
+    try {
+      result = JSON.parse(strip(rawText));
+    } catch (parseErr) {
+      // First parse failed — log the full response and attempt one reformat retry
+      console.error(`[AI] JSON parse failed for ${lead.companyName}: ${parseErr.message}`);
+      console.error(`[AI] Full raw response:\n${rawText}`);
+      console.log(`[AI] Retrying JSON reformat for ${lead.companyName}...`);
+
+      const retryResp = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4000,
+        messages: [{
+          role: 'user',
+          content: `The previous response had invalid JSON syntax — please re-output the same content as strict valid JSON, escape all internal double quotes with backslash (\\"), no markdown fences, no extra text.\n\nPrevious response:\n${rawText}`,
+        }],
+      });
+
+      totalIn  += retryResp.usage.input_tokens;
+      totalOut += retryResp.usage.output_tokens;
+      const retryRaw = retryResp.content[0].text;
+
+      try {
+        result = JSON.parse(strip(retryRaw));
+        console.log(`[AI] ${lead.companyName}: JSON reformat retry succeeded`);
+      } catch (retryErr) {
+        console.error(`[AI] JSON reformat retry also failed for ${lead.companyName}: ${retryErr.message}`);
+        return {
+          EMAIL_1_SUBJECT: '', EMAIL_1_BODY: '',
+          EMAIL_2_SUBJECT: '', EMAIL_2_BODY: '',
+          EMAIL_3_SUBJECT: '', EMAIL_3_BODY: '',
+          EMAIL_4_SUBJECT: '', EMAIL_4_BODY: '',
+          EMAIL_5_SUBJECT: '', EMAIL_5_BODY: '',
+          usage: { input_tokens: totalIn, output_tokens: totalOut },
+          error: `JSON parse failed after retry: ${retryErr.message}`,
+        };
+      }
+    }
+
     console.log(`[AI] ${lead.companyName}: email1="${String(result.EMAIL_1_SUBJECT || '').slice(0, 60)}"`);
 
     await new Promise(r => setTimeout(r, 300));
@@ -251,18 +287,18 @@ Follow the framework structure above strictly for all 5 emails. Each body under 
       EMAIL_3_SUBJECT: result.EMAIL_3_SUBJECT || '',  EMAIL_3_BODY: result.EMAIL_3_BODY || '',
       EMAIL_4_SUBJECT: result.EMAIL_4_SUBJECT || '',  EMAIL_4_BODY: result.EMAIL_4_BODY || '',
       EMAIL_5_SUBJECT: result.EMAIL_5_SUBJECT || '',  EMAIL_5_BODY: result.EMAIL_5_BODY || '',
-      usage: { input_tokens, output_tokens },
+      usage: { input_tokens: totalIn, output_tokens: totalOut },
     };
   } catch (err) {
     console.error(`[AI] Email gen FAILED for ${lead.companyName}: ${err.message}`);
-    if (rawText) console.error(`[AI] Raw (first 300): ${rawText.slice(0, 300)}`);
+    if (rawText) console.error(`[AI] Full raw response:\n${rawText}`);
     return {
       EMAIL_1_SUBJECT: '', EMAIL_1_BODY: '',
       EMAIL_2_SUBJECT: '', EMAIL_2_BODY: '',
       EMAIL_3_SUBJECT: '', EMAIL_3_BODY: '',
       EMAIL_4_SUBJECT: '', EMAIL_4_BODY: '',
       EMAIL_5_SUBJECT: '', EMAIL_5_BODY: '',
-      usage: { input_tokens: 0, output_tokens: 0 },
+      usage: { input_tokens: totalIn, output_tokens: totalOut },
     };
   }
 }
