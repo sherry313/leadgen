@@ -3630,6 +3630,9 @@ async function loadSearchById(searchId) {
     // Restore step 4 (email section) if that's where the user was when they refreshed
     const _savedStep = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
     if (_savedStep === 4) {
+      document.getElementById('wizard-step-1').style.display = 'none';
+      document.getElementById('wizard-step-2').style.display = 'none';
+      document.getElementById('wizard-step-3').style.display = 'none';
       showStep5();
       _updateBulkPushBar();
     }
@@ -4660,6 +4663,9 @@ function _restoreStep() {
   const saved = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
   if (saved <= 1 || saved > 4) return;
   if (saved === 4) {
+    document.getElementById('wizard-step-1').style.display = 'none';
+    document.getElementById('wizard-step-2').style.display = 'none';
+    document.getElementById('wizard-step-3').style.display = 'none';
     showStep5();           // shows step5Section, resets bulkPushBar to none
     _updateBulkPushBar();  // re-show bar if _allLeads already has eligible leads
     console.log('[RestoreStep] 恢复到 step 4 (step5Section)');
