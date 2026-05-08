@@ -334,11 +334,6 @@
     }
     .stat-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
 
-    /* ── FEATURES ── */
-    #features {
-      background: #f8fafc;
-      padding: 6rem 6%;
-    }
     .section-header {
       text-align: center;
       margin-bottom: 3.5rem;
@@ -368,56 +363,6 @@
       margin: 0 auto;
       line-height: 1.7;
     }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.5rem;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-    .feature-card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 2rem 1.8rem;
-      cursor: default;
-      transition: transform 0.3s cubic-bezier(.22,.68,0,1.2), box-shadow 0.3s ease, border-color 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    .feature-card.visible { opacity: 1; transform: translateY(0); }
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      background: radial-gradient(circle at 50% 0%, rgba(37,99,235,0.07) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .feature-card:hover { transform: translateY(-8px); box-shadow: 0 20px 60px rgba(37,99,235,0.12); border-color: rgba(37,99,235,0.3); }
-    .feature-card:hover::before { opacity: 1; }
-    .feature-icon {
-      width: 54px; height: 54px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.6rem;
-      background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05));
-      margin-bottom: 1.2rem;
-      border: 1px solid rgba(37,99,235,0.12);
-    }
-    .feature-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 0.6rem;
-    }
-    .feature-desc { font-size: 0.9rem; color: #64748b; line-height: 1.7; }
-
     /* ── PROCESS ── */
     #process {
       background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
@@ -529,7 +474,6 @@
       #stats { flex-direction: column; align-items: center; }
       .stat-item:not(:last-child)::after { display: none; }
       .stat-item { border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem; }
-      .features-grid { grid-template-columns: 1fr; }
     }
 
     /* ── 6480 MATRIX ── */
@@ -837,37 +781,6 @@
   </div>
 </section>
 
-<!-- FEATURES -->
-<section id="features">
-  <div class="section-header" data-reveal>
-    <span class="section-tag">核心功能</span>
-    <h2 class="section-title">一站式海外拓客解决方案</h2>
-    <p class="section-sub">从搜索到触达，AI 全程赋能，让您的产品触及全球每一个潜在买家</p>
-  </div>
-  <div class="features-grid">
-    <div class="feature-card" style="transition-delay:0.05s">
-      <div class="feature-icon">🔍</div>
-      <div class="feature-title">智能搜索</div>
-      <p class="feature-desc">覆盖全球 50+ 国家，精准定位目标买家，多维度筛选，毫秒级响应</p>
-    </div>
-    <div class="feature-card" style="transition-delay:0.12s">
-      <div class="feature-icon">🤖</div>
-      <div class="feature-title">AI 深度分析</div>
-      <p class="feature-desc">深度分析客户官网，智能评估采购意向，识别高价值潜在客户</p>
-    </div>
-    <div class="feature-card" style="transition-delay:0.19s">
-      <div class="feature-icon">✉️</div>
-      <div class="feature-title">开发信生成</div>
-      <p class="feature-desc">自动生成 5 封个性化开发信序列，多语种支持，提升回复率</p>
-    </div>
-    <div class="feature-card" style="transition-delay:0.26s">
-      <div class="feature-icon">📊</div>
-      <div class="feature-title">数据管理</div>
-      <p class="feature-desc">所有线索云端保存，历史记录随时查看，团队协作无缝衔接</p>
-    </div>
-  </div>
-</section>
-
 <!-- PROCESS -->
 <style>
   @keyframes flowLine_4steps {
@@ -1129,7 +1042,7 @@ const io = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.15 });
 
-document.querySelectorAll('.stat-item, .feature-card, .process-step, [data-reveal]').forEach(el => io.observe(el));
+document.querySelectorAll('.stat-item, .process-step, [data-reveal]').forEach(el => io.observe(el));
 
 /* ── COUNT-UP ANIMATION ── */
 const countIO = new IntersectionObserver((entries) => {
