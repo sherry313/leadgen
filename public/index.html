@@ -765,6 +765,35 @@
       font-size: 0.8rem; color: var(--text); line-height: 1.65;
       white-space: pre-wrap; word-break: break-word;
     }
+    .fw-email-card {
+      background: rgba(15,23,42,0.5); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
+    }
+    .fw-email-card:last-child { margin-bottom: 0; }
+    .fw-email-card-header { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .fw-email-num {
+      font-size: 0.73rem; font-weight: 700; color: var(--text);
+      background: rgba(100,116,139,0.18); padding: 2px 8px; border-radius: 5px;
+    }
+    .fw-email-day {
+      font-size: 0.7rem; color: var(--sub);
+      background: rgba(100,116,139,0.12); padding: 2px 8px; border-radius: 5px;
+      border: 1px solid rgba(100,116,139,0.2);
+    }
+    .fw-email-role {
+      font-size: 0.7rem; font-weight: 600; color: #93c5fd;
+      background: rgba(37,99,235,0.12); padding: 2px 8px; border-radius: 5px;
+      border: 1px solid rgba(37,99,235,0.25);
+    }
+    .fw-email-subject {
+      font-size: 0.8rem; font-weight: 600; color: var(--text);
+      padding: 8px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .fw-email-body {
+      font-size: 0.77rem; color: #94a3b8; line-height: 1.65;
+      white-space: pre-wrap; word-break: break-word;
+    }
 
     /* ── Custom framework modal ───────────────────────────────────────────── */
     #customFwModal {
@@ -1351,6 +1380,47 @@
     }
     .hist-exit-btn:hover { border-color: #94a3b8; color: #f1f5f9; }
 
+    /* City dropdown */
+    .city-drop-wrap { position:relative; }
+    .city-drop-trigger {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:9px 12px; background:var(--card); border:1px solid var(--border);
+      border-radius:8px; cursor:pointer; font-size:0.9rem; color:var(--text);
+      transition:border-color 0.15s;
+    }
+    .city-drop-trigger:hover { border-color:#3b82f6; }
+    .city-drop-arrow { color:var(--sub); font-size:0.75rem; }
+    .city-drop-panel {
+      position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:200;
+      background:var(--card); border:1px solid var(--border); border-radius:10px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.35); overflow:hidden;
+    }
+    .city-drop-panel.hidden { display:none; }
+    .city-drop-search {
+      width:100%; box-sizing:border-box; padding:9px 12px;
+      background:transparent; border:none; border-bottom:1px solid var(--border);
+      color:var(--text); font-size:0.88rem; outline:none;
+    }
+    #cityDropList { max-height:220px; overflow-y:auto; padding:4px 0; }
+    .city-group-label {
+      padding:6px 12px 2px; font-size:0.72rem; color:var(--sub);
+      text-transform:uppercase; letter-spacing:0.05em;
+    }
+    .city-opt {
+      padding:7px 14px; font-size:0.88rem; color:var(--text); cursor:pointer;
+      transition:background 0.1s;
+    }
+    .city-opt:hover { background:rgba(59,130,246,0.12); color:#93c5fd; }
+    .city-opt.selected { color:#60a5fa; font-weight:600; }
+    .city-not-found { padding:12px 14px; font-size:0.85rem; color:var(--sub); }
+
+    /* Step 1 combined: separate country + type sections */
+    .step1-section-title {
+      font-size:0.78rem; font-weight:600; color:var(--sub);
+      text-transform:uppercase; letter-spacing:0.07em; margin:20px 0 10px;
+    }
+    .step1-section-title:first-of-type { margin-top:0; }
+
   </style>
 </head>
 <body>
@@ -1371,7 +1441,7 @@
   <ul class="nav-links" id="navApp" style="display:none">
     <li><a href="index.html" class="nav-primary">找客户</a></li>
     <li><a href="dashboard.html">仪表盘</a></li>
-    <li><button class="btn-hub-trigger" onclick="goToStep(5)" title="邮件发送配置">📬 邮件</button></li>
+    <li><button class="btn-hub-trigger" onclick="goToStep(4)" title="邮件发送配置">📬 邮件</button></li>
     <li class="nav-dropdown" id="navUserMenu">
       <button class="nav-user-btn" onclick="toggleUserMenu()" title="账户菜单">👤 ▾</button>
       <div class="nav-dropdown-menu" id="userDropdown">
@@ -1389,34 +1459,31 @@
   <div class="step-progress">
     <div class="step-item" onclick="goToStep(1)">
       <div class="step-num active" id="snum-1">1</div>
-      <span class="step-label active" id="slbl-1">目标市场</span>
+      <span class="step-label active" id="slbl-1">目标 + 类型</span>
     </div>
     <div class="step-connector" id="scon-1"></div>
     <div class="step-item" onclick="goToStep(2)">
       <div class="step-num" id="snum-2">2</div>
-      <span class="step-label" id="slbl-2">客户类型</span>
+      <span class="step-label" id="slbl-2">搜索配置</span>
     </div>
     <div class="step-connector" id="scon-2"></div>
     <div class="step-item" onclick="goToStep(3)">
       <div class="step-num" id="snum-3">3</div>
-      <span class="step-label" id="slbl-3">搜索配置</span>
+      <span class="step-label" id="slbl-3">抓取分析</span>
     </div>
     <div class="step-connector" id="scon-3"></div>
     <div class="step-item" onclick="goToStep(4)">
       <div class="step-num" id="snum-4">4</div>
-      <span class="step-label" id="slbl-4">开始搜索</span>
-    </div>
-    <div class="step-connector" id="scon-4"></div>
-    <div class="step-item" onclick="goToStep(5)">
-      <div class="step-num" id="snum-5">5</div>
-      <span class="step-label" id="slbl-5">邮件发送</span>
+      <span class="step-label" id="slbl-4">邮件发送</span>
     </div>
   </div>
 
-  <!-- Step 1: Country selection -->
+  <!-- Step 1: Country + Customer type (combined) -->
   <div class="wizard-panel" id="wizard-step-1">
-    <div class="panel-title">第一步：选择目标国家/地区</div>
-    <div class="panel-sub">可多选，系统将为每个国家依次搜索客户</div>
+    <div class="panel-title">第一步：选择目标市场 &amp; 客户类型</div>
+
+    <div class="step1-section-title">目标国家/地区（可多选）</div>
+    <div class="panel-sub" style="margin-top:-6px;margin-bottom:12px">系统将为每个国家依次搜索客户</div>
     <div class="cards-grid" id="countryGrid">
       <div class="country-card select-card" id="cc-0" onclick="toggleCountry(0)">
         <img class="flag-img" src="https://flagcdn.com/w80/au.png" alt="AU">
@@ -1451,29 +1518,23 @@
         <span class="name">日本</span>
       </div>
     </div>
-    <div class="panel-nav">
-      <span class="sel-hint" id="countrySelHint">请至少选择一个国家</span>
-      <button class="btn-primary" onclick="nextStep(2)">下一步 →</button>
-    </div>
-  </div>
 
-  <!-- Step 2: Customer type -->
-  <div class="wizard-panel hidden" id="wizard-step-2">
-    <div class="panel-title">第二步：选择目标客户类型</div>
-    <div class="panel-sub">可多选，选择您建材产品的目标买家群体</div>
+    <div class="step1-section-title" style="margin-top:28px">目标客户类型（可多选）</div>
+    <div class="panel-sub" style="margin-top:-6px;margin-bottom:12px">选择您建材产品的目标买家群体</div>
     <div class="type-grid" id="typeGrid"></div>
-    <div class="panel-nav">
-      <button class="btn-ghost" onclick="goToStep(1)">← 上一步</button>
-      <div style="display:flex;align-items:center;gap:14px">
+
+    <div class="panel-nav" style="margin-top:24px">
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+        <span class="sel-hint" id="countrySelHint">请至少选择一个国家</span>
         <span class="sel-hint" id="typeSelHint">请至少选择一个类型</span>
-        <button class="btn-primary" onclick="nextStep(3)">下一步 →</button>
       </div>
+      <button class="btn-primary" id="step1NextBtn" disabled onclick="nextStep(2)">下一步 →</button>
     </div>
   </div>
 
-  <!-- Step 3: Config -->
-  <div class="wizard-panel hidden" id="wizard-step-3">
-    <div class="panel-title">第三步：配置搜索参数</div>
+  <!-- Step 2: Config -->
+  <div class="wizard-panel hidden" id="wizard-step-2">
+    <div class="panel-title">第二步：配置搜索参数</div>
     <div class="panel-sub">填写关键词和目标城市即可开始</div>
 
     <!-- Keyword + City side by side -->
@@ -1485,7 +1546,18 @@
       </div>
       <div>
         <label>目标城市</label>
-        <input type="text" id="locInput" placeholder="如：Sydney Australia">
+        <div class="city-drop-wrap" id="cityDropWrap">
+          <div class="city-drop-trigger" id="cityDropTrigger" onclick="toggleCityDrop()">
+            <span id="cityDropLabel">请选择目标城市（可选）</span>
+            <span class="city-drop-arrow">▾</span>
+          </div>
+          <div class="city-drop-panel hidden" id="cityDropPanel">
+            <input type="text" id="cityDropSearch" class="city-drop-search"
+                   placeholder="搜索城市…" oninput="filterCities()" autocomplete="off">
+            <div id="cityDropList"></div>
+          </div>
+        </div>
+        <input type="hidden" id="locInput" value="">
       </div>
     </div>
 
@@ -1613,14 +1685,14 @@
     </div>
 
     <div class="panel-nav" style="margin-top:24px">
-      <button class="btn-ghost" onclick="goToStep(2)">← 上一步</button>
-      <button class="btn-primary" onclick="nextStep(4)">下一步 →</button>
+      <button class="btn-ghost" onclick="goToStep(1)">← 上一步</button>
+      <button class="btn-primary" onclick="nextStep(3)">下一步 →</button>
     </div>
   </div>
 
-  <!-- Step 4: Start -->
-  <div class="wizard-panel hidden" id="wizard-step-4">
-    <div class="panel-title">第四步：抓取原始数据</div>
+  <!-- Step 3: Scrape -->
+  <div class="wizard-panel hidden" id="wizard-step-3">
+    <div class="panel-title">第三步：抓取原始数据</div>
     <div class="panel-sub">先查看所有原始公司数据，再决定是否使用 AI 预筛选</div>
 
     <div id="runSummary" style="margin-bottom:18px"></div>
@@ -1630,7 +1702,7 @@
     <button class="btn-start" id="btnStart" onclick="startScrapeRaw()">🔍 开始抓取</button>
 
     <div class="panel-nav" style="margin-top:14px">
-      <button class="btn-ghost" onclick="goToStep(3)">← 修改配置</button>
+      <button class="btn-ghost" onclick="goToStep(2)">← 修改配置</button>
       <span></span>
     </div>
   </div>
@@ -2021,11 +2093,7 @@
       <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.76rem;color:#93c5fd;line-height:1.6">
         💡 这是该框架的经典案例。AI 会读取你的产品信息和目标客户类型，生成完全个性化的建材行业开发信——结构遵循框架，内容根据每个客户量身创作。
       </div>
-      <div>
-        <div class="tpl-section-label" style="margin-bottom:8px">原版示例邮件</div>
-        <div class="fw-sample-subj" id="fwExSubj"></div>
-        <div class="fw-sample-body" id="fwExBody"></div>
-      </div>
+      <div id="fwExEmailCards"></div>
     </div>
     <div style="padding:12px 22px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px">
       <button class="hub-btn ghost" onclick="closeFwExModal()" style="padding:6px 16px">关闭</button>
@@ -2182,6 +2250,20 @@ const CUSTOMER_TYPES = [
   { icon:'🛒', zh:'超市建材采购', en:'hardware store',              lucide:'shopping-cart' },
 ];
 
+// ── City presets ──────────────────────────────────────────────────────────────
+const COUNTRY_CODES = ['AU','US','UK','CA','DE','AE','SG','JP'];
+const COUNTRY_NAMES = { AU:'澳大利亚', US:'美国', UK:'英国', CA:'加拿大', DE:'德国', AE:'阿联酋', SG:'新加坡', JP:'日本' };
+const CITY_PRESETS = {
+  AU: ['Melbourne','Sydney','Brisbane','Perth','Adelaide','Canberra','Gold Coast','Hobart','Darwin','Newcastle','Wollongong','Geelong','Townsville','Cairns','Toowoomba','Ballarat','Bendigo','Launceston','Mackay','Rockhampton'],
+  CA: ['Toronto','Vancouver','Montreal','Calgary','Ottawa','Edmonton','Quebec City','Winnipeg','Hamilton','Kitchener','London (ON)','Victoria','Halifax','Oshawa','Windsor','Saskatoon','Regina',"St. John's",'Kelowna','Sherbrooke'],
+  US: ['New York','Los Angeles','Chicago','Houston','Phoenix','Philadelphia','San Antonio','San Diego','Dallas','San Jose','Austin','Jacksonville','Fort Worth','Columbus','San Francisco','Charlotte','Seattle','Denver','Washington DC','Boston','Miami'],
+  UK: ['London','Manchester','Birmingham','Liverpool','Leeds','Glasgow','Edinburgh','Bristol','Sheffield','Newcastle','Cardiff','Belfast'],
+  DE: ['Berlin','Hamburg','Munich','Cologne','Frankfurt','Stuttgart','Düsseldorf','Leipzig','Dortmund','Essen'],
+  AE: ['Dubai','Abu Dhabi','Sharjah','Ajman','Ras Al Khaimah','Fujairah','Umm Al Quwain'],
+  SG: ['Singapore'],
+  JP: ['Tokyo','Osaka','Yokohama','Nagoya','Sapporo','Fukuoka','Kobe','Kyoto','Kawasaki','Saitama'],
+};
+
 // ── State ─────────────────────────────────────────────────────────────────────
 const selectedCountries = new Set();
 const selectedTypes     = new Set();
@@ -2213,42 +2295,94 @@ function toggleCountry(i) {
   document.getElementById(`cc-${i}`).classList.toggle('selected', selectedCountries.has(i));
   const n = selectedCountries.size;
   document.getElementById('countrySelHint').textContent = n ? `已选 ${n} 个国家` : '请至少选择一个国家';
+  updateStep1Nav();
 }
 function toggleType(i) {
   selectedTypes.has(i) ? selectedTypes.delete(i) : selectedTypes.add(i);
   document.getElementById(`ct-${i}`).classList.toggle('selected', selectedTypes.has(i));
   const n = selectedTypes.size;
   document.getElementById('typeSelHint').textContent = n ? `已选 ${n} 个类型` : '请至少选择一个类型';
+  updateStep1Nav();
 }
+function updateStep1Nav() {
+  const ok = selectedCountries.size > 0 && selectedTypes.size > 0;
+  const btn = document.getElementById('step1NextBtn');
+  if (btn) btn.disabled = !ok;
+}
+
+// ── City dropdown ─────────────────────────────────────────────────────────────
+function toggleCityDrop() {
+  const panel = document.getElementById('cityDropPanel');
+  if (panel.classList.contains('hidden')) {
+    _buildCityDropList('');
+    panel.classList.remove('hidden');
+    document.getElementById('cityDropSearch').focus();
+  } else {
+    panel.classList.add('hidden');
+  }
+}
+function _buildCityDropList(filter) {
+  const f = filter.toLowerCase();
+  const codes = [...selectedCountries].map(i => COUNTRY_CODES[i]).filter(c => CITY_PRESETS[c]);
+  let html = ''; let found = false;
+  for (const code of codes) {
+    const matching = CITY_PRESETS[code].filter(c => c.toLowerCase().includes(f));
+    if (matching.length) {
+      found = true;
+      html += `<div class="city-group-label">${COUNTRY_NAMES[code]}</div>`;
+      const cur = document.getElementById('locInput')?.value || '';
+      matching.forEach(city => {
+        const sel = city === cur ? ' selected' : '';
+        html += `<div class="city-opt${sel}" onclick="selectCity(this,'${city.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">[${code}] ${city}</div>`;
+      });
+    }
+  }
+  if (!found) html = `<div class="city-not-found">未找到该城市 — 请联系管理员添加</div>`;
+  document.getElementById('cityDropList').innerHTML = html;
+}
+function filterCities() {
+  _buildCityDropList(document.getElementById('cityDropSearch').value);
+}
+function selectCity(el, city) {
+  document.getElementById('locInput').value = city;
+  document.getElementById('cityDropLabel').textContent = el.textContent.trim();
+  document.getElementById('cityDropPanel').classList.add('hidden');
+}
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('cityDropWrap');
+  if (wrap && !wrap.contains(e.target))
+    document.getElementById('cityDropPanel')?.classList.add('hidden');
+});
 
 // ── Step navigation ───────────────────────────────────────────────────────────
 function goToStep(n) {
-  if (n === 5) {
+  if (n === 4) {
     const s5 = document.getElementById('step5Section');
     if (s5 && s5.style.display !== 'none') {
-      currentStep = 5;
+      currentStep = 4;
       updateStepProgress();
       s5.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     return;
   }
-  if (n > 1 && selectedCountries.size === 0) { alert('请至少选择一个目标国家'); goToStep(1); return; }
-  if (n > 2 && selectedTypes.size === 0)     { alert('请至少选择一种客户类型'); goToStep(2); return; }
+  if (n > 1 && (selectedCountries.size === 0 || selectedTypes.size === 0)) {
+    alert('请先在第一步选择国家和客户类型'); goToStep(1); return;
+  }
   document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
   document.getElementById(`wizard-step-${n}`).classList.remove('hidden');
   currentStep = n;
   updateStepProgress();
-  if (n === 3) { buildKeywords(); restoreIcp(); }
-  if (n === 4) {
+  if (n === 2) { buildKeywords(); restoreIcp(); _buildCityDropList(''); }
+  if (n === 3) {
     const icpText = document.getElementById('icpInput').value.trim();
     if (icpText && isIcpVague(icpText)) {
       document.getElementById('icpWarning').style.display = 'block';
       document.getElementById('icpGood').style.display = 'none';
       document.getElementById('icpInput').focus();
       document.getElementById('icpInput').style.borderColor = '#ef4444';
-      currentStep = 3;
+      currentStep = 2;
       document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
-      document.getElementById('wizard-step-3').classList.remove('hidden');
+      document.getElementById('wizard-step-2').classList.remove('hidden');
       updateStepProgress();
       return;
     }
@@ -2260,7 +2394,7 @@ function nextStep(n) { goToStep(n); }
 
 function updateStepProgress() {
   localStorage.setItem('leadgen_current_step', currentStep);
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 4; i++) {
     const numEl = document.getElementById(`snum-${i}`);
     const lblEl = document.getElementById(`slbl-${i}`);
     if (!numEl || !lblEl) continue;
@@ -2281,7 +2415,7 @@ function updateStepProgress() {
       lblEl.className   = 'step-label';
       item.classList.remove('step-done');
     }
-    if (i < 5) {
+    if (i < 4) {
       const con = document.getElementById(`scon-${i}`);
       if (con) con.className = 'step-connector' + (i < currentStep ? ' done' : '');
     }
@@ -2319,7 +2453,7 @@ function updateSelectedCombo() {
   const location = (document.getElementById('locInput')?.value || '').trim();
   if (!query) {
     alert('请输入搜索关键词');
-    goToStep(3);
+    goToStep(2);
     return false;
   }
   const label = [query, location].filter(Boolean).join(' · ');
@@ -2646,7 +2780,7 @@ function renderResults(leads) {
     const detailBtn     = (lead.intentReasoning || lead.icpReasoning) ? `<button class="btn-sm" id="toggle-${origIdx}" onclick="toggleEmails(${origIdx})" title="查看 AI 评估理由">展开 ▾</button>` : '';
     const viewEmailsBtn = hasEmails
       ? `<button class="btn-sm btn-view-emails" id="emailbtn-${origIdx}" onclick="openEmailDrawer(${origIdx})" title="查看已生成的 5 封开发信">📝 查看邮件</button>`
-      : (qualified ? `<button class="btn-sm" id="emailbtn-${origIdx}" onclick="goToStep(5)" title="前往第五步选模板生成邮件" style="color:#60a5fa;border-color:rgba(37,99,235,0.4)">✉️ 生成邮件</button>` : '');
+      : (qualified ? `<button class="btn-sm" id="emailbtn-${origIdx}" onclick="goToStep(4)" title="前往第四步选模板生成邮件" style="color:#60a5fa;border-color:rgba(37,99,235,0.4)">✉️ 生成邮件</button>` : '');
     const leadKey = getLeadKey(lead);
     const alreadySent = _isSentLS(leadKey);
     const noCampaign  = !getSelectedCampaignId();
@@ -2756,7 +2890,7 @@ async function downloadDOCX() {
 // ── Phase 1: Raw scrape ───────────────────────────────────────────────────────
 async function startScrapeRaw() {
   const token = getStoredToken();
-  if (!token) { alert('请先在第三步输入访问令牌'); goToStep(3); return; }
+  if (!token) { alert('请先在第二步输入访问令牌'); goToStep(2); return; }
 
   const selectedCombos = generatedKeywords.filter(k => k.selected);
   if (!selectedCombos.length) { alert('请先生成并选择搜索关键词'); return; }
@@ -3313,7 +3447,7 @@ async function cancelEnrich() {
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 async function startPipeline() {
   const token = getStoredToken();
-  if (!token) { alert('请先在第三步输入访问令牌'); goToStep(3); return; }
+  if (!token) { alert('请先在第二步输入访问令牌'); goToStep(2); return; }
 
   const selectedCombos = generatedKeywords.filter(k => k.selected);
 
@@ -3608,8 +3742,8 @@ async function sendLeadToInstantly(origIdx) {
 
   const campaignId = getSelectedCampaignId();
   if (!campaignId) {
-    _showToast('请先在下方第五步选择 Campaign');
-    goToStep(5);
+    _showToast('请先在下方第四步选择 Campaign');
+    goToStep(4);
     return;
   }
 
@@ -3861,9 +3995,9 @@ function getSelectedCampaignId() {
   return localStorage.getItem(_LS_CAMPAIGN) || '';
 }
 
-function openHubDrawer() { goToStep(5); }   // legacy alias
+function openHubDrawer() { goToStep(4); }   // legacy alias
 function closeHubDrawer() {}                 // legacy alias — drawer removed
-function toggleInstantlyHub() { goToStep(5); }
+function toggleInstantlyHub() { goToStep(4); }
 
 function showStep5() {
   const s5 = document.getElementById('step5Section');
@@ -4260,7 +4394,7 @@ function _restoreStep() {
   const params = new URLSearchParams(location.search);
   if (params.get('search') || params.get('query')) return;
   const saved = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
-  if (saved <= 1 || saved > 5) return;
+  if (saved <= 1 || saved > 3) return;
   const panel = document.getElementById('wizard-step-' + saved);
   if (!panel) return;
   document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
@@ -4268,7 +4402,7 @@ function _restoreStep() {
   currentStep = saved;
   updateStepProgress();
   console.log('[RestoreStep] 恢复到 step', saved, '成功, wizard-step-' + saved + ' hidden?', panel.classList.contains('hidden'));
-  if (saved >= 4 && _allLeads.length === 0) _showRefreshWarning(panel);
+  if (saved >= 3 && _allLeads.length === 0) _showRefreshWarning(panel);
 }
 
 function _showRefreshWarning(panel) {
@@ -4277,8 +4411,8 @@ function _showRefreshWarning(panel) {
   banner.id = 'refresh-warning-banner';
   banner.style.cssText = 'margin:12px 0 10px;padding:12px 16px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:0.83rem;color:#fbbf24;line-height:1.5';
   banner.innerHTML =
-    `<span style="flex:1;min-width:200px">⚠️ 检测到您刷新了页面，搜索数据未恢复。请前往第三步重新跑搜索来加载线索。</span>` +
-    `<button onclick="goToStep(3);document.getElementById('refresh-warning-banner').remove()" style="padding:5px 14px;background:rgba(245,158,11,0.18);border:1px solid rgba(245,158,11,0.45);border-radius:6px;color:#fbbf24;font-size:0.8rem;cursor:pointer;white-space:nowrap">前往第 3 步</button>` +
+    `<span style="flex:1;min-width:200px">⚠️ 检测到您刷新了页面，搜索数据未恢复。请前往第二步重新跑搜索来加载线索。</span>` +
+    `<button onclick="goToStep(2);document.getElementById('refresh-warning-banner').remove()" style="padding:5px 14px;background:rgba(245,158,11,0.18);border:1px solid rgba(245,158,11,0.45);border-radius:6px;color:#fbbf24;font-size:0.8rem;cursor:pointer;white-space:nowrap">前往第 2 步</button>` +
     `<button onclick="document.getElementById('refresh-warning-banner').remove()" style="padding:4px 8px;background:transparent;border:none;color:#94a3b8;font-size:1rem;cursor:pointer;line-height:1" title="关闭">✕</button>`;
   panel.prepend(banner);
 }
@@ -4502,11 +4636,7 @@ function openFwExModal(key) {
     structRow.innerHTML = `<div class="fw-struct-chip">${fw.description}</div>`;
   }
 
-  // Sample email
-  document.getElementById('fwExSubj').textContent = fw.sample_subject
-    ? `Subject: ${fw.sample_subject}`
-    : '（无固定 Subject 示例）';
-  document.getElementById('fwExBody').textContent = fw.sample_email_body || '（本框架无原版示例，AI 按结构自由创作）';
+  document.getElementById('fwExEmailCards').innerHTML = _buildFwEmailCards(fw);
 
   // Select button state
   const selBtn = document.getElementById('fwExSelectBtn');
@@ -4520,6 +4650,48 @@ function openFwExModal(key) {
 function closeFwExModal() {
   document.getElementById('fwExModal').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+function _buildFwEmailCards(fw) {
+  const raw = fw.sample_email_body || '';
+
+  // Try to split on "Email N (Day X) — Role" lines (cold_5_step format)
+  const parts = raw.split(/(?=^Email\s+\d+\s+\(Day\s+\d+\))/m).filter(p => p.trim());
+  const isMulti = parts.length >= 2 && /^Email\s+\d+\s+\(Day\s+\d+\)/.test(parts[0]);
+
+  let emails;
+  if (isMulti) {
+    emails = parts.map((part, idx) => {
+      const hm = part.match(/^Email\s+(\d+)\s+\(Day\s+(\d+)\)\s+[—-]\s+(.+?)(?:\r?\n|$)/);
+      const num  = hm ? parseInt(hm[1]) : idx + 1;
+      const day  = hm ? `Day ${hm[2]}` : '';
+      const role = hm ? hm[3].trim() : '';
+      const afterHdr = hm ? part.slice(hm[0].length).trim() : part.trim();
+      const subjM = afterHdr.match(/Subject:\s*"?([^\n"]+)"?/);
+      const subject = subjM ? subjM[1].replace(/^"|"$/g, '').trim() : '';
+      const body = afterHdr.replace(/Subject:\s*"?[^\n]*"?\n?/, '').trim();
+      return { num, day, role, subject, body };
+    });
+  } else {
+    const s = fw.structure && fw.structure.length ? fw.structure[0] : null;
+    const role = s ? (s.letter ? `${s.letter} — ${s.stage}` : s.stage) : '';
+    emails = [{ num: null, day: null, role, subject: fw.sample_subject || '', body: raw || '（本框架无原版示例，AI 按结构自由创作）' }];
+  }
+
+  const label = `<div class="tpl-section-label" style="margin-bottom:10px">原版示例邮件</div>`;
+  const cards = emails.map(e => {
+    const hdrParts = [
+      e.num  ? `<span class="fw-email-num">Email ${e.num}</span>` : '',
+      e.day  ? `<span class="fw-email-day">${_esc(e.day)}</span>` : '',
+      e.role ? `<span class="fw-email-role">${_esc(e.role)}</span>` : '',
+    ].filter(Boolean).join('');
+    return `<div class="fw-email-card">
+  ${hdrParts ? `<div class="fw-email-card-header">${hdrParts}</div>` : ''}
+  ${e.subject ? `<div class="fw-email-subject">Subject: ${_esc(e.subject)}</div>` : ''}
+  <div class="fw-email-body">${_esc(e.body)}</div>
+</div>`;
+  }).join('');
+  return label + cards;
 }
 
 function selectFwFromModal() {
