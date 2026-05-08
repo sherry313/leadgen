@@ -790,10 +790,10 @@
     100% { stroke-dashoffset: -60; opacity: 0; }
   }
   .four-step-section {
-    padding: 80px 32px;
+    padding: 60px 32px;
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
     position: relative;
     overflow: hidden;
-    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   }
   .fs-eyebrow {
     font-size: 11px;
@@ -826,7 +826,7 @@
   }
   .fs-line {
     position: absolute;
-    top: 60px;
+    top: 88px;
     left: 12.5%;
     right: 12.5%;
     height: 2px;
@@ -838,8 +838,9 @@
     background: #0d1729;
     border: 0.5px solid rgba(120,180,255,0.18);
     border-radius: 14px;
-    padding: 32px 22px;
+    padding: 32px 22px 26px;
     z-index: 1;
+    text-align: center;
     transition: transform 0.45s cubic-bezier(.22,.9,.3,1.4),
                 border-color 0.45s,
                 box-shadow 0.45s;
@@ -865,23 +866,25 @@
     opacity: 1;
   }
   .fs-num {
-    position: absolute;
-    top: 18px;
-    right: 22px;
-    font-size: 36px;
+    font-size: 50px;
     font-weight: 700;
-    color: rgba(91,141,239,0.3);
-    letter-spacing: -0.02em;
-  }
-  .fs-emoji {
-    font-size: 30px;
+    line-height: 1;
     margin-bottom: 16px;
+    letter-spacing: -0.02em;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+  }
+  .fs-num .digit-white { color: #ffffff; }
+  .fs-num .digit-blue { color: #5b8def; }
+  .fs-emoji {
+    font-size: 28px;
+    margin-bottom: 12px;
   }
   .fs-name {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
     color: #e8eef8;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     letter-spacing: 0.04em;
   }
   .fs-desc {
@@ -895,7 +898,7 @@
   }
   @media (max-width: 640px) {
     .fs-cards-wrap { grid-template-columns: 1fr; }
-    .four-step-section { padding: 60px 20px; }
+    .four-step-section { padding: 48px 20px; }
     .fs-title { font-size: 28px; }
   }
 </style>
@@ -912,28 +915,28 @@
     </svg>
 
     <div class="fs-card" data-reveal style="--reveal-delay: 0ms">
-      <div class="fs-num">01</div>
+      <div class="fs-num"><span class="digit-white">0</span><span class="digit-blue">1</span></div>
       <div class="fs-emoji">🌏</div>
       <div class="fs-name">选择目标市场</div>
       <div class="fs-desc">从 50+ 国家中选定目标市场，聚焦高潜力地区</div>
     </div>
 
     <div class="fs-card" data-reveal style="--reveal-delay: 100ms">
-      <div class="fs-num">02</div>
+      <div class="fs-num"><span class="digit-blue">0</span><span class="digit-white">2</span></div>
       <div class="fs-emoji">🏢</div>
       <div class="fs-name">选择客户类型</div>
       <div class="fs-desc">进口商、批发商、装修公司等 8 大类型精准匹配</div>
     </div>
 
     <div class="fs-card" data-reveal style="--reveal-delay: 200ms">
-      <div class="fs-num">03</div>
+      <div class="fs-num"><span class="digit-white">0</span><span class="digit-blue">3</span></div>
       <div class="fs-emoji">⚙️</div>
       <div class="fs-name">配置搜索参数</div>
       <div class="fs-desc">填写产品关键词，设置公司规模和采购偏好</div>
     </div>
 
     <div class="fs-card" data-reveal style="--reveal-delay: 300ms">
-      <div class="fs-num">04</div>
+      <div class="fs-num"><span class="digit-blue">0</span><span class="digit-white">4</span></div>
       <div class="fs-emoji">🚀</div>
       <div class="fs-name">AI 自动拓客</div>
       <div class="fs-desc">AI 自动搜索、分析、生成开发信</div>
