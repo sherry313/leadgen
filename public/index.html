@@ -1257,13 +1257,13 @@
     .keyword-tag.priority-tag.selected { background: #d97706 !important; border-color: #d97706 !important; color: #fff !important; }
     /* Pre-filter level badges */
     .pf-badge { display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:700;white-space:nowrap }
-    .pf-badge.priority  { background:rgba(251,191,36,0.18);color:#d97706;border:1px solid rgba(251,191,36,0.5) }
     .pf-badge.recommend { background:rgba(34,197,94,0.15);color:#16a34a;border:1px solid rgba(34,197,94,0.4) }
     .pf-badge.skip      { background:rgba(148,163,184,0.1);color:var(--sub);border:1px solid var(--border) }
-    .dark-mode .pf-badge.priority  { background:rgba(251,191,36,0.2);color:#fcd34d }
+    .pf-badge.failed    { background:rgba(251,191,36,0.15);color:#d97706;border:1px solid rgba(251,191,36,0.4) }
     .dark-mode .pf-badge.recommend { background:rgba(34,197,94,0.2);color:#4ade80 }
-    .pf-row.priority td:first-child { border-left:3px solid #d97706 }
+    .dark-mode .pf-badge.failed    { background:rgba(251,191,36,0.2);color:#fcd34d }
     .pf-row.recommend td:first-child { border-left:3px solid #16a34a }
+    .pf-row.failed td:first-child    { border-left:3px solid #d97706 }
     .bulk-bar { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px }
     .kw-sel-count { background: rgba(37,99,235,0.15) !important; color: #93c5fd !important; }
     .kw-section-label { color: #e2e8f0 !important; }
@@ -1793,7 +1793,6 @@
     </div>
 
     <div class="bulk-bar" id="bulkBarAI">
-      <button class="btn-ghost btn-sm" onclick="selectByLevel('priority')">⭐ 全选优先</button>
       <button class="btn-ghost btn-sm" onclick="selectByLevel('recommend')">✅ 全选推荐</button>
       <button class="btn-ghost btn-sm" onclick="deselectByLevel('skip')">☐ 取消跳过</button>
       <button class="btn-ghost btn-sm" onclick="pfSelectNone()">取消全选</button>
@@ -3272,12 +3271,13 @@ async function startAIFilter() {
     if (!doneData) throw new Error('未收到完成数据');
     _preFilterResults = doneData.companies || [];
     const visible   = _preFilterResults.filter(c => c.level !== 'skip');
-    const priority  = _preFilterResults.filter(c => c.level === 'priority').length;
     const recommend = _preFilterResults.filter(c => c.level === 'recommend').length;
-    const skipped   = _preFilterResults.length - visible.length;
+    const failed    = _preFilterResults.filter(c => c.level === 'failed').length;
+    const skipped   = _preFilterResults.filter(c => c.level === 'skip').length;
     showPreFilterSection('ai', visible);
     setStatus(`✅ AI预筛选完成！筛掉 ${skipped} 家不相关公司，剩余 ${visible.length} 家值得联系。请勾选后开始深度分析。`, 'success');
-    _showToast(`✓ AI 预筛选完成（${priority} 条优先 · ${recommend} 条推荐 · ${skipped} 条跳过）`);
+    const failedNote = failed > 0 ? ` · ⚠️${failed} 失败` : '';
+    _showToast(`✓ AI 预筛选完成（✅${recommend} 条推荐 · ❌${skipped} 条跳过${failedNote}）`);
     succeeded = true;
   } catch (err) {
     setStatus(`AI预筛选失败：${err.message}`, 'error');
@@ -3326,8 +3326,8 @@ function sourceBadgeHtml(source) {
 }
 
 function pfLevelBadge(level) {
-  if (level === 'priority')  return '<span class="pf-badge priority">⭐ 优先</span>';
   if (level === 'recommend') return '<span class="pf-badge recommend">✅ 推荐</span>';
+  if (level === 'failed')    return '<span class="pf-badge failed">⚠️ AI 预筛失败，请重试</span>';
   return '<span class="pf-badge skip">❌ 跳过</span>';
 }
 
@@ -3363,15 +3363,16 @@ function renderPreFilter(companies) {
   const tbody   = document.getElementById('preFilterBody');
   const countEl = document.getElementById('preFilterCount');
   if (_pfMode === 'ai') {
-    const p = companies.filter(c => c.level === 'priority').length;
     const r = companies.filter(c => c.level === 'recommend').length;
-    countEl.textContent = `共 ${companies.length} 家：⭐${p} 优先 · ✅${r} 推荐`;
+    const f = companies.filter(c => c.level === 'failed').length;
+    const failedSeg = f > 0 ? ` · ⚠️${f} 失败` : '';
+    countEl.textContent = `共 ${companies.length} 家：✅${r} 推荐${failedSeg}`;
   } else {
     countEl.textContent = `共 ${companies.length} 家公司`;
   }
 
   tbody.innerHTML = companies.map((c, i) => {
-    const checked = 'checked'; // in both modes all shown companies are pre-checked
+    const checked = (_pfMode === 'manual' || c.level === 'recommend') ? 'checked' : '';
     let websiteCell = '—';
     if (c.website) {
       try { websiteCell = `<a class="website-link" href="${c.website}" target="_blank">${new URL(c.website).hostname}</a>`; }
@@ -3411,10 +3412,8 @@ function toggleAllPf(el) {
 }
 
 function selectByLevel(level) {
-  // 'recommend' means keep priority + recommend; 'priority' means only priority
-  const keep = level === 'recommend' ? ['priority', 'recommend'] : ['priority'];
   document.querySelectorAll('.pf-check').forEach(cb => {
-    cb.checked = keep.includes(_preFilterResults[parseInt(cb.dataset.idx)]?.level);
+    cb.checked = _preFilterResults[parseInt(cb.dataset.idx)]?.level === level;
   });
   onPfCheck();
 }

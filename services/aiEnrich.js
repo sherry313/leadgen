@@ -320,7 +320,7 @@ Follow the framework structure above strictly for all 5 emails. Each body under 
   }
 }
 
-// ── Haiku pre-filter (unchanged) ───────────────────────────────────────────────
+// ── Haiku pre-filter ──────────────────────────────────────────────────────────
 async function preFilterLead(company) {
   try {
     const response = await client.messages.create({
@@ -328,22 +328,30 @@ async function preFilterLead(company) {
       max_tokens: 100,
       messages: [{
         role: 'user',
-        content: `你是建材采购意向分析师。根据以下信息快速判断这家公司是否值得联系：
+        content: `你是建材采购意向初筛师。我们卖门窗、橱柜、浴缸，目标客户是装修商、建筑商、开发商、零售商。
+
 公司名：${company.companyName}
 地址：${company.address}
 Google评分：${company.googleRating}（${company.reviewCount}条评价）
 官网：${company.website || '无'}
 
-我们卖：门窗、橱柜、浴缸，找的是装修商、建筑商、开发商、零售商。
+你的任务是快速初筛，只决定这家是否值得进入下一阶段的深度评分。不要评判优劣。
 
-只返回JSON：{"level": "priority"|"recommend"|"skip", "reason": "一句话原因（中文，15字以内）"}`,
+【skip】明显不相关或无法联系，符合其一即跳过：
+- 名字含餐饮/美容/医疗/汽车/服装/酒店/超市/咨询/会计/法律/教育/金融等非建材行业关键词
+- 评论数 ≤ 1 且无官网（可能偏包公司/已歇业）
+- 名字明显为个体手艺人（如「John's Handyman」「Mike's Repairs」「Bob the Builder」等）
+
+【recommend】不符合以上 skip 条件的一律归 recommend。不要挑剔。让 Sonnet 去详细评分。
+
+只返回JSON：{"level": "recommend"|"skip", "reason": "一句话原因（中文，15字以内）"}`,
       }],
     }, { timeout: 10000 });
 
     const raw = response.content[0].text
       .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     const parsed = JSON.parse(raw);
-    const level = ['priority', 'recommend', 'skip'].includes(parsed.level) ? parsed.level : 'recommend';
+    const level = ['recommend', 'skip'].includes(parsed.level) ? parsed.level : 'failed';
     console.log(`[Haiku] ${company.companyName} → ${level}: ${parsed.reason || ''}`);
     return {
       level,
@@ -352,7 +360,7 @@ Google评分：${company.googleRating}（${company.reviewCount}条评价）
     };
   } catch (err) {
     console.warn(`[Haiku] preFilter failed for ${company.companyName}: ${err.message}`);
-    return { level: 'recommend', reason: '预分析失败', usage: { input_tokens: 0, output_tokens: 0 } };
+    return { level: 'failed', reason: 'AI 预筛失败，请重试', aiFailed: true, usage: { input_tokens: 0, output_tokens: 0 } };
   }
 }
 
