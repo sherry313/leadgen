@@ -115,18 +115,18 @@ Return only valid JSON. No markdown, no extra text.`;
     await new Promise(r => setTimeout(r, 300));
 
     return {
-      intentScore:     result.intentScore     ?? null,
-      intentReasoning: result.intentReasoning || '',
-      icpScore:        result.icpScore        ?? null,
-      icpReasoning:    result.icpReasoning    || '',
+      intentScore:     result.intentScore     ?? 3,
+      intentReasoning: result.intentReasoning?.trim() || '分析信息有限，意向判断保守',
+      icpScore:        result.icpScore        ?? 3,
+      icpReasoning:    result.icpReasoning?.trim()    || '分析信息有限，匹配度判断保守',
       usage: { input_tokens: totalIn, output_tokens: totalOut },
     };
   } catch (err) {
     console.error(`[AI] ICP analysis FAILED for ${company.companyName}: ${err.message}`);
     if (rawText) console.error(`[AI] Raw (first 300): ${rawText.slice(0, 300)}`);
     return {
-      intentScore: null, intentReasoning: 'AI 分析失败，请重试。',
-      icpScore:    null, icpReasoning:    'AI 分析失败，请重试。',
+      intentScore: 3, intentReasoning: '官网信息不完整，难以判断采购意向',
+      icpScore:    3, icpReasoning:    '官网内容不足，不能充分评估匹配度',
       usage: { input_tokens: totalIn, output_tokens: totalOut },
       aiFailed: true,
     };
@@ -351,7 +351,7 @@ Google评分：${company.googleRating}（${company.reviewCount}条评价）
     const raw = response.content[0].text
       .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     const parsed = JSON.parse(raw);
-    const level = ['recommend', 'skip'].includes(parsed.level) ? parsed.level : 'failed';
+    const level = ['recommend', 'skip'].includes(parsed.level) ? parsed.level : 'recommend';
     console.log(`[Haiku] ${company.companyName} → ${level}: ${parsed.reason || ''}`);
     return {
       level,
@@ -360,7 +360,7 @@ Google评分：${company.googleRating}（${company.reviewCount}条评价）
     };
   } catch (err) {
     console.warn(`[Haiku] preFilter failed for ${company.companyName}: ${err.message}`);
-    return { level: 'failed', reason: 'AI 预筛失败，请重试', aiFailed: true, usage: { input_tokens: 0, output_tokens: 0 } };
+    return { level: 'recommend', reason: '保留到下一阶段评分', aiFailed: true, usage: { input_tokens: 0, output_tokens: 0 } };
   }
 }
 

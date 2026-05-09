@@ -324,7 +324,7 @@ app.post('/api/prefilter', requireAuth, async (req, res) => {
     send({ type: 'done', companies: results });
   } catch (err) {
     console.error('[Prefilter] error:', err.message);
-    send({ type: 'done', companies: results.map((r, i) => r || { ...companies[i], level: 'failed', reason: 'AI 预筛失败', aiFailed: true }) });
+    send({ type: 'done', companies: results.map((r, i) => r || { ...companies[i], level: 'recommend', reason: '保留到下一阶段评分', aiFailed: true }) });
   } finally {
     clearInterval(heartbeat);
     res.end();

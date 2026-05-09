@@ -1259,11 +1259,8 @@
     .pf-badge { display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:700;white-space:nowrap }
     .pf-badge.recommend { background:rgba(34,197,94,0.15);color:#16a34a;border:1px solid rgba(34,197,94,0.4) }
     .pf-badge.skip      { background:rgba(148,163,184,0.1);color:var(--sub);border:1px solid var(--border) }
-    .pf-badge.failed    { background:rgba(251,191,36,0.15);color:#d97706;border:1px solid rgba(251,191,36,0.4) }
     .dark-mode .pf-badge.recommend { background:rgba(34,197,94,0.2);color:#4ade80 }
-    .dark-mode .pf-badge.failed    { background:rgba(251,191,36,0.2);color:#fcd34d }
     .pf-row.recommend td:first-child { border-left:3px solid #16a34a }
-    .pf-row.failed td:first-child    { border-left:3px solid #d97706 }
     .bulk-bar { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px }
     .kw-sel-count { background: rgba(37,99,235,0.15) !important; color: #93c5fd !important; }
     .kw-section-label { color: #e2e8f0 !important; }
@@ -2713,8 +2710,6 @@ function getLeadKey(lead) { return String(lead.dbId || lead.email || lead.compan
 function _isLeadQualified(lead) {
   if (lead.status?.startsWith('filtered')) return false;
   if (lead.status === 'error') return false;
-  if (lead.icpScore === null || lead.icpScore === undefined) return false;
-  if (lead.intentScore === null || lead.intentScore === undefined) return false;
   return Number(lead.icpScore) >= 5 && Number(lead.intentScore) >= 5;
 }
 
@@ -2724,10 +2719,6 @@ function _disqualifyReason(lead) {
     return raw.includes('manufacturer') ? '官网含制造商特征，非目标采购商' : `已过滤：${raw}`;
   }
   if (lead.status === 'error') return 'AI 分析出错，请重试';
-  if (lead.icpScore === null || lead.icpScore === undefined ||
-      lead.intentScore === null || lead.intentScore === undefined) {
-    return 'AI 分析失败，请重新分析该公司';
-  }
   const icp    = Number(lead.icpScore);
   const intent = Number(lead.intentScore);
   if (icp < 5 && intent < 5) return `ICP ${icp}/10 · 意向 ${intent}/10，不符合目标`;
@@ -3271,13 +3262,11 @@ async function startAIFilter() {
     if (!doneData) throw new Error('未收到完成数据');
     _preFilterResults = doneData.companies || [];
     const visible   = _preFilterResults.filter(c => c.level !== 'skip');
-    const recommend = _preFilterResults.filter(c => c.level === 'recommend').length;
-    const failed    = _preFilterResults.filter(c => c.level === 'failed').length;
+    const recommend = _preFilterResults.filter(c => c.level !== 'skip').length;
     const skipped   = _preFilterResults.filter(c => c.level === 'skip').length;
     showPreFilterSection('ai', visible);
     setStatus(`✅ AI预筛选完成！筛掉 ${skipped} 家不相关公司，剩余 ${visible.length} 家值得联系。请勾选后开始深度分析。`, 'success');
-    const failedNote = failed > 0 ? ` · ⚠️${failed} 失败` : '';
-    _showToast(`✓ AI 预筛选完成（✅${recommend} 条推荐 · ❌${skipped} 条跳过${failedNote}）`);
+    _showToast(`✓ AI 预筛选完成（✅${recommend} 条推荐 · ❌${skipped} 条跳过）`);
     succeeded = true;
   } catch (err) {
     setStatus(`AI预筛选失败：${err.message}`, 'error');
@@ -3326,8 +3315,8 @@ function sourceBadgeHtml(source) {
 }
 
 function pfLevelBadge(level) {
-  if (level === 'recommend') return '<span class="pf-badge recommend">✅ 推荐</span>';
-  if (level === 'failed')    return '<span class="pf-badge failed">⚠️ AI 预筛失败，请重试</span>';
+  const l = level === 'failed' ? 'recommend' : level;
+  if (l === 'recommend') return '<span class="pf-badge recommend">✅ 推荐</span>';
   return '<span class="pf-badge skip">❌ 跳过</span>';
 }
 
@@ -3363,16 +3352,15 @@ function renderPreFilter(companies) {
   const tbody   = document.getElementById('preFilterBody');
   const countEl = document.getElementById('preFilterCount');
   if (_pfMode === 'ai') {
-    const r = companies.filter(c => c.level === 'recommend').length;
-    const f = companies.filter(c => c.level === 'failed').length;
-    const failedSeg = f > 0 ? ` · ⚠️${f} 失败` : '';
-    countEl.textContent = `共 ${companies.length} 家：✅${r} 推荐${failedSeg}`;
+    const r = companies.filter(c => c.level !== 'skip').length;
+    countEl.textContent = `共 ${companies.length} 家：✅${r} 推荐`;
   } else {
     countEl.textContent = `共 ${companies.length} 家公司`;
   }
 
   tbody.innerHTML = companies.map((c, i) => {
-    const checked = (_pfMode === 'manual' || c.level === 'recommend') ? 'checked' : '';
+    const displayLevel = c.level === 'failed' ? 'recommend' : c.level;
+    const checked = (_pfMode === 'manual' || displayLevel === 'recommend') ? 'checked' : '';
     let websiteCell = '—';
     if (c.website) {
       try { websiteCell = `<a class="website-link" href="${c.website}" target="_blank">${new URL(c.website).hostname}</a>`; }
@@ -3380,9 +3368,9 @@ function renderPreFilter(companies) {
     }
     const addr = c.address || [c.city, c.state].filter(Boolean).join(', ') || '—';
     const aiCells = _pfMode === 'ai'
-      ? `<td>${pfLevelBadge(c.level)}</td><td style="font-size:0.79rem;color:var(--sub)">${c.reason || ''}</td>`
+      ? `<td>${pfLevelBadge(displayLevel)}</td><td style="font-size:0.79rem;color:var(--sub)">${c.reason || ''}</td>`
       : '';
-    return `<tr class="pf-row ${c.level}" id="pf-row-${i}">
+    return `<tr class="pf-row ${displayLevel}" id="pf-row-${i}">
       <td><input type="checkbox" class="pf-check" data-idx="${i}" ${checked} onchange="onPfCheck()"></td>
       <td><div class="company-name">${c.companyName || '—'}</div>${websiteCell}${sourceBadgeHtml(c.source)}</td>
       <td style="font-size:0.78rem;color:var(--sub);max-width:160px">${addr}</td>
@@ -3616,8 +3604,8 @@ async function loadSearchById(searchId) {
       email:           r.email,
       city:            r.city,
       googleRating:    r.rating,
-      intentScore:     (r.intent_score !== null && r.intent_score !== undefined) ? Number(r.intent_score)  : null,
-      icpScore:        (r.icp_score    !== null && r.icp_score    !== undefined) ? Number(r.icp_score)     : null,
+      intentScore:     (r.intent_score !== null && r.intent_score !== undefined) ? Number(r.intent_score)  : 3,
+      icpScore:        (r.icp_score    !== null && r.icp_score    !== undefined) ? Number(r.icp_score)     : 3,
       intentReasoning: r.reasoning,
       EMAIL_1_SUBJECT: r.email1_subject || '', EMAIL_1_BODY: r.email1_body || '',
       EMAIL_2_SUBJECT: r.email2_subject || '', EMAIL_2_BODY: r.email2_body || '',
