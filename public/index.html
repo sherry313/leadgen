@@ -4173,22 +4173,30 @@ function _updateBulkPushBar() {
   const bar = document.getElementById('bulkPushBar');
   if (!bar) return;
   const eligible = (_allLeads || []).filter(l =>
-    _isLeadQualified(l) && l.email?.trim() && !_isSentLS(getLeadKey(l))
+    _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && !_isSentLS(getLeadKey(l))
   );
   const n = eligible.length;
   if (n === 0) { bar.style.display = 'none'; return; }
   const countEl = document.getElementById('bulkPushCount');
   const btn     = document.getElementById('btnBulkPush');
-  if (countEl) countEl.textContent = `${n} 条线索已就绪（含邮箱 + 开发信）`;
+  if (countEl) countEl.textContent = `${n} 条线索已生成开发信，可推送`;
   if (btn && !btn.disabled) btn.textContent = `📤 推送 ${n} 条线索到 Instantly Campaign`;
   bar.style.display = 'flex';
 }
 
 async function startBulkPush() {
-  const countBefore = (_allLeads || []).filter(l =>
-    _isLeadQualified(l) && l.email?.trim() && !_isSentLS(getLeadKey(l))
-  ).length;
-  // Auto-select all qualified + email + unsent leads, then delegate to bulkSendInstantly
+  const withContent = (_allLeads || []).filter(l =>
+    _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && !_isSentLS(getLeadKey(l))
+  );
+  const withContactCount    = withContent.filter(l => l.email?.trim()).length;
+  const skippedNoEmailCount = withContent.filter(l => !l.email?.trim()).length;
+
+  if (withContactCount === 0 && skippedNoEmailCount > 0) {
+    alert(`这 ${skippedNoEmailCount} 条线索都没有联系邮箱，无法推送。\n\n请重新跑一次搜索，在第二步勾选「📧 抓取邮箱」选项。`);
+    return;
+  }
+
+  // Auto-select qualified + email + unsent leads, then delegate to bulkSendInstantly
   document.querySelectorAll('.result-check').forEach(cb => {
     const i = parseInt(cb.dataset.idx);
     const lead = _allLeads[i];
@@ -4200,7 +4208,11 @@ async function startBulkPush() {
   const countAfter = (_allLeads || []).filter(l =>
     _isLeadQualified(l) && l.email?.trim() && !_isSentLS(getLeadKey(l))
   ).length;
-  if (countAfter < countBefore) _revealInstantlyStateB();
+  if (countAfter < withContactCount) _revealInstantlyStateB();
+
+  if (skippedNoEmailCount > 0) {
+    _showToast(`⚠️ 已推送 ${withContactCount} 条 · 跳过 ${skippedNoEmailCount} 条（无联系邮箱，请在第二步勾选「📧 抓取邮箱」后重新运行）`);
+  }
 }
 
 function _revealInstantlyStateB() {
