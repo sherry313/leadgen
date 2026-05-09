@@ -2990,6 +2990,7 @@ async function startScrapeRaw() {
   btn.textContent = '抓取中...';
   _rawResults = [];
   _currentSearchId = null;
+  localStorage.removeItem('leadgen_searchId');
   _pfMode = null;
   let _totalRaw = 0, _totalSkipped = 0;
   document.getElementById('rawSection').style.display = 'none';
@@ -3041,7 +3042,7 @@ async function startScrapeRaw() {
 
       if (!data || !data.success) throw new Error(data?.error || '抓取失败');
 
-      if (!_currentSearchId) _currentSearchId = data.searchId;
+      if (!_currentSearchId) { _currentSearchId = data.searchId; localStorage.setItem('leadgen_searchId', data.searchId); }
       _rawResults = _rawResults.concat(data.companies || []);
       _totalRaw     += data.totalRaw     ?? (data.companies?.length ?? 0);
       _totalSkipped += data.skippedCount ?? 0;
@@ -4014,7 +4015,7 @@ async function confirmBulkGenerate() {
       }
     }
   } catch (err) {
-    _showToast('❌ 生成失败：' + err.message);
+    _showToast('❌ 邮件生成失败，请重试。您的评分结果已保存，不会丢失。');
   } finally {
     confirmBtn.disabled = false;
     progEl.style.display = 'none';
@@ -4673,6 +4674,11 @@ function _restoreStep() {
     showStep5();           // shows step5Section, resets bulkPushBar to none
     _updateBulkPushBar();  // re-show bar if _allLeads already has eligible leads
     console.log('[RestoreStep] 恢复到 step 4 (step5Section)');
+    const savedSearchId = localStorage.getItem('leadgen_searchId');
+    if (savedSearchId) {
+      _currentSearchId = savedSearchId;
+      loadSearchById(savedSearchId);
+    }
     return;
   }
   const panel = document.getElementById('wizard-step-' + saved);
@@ -4730,6 +4736,7 @@ setTimeout(onSellerInput, 0); // set initial disabled state for step2 next btn
         if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
         _rawResults      = data.companies || [];
         _currentSearchId = data.searchId;
+        localStorage.setItem('leadgen_searchId', data.searchId);
         _pTimers         = [];
         if (_rawResults.length) {
           renderRawResults(_rawResults);
@@ -5418,8 +5425,8 @@ async function startEmailGeneration() {
       }
     }
   } catch (err) {
-    setStatus('邮件生成失败，请重试或减少选择的公司数量', 'error');
-    _showToast('❌ 邮件生成失败，请重试或减少选择的公司数量');
+    setStatus('邮件生成失败，请重试。您的评分结果已保存，不会丢失。', 'error');
+    _showToast('❌ 邮件生成失败，请重试。您的评分结果已保存，不会丢失。');
   } finally {
     btn.disabled = false;
     if (confirmBtn) confirmBtn.disabled = false;
