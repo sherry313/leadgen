@@ -17,7 +17,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Page routes — explicit handlers before static so '/' isn't captured by index.html default
 app.get('/',            (req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));

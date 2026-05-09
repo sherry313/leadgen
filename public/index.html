@@ -5418,8 +5418,8 @@ async function startEmailGeneration() {
       }
     }
   } catch (err) {
-    setStatus(`邮件生成失败：${err.message}`, 'error');
-    _showToast('❌ 邮件生成失败：' + err.message);
+    setStatus('邮件生成失败，请重试或减少选择的公司数量', 'error');
+    _showToast('❌ 邮件生成失败，请重试或减少选择的公司数量');
   } finally {
     btn.disabled = false;
     if (confirmBtn) confirmBtn.disabled = false;
