@@ -75,6 +75,8 @@ ${websiteContent || 'No website content available.'}
 Return only valid JSON. No markdown, no extra text.`;
 
   let rawText = '';
+  let totalIn = 0, totalOut = 0;
+  const strip = s => s.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
   try {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
@@ -83,35 +85,50 @@ Return only valid JSON. No markdown, no extra text.`;
       messages: [{ role: 'user', content: userPrompt }],
     });
 
-    const { input_tokens, output_tokens } = response.usage;
-    rawText = response.content[0].text;
-    console.log(`[AI] ${company.companyName}: tokens=${input_tokens}in/${output_tokens}out`);
+    totalIn  = response.usage.input_tokens;
+    totalOut = response.usage.output_tokens;
+    rawText  = response.content[0].text;
+    console.log(`[AI] ${company.companyName}: tokens=${totalIn}in/${totalOut}out`);
 
-    const cleaned = rawText
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim();
+    let result;
+    try {
+      result = JSON.parse(strip(rawText));
+    } catch (parseErr) {
+      console.error(`[AI] ICP JSON parse failed for ${company.companyName}: ${parseErr.message}`);
+      console.error(`[AI] Raw (first 300): ${rawText.slice(0, 300)}`);
+      console.log(`[AI] Retrying JSON reformat for ${company.companyName}…`);
+      const retryResp = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 800,
+        messages: [{
+          role: 'user',
+          content: `Your previous response was not valid JSON. Re-output the same content as strict valid JSON only — no markdown fences, no extra text.\n\nPrevious response:\n${rawText}`,
+        }],
+      });
+      totalIn  += retryResp.usage.input_tokens;
+      totalOut += retryResp.usage.output_tokens;
+      result = JSON.parse(strip(retryResp.content[0].text));
+    }
 
-    const result = JSON.parse(cleaned);
     console.log(`[AI] ${company.companyName}: intent=${result.intentScore}/10  icp=${result.icpScore}/10`);
 
     await new Promise(r => setTimeout(r, 300));
 
     return {
-      intentScore:     result.intentScore     || 0,
+      intentScore:     result.intentScore     ?? null,
       intentReasoning: result.intentReasoning || '',
-      icpScore:        result.icpScore        || 0,
+      icpScore:        result.icpScore        ?? null,
       icpReasoning:    result.icpReasoning    || '',
-      usage: { input_tokens, output_tokens },
+      usage: { input_tokens: totalIn, output_tokens: totalOut },
     };
   } catch (err) {
     console.error(`[AI] ICP analysis FAILED for ${company.companyName}: ${err.message}`);
     if (rawText) console.error(`[AI] Raw (first 300): ${rawText.slice(0, 300)}`);
     return {
-      intentScore: 0, intentReasoning: 'AI分析失败。',
-      icpScore: 0,    icpReasoning:    'AI分析失败。',
-      usage: { input_tokens: 0, output_tokens: 0 },
+      intentScore: null, intentReasoning: 'AI 分析失败，请重试。',
+      icpScore:    null, icpReasoning:    'AI 分析失败，请重试。',
+      usage: { input_tokens: totalIn, output_tokens: totalOut },
+      aiFailed: true,
     };
   }
 }

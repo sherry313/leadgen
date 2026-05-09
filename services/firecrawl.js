@@ -80,6 +80,16 @@ const KEEP_KEYWORDS = [
   'sourcing', 'procurement', 'purchase', 'buying',
 ];
 
+// Phrases that appear in metaphorical/idiomatic contexts on buyer websites
+// ("our factory-direct pricing", "we manufacture relationships with suppliers").
+// These require word-boundary matching rather than bare substring.
+const AMBIGUOUS_KEYWORDS = new Set([
+  'we manufacture',
+  'our factory',
+  'our production line',
+  'we produce',
+]);
+
 // Analyse crawled content to decide whether to include this company in the pipeline.
 // Returns { shouldSkip, reason, keepSignals, lowSignal }
 function filterCompany(websiteContent) {
@@ -89,9 +99,18 @@ function filterCompany(websiteContent) {
 
   const lower = websiteContent.toLowerCase();
 
-  // SKIP check — any single match is enough to exclude
+  // SKIP check — any single match is enough to exclude.
+  // Ambiguous phrases require a word-boundary on both sides to avoid false positives
+  // (e.g. "our factory-direct pricing" should NOT trigger the manufacturer filter).
   for (const kw of SKIP_KEYWORDS) {
-    if (lower.includes(kw)) {
+    let matched;
+    if (AMBIGUOUS_KEYWORDS.has(kw)) {
+      const re = new RegExp(`(^|[\\s.,!?;:\\-\\(])${kw.replace(/\s+/g, '\\s+')}([\\s.,!?;:\\-\\)]|$)`, 'i');
+      matched = re.test(lower);
+    } else {
+      matched = lower.includes(kw);
+    }
+    if (matched) {
       console.log(`[Filter] SKIP — found "${kw}"`);
       return { shouldSkip: true, reason: `manufacturer signal: "${kw}"`, keepSignals: [], lowSignal: false };
     }

@@ -2712,10 +2712,11 @@ function getLeadKey(lead) { return String(lead.dbId || lead.email || lead.compan
 
 // ── Render results ────────────────────────────────────────────────────────────
 function _isLeadQualified(lead) {
-  return !lead.status?.startsWith('filtered') &&
-         lead.status !== 'error' &&
-         Number(lead.icpScore  || 0) >= 5 &&
-         Number(lead.intentScore || 0) >= 5;
+  if (lead.status?.startsWith('filtered')) return false;
+  if (lead.status === 'error') return false;
+  if (lead.icpScore === null || lead.icpScore === undefined) return false;
+  if (lead.intentScore === null || lead.intentScore === undefined) return false;
+  return Number(lead.icpScore) >= 5 && Number(lead.intentScore) >= 5;
 }
 
 function _disqualifyReason(lead) {
@@ -2724,8 +2725,12 @@ function _disqualifyReason(lead) {
     return raw.includes('manufacturer') ? '官网含制造商特征，非目标采购商' : `已过滤：${raw}`;
   }
   if (lead.status === 'error') return 'AI 分析出错，请重试';
-  const icp    = Number(lead.icpScore    || 0);
-  const intent = Number(lead.intentScore || 0);
+  if (lead.icpScore === null || lead.icpScore === undefined ||
+      lead.intentScore === null || lead.intentScore === undefined) {
+    return 'AI 分析失败，请重新分析该公司';
+  }
+  const icp    = Number(lead.icpScore);
+  const intent = Number(lead.intentScore);
   if (icp < 5 && intent < 5) return `ICP ${icp}/10 · 意向 ${intent}/10，不符合目标`;
   if (icp < 5)    return `ICP 仅 ${icp}/10，不匹配客户画像，未生成开发信`;
   if (intent < 5) return `意向仅 ${intent}/10，购买意向偏低`;
@@ -3612,8 +3617,8 @@ async function loadSearchById(searchId) {
       email:           r.email,
       city:            r.city,
       googleRating:    r.rating,
-      intentScore:     r.intent_score  ? Number(r.intent_score)  : 10,
-      icpScore:        r.icp_score     ? Number(r.icp_score)     : 10,
+      intentScore:     (r.intent_score !== null && r.intent_score !== undefined) ? Number(r.intent_score)  : null,
+      icpScore:        (r.icp_score    !== null && r.icp_score    !== undefined) ? Number(r.icp_score)     : null,
       intentReasoning: r.reasoning,
       EMAIL_1_SUBJECT: r.email1_subject || '', EMAIL_1_BODY: r.email1_body || '',
       EMAIL_2_SUBJECT: r.email2_subject || '', EMAIL_2_BODY: r.email2_body || '',
