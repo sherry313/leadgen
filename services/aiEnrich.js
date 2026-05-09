@@ -164,8 +164,8 @@ Return ONLY valid JSON. All string values must escape internal double quotes wit
 async function generateEmails(lead, templateKey, websiteContent, frameworkKey, customFrameworkData) {
   const templates   = require('./emailTemplates');
   const frameworks  = require('./emailFrameworks');
-  const template    = templates[templateKey];
-  if (!template) throw new Error(`Unknown template key: ${templateKey}`);
+  const template    = templates[templateKey] || templates[frameworkKey] || Object.values(templates)[0];
+  if (!template) throw new Error(`No templates available`);
 
   // Resolve framework instructions
   let frameworkInstructions;
