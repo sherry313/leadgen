@@ -476,11 +476,12 @@ app.post('/api/leads/generate-emails/cancel', requireAuth, (req, res) => {
 app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
   emailGenCancelled = false;
   const { companies, template_key, framework_key, custom_framework, searchId } = req.body;
+  const frameworkKey = framework_key || template_key;
 
   if (!Array.isArray(companies) || !companies.length)
     return res.status(400).json({ success: false, error: 'companies array required' });
-  if (!template_key)
-    return res.status(400).json({ success: false, error: 'template_key required' });
+  if (!frameworkKey)
+    return res.status(400).json({ success: false, error: 'framework_key required' });
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -499,13 +500,13 @@ app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
       const i = idx++;
       const company = companies[i];
       try {
-        const emails = await generateEmails(company, template_key, company.websiteContent || '', framework_key, custom_framework);
+        const emails = await generateEmails(company, frameworkKey, company.websiteContent || '', framework_key, custom_framework);
         sonnetIn  += emails.usage?.input_tokens  || 0;
         sonnetOut += emails.usage?.output_tokens || 0;
-        results[i] = { ...company, ...emails, emailTemplateKey: template_key };
+        results[i] = { ...company, ...emails, emailTemplateKey: frameworkKey };
       } catch (err) {
         console.error(`[EmailGen] ${company.companyName}:`, err.message);
-        results[i] = { ...company, emailTemplateKey: template_key };
+        results[i] = { ...company, emailTemplateKey: frameworkKey };
       }
       completed++;
       send({ type: 'progress', lead: results[i], done: completed, total: companies.length });
