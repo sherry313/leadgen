@@ -517,6 +517,15 @@
     @media (max-width: 1024px) {
       .fs-line { display: none; }
     }
+    @media (max-width: 768px) {
+      #hero { padding: 48px 20px 40px; }
+      .hero-title { font-size: clamp(26px, 7vw, 48px); }
+      .hero-sub { font-size: clamp(13px, 3.5vw, 16px); line-height: 1.7; }
+      .hero-btns { flex-direction: column; align-items: stretch; gap: 12px; }
+      .mockup-frame { padding: 16px; max-width: 100%; overflow: hidden; }
+      .mockup-name { font-size: 13px; }
+      .mockup-detail { font-size: 11px; }
+    }
   </style>
 </head>
 <body>
