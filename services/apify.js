@@ -36,6 +36,8 @@ async function scrapeAustralianCompanies(searchQuery, location, maxResults = 25,
   const actorInput = {
     searchStringsArray: [`${searchQuery} ${location}`],
     maxCrawledPlacesPerSearch: maxResults,
+    maxCrawledPlaces: maxResults * 3,   // overall run cap (belt-and-suspenders)
+    maxAutomaticZoomOut: 1,              // limit auto zoom-out to 1 level (city -> metro area only)
     language: 'en',
     countryCode: 'au',
     // Conditionally enable paid features
