@@ -5093,15 +5093,23 @@ function _jumpToStep4FromAuto() {
 }
 
 // ── Mode Picker ──────────────────────────────────────────────────────────────
-function _showModePicker() {
-  document.getElementById('modePicker').style.display = 'block';
-  const s1 = document.getElementById('wizard-step-1');
-  if (s1) { s1.classList.add('hidden'); s1.style.display = 'none'; }
-  const sp = document.getElementById('stepProgressBar');
-  if (sp) sp.style.display = 'none';
+function _showModePickerExclusive() {
+  // Hide all wizard panels and auxiliary chrome first — synchronously, no delay
+  for (let i = 1; i <= 5; i++) {
+    const p = document.getElementById('wizard-step-' + i);
+    if (p) p.style.display = 'none';
+  }
+  const amf = document.getElementById('autoModeForm');
+  if (amf) amf.style.display = 'none';
+  const bar = document.getElementById('stepProgressBar');
+  if (bar) bar.style.display = 'none';
   const sl = document.getElementById('switchModeLink');
   if (sl) sl.style.display = 'none';
+  // Show picker only after everything else is hidden
+  const pk = document.getElementById('modePicker');
+  if (pk) pk.style.display = 'block';
 }
+function _showModePicker() { _showModePickerExclusive(); }
 
 function enterMode(mode) {
   document.getElementById('modePicker').style.display = 'none';
@@ -5126,47 +5134,23 @@ function enterMode(mode) {
 }
 
 function backToModePicker() {
-  // Clear localStorage so picker shows on next refresh too
   localStorage.removeItem('leadgen_mode');
-
-  // Hide all wizard panels (1-5)
-  for (let i = 1; i <= 5; i++) {
-    const panel = document.getElementById('wizard-step-' + i);
-    if (panel) panel.style.display = 'none';
-  }
-
-  // Hide auto mode form
-  const autoForm = document.getElementById('autoModeForm');
-  if (autoForm) autoForm.style.display = 'none';
-
-  // Hide step progress bar (header)
-  const bar = document.getElementById('stepProgressBar');
-  if (bar) bar.style.display = 'none';
-
-  // Hide 「切换模式」 link itself (it's only relevant in a chosen mode)
-  const switchLink = document.getElementById('switchModeLink');
-  if (switchLink) switchLink.style.display = 'none';
-
-  // Show the mode picker
-  const picker = document.getElementById('modePicker');
-  if (picker) picker.style.display = 'block';
-
-  // Scroll to top so user sees the cards
+  _showModePickerExclusive();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function _initModePicker() {
-  if (!getStoredToken()) return;
+  if (!getStoredToken()) { _showModePickerExclusive(); return; }
   const saved = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
   if (saved > 1 && saved <= 4) {
-    // In-progress session — _restoreStep already showed the right panel; just reveal switch link
+    // In-progress session — _restoreStep will show the right panel; just reveal switch link
     const sl = document.getElementById('switchModeLink');
     if (sl) sl.style.display = 'inline';
     return;
   }
   const savedMode = localStorage.getItem('leadgen_mode');
   if (savedMode) { enterMode(savedMode); return; }
-  _showModePicker();
+  _showModePickerExclusive();
 }
 
 function _restoreStep() {
@@ -5215,13 +5199,9 @@ function _showRefreshWarning(panel) {
 // ── Init ──────────────────────────────────────────────────────────────────────
 updateLoginStatus();
 checkAdminAndShow();
-setTimeout(_restoreStep, 0);
-setTimeout(_initModePicker, 0);
-setTimeout(onSellerInput, 0); // set initial disabled state for step2 next btn
-// Fallback: ensure mode picker initialises even if deferred execution misfires
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', _initModePicker);
-}
+_initModePicker();               // synchronous: hides wizard panels before first paint
+setTimeout(_restoreStep, 0);     // deferred: restores in-progress session after init
+setTimeout(onSellerInput, 0);    // set initial disabled state for step2 next btn
 
 // Deep-link: index.html?search=<id> loads that search's leads directly
 // Deep-link: index.html?query=X&location=Y re-runs a scrape directly
