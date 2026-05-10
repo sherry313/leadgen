@@ -1867,6 +1867,11 @@
         style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:7px;font-size:0.81rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s">
         📧 批量生成开发信
       </button>
+      <button id="btnBulkPushSelected" onclick="startSelectedPush()"
+        style="display:none;align-items:center;gap:6px;padding:5px 14px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:7px;font-size:0.81rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;white-space:nowrap"
+        onmouseover="this.style.opacity=0.82" onmouseout="this.style.opacity=1">
+        📤 一键推送选中的 · 0 条
+      </button>
       <span style="font-size:0.75rem;color:var(--sub)">生成后可在第四步配置发送</span>
     </div>
     <div id="bulkEmailPreview"></div>
@@ -4091,11 +4096,30 @@ function updateBulkBar() {
   const cnt = document.getElementById('instantlyBulkCount');
   if (bar) bar.style.display = checkedCount > 0 ? 'flex' : 'none';
   if (cnt) cnt.textContent = `已选 ${checkedCount} 条`;
+  const pushBtn = document.getElementById('btnBulkPushSelected');
+  if (pushBtn) {
+    const pushable = [...document.querySelectorAll('.result-check:checked')]
+      .map(cb => _allLeads[parseInt(cb.dataset.idx)])
+      .filter(l => l?.EMAIL_1_BODY?.trim() && l?.email?.trim() && !_isSentLS(getLeadKey(l))).length;
+    pushBtn.textContent = `📤 一键推送选中的 · ${pushable} 条`;
+    pushBtn.style.display = pushable > 0 ? 'inline-flex' : 'none';
+  }
   const checkAll = document.getElementById('resultCheckAll');
   if (checkAll) {
     checkAll.checked = checks.length > 0 && checkedCount === checks.length;
     checkAll.indeterminate = checkedCount > 0 && checkedCount < checks.length;
   }
+}
+
+async function startSelectedPush() {
+  const pushable = [...document.querySelectorAll('.result-check:checked')]
+    .map(cb => _allLeads[parseInt(cb.dataset.idx)])
+    .filter(l => l?.EMAIL_1_BODY?.trim() && l?.email?.trim() && !_isSentLS(getLeadKey(l)));
+  if (!pushable.length) { _showToast('没有可推送的线索（请先生成邮件，并确认线索有联系邮箱）'); return; }
+  if (!confirm(`确认推送 ${pushable.length} 条线索到 Instantly Campaign？`)) return;
+  await bulkSendInstantly();
+  _updateBulkPushBar();
+  updateBulkBar();
 }
 
 // ── Instantly Hub ─────────────────────────────────────────────────────────────
