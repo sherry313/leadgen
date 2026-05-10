@@ -4978,8 +4978,8 @@ async function runAutoPipeline() {
     if (!_rawResults || _rawResults.length === 0) throw new Error('未抓到任何结果，请检查关键词和城市');
     _setAutoStep('scrape', 'done', `${_rawResults.length} 条`);
 
-    // 10) Auto-select all pre-filter results, then enrich
-    document.querySelectorAll('.pf-check').forEach(cb => { cb.checked = true; });
+    // 10) Auto-select all scraped leads via the same pathway manual mode uses
+    startManualSelect();
     _setAutoStep('enrich', 'running');
     await startEnrich();
     if (!_allLeads || _allLeads.length === 0) throw new Error('评分阶段未返回任何线索');
