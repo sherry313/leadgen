@@ -1438,6 +1438,37 @@
     }
     .step1-section-title:first-of-type { margin-top:0; }
 
+    /* ── Mode Picker ── */
+    #modePicker { display:none; margin:20px 0 28px; }
+    .mode-picker-header { text-align:center; margin-bottom:28px; }
+    .mode-picker-eyebrow { font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--blue); margin-bottom:8px; }
+    .mode-picker-h2 { font-size:1.5rem; font-weight:800; letter-spacing:-0.025em; margin:0 0 6px; }
+    .mode-picker-sub { font-size:0.85rem; color:var(--sub); margin:0; }
+    .mode-picker-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:680px; margin:0 auto 14px; }
+    @media(max-width:580px) { .mode-picker-grid { grid-template-columns:1fr; } }
+    .mode-picker-card {
+      border:1.5px solid var(--border); border-radius:14px; padding:28px 24px;
+      cursor:pointer; user-select:none; display:flex; flex-direction:column; gap:10px;
+      background:rgba(30,41,59,0.85);
+      transition:transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
+    }
+    .mode-picker-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(37,99,235,0.18); border-color:rgba(37,99,235,0.6); }
+    .mode-picker-card.auto-mode-card { border-color:rgba(124,58,237,0.35); }
+    .mode-picker-card.auto-mode-card:hover { border-color:#7c3aed; box-shadow:0 12px 36px rgba(124,58,237,0.25); }
+    .mp-badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:0.68rem; font-weight:700; background:linear-gradient(135deg,#2563eb,#7c3aed); color:#fff; letter-spacing:0.05em; align-self:flex-start; }
+    .mp-icon { font-size:2.4rem; line-height:1; }
+    .mp-title { font-size:1.1rem; font-weight:700; }
+    .mp-desc { font-size:0.83rem; color:var(--sub); line-height:1.6; }
+    .mp-fit { font-size:0.77rem; color:#64748b; }
+    .mp-cta { margin-top:6px; padding:10px 20px; border-radius:8px; font-size:0.88rem; font-weight:700; cursor:pointer; font-family:inherit; transition:opacity 0.15s; width:100%; text-align:center; border:none; }
+    .mp-cta:hover { opacity:0.85; }
+    .mp-cta.manual-cta { background:rgba(37,99,235,0.12); border:1.5px solid rgba(37,99,235,0.35); color:#93c5fd; }
+    .mp-cta.auto-cta { background:linear-gradient(135deg,#2563eb,#7c3aed); color:#fff; }
+    .mode-note { text-align:center; font-size:0.77rem; color:#64748b; padding:8px 0 0; }
+    #autoModeForm { display:none; }
+    #switchModeLink { font-size:0.74rem; color:var(--sub); cursor:pointer; text-decoration:underline; text-underline-offset:2px; opacity:0.7; white-space:nowrap; margin-left:auto; display:none; }
+    #switchModeLink:hover { color:var(--blue); opacity:1; }
+
   </style>
 </head>
 <body>
@@ -1473,7 +1504,7 @@
 <div class="container">
 
   <!-- Step progress bar -->
-  <div class="step-progress">
+  <div class="step-progress" id="stepProgressBar">
     <div class="step-item" onclick="goToStep(1)">
       <div class="step-num active" id="snum-1">1</div>
       <span class="step-label active" id="slbl-1">目标 + 类型</span>
@@ -1492,6 +1523,44 @@
     <div class="step-item" onclick="goToStep(4)">
       <div class="step-num" id="snum-4">4</div>
       <span class="step-label" id="slbl-4">邮件发送</span>
+    </div>
+    <span id="switchModeLink" onclick="backToModePicker()" title="返回模式选择">切换模式</span>
+  </div>
+
+  <!-- Mode Picker — shown on fresh load; picker hides wizard panels until user picks -->
+  <div id="modePicker">
+    <div class="mode-picker-header">
+      <div class="mode-picker-eyebrow">选择工作模式</div>
+      <h2 class="mode-picker-h2">你想怎么开始？</h2>
+      <p class="mode-picker-sub">两种模式，同样的 AI，选一个适合你的节奏</p>
+    </div>
+    <div class="mode-picker-grid">
+      <div class="mode-picker-card" onclick="enterMode('manual')">
+        <div class="mp-icon">🧭</div>
+        <div class="mp-title">手动模式</div>
+        <div class="mp-desc">分步查看每个阶段的结果，可以在每一步确认或调整后再继续。</div>
+        <div class="mp-fit">适合：初次使用 · 需要精细控制</div>
+        <button class="mp-cta manual-cta">开始手动拓客</button>
+      </div>
+      <div class="mode-picker-card auto-mode-card" onclick="enterMode('auto')">
+        <div class="mp-badge">BETA</div>
+        <div class="mp-icon">⚡</div>
+        <div class="mp-title">一键自动模式</div>
+        <div class="mp-desc">一次填完所有配置，系统自动跑完全流程并生成开发信。</div>
+        <div class="mp-fit">适合：熟练用户 · 赶时间</div>
+        <button class="mp-cta auto-cta">进入自动模式</button>
+      </div>
+    </div>
+    <div class="mode-note">💡 两种模式背后的 AI 逻辑一致、不影响结果质量 · 仅流程不同</div>
+  </div>
+
+  <!-- Auto Mode Form — placeholder until Phase 1B -->
+  <div id="autoModeForm">
+    <div class="wizard-panel">
+      <div class="panel-title">⚡ 一键自动模式</div>
+      <div class="panel-sub">自动模式表单将在下一阶段加入（Phase 1B）</div>
+      <p style="color:var(--sub);font-size:0.88rem;margin-bottom:20px">功能开发中，敬请期待。</p>
+      <button onclick="backToModePicker()" style="padding:8px 18px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--sub);font-size:0.85rem;cursor:pointer;font-family:inherit">← 返回选择模式</button>
     </div>
   </div>
 
@@ -4684,6 +4753,62 @@ if (savedMax) {
   }
 }
 
+// ── Mode Picker ──────────────────────────────────────────────────────────────
+function _showModePicker() {
+  document.getElementById('modePicker').style.display = '';
+  const s1 = document.getElementById('wizard-step-1');
+  if (s1) { s1.classList.add('hidden'); s1.style.display = 'none'; }
+  const sp = document.getElementById('stepProgressBar');
+  if (sp) sp.style.display = 'none';
+  const sl = document.getElementById('switchModeLink');
+  if (sl) sl.style.display = 'none';
+}
+
+function enterMode(mode) {
+  document.getElementById('modePicker').style.display = 'none';
+  const sp = document.getElementById('stepProgressBar');
+  if (sp) sp.style.display = '';
+  const sl = document.getElementById('switchModeLink');
+  if (sl) sl.style.display = '';
+  localStorage.setItem('leadgen_mode', mode);
+  if (mode === 'manual') {
+    const autoForm = document.getElementById('autoModeForm');
+    if (autoForm) autoForm.style.display = 'none';
+    const s1 = document.getElementById('wizard-step-1');
+    if (s1) { s1.classList.remove('hidden'); s1.style.display = ''; }
+  } else {
+    const s1 = document.getElementById('wizard-step-1');
+    if (s1) { s1.classList.add('hidden'); s1.style.display = 'none'; }
+    const autoForm = document.getElementById('autoModeForm');
+    if (autoForm) autoForm.style.display = '';
+  }
+}
+
+function backToModePicker() {
+  document.querySelectorAll('.wizard-panel').forEach(p => {
+    p.classList.add('hidden');
+    p.style.display = '';
+  });
+  const autoForm = document.getElementById('autoModeForm');
+  if (autoForm) autoForm.style.display = 'none';
+  localStorage.removeItem('leadgen_mode');
+  _showModePicker();
+}
+
+function _initModePicker() {
+  if (!getStoredToken()) return;
+  const saved = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
+  if (saved > 1 && saved <= 4) {
+    // In-progress session — _restoreStep already showed the right panel; just reveal switch link
+    const sl = document.getElementById('switchModeLink');
+    if (sl) sl.style.display = '';
+    return;
+  }
+  const savedMode = localStorage.getItem('leadgen_mode');
+  if (savedMode) { enterMode(savedMode); return; }
+  _showModePicker();
+}
+
 function _restoreStep() {
   console.log('[RestoreStep] 触发, saved=', localStorage.getItem('leadgen_current_step'), 'token存在?', !!getStoredToken());
   if (!getStoredToken()) return;
@@ -4731,6 +4856,7 @@ function _showRefreshWarning(panel) {
 updateLoginStatus();
 checkAdminAndShow();
 setTimeout(_restoreStep, 0);
+setTimeout(_initModePicker, 0);
 setTimeout(onSellerInput, 0); // set initial disabled state for step2 next btn
 
 // Deep-link: index.html?search=<id> loads that search's leads directly
