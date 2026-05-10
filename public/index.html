@@ -1468,6 +1468,22 @@
     #autoModeForm { display:none; }
     #switchModeLink { font-size:0.74rem; color:var(--sub); cursor:pointer; text-decoration:underline; text-underline-offset:2px; opacity:0.7; white-space:nowrap; margin-left:auto; display:none; }
     #switchModeLink:hover { color:var(--blue); opacity:1; }
+    /* ── Auto Mode Form ── */
+    .am-section-title { font-size:0.72rem; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:0.08em; margin:24px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+    .am-section-title:first-child { margin-top:0; }
+    .am-radio-group { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+    .am-radio-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 16px; border:1.5px solid var(--border); border-radius:20px; cursor:pointer; font-size:0.83rem; font-weight:600; color:var(--sub); transition:border-color 0.15s,color 0.15s,background 0.15s; user-select:none; }
+    .am-radio-pill:has(input:checked) { border-color:var(--blue); color:var(--blue); background:rgba(37,99,235,0.08); }
+    .am-radio-pill input[type="radio"] { accent-color:var(--blue); width:13px; height:13px; margin:0; }
+    .am-check-row { display:flex; flex-direction:column; gap:4px; margin-bottom:16px; }
+    .am-check-label { display:flex; align-items:center; gap:8px; font-size:0.85rem; font-weight:500; color:var(--text); cursor:pointer; }
+    .am-check-label input[type="checkbox"] { accent-color:var(--blue); width:15px; height:15px; flex-shrink:0; }
+    .am-check-hint { font-size:0.75rem; color:#64748b; margin-left:23px; }
+    .am-cost { font-size:0.82rem; color:var(--sub); margin-bottom:20px; }
+    .am-cost strong { color:var(--text); }
+    #am_submitBtn { width:100%; padding:14px; background:linear-gradient(135deg,#2563eb,#7c3aed); color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; font-family:inherit; transition:opacity 0.2s; }
+    #am_submitBtn:disabled { opacity:0.42; cursor:default; }
+    #am_submitBtn:not(:disabled):hover { opacity:0.88; }
 
   </style>
 </head>
@@ -1558,9 +1574,94 @@
   <div id="autoModeForm">
     <div class="wizard-panel">
       <div class="panel-title">⚡ 一键自动模式</div>
-      <div class="panel-sub">自动模式表单将在下一阶段加入（Phase 1B）</div>
-      <p style="color:var(--sub);font-size:0.88rem;margin-bottom:20px">功能开发中，敬请期待。</p>
-      <button onclick="backToModePicker()" style="padding:8px 18px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--sub);font-size:0.85rem;cursor:pointer;font-family:inherit">← 返回选择模式</button>
+      <div class="panel-sub">填完配置，系统自动跑完全流程并生成开发信</div>
+
+      <!-- Group 1: 卖方信息 -->
+      <div class="am-section-title">卖方信息</div>
+      <div class="form-row">
+        <div>
+          <label for="am_sellerName">公司名称 <span style="color:#ef4444">*</span></label>
+          <input type="text" id="am_sellerName" placeholder="例：华建建材" oninput="_updateAmSubmitBtn()">
+        </div>
+        <div>
+          <label for="am_products">产品 <span style="color:#ef4444">*</span></label>
+          <input type="text" id="am_products" placeholder="例：瓷砖、石材、地板" oninput="_updateAmSubmitBtn()">
+        </div>
+      </div>
+      <div class="form-row single">
+        <div>
+          <label for="am_advantage">产品优势 <span style="color:#ef4444">*</span></label>
+          <textarea id="am_advantage" rows="2" placeholder="例：20年经验，支持定制，交期稳定" oninput="_updateAmSubmitBtn()" style="resize:vertical"></textarea>
+        </div>
+      </div>
+      <div class="form-row single">
+        <div>
+          <label for="am_icpInput">理想客户画像（ICP）<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.78rem;color:#64748b"> — 可选</span></label>
+          <textarea id="am_icpInput" rows="2" placeholder="可选填：描述你心中理想的客户是什么样子，例：年营业额 500万以上的澳大利亚建筑承包商" style="resize:vertical"></textarea>
+        </div>
+      </div>
+
+      <!-- Group 2: 拓客参数 -->
+      <div class="am-section-title">拓客参数</div>
+      <div class="form-row">
+        <div>
+          <label for="am_kwInput">关键词 <span style="color:#ef4444">*</span></label>
+          <input type="text" id="am_kwInput" placeholder="例如：home builder" oninput="_updateAmSubmitBtn()">
+        </div>
+        <div>
+          <label for="am_locInput">城市 <span style="color:#ef4444">*</span></label>
+          <input type="text" id="am_locInput" placeholder="例如：Sydney" oninput="_updateAmSubmitBtn()">
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="display:block;margin-bottom:6px">抓取数量</label>
+        <div class="am-radio-group">
+          <label class="am-radio-pill"><input type="radio" name="am_maxResults" value="20" onchange="_updateAmCostEstimate()"> 20条</label>
+          <label class="am-radio-pill"><input type="radio" name="am_maxResults" value="50" checked onchange="_updateAmCostEstimate()"> 50条</label>
+          <label class="am-radio-pill"><input type="radio" name="am_maxResults" value="100" onchange="_updateAmCostEstimate()"> 100条</label>
+        </div>
+      </div>
+      <div class="am-check-row">
+        <label class="am-check-label"><input type="checkbox" id="am_optEmail" checked> 📧 抓取联系邮箱（+¥0.014/条）</label>
+        <div class="am-check-hint">💡 不勾上将无法推送到 Instantly</div>
+      </div>
+
+      <!-- Group 3: 写作与推送 -->
+      <div class="am-section-title">写作与推送</div>
+      <div class="form-row">
+        <div>
+          <label for="am_frameworkKey">写作框架 <span style="color:#ef4444">*</span></label>
+          <select id="am_frameworkKey" onchange="_updateAmSubmitBtn()">
+            <option value="cold_5_step">Cold Email 5 步序列（推荐）</option>
+            <option value="aida">AIDA 经典营销 4 段</option>
+            <option value="bab">Before-After-Bridge</option>
+            <option value="pas">PAS 痛点驱动 3 段</option>
+            <option value="byaf">BYAF 自由选择</option>
+            <option value="sch">Star-Chain-Hook</option>
+            <option value="three_ps">3 P's (Praise-Picture-Push)</option>
+          </select>
+        </div>
+        <div>
+          <label for="am_campaignId">Instantly Campaign <span style="color:#ef4444">*</span></label>
+          <select id="am_campaignId" onchange="_updateAmSubmitBtn()">
+            <option value="">加载中…</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Group 4: 选项 -->
+      <div class="am-section-title">选项</div>
+      <div class="am-check-row" style="margin-bottom:12px">
+        <label class="am-check-label"><input type="checkbox" id="am_autoPush"> 完成后自动推送合格线索到 Instantly Campaign</label>
+        <div class="am-check-hint">推送条件：ICP 评分 ≥ 5 且意向评分 ≥ 5</div>
+      </div>
+      <div class="am-cost">预计费用：<strong id="am_costEstimate">约 ¥24.5</strong> <span style="font-size:0.74rem;color:#64748b">（含 AI 分析 + 邮件生成，不含邮箱抓取）</span></div>
+
+      <!-- Submit -->
+      <button id="am_submitBtn" onclick="runAutoPipeline()" disabled>⚡ 一键开始</button>
+      <div style="text-align:center;margin-top:14px">
+        <button onclick="backToModePicker()" style="padding:7px 16px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--sub);font-size:0.84rem;cursor:pointer;font-family:inherit">← 返回选择模式</button>
+      </div>
     </div>
   </div>
 
@@ -4753,6 +4854,78 @@ if (savedMax) {
   }
 }
 
+// ── Auto Mode Form ───────────────────────────────────────────────────────────
+async function _loadAmCampaigns() {
+  const sel = document.getElementById('am_campaignId');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">加载中…</option>';
+  sel.disabled = true;
+  const token = getStoredToken();
+  if (!token) {
+    sel.innerHTML = '<option value="">请先输入访问令牌</option>';
+    _updateAmSubmitBtn();
+    return;
+  }
+  try {
+    const r = await fetch('/api/instantly/campaigns', { headers: { Authorization: `Bearer ${token}` } });
+    const d = await r.json();
+    if (d.success && d.campaigns?.length) {
+      sel.innerHTML = '<option value="">— 选择 Campaign —</option>';
+      d.campaigns.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name || c.id;
+        sel.appendChild(opt);
+      });
+      const saved = getSelectedCampaignId();
+      if (saved) sel.value = saved;
+    } else {
+      sel.innerHTML = '<option value="">请先在 Instantly 后台创建 Campaign</option>';
+    }
+  } catch(e) {
+    sel.innerHTML = '<option value="">加载失败，请刷新重试</option>';
+  }
+  sel.disabled = false;
+  _updateAmSubmitBtn();
+}
+
+function _updateAmCostEstimate() {
+  const n = parseInt(document.querySelector('input[name="am_maxResults"]:checked')?.value || '50');
+  const cost = (n * 0.07 * 7).toFixed(1);
+  const el = document.getElementById('am_costEstimate');
+  if (el) el.textContent = `约 ¥${cost}`;
+  _updateAmSubmitBtn();
+}
+
+function _updateAmSubmitBtn() {
+  const btn = document.getElementById('am_submitBtn');
+  if (!btn) return;
+  const required = ['am_sellerName','am_products','am_advantage','am_kwInput','am_locInput','am_frameworkKey','am_campaignId'];
+  const ok = required.every(id => {
+    const el = document.getElementById(id);
+    return el && el.value.trim() !== '';
+  });
+  btn.disabled = !ok;
+}
+
+async function runAutoPipeline() {
+  const formData = {
+    sellerName: document.getElementById('am_sellerName').value.trim(),
+    products: document.getElementById('am_products').value.trim(),
+    advantage: document.getElementById('am_advantage').value.trim(),
+    icpInput: document.getElementById('am_icpInput').value.trim(),
+    kwInput: document.getElementById('am_kwInput').value.trim(),
+    locInput: document.getElementById('am_locInput').value.trim(),
+    maxResults: parseInt(document.querySelector('input[name="am_maxResults"]:checked')?.value || '50'),
+    optEmail: document.getElementById('am_optEmail').checked,
+    frameworkKey: document.getElementById('am_frameworkKey').value,
+    campaignId: document.getElementById('am_campaignId').value,
+    autoPush: document.getElementById('am_autoPush').checked,
+  };
+  console.log('[AutoMode] Form submitted with:', formData);
+  alert('Phase 1B 完成！表单收到。Phase 1C 将串起流水线。');
+}
+
 // ── Mode Picker ──────────────────────────────────────────────────────────────
 function _showModePicker() {
   document.getElementById('modePicker').style.display = 'block';
@@ -4781,6 +4954,8 @@ function enterMode(mode) {
     if (s1) { s1.classList.add('hidden'); s1.style.display = 'none'; }
     const autoForm = document.getElementById('autoModeForm');
     if (autoForm) autoForm.style.display = 'block';
+    _updateAmCostEstimate();
+    _loadAmCampaigns();
   }
 }
 
