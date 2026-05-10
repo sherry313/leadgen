@@ -4909,21 +4909,187 @@ function _updateAmSubmitBtn() {
 }
 
 async function runAutoPipeline() {
-  const formData = {
-    sellerName: document.getElementById('am_sellerName').value.trim(),
-    products: document.getElementById('am_products').value.trim(),
-    advantage: document.getElementById('am_advantage').value.trim(),
-    icpInput: document.getElementById('am_icpInput').value.trim(),
-    kwInput: document.getElementById('am_kwInput').value.trim(),
-    locInput: document.getElementById('am_locInput').value.trim(),
-    maxResults: parseInt(document.querySelector('input[name="am_maxResults"]:checked')?.value || '50'),
-    optEmail: document.getElementById('am_optEmail').checked,
+  // 1) Read form
+  const f = {
+    sellerName:   document.getElementById('am_sellerName').value.trim(),
+    products:     document.getElementById('am_products').value.trim(),
+    advantage:    document.getElementById('am_advantage').value.trim(),
+    icpInput:     document.getElementById('am_icpInput').value.trim(),
+    kwInput:      document.getElementById('am_kwInput').value.trim(),
+    locInput:     document.getElementById('am_locInput').value.trim(),
+    maxResults:   parseInt(document.querySelector('input[name="am_maxResults"]:checked')?.value || '50'),
+    optEmail:     document.getElementById('am_optEmail').checked,
     frameworkKey: document.getElementById('am_frameworkKey').value,
-    campaignId: document.getElementById('am_campaignId').value,
-    autoPush: document.getElementById('am_autoPush').checked,
+    campaignId:   document.getElementById('am_campaignId').value,
+    autoPush:     document.getElementById('am_autoPush').checked,
   };
-  console.log('[AutoMode] Form submitted with:', formData);
-  alert('Phase 1B 完成！表单收到。Phase 1C 将串起流水线。');
+
+  // 2) Validate
+  const missing = [];
+  if (!f.sellerName)   missing.push('公司名称');
+  if (!f.products)     missing.push('产品');
+  if (!f.advantage)    missing.push('产品优势');
+  if (!f.kwInput)      missing.push('关键词');
+  if (!f.locInput)     missing.push('城市');
+  if (!f.frameworkKey) missing.push('写作框架');
+  if (!f.campaignId)   missing.push('Instantly Campaign');
+  if (missing.length) { _showToast('请先填写：' + missing.join('、')); return; }
+
+  // 3) Disable submit
+  const submitBtn = document.getElementById('am_submitBtn');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '运行中…'; }
+
+  // 4) Show progress panel
+  _showAutoModeProgress();
+  _setAutoStep('scrape', 'running');
+
+  try {
+    // 5) Copy values into the DOM fields that the pipeline functions read
+    document.getElementById('sellerName').value = f.sellerName;
+    document.getElementById('products').value   = f.products;
+    document.getElementById('advantage').value  = f.advantage;
+    document.getElementById('icpInput').value   = f.icpInput;
+    document.getElementById('kwInput').value    = f.kwInput;
+    document.getElementById('locInput').value   = f.locInput;
+    document.getElementById('maxResults').value = f.maxResults;
+    document.getElementById('optEmail').checked = f.optEmail;
+
+    // 6) Build generatedKeywords from kwInput × locInput
+    //    (buildKeywords() is a no-op in this codebase; we construct the array directly)
+    const kws  = f.kwInput.split(/[\n,，]/).map(s => s.trim()).filter(Boolean);
+    const locs = f.locInput.split(/[\n,，]/).map(s => s.trim()).filter(Boolean);
+    const baseKws  = kws.length  ? kws  : [f.kwInput];
+    const baseLocs = locs.length ? locs : [''];
+    generatedKeywords = [];
+    for (const kw of baseKws) {
+      for (const loc of baseLocs) {
+        generatedKeywords.push({ query: kw, location: loc, label: loc ? `${kw} · ${loc}` : kw, selected: true });
+      }
+    }
+
+    // 7) Set framework
+    selectFramework(f.frameworkKey);
+
+    // 8) Set campaign in localStorage so getSelectedCampaignId() picks it up
+    localStorage.setItem('selected_campaign_id', f.campaignId);
+
+    // 9) STAGE 1: Scrape
+    await startScrapeRaw();
+    if (!_rawResults || _rawResults.length === 0) throw new Error('未抓到任何结果，请检查关键词和城市');
+    _setAutoStep('scrape', 'done', `${_rawResults.length} 条`);
+
+    // 10) Auto-select all pre-filter results, then enrich
+    document.querySelectorAll('.pf-check').forEach(cb => { cb.checked = true; });
+    _setAutoStep('enrich', 'running');
+    await startEnrich();
+    if (!_allLeads || _allLeads.length === 0) throw new Error('评分阶段未返回任何线索');
+    const qualifiedCount = _allLeads.filter(l => _isLeadQualified(l)).length;
+    _setAutoStep('enrich', 'done', `合格 ${qualifiedCount} / ${_allLeads.length}`);
+
+    // 11) STAGE 3: Generate emails
+    _setAutoStep('emails', 'running');
+    await startEmailGeneration();
+    const emailCount = _allLeads.filter(l => l.EMAIL_1_BODY).length;
+    _setAutoStep('emails', 'done', `${emailCount} 人`);
+
+    // 12) STAGE 4: Push to Instantly if checked
+    if (f.autoPush) {
+      _setAutoStep('push', 'running');
+      // bulkSendInstantly() reads .result-check:checked — select all
+      document.querySelectorAll('.result-check').forEach(cb => { cb.checked = true; });
+      await bulkSendInstantly();
+      _setAutoStep('push', 'done');
+      _showAutoModeSuccess({ scraped: _rawResults.length, qualified: qualifiedCount, emails: emailCount, pushed: true });
+    } else {
+      _setAutoStep('push', 'done');
+      _showAutoModeSuccess({ scraped: _rawResults.length, qualified: qualifiedCount, emails: emailCount, pushed: false });
+    }
+  } catch (err) {
+    console.error('[AutoMode] Pipeline error:', err);
+    _showToast('⚠️ 运行失败：' + (err.message || '未知错误'));
+    _setAutoStep(null, 'error');
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '⚡ 一键开始'; }
+  }
+}
+
+function _showAutoModeProgress() {
+  const amForm = document.getElementById('autoModeForm');
+  if (!amForm) return;
+  // Hide every direct child except the progress panel itself
+  [...amForm.children].forEach(child => {
+    if (child.id !== 'autoProgressPanel') child.style.display = 'none';
+  });
+  let panel = document.getElementById('autoProgressPanel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'autoProgressPanel';
+    panel.style.cssText = 'padding:24px;max-width:600px;margin:0 auto';
+    panel.innerHTML = `
+      <div style="font-size:18px;font-weight:600;margin-bottom:16px">🤖 自动运行中</div>
+      <div id="autoStepScrape" class="auto-step">⚪ 在拓客中…</div>
+      <div id="autoStepEnrich" class="auto-step">⚪ 预筛 + 评分中…</div>
+      <div id="autoStepEmails" class="auto-step">⚪ 生成邮件中…</div>
+      <div id="autoStepPush"   class="auto-step">⚪ 推送到 Instantly…</div>
+    `;
+    amForm.appendChild(panel);
+  }
+  panel.style.display = 'block';
+}
+
+function _setAutoStep(stage, status, detail) {
+  const idMap    = { scrape: 'autoStepScrape', enrich: 'autoStepEnrich', emails: 'autoStepEmails', push: 'autoStepPush' };
+  const labelMap = { scrape: '在拓客', enrich: '预筛 + 评分', emails: '生成邮件', push: '推送到 Instantly' };
+  if (stage === null) {
+    // error — mark any running step as failed
+    Object.values(idMap).forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.innerHTML.startsWith('⏳')) el.innerHTML = el.innerHTML.replace('⏳', '❌');
+    });
+    return;
+  }
+  const el = document.getElementById(idMap[stage]);
+  if (!el) return;
+  const icon = status === 'running' ? '⏳' : status === 'done' ? '✅' : '❌';
+  el.innerHTML = `${icon} ${labelMap[stage]}${detail ? ` — ${detail}` : ''}`;
+}
+
+function _showAutoModeSuccess(stats) {
+  const panel = document.getElementById('autoProgressPanel');
+  if (!panel) return;
+  const pushedNote = stats.pushed ? ' · 已推送' : '';
+  panel.innerHTML = `
+    <div style="text-align:center;padding:24px">
+      <div style="font-size:48px;margin-bottom:12px">🎉</div>
+      <div style="font-size:20px;font-weight:600;margin-bottom:16px">自动运行完成！</div>
+      <div style="color:var(--sub);margin-bottom:8px">
+        拓到 ${stats.scraped} 条 · 合格 ${stats.qualified} · 生成邮件 ${stats.emails} 人${pushedNote}
+      </div>
+      <div style="margin-top:24px;display:flex;gap:12px;justify-content:center">
+        <button class="primary" onclick="_jumpToStep4FromAuto()">查看详情</button>
+        <button class="secondary" onclick="backToModePicker()">再跑一次</button>
+      </div>
+    </div>
+  `;
+}
+
+function _jumpToStep4FromAuto() {
+  // Hide auto mode container
+  const amForm = document.getElementById('autoModeForm');
+  if (amForm) amForm.style.display = 'none';
+  // Mark as manual mode at step 4 so restore logic works on refresh
+  localStorage.setItem('leadgen_mode', 'manual');
+  localStorage.setItem('leadgen_current_step', '4');
+  // Show wizard-step-4 wrapper if it exists (step5Section may live inside it)
+  const w4 = document.getElementById('wizard-step-4');
+  if (w4) { w4.classList.remove('hidden'); w4.style.display = 'block'; }
+  // Render the email/push hub
+  if (typeof showStep5 === 'function') showStep5();
+  // Restore top bar
+  const bar = document.getElementById('stepProgressBar');
+  if (bar) bar.style.display = 'flex';
+  const sl = document.getElementById('switchModeLink');
+  if (sl) sl.style.display = 'inline';
 }
 
 // ── Mode Picker ──────────────────────────────────────────────────────────────
