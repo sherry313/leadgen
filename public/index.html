@@ -4960,14 +4960,33 @@ function enterMode(mode) {
 }
 
 function backToModePicker() {
-  document.querySelectorAll('.wizard-panel').forEach(p => {
-    p.classList.add('hidden');
-    p.style.display = 'none';
-  });
+  // Clear localStorage so picker shows on next refresh too
+  localStorage.removeItem('leadgen_mode');
+
+  // Hide all wizard panels (1-5)
+  for (let i = 1; i <= 5; i++) {
+    const panel = document.getElementById('wizard-step-' + i);
+    if (panel) panel.style.display = 'none';
+  }
+
+  // Hide auto mode form
   const autoForm = document.getElementById('autoModeForm');
   if (autoForm) autoForm.style.display = 'none';
-  localStorage.removeItem('leadgen_mode');
-  _showModePicker();
+
+  // Hide step progress bar (header)
+  const bar = document.getElementById('stepProgressBar');
+  if (bar) bar.style.display = 'none';
+
+  // Hide 「切换模式」 link itself (it's only relevant in a chosen mode)
+  const switchLink = document.getElementById('switchModeLink');
+  if (switchLink) switchLink.style.display = 'none';
+
+  // Show the mode picker
+  const picker = document.getElementById('modePicker');
+  if (picker) picker.style.display = 'block';
+
+  // Scroll to top so user sees the cards
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function _initModePicker() {
