@@ -1484,6 +1484,17 @@
     #am_submitBtn { width:100%; padding:14px; background:linear-gradient(135deg,#2563eb,#7c3aed); color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; font-family:inherit; transition:opacity 0.2s; }
     #am_submitBtn:disabled { opacity:0.42; cursor:default; }
     #am_submitBtn:not(:disabled):hover { opacity:0.88; }
+    /* ── Framework custom dropdown ── */
+    .am-dropdown { position:relative; width:100%; }
+    .am-dropdown-trigger { width:100%; display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:0.9rem; font-family:inherit; cursor:pointer; text-align:left; transition:border-color 0.15s; }
+    .am-dropdown-trigger:hover,.am-dropdown-trigger:focus { border-color:rgba(99,102,241,0.5); outline:none; }
+    .am-dropdown-caret { color:var(--sub); margin-left:8px; font-size:11px; transition:transform 0.15s; flex-shrink:0; }
+    .am-dropdown.open .am-dropdown-caret { transform:rotate(180deg); }
+    .am-dropdown-menu { position:absolute; top:calc(100% + 4px); left:0; right:0; background:#1a2035; border:1px solid var(--border); border-radius:8px; padding:4px; z-index:200; box-shadow:0 8px 24px rgba(0,0,0,0.5); max-height:300px; overflow-y:auto; }
+    .am-dropdown-menu[hidden] { display:none; }
+    .am-dropdown-option { width:100%; display:block; padding:9px 11px; background:transparent; border:none; color:var(--text); font-size:0.88rem; font-family:inherit; text-align:left; cursor:pointer; border-radius:6px; transition:background 0.12s; }
+    .am-dropdown-option:hover { background:rgba(99,102,241,0.15); }
+    .am-dropdown-option.selected { background:rgba(99,102,241,0.22); color:#c7d2fe; }
 
   </style>
 </head>
@@ -1631,15 +1642,22 @@
       <div class="form-row">
         <div>
           <label for="am_frameworkKey">写作框架 <span style="color:#ef4444">*</span></label>
-          <select id="am_frameworkKey" onchange="_updateAmSubmitBtn()">
-            <option value="cold_5_step">Cold Email 5 步序列（推荐）</option>
-            <option value="aida">AIDA 经典营销 4 段</option>
-            <option value="bab">Before-After-Bridge</option>
-            <option value="pas">PAS 痛点驱动 3 段</option>
-            <option value="byaf">BYAF 自由选择</option>
-            <option value="sch">Star-Chain-Hook</option>
-            <option value="three_ps">3 P's (Praise-Picture-Push)</option>
-          </select>
+          <div class="am-dropdown" id="am_frameworkDropdown">
+            <input type="hidden" id="am_frameworkKey" value="cold_5_step">
+            <button type="button" class="am-dropdown-trigger" id="am_frameworkTrigger">
+              <span class="am-dropdown-label">Cold Email 5 步序列（推荐）</span>
+              <span class="am-dropdown-caret">▾</span>
+            </button>
+            <div class="am-dropdown-menu" id="am_frameworkMenu" hidden>
+              <button type="button" class="am-dropdown-option selected" data-value="cold_5_step">Cold Email 5 步序列（推荐）</button>
+              <button type="button" class="am-dropdown-option" data-value="aida">AIDA 经典营销 4 段</button>
+              <button type="button" class="am-dropdown-option" data-value="bab">Before-After-Bridge</button>
+              <button type="button" class="am-dropdown-option" data-value="pas">PAS 痛点驱动 3 段</button>
+              <button type="button" class="am-dropdown-option" data-value="byaf">BYAF 自由选择</button>
+              <button type="button" class="am-dropdown-option" data-value="sch">Star-Chain-Hook</button>
+              <button type="button" class="am-dropdown-option" data-value="three_ps">3 P's (Praise-Picture-Push)</button>
+            </div>
+          </div>
         </div>
         <div>
           <label for="am_campaignId">Instantly Campaign <span style="color:#ef4444">*</span></label>
@@ -6013,6 +6031,52 @@ window.addEventListener('pipelineDone', () => {
     if (n > 0) _showToast('✅ 成功找到 ' + n + ' 条线索！');
   }, 700);
 });
+
+// ── Framework custom dropdown wiring ──────────────────────────────────────────
+(function setupFrameworkDropdown() {
+  const dropdown = document.getElementById('am_frameworkDropdown');
+  if (!dropdown) return;
+  const trigger  = document.getElementById('am_frameworkTrigger');
+  const menu     = document.getElementById('am_frameworkMenu');
+  const hidden   = document.getElementById('am_frameworkKey');
+  const label    = trigger.querySelector('.am-dropdown-label');
+
+  function refreshSelected() {
+    menu.querySelectorAll('.am-dropdown-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.value === hidden.value);
+    });
+  }
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = !menu.hasAttribute('hidden');
+    if (isOpen) {
+      menu.setAttribute('hidden', '');
+      dropdown.classList.remove('open');
+    } else {
+      menu.removeAttribute('hidden');
+      dropdown.classList.add('open');
+    }
+  });
+
+  menu.querySelectorAll('.am-dropdown-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      hidden.value  = opt.dataset.value;
+      label.textContent = opt.textContent;
+      menu.setAttribute('hidden', '');
+      dropdown.classList.remove('open');
+      refreshSelected();
+      _updateAmSubmitBtn();
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target)) {
+      menu.setAttribute('hidden', '');
+      dropdown.classList.remove('open');
+    }
+  });
+})();
 </script>
 </body>
 </html>
