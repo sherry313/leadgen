@@ -1834,7 +1834,7 @@
       <input type="checkbox" id="optPhone"   checked style="display:none">
       <input type="checkbox" id="optRating"  checked style="display:none">
       <label class="field-opt" style="max-width:340px;cursor:pointer">
-        <input type="checkbox" id="optEmail" onchange="updateFieldCost()">
+        <input type="checkbox" id="optEmail" onchange="updateFieldCost()" checked>
         <div class="field-opt-info">
           <span class="field-opt-name">📧 抓取邮箱</span>
           <span class="field-opt-desc">额外收费 +$0.002/条，从官网抓取</span>
@@ -4826,12 +4826,20 @@ setInterval(() => {
   if (v !== null) el.value = v;
   el.addEventListener('input', () => localStorage.setItem('leadgen_' + id, el.value));
 });
-['optEmail','optSocial','optHours','optOwner'].forEach(id => {
+['optSocial','optHours','optOwner'].forEach(id => {
   const el = document.getElementById(id); if (!el) return;
   const v = localStorage.getItem('leadgen_' + id);
   if (v !== null) el.checked = v === 'true';
   el.addEventListener('change', () => localStorage.setItem('leadgen_' + id, el.checked));
 });
+// optEmail defaults to true so new users don't miss email scraping
+{
+  const el = document.getElementById('optEmail'); if (el) {
+    const v = localStorage.getItem('leadgen_optEmail') ?? 'true';
+    el.checked = v === 'true';
+    el.addEventListener('change', () => localStorage.setItem('leadgen_optEmail', el.checked));
+  }
+}
 // Restore depth card selection
 const savedMax = localStorage.getItem('leadgen_maxResults');
 if (savedMax) {
