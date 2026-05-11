@@ -1165,6 +1165,20 @@
     #createCampaignModal { display:none; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
     #createCampaignModal.open { display:flex; }
     .hub-modal-box { background:rgba(22,32,52,0.98); border:1px solid var(--border); border-radius:12px; padding:28px; width:360px; max-width:92vw; box-shadow:0 16px 48px rgba(0,0,0,0.5); }
+    /* ── Instantly Wizard ───────────────────────────────────────────────────── */
+    .wiz-step { display:none; max-width:720px; }
+    .wiz-step.active { display:block; }
+    .wiz-progress { display:flex; align-items:center; gap:0; margin-bottom:24px; overflow-x:auto; padding-bottom:2px; }
+    .wiz-step-dot { display:flex; align-items:center; cursor:default; }
+    .wiz-step-num { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; border:2px solid var(--border); color:var(--sub); background:transparent; flex-shrink:0; transition:all 0.2s; }
+    .wiz-step-num.active { border-color:var(--blue); background:var(--blue); color:#fff; }
+    .wiz-step-num.done   { border-color:#34d399; background:#34d399; color:#1e293b; cursor:pointer; }
+    .wiz-step-label { font-size:0.73rem; color:var(--sub); margin-left:7px; white-space:nowrap; transition:color 0.2s; }
+    .wiz-step-label.active { color:var(--text); font-weight:600; }
+    .wiz-step-label.done   { color:#34d399; cursor:pointer; }
+    .wiz-connector { flex:1; min-width:14px; height:1px; background:var(--border); margin:0 6px; transition:background 0.2s; }
+    .wiz-connector.done { background:#34d399; }
+    .wiz-nav { display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:24px; padding-top:16px; border-top:1px solid var(--border); }
 
     /* ── Keyword tag cards ───────────────────────────────────────────────── */
     @keyframes kwFloat {
@@ -1964,33 +1978,34 @@
       </div>
     </div>
 
-    <!-- State 3: email preview (shown after generation) -->
-    <div id="emailPreview" style="margin-top:16px"></div>
-
-    <!-- State 3: bulk push bar (shown after generation when leads have email) -->
-    <div id="bulkPushBar" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(37,99,235,0.07);border:1px solid rgba(37,99,235,0.22);border-radius:10px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <span id="bulkPushCount" style="font-size:0.85rem;color:var(--sub)"></span>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span id="bulkPushDoneIndicator" style="display:none;color:#34d399;font-size:0.82rem;font-weight:600">✓ 已推送</span>
-        <button id="btnBulkPush" onclick="startBulkPush()"
-          style="padding:8px 20px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;white-space:nowrap"
-          onmouseover="this.style.opacity=0.82" onmouseout="this.style.opacity=1">
-          📤 批量推送到 Instantly Campaign
-        </button>
+    <!-- Wizard progress bar -->
+    <div id="wizProgressBar" style="display:none;margin-top:24px">
+      <div class="wiz-progress">
+        <div class="wiz-step-dot" id="wizDot1" onclick="_wizJumpTo(1)">
+          <div class="wiz-step-num" id="wizNum1">①</div>
+          <span class="wiz-step-label" id="wizLbl1">Campaign & 邮箱</span>
+        </div>
+        <div class="wiz-connector" id="wizConn1"></div>
+        <div class="wiz-step-dot" id="wizDot2" onclick="_wizJumpTo(2)">
+          <div class="wiz-step-num" id="wizNum2">②</div>
+          <span class="wiz-step-label" id="wizLbl2">发送序列</span>
+        </div>
+        <div class="wiz-connector" id="wizConn2"></div>
+        <div class="wiz-step-dot" id="wizDot3" onclick="_wizJumpTo(3)">
+          <div class="wiz-step-num" id="wizNum3">③</div>
+          <span class="wiz-step-label" id="wizLbl3">推送线索</span>
+        </div>
+        <div class="wiz-connector" id="wizConn3"></div>
+        <div class="wiz-step-dot" id="wizDot4" onclick="_wizJumpTo(4)">
+          <div class="wiz-step-num" id="wizNum4">④</div>
+          <span class="wiz-step-label" id="wizLbl4">激活 & 数据</span>
+        </div>
       </div>
     </div>
 
-    <!-- State 3: Instantly section (revealed after generation) -->
-    <div id="step5InstantlyDivider" style="display:none;border-top:1px solid var(--border);margin:20px 0"></div>
-    <div id="step5Empty" style="display:none;padding:24px 20px;text-align:center;background:rgba(30,41,59,0.6);border:1px dashed var(--border);border-radius:12px;color:var(--sub);font-size:0.88rem">
-      深度分析完成后，Campaign 配置将在此出现
-    </div>
-
-    <!-- Hub grid -->
-    <div id="step5Grid" class="hub-grid" style="display:none">
-
-      <!-- Card 1: Campaign selector (State B) -->
-      <div class="hub-card" id="hubCardCampaign" style="display:none">
+    <!-- Step 1: Campaign & Sender Setup -->
+    <div id="wizStep1" class="wiz-step">
+      <div class="hub-card" id="hubCardCampaign">
         <div class="hub-card-title">Campaign 选择</div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <select id="hubCampaignSelect" class="hub-select" onchange="onCampaignSelect(this.value)">
@@ -1999,9 +2014,7 @@
           <button class="hub-btn ghost" onclick="openCreateCampaignModal()" title="新建 Campaign" style="padding:6px 12px;flex-shrink:0">+</button>
         </div>
       </div>
-
-      <!-- Card 2: Email accounts (State B) -->
-      <div class="hub-card" id="hubCardAccounts" style="display:none">
+      <div class="hub-card" id="hubCardAccounts" style="margin-top:14px">
         <div class="hub-card-title">发件邮箱（多选）</div>
         <div id="hubAccountsList" style="max-height:170px;overflow-y:auto;margin-bottom:10px">
           <div style="color:var(--sub);font-size:0.8rem">加载中…</div>
@@ -2012,9 +2025,11 @@
           <a href="https://app.instantly.ai/app/accounts" target="_blank" style="font-size:0.74rem;color:#93c5fd;text-decoration:none" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">在 Instantly 添加邮箱 →</a>
         </div>
       </div>
+    </div>
 
-      <!-- Card 3: Sequence timing (State C) -->
-      <div class="hub-card" id="hubCardSequence" style="display:none">
+    <!-- Step 2: Sequence Timing -->
+    <div id="wizStep2" class="wiz-step">
+      <div class="hub-card" id="hubCardSequence">
         <div class="hub-card-title">发送序列间隔（天）</div>
         <div class="seq-grid">
           <div class="seq-input-wrap"><div class="seq-day-label">第1封</div><input class="seq-input" id="seqDelay0" type="number" min="0" max="999" value="0"></div>
@@ -2023,14 +2038,36 @@
           <div class="seq-input-wrap"><div class="seq-day-label">第4封</div><input class="seq-input" id="seqDelay3" type="number" min="0" max="999" value="6"></div>
           <div class="seq-input-wrap"><div class="seq-day-label">第5封</div><input class="seq-input" id="seqDelay4" type="number" min="0" max="999" value="9"></div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+        <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
           <button class="hub-btn primary" onclick="saveSequenceDelays()" style="padding:5px 12px;font-size:0.77rem">保存时间设置</button>
+          <button class="hub-btn ghost" onclick="_setWizardStep(3)" style="padding:5px 12px;font-size:0.77rem">使用默认值继续 →</button>
           <span id="seqSaveStatus" style="font-size:0.74rem;color:var(--sub)"></span>
         </div>
       </div>
+    </div>
 
-      <!-- Card 4: Campaign controls (State D) -->
-      <div class="hub-card" id="hubCardControls" style="display:none">
+    <!-- Step 3: Preview & Push Leads -->
+    <div id="wizStep3" class="wiz-step">
+      <div id="step5Empty" style="display:none;padding:24px 20px;text-align:center;background:rgba(30,41,59,0.6);border:1px dashed var(--border);border-radius:12px;color:var(--sub);font-size:0.88rem;margin-bottom:16px">
+        生成邮件后，推送线索到 Instantly Campaign
+      </div>
+      <div id="emailPreview"></div>
+      <div id="bulkPushBar" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(37,99,235,0.07);border:1px solid rgba(37,99,235,0.22);border-radius:10px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <span id="bulkPushCount" style="font-size:0.85rem;color:var(--sub)"></span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="bulkPushDoneIndicator" style="display:none;color:#34d399;font-size:0.82rem;font-weight:600">✓ 已推送</span>
+          <button id="btnBulkPush" onclick="startBulkPush()"
+            style="padding:8px 20px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;white-space:nowrap"
+            onmouseover="this.style.opacity=0.82" onmouseout="this.style.opacity=1">
+            📤 批量推送到 Instantly Campaign
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Activate & Analytics -->
+    <div id="wizStep4" class="wiz-step">
+      <div class="hub-card" id="hubCardControls">
         <div class="hub-card-title">Campaign 控制</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
           <button class="hub-btn success" id="btnActivate" onclick="activateCampaign()" disabled>🚀 激活</button>
@@ -2038,9 +2075,7 @@
         </div>
         <div id="hubCampaignStatus" style="font-size:0.78rem;color:var(--sub)">请先选择 Campaign</div>
       </div>
-
-      <!-- Card 5: Analytics (State E) -->
-      <div class="hub-card" id="hubCardAnalytics" style="grid-column:1/-1;display:none">
+      <div class="hub-card" id="hubCardAnalytics" style="margin-top:14px">
         <div class="hub-card-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleAnalyticsDash()">
           <span>数据看板</span>
           <span id="analyticsDashToggle" style="font-size:0.78rem;color:var(--sub);text-transform:none;letter-spacing:0;font-weight:400">▸ 展开</span>
@@ -2052,8 +2087,16 @@
           <div id="hubAnalyticsTime" style="font-size:0.68rem;color:var(--sub);margin-top:8px;text-align:right"></div>
         </div>
       </div>
+    </div>
 
-    </div><!-- /step5Grid -->
+    <!-- Wizard nav -->
+    <div id="wizNav" style="display:none">
+      <div class="wiz-nav">
+        <button id="wizBtnBack" class="hub-btn ghost" onclick="_wizBack()" style="display:none">← 上一步</button>
+        <button id="wizBtnNext" class="hub-btn primary" onclick="_wizNext()" disabled>下一步 →</button>
+      </div>
+    </div>
+
   </div><!-- /step5Section -->
 
 </div><!-- /container -->
@@ -4137,6 +4180,9 @@ let _hubCampaigns = [];
 let _hubAccounts  = [];
 let _hubSelectedCampaign = null;
 let _hubLoaded = false;
+let _instantlyWizardStep = 0;
+let _wizardSyncDone = false;
+let _wizardPushDone = false;
 
 function getSelectedCampaignId() {
   return localStorage.getItem(_LS_CAMPAIGN) || '';
@@ -4154,18 +4200,22 @@ function showStep5() {
   if (!_frameworksLoaded) loadFrameworks();
   _updateGenerateBtn();
 
-  // State 1 on entry: Instantly hidden until emails generate; progressive cards all reset
-  const emptyEl   = document.getElementById('step5Empty');
-  const gridEl    = document.getElementById('step5Grid');
-  const divider   = document.getElementById('step5InstantlyDivider');
-  const pushBarEl = document.getElementById('bulkPushBar');
-  if (emptyEl)   emptyEl.style.display   = 'none';
-  if (gridEl)    gridEl.style.display    = 'none';
-  if (divider)   divider.style.display   = 'none';
-  if (pushBarEl) pushBarEl.style.display = 'none';
-  // Reset all progressive disclosure cards and indicators
-  ['hubCardCampaign','hubCardAccounts','hubCardSequence','hubCardControls','hubCardAnalytics']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  // Hide wizard chrome on entry — revealed by _revealInstantlySection after email generation
+  const progressBar = document.getElementById('wizProgressBar');
+  const wizNav      = document.getElementById('wizNav');
+  const emptyEl     = document.getElementById('step5Empty');
+  const pushBarEl   = document.getElementById('bulkPushBar');
+  if (progressBar) progressBar.style.display = 'none';
+  if (wizNav)      wizNav.style.display      = 'none';
+  if (emptyEl)     emptyEl.style.display     = 'none';
+  if (pushBarEl)   pushBarEl.style.display   = 'none';
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`wizStep${i}`);
+    if (el) el.classList.remove('active');
+  }
+  _instantlyWizardStep = 0;
+  _wizardSyncDone = false;
+  _wizardPushDone = false;
   ['bulkPushDoneIndicator','syncDoneIndicator'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
@@ -4175,17 +4225,20 @@ function showStep5() {
 }
 
 function _revealInstantlySection() {
-  const qualified = (_allLeads || []).filter(l => _isLeadQualified(l)).length;
-  const emptyEl = document.getElementById('step5Empty');
-  const gridEl  = document.getElementById('step5Grid');
-  // Divider and individual cards are revealed progressively by _revealInstantlyState[B-E]
+  const qualified   = (_allLeads || []).filter(l => _isLeadQualified(l)).length;
+  const emptyEl     = document.getElementById('step5Empty');
+  const progressBar = document.getElementById('wizProgressBar');
+  const wizNav      = document.getElementById('wizNav');
   if (qualified > 0) {
     if (emptyEl) emptyEl.style.display = 'none';
-    if (gridEl)  gridEl.style.display  = 'grid'; // container present; cards start hidden
     if (!_hubLoaded) loadInstantlyData();
+    if (progressBar) progressBar.style.display = 'block';
+    if (wizNav)      wizNav.style.display      = 'block';
+    const jumpToStep4 = _hubSelectedCampaign &&
+      (_hubSelectedCampaign.status === 1 || _hubSelectedCampaign.status === 'active');
+    _setWizardStep(jumpToStep4 ? 4 : 1);
   } else {
     if (emptyEl) emptyEl.style.display = 'block';
-    if (gridEl)  gridEl.style.display  = 'none';
   }
   _updateBulkPushBar();
 }
@@ -4229,45 +4282,76 @@ async function startBulkPush() {
   const countAfter = (_allLeads || []).filter(l =>
     _isLeadQualified(l) && l.email?.trim() && !_isSentLS(getLeadKey(l))
   ).length;
-  if (countAfter < withContactCount) _revealInstantlyStateB();
+  if (countAfter < withContactCount) {
+    _wizardPushDone = true;
+    const doneIndicator = document.getElementById('bulkPushDoneIndicator');
+    if (doneIndicator) doneIndicator.style.display = 'inline';
+    _updateWizardNav();
+  }
 
   if (skippedNoEmailCount > 0) {
     _showToast(`⚠️ 已推送 ${withContactCount} 条 · 跳过 ${skippedNoEmailCount} 条（无联系邮箱，请在第二步勾选「📧 抓取邮箱」后重新运行）`);
   }
 }
 
-function _revealInstantlyStateB() {
-  const divider      = document.getElementById('step5InstantlyDivider');
-  const cardCampaign = document.getElementById('hubCardCampaign');
-  const cardAccounts = document.getElementById('hubCardAccounts');
-  const doneIndicator = document.getElementById('bulkPushDoneIndicator');
-  if (divider)      divider.style.display      = 'block';
-  if (cardCampaign) cardCampaign.style.display = 'block';
-  if (cardAccounts) cardAccounts.style.display = 'block';
-  if (doneIndicator) doneIndicator.style.display = 'inline';
+function _setWizardStep(n) {
+  _instantlyWizardStep = n;
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`wizStep${i}`);
+    if (el) el.classList.toggle('active', i === n);
+  }
+  _updateWizardProgress();
+  _updateWizardNav();
 }
 
-function _revealInstantlyStateC() {
-  const cardSequence = document.getElementById('hubCardSequence');
-  const syncDone     = document.getElementById('syncDoneIndicator');
-  if (cardSequence) cardSequence.style.display = 'block';
-  if (syncDone)     syncDone.style.display     = 'inline';
+function _updateWizardProgress() {
+  const n = _instantlyWizardStep;
+  for (let i = 1; i <= 4; i++) {
+    const numEl  = document.getElementById(`wizNum${i}`);
+    const lblEl  = document.getElementById(`wizLbl${i}`);
+    const connEl = i < 4 ? document.getElementById(`wizConn${i}`) : null;
+    if (!numEl) continue;
+    const isDone   = i < n;
+    const isActive = i === n;
+    numEl.className   = 'wiz-step-num'   + (isDone ? ' done' : isActive ? ' active' : '');
+    numEl.textContent = isDone ? '✓' : ['①','②','③','④'][i - 1];
+    if (lblEl)  lblEl.className  = 'wiz-step-label' + (isDone ? ' done' : isActive ? ' active' : '');
+    if (connEl) connEl.className = 'wiz-connector'  + (isDone ? ' done' : '');
+  }
 }
 
-function _revealInstantlyStateD() {
-  const cardControls = document.getElementById('hubCardControls');
-  if (cardControls) cardControls.style.display = 'block';
+function _updateWizardNav() {
+  const n       = _instantlyWizardStep;
+  const backBtn = document.getElementById('wizBtnBack');
+  const nextBtn = document.getElementById('wizBtnNext');
+  if (!backBtn || !nextBtn) return;
+  backBtn.style.display = (n <= 1) ? 'none' : '';
+  if (n === 4) {
+    nextBtn.textContent = '完成 ✓';
+    nextBtn.disabled    = false;
+  } else if (n === 3) {
+    nextBtn.textContent = '下一步 →';
+    nextBtn.disabled    = !_wizardPushDone;
+  } else if (n === 1) {
+    nextBtn.textContent = '下一步 →';
+    nextBtn.disabled    = !(!!getSelectedCampaignId() && _wizardSyncDone);
+  } else {
+    nextBtn.textContent = '下一步 →';
+    nextBtn.disabled    = false;
+  }
 }
 
-function _revealInstantlyStateE() {
-  const cardAnalytics = document.getElementById('hubCardAnalytics');
-  if (cardAnalytics) cardAnalytics.style.display = 'block';
-  const body   = document.getElementById('analyticsDashBody');
-  const toggle = document.getElementById('analyticsDashToggle');
-  if (body)   body.style.display   = 'block';
-  if (toggle) toggle.textContent   = '▾ 收起';
-  const id = getSelectedCampaignId();
-  if (id) loadAnalytics(id);
+function _wizNext() {
+  if (_instantlyWizardStep < 4) _setWizardStep(_instantlyWizardStep + 1);
+  else _showToast('✅ Campaign 配置完成');
+}
+
+function _wizBack() {
+  if (_instantlyWizardStep > 1) _setWizardStep(_instantlyWizardStep - 1);
+}
+
+function _wizJumpTo(n) {
+  if (n < _instantlyWizardStep) _setWizardStep(n);
 }
 
 function toggleAnalyticsDash() {
@@ -4335,15 +4419,20 @@ function resetFwSelection() {
   if (panel) panel.style.display = 'none';
   const btn = document.getElementById('generateEmailsBtn');
   if (btn) btn.style.display = '';
-  // Back to State 1: hide downstream sections
   const ep = document.getElementById('emailPreview');
-  if (ep) { ep.style.display = 'none'; ep.innerHTML = ''; }
+  if (ep) { ep.style.display = ''; ep.innerHTML = ''; }
   const emptyEl = document.getElementById('step5Empty');
   if (emptyEl) emptyEl.style.display = 'none';
-  const gridEl = document.getElementById('step5Grid');
-  if (gridEl) gridEl.style.display = 'none';
-  const divider = document.getElementById('step5InstantlyDivider');
-  if (divider) divider.style.display = 'none';
+  // Hide wizard chrome
+  const progressBar = document.getElementById('wizProgressBar');
+  const wizNav      = document.getElementById('wizNav');
+  if (progressBar) progressBar.style.display = 'none';
+  if (wizNav)      wizNav.style.display      = 'none';
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`wizStep${i}`);
+    if (el) el.classList.remove('active');
+  }
+  _instantlyWizardStep = 0;
   _renderFrameworkCards();
   _updateGenerateBtn();
 }
@@ -4494,7 +4583,13 @@ async function syncAccountsToCampaign() {
       body: JSON.stringify({ emails: selected }),
     });
     const d = await r.json();
-    if (d.success) { _showToast(`✅ 已同步 ${selected.length} 个邮箱到 Campaign`); _revealInstantlyStateC(); }
+    if (d.success) {
+      _showToast(`✅ 已同步 ${selected.length} 个邮箱到 Campaign`);
+      _wizardSyncDone = true;
+      const syncDone = document.getElementById('syncDoneIndicator');
+      if (syncDone) syncDone.style.display = 'inline';
+      _updateWizardNav();
+    }
     else _showToast('同步失败：' + JSON.stringify(d.error));
   } catch (e) { _showToast('同步失败：' + e.message); }
 }
@@ -4532,7 +4627,7 @@ async function saveSequenceDelays() {
       statusEl.style.color = '#34d399';
       statusEl.textContent = '✓ 已保存';
       setTimeout(() => { statusEl.textContent = ''; }, 2500);
-      _revealInstantlyStateD();
+      _setWizardStep(3);
     } else {
       statusEl.style.color = '#fca5a5';
       statusEl.textContent = '失败：' + JSON.stringify(d.error).slice(0, 60);
@@ -4556,7 +4651,12 @@ async function activateCampaign() {
       _showToast('🚀 Campaign 已激活，正在发送邮件');
       _hubLoaded = false;
       await loadInstantlyData();
-      _revealInstantlyStateE();
+      const body   = document.getElementById('analyticsDashBody');
+      const toggle = document.getElementById('analyticsDashToggle');
+      if (body)   body.style.display = 'block';
+      if (toggle) toggle.textContent = '▾ 收起';
+      const id = getSelectedCampaignId();
+      if (id) loadAnalytics(id);
     } else {
       _showToast('激活失败：' + JSON.stringify(d.error).slice(0, 80));
     }
