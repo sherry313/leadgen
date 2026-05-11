@@ -3643,6 +3643,36 @@ function exitHistView() {
   location.href = 'dashboard.html';
 }
 
+// Normalize a raw Supabase leads row (snake_case columns) to the camelCase shape
+// that _allLeads expects throughout the app.  Idempotent: if the row is already
+// camelCase (e.g. an in-memory object) it is returned unchanged.
+function _normalizeLeadRow(r) {
+  if ('companyName' in r) return r;   // already normalized
+  return {
+    dbId:              r.id,
+    companyName:       r.company_name,
+    website:           r.website,
+    phone:             r.phone,
+    email:             r.email,
+    city:              r.city,
+    googleRating:      r.rating,
+    reviewCount:       r.review_count ?? null,
+    intentScore:       (r.intent_score != null) ? Number(r.intent_score) : 3,
+    icpScore:          (r.icp_score    != null) ? Number(r.icp_score)    : 3,
+    intentReasoning:   r.reasoning,
+    placeId:           r.place_id || '',
+    EMAIL_1_SUBJECT:   r.email1_subject || '',  EMAIL_1_BODY: r.email1_body || '',
+    EMAIL_2_SUBJECT:   r.email2_subject || '',  EMAIL_2_BODY: r.email2_body || '',
+    EMAIL_3_SUBJECT:   r.email3_subject || '',  EMAIL_3_BODY: r.email3_body || '',
+    EMAIL_4_SUBJECT:   r.email4_subject || '',  EMAIL_4_BODY: r.email4_body || '',
+    EMAIL_5_SUBJECT:   r.email5_subject || '',  EMAIL_5_BODY: r.email5_body || '',
+    emailFrameworkKey: r.email_framework_key || null,
+    emailTemplateKey:  r.email_template_key  || null,
+    status:            'enriched',
+    dateAdded:         r.created_at?.split('T')[0],
+  };
+}
+
 async function loadSearchById(searchId) {
   const token = getStoredToken();
   if (!token || !searchId) return;
@@ -3654,27 +3684,7 @@ async function loadSearchById(searchId) {
       setStatus('未找到该搜索记录或暂无线索', 'done');
       return;
     }
-    const mapped = data.leads.map(r => ({
-      dbId:             r.id,
-      companyName:      r.company_name,
-      website:          r.website,
-      phone:            r.phone,
-      email:            r.email,
-      city:             r.city,
-      googleRating:     r.rating,
-      intentScore:      (r.intent_score !== null && r.intent_score !== undefined) ? Number(r.intent_score)  : 3,
-      icpScore:         (r.icp_score    !== null && r.icp_score    !== undefined) ? Number(r.icp_score)     : 3,
-      intentReasoning:  r.reasoning,
-      EMAIL_1_SUBJECT:  r.email1_subject || '', EMAIL_1_BODY: r.email1_body || '',
-      EMAIL_2_SUBJECT:  r.email2_subject || '', EMAIL_2_BODY: r.email2_body || '',
-      EMAIL_3_SUBJECT:  r.email3_subject || '', EMAIL_3_BODY: r.email3_body || '',
-      EMAIL_4_SUBJECT:  r.email4_subject || '', EMAIL_4_BODY: r.email4_body || '',
-      EMAIL_5_SUBJECT:  r.email5_subject || '', EMAIL_5_BODY: r.email5_body || '',
-      emailFrameworkKey: r.email_framework_key || null,
-      emailTemplateKey:  r.email_template_key  || null,
-      status:           'enriched',
-      dateAdded:        r.created_at?.split('T')[0],
-    }));
+    const mapped = data.leads.map(_normalizeLeadRow);
     renderResults(mapped);
     document.getElementById('resultsSection').style.display   = 'block';
     document.getElementById('histViewBanner').style.display   = 'flex';
@@ -3686,7 +3696,6 @@ async function loadSearchById(searchId) {
       document.getElementById('wizard-step-2').style.display = 'none';
       document.getElementById('wizard-step-3').style.display = 'none';
       showStep5();
-      _updateBulkPushBar();
       // Restore email preview if emails were persisted to DB
       const leadsWithEmails = mapped.filter(l => l.EMAIL_1_SUBJECT || l.EMAIL_1_BODY);
       if (leadsWithEmails.length > 0) {
@@ -3694,12 +3703,11 @@ async function loadSearchById(searchId) {
         if (ep) ep.style.display = 'block';
         _renderEmailPreview(leadsWithEmails);
       }
-      // Restore the framework selection so the card highlights and generate btn works
+      // Restore framework key silently — _updateGenerateBtn would re-show fwPreviewPanel
       const savedFwKey = mapped.find(l => l.emailFrameworkKey)?.emailFrameworkKey;
-      if (savedFwKey && !_selectedFrameworkKey) {
-        _selectedFrameworkKey = savedFwKey;
-        _updateGenerateBtn();
-      }
+      if (savedFwKey && !_selectedFrameworkKey) _selectedFrameworkKey = savedFwKey;
+      // Reveal wizard chrome (progress bar + nav + step 1) so user can navigate to step 3
+      _revealInstantlySection();
     }
     setTimeout(() => document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     setStatus(`已加载 ${mapped.length} 条历史线索`, 'success');
