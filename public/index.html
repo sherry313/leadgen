@@ -2284,6 +2284,7 @@ const CUSTOMER_TYPES = [
 // ── City presets ──────────────────────────────────────────────────────────────
 const COUNTRY_CODES = ['AU','US','UK','CA','DE','AE','SG','JP'];
 const COUNTRY_NAMES = { AU:'澳大利亚', US:'美国', UK:'英国', CA:'加拿大', DE:'德国', AE:'阿联酋', SG:'新加坡', JP:'日本' };
+const APIFY_COUNTRY_ISO = { AU:'au', US:'us', UK:'gb', CA:'ca', DE:'de', AE:'ae', SG:'sg', JP:'jp' };
 const CITY_PRESETS = {
   AU: ['Melbourne','Sydney','Brisbane','Perth','Adelaide','Canberra','Gold Coast','Hobart','Darwin','Newcastle','Wollongong','Geelong','Townsville','Cairns','Toowoomba','Ballarat','Bendigo','Launceston','Mackay','Rockhampton'],
   CA: ['Toronto','Vancouver','Montreal','Calgary','Ottawa','Edmonton','Quebec City','Winnipeg','Hamilton','Kitchener','London (ON)','Victoria','Halifax','Oshawa','Windsor','Saskatoon','Regina',"St. John's",'Kelowna','Sherbrooke'],
@@ -2323,10 +2324,15 @@ lucide.createIcons();
 
 // ── Selection toggles ─────────────────────────────────────────────────────────
 function toggleCountry(i) {
-  selectedCountries.has(i) ? selectedCountries.delete(i) : selectedCountries.add(i);
-  document.getElementById(`cc-${i}`).classList.toggle('selected', selectedCountries.has(i));
+  const alreadySelected = selectedCountries.has(i);
+  selectedCountries.clear();
+  document.querySelectorAll('.country-card').forEach(el => el.classList.remove('selected'));
+  if (!alreadySelected) {
+    selectedCountries.add(i);
+    document.getElementById(`cc-${i}`).classList.add('selected');
+  }
   const n = selectedCountries.size;
-  document.getElementById('countrySelHint').textContent = n ? `已选 ${n} 个国家` : '请至少选择一个国家';
+  document.getElementById('countrySelHint').textContent = n ? `已选：${COUNTRY_NAMES[COUNTRY_CODES[i]] || COUNTRY_CODES[i]}` : '请选择一个国家';
   updateStep1Nav();
 }
 function toggleType(i) {
@@ -2488,8 +2494,10 @@ function updateSelectedCombo() {
     goToStep(2);
     return false;
   }
+  const countryIdx  = [...selectedCountries][0] ?? 0;
+  const countryCode = APIFY_COUNTRY_ISO[COUNTRY_CODES[countryIdx]] || 'au';
   const label = [query, location].filter(Boolean).join(' · ');
-  generatedKeywords = [{ query, location, label, selected: true }];
+  generatedKeywords = [{ query, location, countryCode, label, selected: true }];
   return true;
 }
 
@@ -3015,7 +3023,7 @@ async function startScrapeRaw() {
       const res = await fetch('/api/scrape-raw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ searchQuery: combo.query, location: combo.location, maxResults, dataOptions, dataSource: _selectedDataSource }),
+        body: JSON.stringify({ searchQuery: combo.query, location: combo.location, countryCode: combo.countryCode, maxResults, dataOptions, dataSource: _selectedDataSource }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -3562,7 +3570,7 @@ async function startPipeline() {
       const res  = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-        body: JSON.stringify({ searchQuery: combo.query, location: combo.location, maxResults, companyProfile, dataOptions, icp: document.getElementById('icpInput').value.trim() }),
+        body: JSON.stringify({ searchQuery: combo.query, location: combo.location, countryCode: combo.countryCode, maxResults, companyProfile, dataOptions, icp: document.getElementById('icpInput').value.trim() }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);

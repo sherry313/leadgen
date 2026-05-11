@@ -4,7 +4,9 @@ const axios = require('axios');
 const APIFY_TOKEN = process.env.APIFY_API_TOKEN;
 const BASE_URL    = 'https://api.apify.com/v2';
 
-async function searchGoogleSearch(searchQuery, location, maxResults = 20) {
+const COUNTRY_DISPLAY = { au:'Australia', us:'United States', gb:'United Kingdom', ca:'Canada', de:'Germany', ae:'United Arab Emirates', sg:'Singapore', jp:'Japan' };
+
+async function searchGoogleSearch(searchQuery, location, maxResults = 20, countryCode = 'au') {
   const query = [searchQuery, location].filter(Boolean).join(' ');
   console.log(`[GoogleSearch] Starting: "${query}" | max: ${maxResults}`);
 
@@ -12,7 +14,7 @@ async function searchGoogleSearch(searchQuery, location, maxResults = 20) {
     queries:          query,
     maxPagesPerQuery: Math.ceil(maxResults / 10),
     resultsPerPage:   10,
-    countryCode:      'au',
+    countryCode,
     languageCode:     'en',
     mobileResults:    false,
   };
@@ -68,7 +70,7 @@ async function searchGoogleSearch(searchQuery, location, maxResults = 20) {
         address:       '',
         city:          location || '',
         state:         '',
-        country:       'Australia',
+        country:       COUNTRY_DISPLAY[countryCode] || countryCode.toUpperCase(),
         industry:      searchQuery,
         googleRating:  '',
         reviewCount:   0,

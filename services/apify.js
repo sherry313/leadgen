@@ -20,7 +20,9 @@ function extractSocialUrl(profiles, platformName) {
 //   scrapePlaceDetailPage: true → scrapes business hours + owner   (~+$0.01/lead)
 //
 // Website, phone, address, rating are always returned for free.
-async function scrapeAustralianCompanies(searchQuery, location, maxResults = 25, dataOptions = {}) {
+const COUNTRY_DISPLAY = { au:'Australia', us:'United States', gb:'United Kingdom', ca:'Canada', de:'Germany', ae:'United Arab Emirates', sg:'Singapore', jp:'Japan' };
+
+async function scrapeAustralianCompanies(searchQuery, location, maxResults = 25, dataOptions = {}, countryCode = 'au') {
   const {
     includeWebsite = true,
     includeEmail   = false,
@@ -39,7 +41,7 @@ async function scrapeAustralianCompanies(searchQuery, location, maxResults = 25,
     maxCrawledPlaces: maxResults * 3,   // overall run cap (belt-and-suspenders)
     maxAutomaticZoomOut: 1,              // limit auto zoom-out to 1 level (city -> metro area only)
     language: 'en',
-    countryCode: 'au',
+    countryCode,
     // Conditionally enable paid features
     scrapeContacts:        needsContacts,
     scrapePlaceDetailPage: needsDetailPage,
@@ -132,7 +134,7 @@ async function scrapeAustralianCompanies(searchQuery, location, maxResults = 25,
     address:      item.address || '',
     city:         item.city || '',
     state:        item.state || '',
-    country:      'Australia',
+    country:      COUNTRY_DISPLAY[countryCode] || countryCode.toUpperCase(),
     industry:     item.categoryName || searchQuery,
     googleRating: item.totalScore || '',
     reviewCount:  item.reviewsCount || 0,

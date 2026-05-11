@@ -38,7 +38,7 @@ app.get('/api/status', (req, res) => {
 // companyProfile: { sellerName, products, advantage }
 // Header: Authorization: Bearer <ACCESS_TOKEN_SECRET>
 app.post('/api/scrape', requireAuth, async (req, res) => {
-  const { searchQuery, location, companyProfile = {}, dataOptions = {}, icp = '' } = req.body;
+  const { searchQuery, location, companyProfile = {}, dataOptions = {}, icp = '', countryCode = 'au' } = req.body;
   let { maxResults } = req.body;
 
   // Validate required fields
@@ -49,13 +49,13 @@ app.post('/api/scrape', requireAuth, async (req, res) => {
   maxResults = Math.min(100, Math.max(1, parseInt(maxResults) || 10));
 
   console.log(`\n[Pipeline] ===== Starting lead generation =====`);
-  console.log(`[Pipeline] Query: "${searchQuery}" | Location: ${location} | Max: ${maxResults}`);
+  console.log(`[Pipeline] Query: "${searchQuery}" | Location: ${location} | Max: ${maxResults} | Country: ${countryCode}`);
   console.log(`[Pipeline] Seller: ${companyProfile.sellerName || '(not set)'} | Products: ${companyProfile.products || '(not set)'}`);
   console.log('dataOptions received:', dataOptions);
   console.log(`[Pipeline] Data options:`, JSON.stringify(dataOptions));
 
   // Step 1: Scrape companies from Google Maps via Apify
-  const { companies, apifyCostUsd: apifyActualCost } = await scrapeAustralianCompanies(searchQuery, location, maxResults, dataOptions);
+  const { companies, apifyCostUsd: apifyActualCost } = await scrapeAustralianCompanies(searchQuery, location, maxResults, dataOptions, countryCode);
   console.log(`[Pipeline] Scraped ${companies.length} companies`);
 
   const results = [];
@@ -161,7 +161,7 @@ app.post('/api/scrape', requireAuth, async (req, res) => {
 // ── Step 1: Quick scrape + Haiku pre-filter ──────────────────────────────────
 // POST /api/generate
 app.post('/api/generate', requireAuth, async (req, res) => {
-  const { location, maxResults: mr = 10, dataOptions = {}, dataSource = 'google_maps' } = req.body;
+  const { location, maxResults: mr = 10, dataOptions = {}, dataSource = 'google_maps', countryCode = 'au' } = req.body;
   const searchQuery = req.body.searchQuery?.trim() || 'renovation contractor';
 
   console.log('[Debug] 收到搜索请求:', JSON.stringify(req.body));
@@ -170,11 +170,11 @@ app.post('/api/generate', requireAuth, async (req, res) => {
   const maxResults = Math.min(100, Math.max(1, parseInt(mr) || 10));
   console.log('[Debug] req.body.maxResults (raw):', mr, '→ 解析后:', maxResults);
   console.log(`\n[Generate] ===== Step 1: ${dataSource} + Haiku pre-filter =====`);
-  console.log(`[Generate] Query: "${searchQuery}" | Location: ${location} | Max: ${maxResults}`);
+  console.log(`[Generate] Query: "${searchQuery}" | Location: ${location} | Max: ${maxResults} | Country: ${countryCode}`);
 
   const { companies, apifyCostUsd: apifyActualCost } = dataSource === 'google_search'
-    ? await searchGoogleSearch(searchQuery, location, maxResults)
-    : await scrapeAustralianCompanies(searchQuery, location, maxResults, dataOptions);
+    ? await searchGoogleSearch(searchQuery, location, maxResults, countryCode)
+    : await scrapeAustralianCompanies(searchQuery, location, maxResults, dataOptions, countryCode);
   console.log('[Debug] Apify 返回条数:', companies.length);
   console.log(`[Generate] Scraped ${companies.length} companies`);
 
@@ -208,11 +208,11 @@ app.post('/api/generate', requireAuth, async (req, res) => {
 // ── Raw scrape only (no Haiku) ────────────────────────────────────────────────
 // POST /api/scrape-raw  →  { searchId, companies, apifyCostUsd }
 app.post('/api/scrape-raw', requireAuth, async (req, res) => {
-  const { location, maxResults: mr = 10, dataOptions = {}, dataSource = 'google_maps' } = req.body;
+  const { location, maxResults: mr = 10, dataOptions = {}, dataSource = 'google_maps', countryCode = 'au' } = req.body;
   const searchQuery = req.body.searchQuery?.trim() || 'renovation contractor';
   const maxResults = Math.min(500, Math.max(1, parseInt(mr) || 10));
 
-  console.log(`[ScrapeRaw] "${searchQuery}" @ ${location} | max ${maxResults}`);
+  console.log(`[ScrapeRaw] "${searchQuery}" @ ${location} | max ${maxResults} | country ${countryCode}`);
 
   res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
   res.flushHeaders();
@@ -221,8 +221,8 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
 
   try {
     const { companies: rawCompanies, apifyCostUsd: apifyActualCost } = dataSource === 'google_search'
-      ? await searchGoogleSearch(searchQuery, location, maxResults)
-      : await scrapeAustralianCompanies(searchQuery, location, maxResults, dataOptions);
+      ? await searchGoogleSearch(searchQuery, location, maxResults, countryCode)
+      : await scrapeAustralianCompanies(searchQuery, location, maxResults, dataOptions, countryCode);
 
     console.log('[ScrapeRaw] Got companies:', rawCompanies.length);
 
