@@ -2095,6 +2095,7 @@
         <button id="wizBtnBack" class="hub-btn ghost" onclick="_wizBack()" style="display:none">← 上一步</button>
         <button id="wizBtnNext" class="hub-btn primary" onclick="_wizNext()" disabled>下一步 →</button>
       </div>
+      <div id="wizHint" class="sel-hint" style="display:none;text-align:right;margin-top:6px"></div>
     </div>
 
   </div><!-- /step5Section -->
@@ -3925,6 +3926,8 @@ async function sendLeadToInstantly(origIdx) {
     btn.classList.add('sent');
     btn.title = '已加入 Instantly';
     _showToast(`✅ ${lead.companyName || lead.email} 已加入 Instantly`);
+    _wizardPushDone = true;
+    _updateWizardNav();
   } catch (err) {
     btn.disabled = false;
     btn.innerHTML = '📧 Instantly';
@@ -4133,6 +4136,7 @@ async function bulkSendInstantly() {
   if (btn) { btn.disabled = false; btn.textContent = '📧 批量加入 Instantly'; }
   _showToast(`✅ 批量发送完成：${ok} 成功${fail ? `，${fail} 失败` : ''}`);
   updateBulkBar();
+  if (ok > 0) { _wizardPushDone = true; _updateWizardNav(); }
 }
 
 function toggleAllResults(el) {
@@ -4332,20 +4336,32 @@ function _updateWizardNav() {
   const n       = _instantlyWizardStep;
   const backBtn = document.getElementById('wizBtnBack');
   const nextBtn = document.getElementById('wizBtnNext');
+  const hintEl  = document.getElementById('wizHint');
   if (!backBtn || !nextBtn) return;
   backBtn.style.display = (n <= 1) ? 'none' : '';
   if (n === 4) {
     nextBtn.textContent = '完成 ✓';
     nextBtn.disabled    = false;
+    if (hintEl) { hintEl.style.display = 'none'; hintEl.textContent = ''; }
   } else if (n === 3) {
     nextBtn.textContent = '下一步 →';
     nextBtn.disabled    = !_wizardPushDone;
+    if (hintEl) {
+      hintEl.textContent   = _wizardPushDone ? '' : '请先推送至少 1 条线索到 Instantly，才能进入下一步';
+      hintEl.style.display = _wizardPushDone ? 'none' : 'block';
+    }
   } else if (n === 1) {
     nextBtn.textContent = '下一步 →';
-    nextBtn.disabled    = !(!!getSelectedCampaignId() && _wizardSyncDone);
+    const step1Ready    = !!getSelectedCampaignId() && _wizardSyncDone;
+    nextBtn.disabled    = !step1Ready;
+    if (hintEl) {
+      hintEl.textContent   = step1Ready ? '' : '请先选择 Campaign 并同步至少 1 个发件邮箱';
+      hintEl.style.display = step1Ready ? 'none' : 'block';
+    }
   } else {
     nextBtn.textContent = '下一步 →';
     nextBtn.disabled    = false;
+    if (hintEl) { hintEl.style.display = 'none'; hintEl.textContent = ''; }
   }
 }
 
