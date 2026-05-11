@@ -4250,6 +4250,8 @@ function _revealInstantlySection() {
   const wizNav      = document.getElementById('wizNav');
   if (qualified > 0) {
     if (emptyEl) emptyEl.style.display = 'none';
+    const fwPanel = document.getElementById('fwPreviewPanel');
+    if (fwPanel) fwPanel.style.display = 'none';
     if (!_hubLoaded) loadInstantlyData();
     if (progressBar) progressBar.style.display = 'block';
     if (wizNav)      wizNav.style.display      = 'block';
@@ -4266,7 +4268,7 @@ function _updateBulkPushBar() {
   const bar = document.getElementById('bulkPushBar');
   if (!bar) return;
   const eligible = (_allLeads || []).filter(l =>
-    _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && l.email?.trim() && !_isSentLS(getLeadKey(l))
+    _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && !_isSentLS(getLeadKey(l))
   );
   const n = eligible.length;
   // Data update always runs — keeps count/text current regardless of wizard step,
