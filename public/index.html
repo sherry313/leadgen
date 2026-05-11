@@ -2371,7 +2371,7 @@ function _buildCityDropList(filter) {
       const cur = document.getElementById('locInput')?.value || '';
       matching.forEach(city => {
         const sel = city === cur ? ' selected' : '';
-        html += `<div class="city-opt${sel}" onclick="selectCity(this,'${city.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">[${code}] ${city}</div>`;
+        html += `<div class="city-opt${sel}" onclick="selectCity(this,'${city.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${city}</div>`;
       });
     }
   }
