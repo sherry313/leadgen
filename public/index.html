@@ -4250,12 +4250,19 @@ function _updateBulkPushBar() {
     _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && l.email?.trim() && !_isSentLS(getLeadKey(l))
   );
   const n = eligible.length;
-  if (n === 0) { bar.style.display = 'none'; return; }
+  // Data update always runs — keeps count/text current regardless of wizard step,
+  // so the bar is correct the moment wizStep3 becomes active.
   const countEl = document.getElementById('bulkPushCount');
   const btn     = document.getElementById('btnBulkPush');
-  if (countEl) countEl.textContent = `${n} 条线索已生成开发信，可推送`;
-  if (btn && !btn.disabled) btn.textContent = `📤 推送 ${n} 条线索到 Instantly Campaign`;
-  bar.style.display = 'flex';
+  if (countEl) countEl.textContent = n > 0 ? `${n} 条线索已生成开发信，可推送` : '';
+  if (n > 0 && btn && !btn.disabled) btn.textContent = `📤 推送 ${n} 条线索到 Instantly Campaign`;
+  // Display toggle is gated on wizStep3 being the active wizard step.
+  // bulkPushBar lives inside wizStep3 (.wiz-step { display:none } by CSS default),
+  // so toggling display while step3 is hidden is invisible and leaves stale state
+  // if n changes before the user navigates to step 3.
+  const step3 = document.getElementById('wizStep3');
+  if (!step3?.classList.contains('active')) return;
+  bar.style.display = n === 0 ? 'none' : 'flex';
 }
 
 async function startBulkPush() {
@@ -4302,6 +4309,7 @@ function _setWizardStep(n) {
   }
   _updateWizardProgress();
   _updateWizardNav();
+  if (n === 3) _updateBulkPushBar();
 }
 
 function _updateWizardProgress() {
