@@ -4356,7 +4356,7 @@ function _updateBulkPushBar() {
   const bar = document.getElementById('bulkPushBar');
   if (!bar) return;
   const eligible = (_allLeads || []).filter(l =>
-    _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && !_isSentLS(getLeadKey(l))
+    _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && l.email?.trim() && !_isSentLS(getLeadKey(l))
   );
   const n = eligible.length;
   if (n === 0) { bar.style.display = 'none'; return; }
