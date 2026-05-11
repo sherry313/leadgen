@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun } = require('./services/supabase');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -504,6 +504,12 @@ app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
         sonnetIn  += emails.usage?.input_tokens  || 0;
         sonnetOut += emails.usage?.output_tokens || 0;
         results[i] = { ...company, ...emails, emailTemplateKey: frameworkKey };
+        // Fire-and-forget: persist emails to DB so they survive a page reload.
+        // Wrapped in .catch so a DB failure never breaks the SSE stream.
+        if (searchId) {
+          updateLeadEmails(searchId, company.companyName, emails, frameworkKey, template_key)
+            .catch(e => console.warn(`[EmailGen] DB persist failed for "${company.companyName}":`, e.message));
+        }
       } catch (err) {
         console.error(`[EmailGen] ${company.companyName}:`, err.message);
         results[i] = { ...company, emailTemplateKey: frameworkKey };

@@ -22,17 +22,19 @@ function getClient() {
 //   ADD COLUMN IF NOT EXISTS total_cost_usd      DECIMAL(10,4);
 //
 // ALTER TABLE leads
-//   ADD COLUMN IF NOT EXISTS icp_score      TEXT,
-//   ADD COLUMN IF NOT EXISTS email1_subject TEXT,
-//   ADD COLUMN IF NOT EXISTS email1_body    TEXT,
-//   ADD COLUMN IF NOT EXISTS email2_subject TEXT,
-//   ADD COLUMN IF NOT EXISTS email2_body    TEXT,
-//   ADD COLUMN IF NOT EXISTS email3_subject TEXT,
-//   ADD COLUMN IF NOT EXISTS email3_body    TEXT,
-//   ADD COLUMN IF NOT EXISTS email4_subject TEXT,
-//   ADD COLUMN IF NOT EXISTS email4_body    TEXT,
-//   ADD COLUMN IF NOT EXISTS email5_subject TEXT,
-//   ADD COLUMN IF NOT EXISTS email5_body    TEXT;
+//   ADD COLUMN IF NOT EXISTS icp_score           TEXT,
+//   ADD COLUMN IF NOT EXISTS email1_subject      TEXT,
+//   ADD COLUMN IF NOT EXISTS email1_body         TEXT,
+//   ADD COLUMN IF NOT EXISTS email2_subject      TEXT,
+//   ADD COLUMN IF NOT EXISTS email2_body         TEXT,
+//   ADD COLUMN IF NOT EXISTS email3_subject      TEXT,
+//   ADD COLUMN IF NOT EXISTS email3_body         TEXT,
+//   ADD COLUMN IF NOT EXISTS email4_subject      TEXT,
+//   ADD COLUMN IF NOT EXISTS email4_body         TEXT,
+//   ADD COLUMN IF NOT EXISTS email5_subject      TEXT,
+//   ADD COLUMN IF NOT EXISTS email5_body         TEXT,
+//   ADD COLUMN IF NOT EXISTS email_framework_key TEXT,
+//   ADD COLUMN IF NOT EXISTS email_template_key  TEXT;
 
 // Step 1: INSERT a new run row and return its ID (called before the processing loop)
 async function saveSearchRun({ query, location, maxResults, totalScraped }) {
@@ -166,6 +168,38 @@ async function saveLeads(searchId, leads) {
   }
 }
 
+// UPDATE the 10 email columns + framework/template keys for one lead row.
+// Called fire-and-forget from /api/leads/generate-emails after each AI response.
+// Keyed on (search_id, company_name) — matches the pattern used by saveLeads INSERT.
+async function updateLeadEmails(searchId, companyName, emails, frameworkKey, templateKey) {
+  const db = getClient();
+  if (!db || !searchId || !companyName) return;
+  try {
+    const { error } = await db
+      .from('leads')
+      .update({
+        email1_subject:      emails.EMAIL_1_SUBJECT || null,
+        email1_body:         emails.EMAIL_1_BODY    || null,
+        email2_subject:      emails.EMAIL_2_SUBJECT || null,
+        email2_body:         emails.EMAIL_2_BODY    || null,
+        email3_subject:      emails.EMAIL_3_SUBJECT || null,
+        email3_body:         emails.EMAIL_3_BODY    || null,
+        email4_subject:      emails.EMAIL_4_SUBJECT || null,
+        email4_body:         emails.EMAIL_4_BODY    || null,
+        email5_subject:      emails.EMAIL_5_SUBJECT || null,
+        email5_body:         emails.EMAIL_5_BODY    || null,
+        email_framework_key: frameworkKey           || null,
+        email_template_key:  templateKey            || null,
+      })
+      .eq('search_id',    searchId)
+      .eq('company_name', companyName);
+    if (error) throw error;
+    console.log(`[Supabase] Emails persisted for "${companyName}" (framework=${frameworkKey})`);
+  } catch (err) {
+    console.warn(`[Supabase] updateLeadEmails failed for "${companyName}": ${err.message}`);
+  }
+}
+
 async function getLeadById(id) {
   const db = getClient();
   if (!db || !id) return null;
@@ -290,4 +324,4 @@ async function deleteSearchRun(searchId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun };
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun };
