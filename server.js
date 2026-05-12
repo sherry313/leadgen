@@ -475,7 +475,7 @@ app.post('/api/leads/generate-emails/cancel', requireAuth, (req, res) => {
 
 app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
   emailGenCancelled = false;
-  const { companies, template_key, framework_key, custom_framework, searchId } = req.body;
+  const { companies, template_key, framework_key, custom_framework, searchId, companyProfile = {} } = req.body;
   const frameworkKey = framework_key || template_key;
 
   if (!Array.isArray(companies) || !companies.length)
@@ -500,7 +500,7 @@ app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
       const i = idx++;
       const company = companies[i];
       try {
-        const emails = await generateEmails(company, frameworkKey, company.websiteContent || '', framework_key, custom_framework);
+        const emails = await generateEmails(company, frameworkKey, company.websiteContent || '', framework_key, custom_framework, companyProfile);
         sonnetIn  += emails.usage?.input_tokens  || 0;
         sonnetOut += emails.usage?.output_tokens || 0;
         results[i] = { ...company, ...emails, emailTemplateKey: frameworkKey };

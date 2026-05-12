@@ -4078,6 +4078,11 @@ async function confirmBulkGenerate() {
         framework_key:    frameworkKey,
         custom_framework: customFw,
         searchId:         _currentSearchId,
+        companyProfile: {
+          sellerName: document.getElementById('sellerName')?.value?.trim() || '',
+          products:   document.getElementById('products')?.value?.trim()   || '',
+          advantage:  document.getElementById('advantage')?.value?.trim()  || '',
+        },
       }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -5585,6 +5590,11 @@ async function startEmailGeneration() {
         framework_key:   _selectedFrameworkKey,
         custom_framework:_selectedFrameworkKey === 'custom' ? _selectedCustomFramework : null,
         searchId:        _currentSearchId,
+        companyProfile: {
+          sellerName: document.getElementById('sellerName')?.value?.trim() || '',
+          products:   document.getElementById('products')?.value?.trim()   || '',
+          advantage:  document.getElementById('advantage')?.value?.trim()  || '',
+        },
       }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

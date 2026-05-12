@@ -136,8 +136,9 @@ Return only valid JSON. No markdown, no extra text.`;
 // ── Email generation using a chosen customer-type angle + writing framework ────
 // Returns: { EMAIL_1_SUBJECT, EMAIL_1_BODY, ..., EMAIL_5_SUBJECT, EMAIL_5_BODY, usage }
 
-function _buildEmailSystemPrompt(frameworkInstructions) {
-  return `You are an expert B2B cold email copywriter for Lens, a Chinese building materials manufacturer (aluminium/uPVC windows & doors, custom kitchen cabinetry, freestanding & built-in bathtubs) targeting Australian businesses.
+function _buildEmailSystemPrompt(frameworkInstructions, sellerProfile = {}) {
+  const name = sellerProfile.sellerName || 'your company';
+  return `You are an expert B2B cold email copywriter for ${name}, a Chinese building materials manufacturer targeting Australian businesses.
 
 Write a 5-email cold outreach sequence following this framework:
 
@@ -155,13 +156,13 @@ BODY IRON RULES:
 2. Write like a real person who researched the company, not a marketing template
 3. Reference specific details from the prospect's website
 4. Reference specific Australian cities, company names, or numbers
-5. Sign every email with "— Lens"
+5. Sign every email with "— ${name}"
 6. Use {first_name} as salutation placeholder; {company} and {website} where natural
 
 Return ONLY valid JSON. All string values must escape internal double quotes with a backslash (\\"). No markdown code fences. No extra text before or after the JSON object.`;
 }
 
-async function generateEmails(lead, templateKey, websiteContent, frameworkKey, customFrameworkData) {
+async function generateEmails(lead, templateKey, websiteContent, frameworkKey, customFrameworkData, sellerProfile = {}) {
   const templates   = require('./emailTemplates');
   const frameworks  = require('./emailFrameworks');
   const template    = templates[templateKey] || templates[frameworkKey] || Object.values(templates)[0];
@@ -189,12 +190,16 @@ ${fw.sequence_prompt || ''}`;
 
   const cfg = template.angle_config || {};
 
+  const sellerName     = sellerProfile.sellerName || 'your company';
+  const sellerProducts = sellerProfile.products   || '';
+  const sellerAdvantage= sellerProfile.advantage  || '';
+
   const userPrompt = `Write 5 personalized cold emails for this Australian prospect. Be creative — vary your hook angle, the specific pain point you address, the case study you cite, and the objection you handle. Don't default to the obvious first option.
 
 === SELLER ===
-Company: Lens
-Products: aluminium/uPVC windows & doors, custom kitchen cabinetry, freestanding & built-in bathtubs
-Advantage: factory-direct pricing, custom sizing, 3-4 week lead times, low MOQ
+Company: ${sellerName}
+Products: ${sellerProducts}
+Advantage: ${sellerAdvantage}
 
 === CUSTOMER TYPE: ${template.en_label} (${templateKey}) ===
 Pain points: ${cfg.pain_point || ''}
@@ -244,7 +249,7 @@ Follow the framework structure above strictly for all 5 emails. Each body under 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
-      system: _buildEmailSystemPrompt(frameworkInstructions),
+      system: _buildEmailSystemPrompt(frameworkInstructions, sellerProfile),
       messages: [{ role: 'user', content: userPrompt }],
     });
 
