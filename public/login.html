@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 - 智拓客</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue-primary: #2563eb;
+      --blue-dark: #1d4ed8;
+      --bg-dark: #0f172a;
+      --bg-mid: #1e3a5f;
+      --text-white: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-subtle: rgba(148,163,184,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6%;
+      height: 64px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+    .nav-links a:hover { color: var(--text-white); }
+
+    /* hamburger */
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--text-white); border-radius: 2px; transition: 0.3s; }
+
+    @media (max-width: 640px) {
+      .hamburger { display: flex; }
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 64px; left: 0; right: 0;
+        background: #0d1729;
+        flex-direction: column;
+        padding: 1rem 6%;
+        gap: 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+        z-index: 99;
+      }
+      .nav-links.open { display: flex; }
+    }
+
+    /* ── MAIN ── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 12px;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37,99,235,0.12) 0%, transparent 70%);
+    }
+
+    /* ── CARD ── */
+    .login-card {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(30,41,59,0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(148,163,184,0.12);
+      border-radius: 16px;
+      padding: 40px 32px;
+    }
+
+    .card-logo {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .card-logo-text {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #2563eb, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    .card-logo-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .card-heading {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-white);
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    /* ── FORM ── */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .form-group input[type="password"] {
+      width: 100%;
+      background: rgba(15,23,42,0.6);
+      border: 1px solid rgba(148,163,184,0.2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #f8fafc;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input[type="password"]::placeholder {
+      color: #475569;
+    }
+    .form-group input[type="password"]:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+
+    /* ── CONSENT ── */
+    .consent-block {
+      margin: 16px 0;
+      padding: 12px 14px;
+      background: rgba(99,102,241,0.08);
+      border-radius: 8px;
+    }
+    .consent-block label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .consent-block input[type="checkbox"] {
+      margin-top: 2px;
+      flex-shrink: 0;
+      accent-color: #2563eb;
+    }
+    .consent-block a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    .consent-block a:hover { text-decoration: underline; }
+
+    /* ── BUTTON ── */
+    .btn-login {
+      width: 100%;
+      padding: 13px 20px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.4);
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      margin-top: 4px;
+    }
+    .btn-login:hover:not(:disabled) {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(37,99,235,0.5);
+    }
+    .btn-login:disabled {
+      background: rgba(100,116,139,0.35);
+      color: #64748b;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* ── ERROR ── */
+    .error-msg {
+      display: none;
+      margin-top: 10px;
+      font-size: 0.83rem;
+      color: #f87171;
+      text-align: center;
+    }
+    .error-msg.visible { display: block; }
+
+    /* ── HELPER TEXT ── */
+    .helper-text {
+      margin-top: 16px;
+      font-size: 0.78rem;
+      color: #475569;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #070e1a;
+      border-top: 1px solid var(--border-subtle);
+      padding: 2rem 6%;
+      text-align: center;
+    }
+    .footer-logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.6rem;
+    }
+    .footer-copy { font-size: 0.82rem; color: #475569; margin-bottom: 0.3rem; }
+    .footer-sub { font-size: 0.78rem; color: #334155; }
+
+    @media (max-width: 640px) {
+      .login-card {
+        padding: 28px 16px;
+      }
+      main {
+        align-items: flex-start;
+        padding-top: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="landing.html" style="text-decoration:none;display:flex;align-items:center">
+    <div style="position:relative;display:flex;align-items:center;gap:14px;padding:14px 18px">
+      <div style="position:absolute;inset:-4px;background:radial-gradient(ellipse 60% 80% at 18% 50%,rgba(91,141,239,0.32) 0%,transparent 70%);filter:blur(10px);z-index:0;pointer-events:none"></div>
+      <div style="display:flex;flex-direction:column;gap:2px;position:relative;z-index:1">
+        <div style="display:flex;gap:2px"><div style="width:14px;height:5px;background:#5b8def;border-radius:1px"></div><div style="width:8px;height:5px;background:#5b8def;border-radius:1px"></div></div>
+        <div style="display:flex;gap:2px"><div style="width:8px;height:5px;background:#7da7f0;border-radius:1px"></div><div style="width:14px;height:5px;background:#7da7f0;border-radius:1px"></div></div>
+        <div style="display:flex;gap:2px"><div style="width:14px;height:5px;background:#a8c5ff;border-radius:1px"></div><div style="width:8px;height:5px;background:#a8c5ff;border-radius:1px"></div></div>
+      </div>
+      <span style="font-size:30px;font-weight:600;color:#e8eef8;letter-spacing:0.05em;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;position:relative;z-index:1">智拓客</span>
+    </div>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="landing.html">首页</a></li>
+    <li><a href="pricing.html">定价</a></li>
+    <li><a href="tutorial.html">教程</a></li>
+    <li><a href="about.html">关于我们</a></li>
+  </ul>
+  <div class="hamburger" id="hamburger" aria-label="菜单">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main>
+  <div class="login-card">
+    <div class="card-logo">
+      <div class="card-logo-text">智拓客</div>
+      <div class="card-logo-sub">建材外贸客户开发助手</div>
+    </div>
+
+    <div class="card-heading">登录 / 申请试用</div>
+
+    <div class="form-group">
+      <label for="accessToken">访问令牌 Access Token</label>
+      <input type="password" id="accessToken" placeholder="请输入您的访问令牌" oninput="onTokenInput()">
+    </div>
+
+    <div class="consent-block">
+      <label>
+        <input type="checkbox" id="agreeTerms" onchange="onConsentChange()">
+        <span>
+          我已阅读并同意智拓客的
+          <a href="/terms.html" target="_blank">《用户协议》</a>
+          和
+          <a href="/privacy.html" target="_blank">《隐私政策》</a>
+        </span>
+      </label>
+    </div>
+
+    <button class="btn-login" id="loginBtn" disabled onclick="doLogin()">登录 / 进入应用</button>
+
+    <div class="error-msg" id="errorMsg">请填写访问令牌并同意用户协议</div>
+
+    <p class="helper-text">
+      还没有访问令牌？请联系：<br>
+      zhuolu34@gmail.com / +86 187 8960 4353（微信同号）
+    </p>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">智拓客</div>
+  <p class="footer-copy">智拓客 © 2026 版权所有</p>
+  <p class="footer-sub">专为中国建材工厂打造的海外客户开发平台</p>
+  <div style="margin-top:24px;text-align:center;font-size:13px;color:#475569">
+    <a href="/privacy.html" style="color:inherit;margin:0 8px">隐私政策</a>
+    |
+    <a href="/terms.html" style="color:inherit;margin:0 8px">用户协议</a>
+    |
+    <a href="mailto:zhuolu34@gmail.com" style="color:inherit;margin:0 8px">联系我们</a>
+  </div>
+</footer>
+
+<script>
+  /* Auto-redirect if already logged in */
+  (function() {
+    const token = localStorage.getItem('leadgen_accessToken');
+    if (token && token.trim()) {
+      window.location.href = '/index.html';
+    }
+  })();
+
+  function updateButtonState() {
+    const token = document.getElementById('accessToken').value.trim();
+    const agreed = document.getElementById('agreeTerms').checked;
+    document.getElementById('loginBtn').disabled = !(token && agreed);
+  }
+
+  function onTokenInput() {
+    updateButtonState();
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  function onConsentChange() {
+    updateButtonState();
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  function doLogin() {
+    const token = document.getElementById('accessToken').value.trim();
+    const agreed = document.getElementById('agreeTerms').checked;
+    if (!token || !agreed) {
+      document.getElementById('errorMsg').classList.add('visible');
+      return;
+    }
+    localStorage.setItem('leadgen_accessToken', token);
+    window.location.href = '/index.html';
+  }
+
+  /* Allow Enter key to submit */
+  document.getElementById('accessToken').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  /* Hamburger */
+  const hamburger = document.getElementById('hamburger');
+  const navLinks = document.getElementById('navLinks');
+  hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+</script>
+</body>
+</html>

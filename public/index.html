@@ -1513,7 +1513,7 @@
   <div class="wizard-panel" id="wizard-step-1">
     <div class="panel-title">第一步：选择目标市场 &amp; 客户类型</div>
 
-    <div class="step1-section-title">目标国家/地区（可多选）</div>
+    <div class="step1-section-title">目标国家/地区（单选）</div>
     <div class="panel-sub" style="margin-top:-6px;margin-bottom:12px">系统将为每个国家依次搜索客户</div>
     <div class="cards-grid" id="countryGrid">
       <div class="country-card select-card" id="cc-0" onclick="toggleCountry(0)">
@@ -4915,6 +4915,14 @@ function _showRefreshWarning(panel) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+// Redirect to login page if no token
+(function() {
+  const token = localStorage.getItem('leadgen_accessToken');
+  if (!token || !token.trim()) {
+    window.location.href = '/login.html';
+  }
+})();
+
 updateLoginStatus();
 checkAdminAndShow();
 setTimeout(_restoreStep, 0);     // deferred: restores in-progress session after init
