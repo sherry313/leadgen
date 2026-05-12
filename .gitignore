@@ -28,6 +28,9 @@ test-sheets.js
 dist/
 build/
 
+# Audit output — contains sensitive campaign data and reply emails, never commit
+audit_output/
+
 # Claude Code
 .claude/
 
