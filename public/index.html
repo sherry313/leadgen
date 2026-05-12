@@ -1626,13 +1626,13 @@
     </div>
 
     <!-- Access token -->
-    <div style="margin-bottom:20px">
+    <div style="margin-bottom:20px; display:none;">
       <label>访问令牌 Access Token</label>
       <input type="password" id="accessToken" placeholder="请输入您的访问令牌" oninput="onTokenInput()">
     </div>
 
     <!-- Legal consent -->
-    <div style="margin: 16px 0; padding: 12px 16px; background: rgba(99,102,241,0.08); border-radius: 8px;">
+    <div style="margin: 16px 0; padding: 12px 16px; background: rgba(99,102,241,0.08); border-radius: 8px; display:none;">
       <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px;">
         <input type="checkbox" id="agreeTerms" style="margin-top: 2px;">
         <span>
@@ -4922,6 +4922,10 @@ function _showRefreshWarning(panel) {
     window.location.href = '/login.html';
   }
 })();
+
+// User already consented at /login.html — auto-check the hidden Step 2 consent box
+const agreeBox = document.getElementById('agreeTerms');
+if (agreeBox) agreeBox.checked = true;
 
 updateLoginStatus();
 checkAdminAndShow();
