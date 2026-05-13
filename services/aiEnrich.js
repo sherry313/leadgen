@@ -344,28 +344,50 @@ async function preFilterLead(company) {
       max_tokens: 100,
       messages: [{
         role: 'user',
-        content: `你是建材采购意向初筛师。我们卖门窗、橱柜、浴缸，工厂在中国佛山，主要目标客户是：海外建材经销商/批发商/进口商、室内设计师、高端定制住宅建筑商、有持续项目的中端建筑商。理想客户是有可能在未来 6-12 个月内来中国采购或访问工厂的买家。
+        content: `你是建材采购意向初筛师。我们卖门窗、橱柜、浴缸,工厂在中国佛山,目标客户是:海外建材经销商/批发商/进口商、室内设计师、高端定制住宅建筑商、有持续项目的中端建筑商。理想客户是有可能未来 6-12 个月内来中国采购或访问工厂的买家。
 
-公司名：${company.companyName}
-地址：${company.address}
-Google评分：${company.googleRating}（${company.reviewCount}条评价）
-官网：${company.website || '无'}
+公司名:${company.companyName}
+地址:${company.address}
+Google评分:${company.googleRating}(${company.reviewCount}条评价)
+官网:${company.website || '无'}
 
-你的任务是快速初筛，只决定这家是否值得进入下一阶段的深度评分。不要评判优劣。
+你的任务:判断这家公司是否可能成为我们的采购客户(经销商/设计师/定制建筑商),还是只是个本地装修施工队。
 
-【skip】明显不相关或不是采购方,符合其一即跳过：
+⚠️ 关键判断标准:看公司名暗示的【业务模式】,不是看名字里有没有"建材"关键词。
 
-- 名字以「Renovations / Renovation / Renos / Reno」开头或结尾(如「Bathroom Renovations Sydney」「Kitchen Reno Specialists」「Sydney Renovations」)——这些是装修施工队、给最终业主做小型翻新、不会整柜采购、不会来工厂访问、必须 skip
-- 名字含「Handyman / Repairs / Services / Maintenance / Plumber / Electrician」等单户服务关键词
-- 名字明显为个体手艺人(如「John's Handyman」「Mike's Repairs」「Joe's Home Repairs」「Bob the Builder」)
-- 名字含餐饮/美容/医疗/汽车/服装/酒店/超市/咨询/会计/法律/教育/金融/园艺/泳池/清洁/太阳能等非建材主业关键词
-- 评论数 ≤ 1 且无官网(可能偏包公司或已歇业)
+装修施工队 = skip(他们做翻新工程、不会大量采购也不会来工厂)
+建材经销商/设计师/定制建筑商 = recommend(他们采购建材或推荐建材给客户)
 
-重要原则:我们要的是「会来中国采购的大型买家」(经销商、设计师、定制别墅商、有展厅的商家)——只做小型本地翻新的承包商不在目标内,即使他们涉及门窗/橱柜/浴缸,也必须 skip。
+【示例】
+✅ recommend:
+"Luxe Interior Design Studio" → 室内设计公司,会推荐建材给客户
+"Door & Window Warehouse" → 建材批发商
+"Premier Custom Homes" → 定制别墅建筑商,采购量大
+"Sydney Joinery & Cabinetry" → 橱柜制造商/经销商
+"Bathroom Showroom Melbourne" → 卫浴展厅经销商
+"Luxury Bespoke Homes" → 高端定制建筑商
 
-【recommend】不符合以上 skip 条件、且有可能是建材采购方或设计/规划者,归 recommend。让 Sonnet 详细评分。
+❌ skip:
+"Bathroom Renovations Sydney" → 装修施工队,做翻新不采购
+"Kitchen Renovations Melbourne" → 装修施工队,做翻新不采购
+"Sydney Bathroom Renos" → 装修施工队,做翻新不采购
+"Mike's Handyman Services" → 个体手艺人
+"Brisbane Reno Specialists" → 装修施工队
+"John's Home Repairs" → 个体维修
+"Sunshine Coast Plumbing" → 水电工不采购建材
+"ABC Catering" → 不相关行业
+"Joe's Painting Services" → 单一服务、不采购建材
 
-只返回JSON：{"level": "recommend"|"skip", "reason": "一句话原因（中文，15字以内）"}`,
+【skip 规则要点】
+任何名字含 "Renovations / Renos / Reno / Repairs / Handyman / Plumbing / Electrician / Maintenance" 关键词的——一律 skip。
+任何名字含餐饮/美容/医疗/汽车/服装/酒店/超市/咨询/会计/法律/教育/金融/园艺/泳池/清洁/太阳能等非建材主业的——skip。
+评论数 ≤ 1 且无官网的——skip。
+
+【recommend 规则要点】
+名字暗示其是经销商/设计师/批发/展厅/定制建筑商/橱柜制造商/joinery/建材供应——recommend。
+名字明确专注于"design / interior / showroom / supplies / warehouse / wholesale / joinery / cabinetry / bespoke / luxury / custom homes / building products"——recommend。
+
+只返回JSON:{"level": "recommend"|"skip", "reason": "一句话原因(中文,15字以内)"}`,
       }],
     }, { timeout: 10000 });
 
