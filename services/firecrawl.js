@@ -13,37 +13,45 @@ async function crawlWebsite(url) {
 
   console.log(`[Firecrawl] Crawling: ${url}`);
 
-  try {
-    const response = await axios.post(
-      FIRECRAWL_URL,
-      { url, formats: ['markdown'] },
-      {
-        headers: {
-          'Authorization': `Bearer ${FIRECRAWL_KEY}`,
-          'Content-Type': 'application/json',
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const response = await axios.post(
+        FIRECRAWL_URL,
+        {
+          url,
+          formats: ['markdown'],
+          waitFor: 3000,
+          onlyMainContent: true,
+          timeout: 30000,
         },
-        timeout: 30000, // 30 second timeout for slow sites
+        {
+          headers: {
+            'Authorization': `Bearer ${FIRECRAWL_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000, // 30 second timeout for slow sites
+        }
+      );
+
+      // Firecrawl v1 response shape: { success: true, data: { markdown: '...' } }
+      if (!response.data.success) {
+        console.warn(`[Firecrawl] Unsuccessful response for ${url}`);
+        return '';
       }
-    );
 
-    // Firecrawl v1 response shape: { success: true, data: { markdown: '...' } }
-    if (!response.data.success) {
-      console.warn(`[Firecrawl] Unsuccessful response for ${url}`);
-      return '';
+      const markdown = response.data.data?.markdown || '';
+      const truncated = markdown.slice(0, 8000);
+      console.log(`[Firecrawl] Got ${truncated.length} chars for ${url}`);
+
+      // Small delay to avoid rate limits
+      await new Promise(r => setTimeout(r, 1000));
+
+      return truncated;
+    } catch (err) {
+      console.log(`[Firecrawl] Attempt ${attempt} failed for ${url}: ${err.message}`);
+      if (attempt === 2) return '';
+      await new Promise(r => setTimeout(r, 2000));
     }
-
-    const markdown = response.data.data?.markdown || '';
-    const truncated = markdown.slice(0, 2000);
-    console.log(`[Firecrawl] Got ${truncated.length} chars for ${url}`);
-
-    // Small delay to avoid rate limits
-    await new Promise(r => setTimeout(r, 1000));
-
-    return truncated;
-  } catch (err) {
-    // Never let a crawl failure break the whole pipeline
-    console.warn(`[Firecrawl] Failed to crawl ${url}: ${err.message}`);
-    return '';
   }
 }
 
