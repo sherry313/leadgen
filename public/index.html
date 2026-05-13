@@ -2473,13 +2473,7 @@ function goToStep(n) {
     if (icpText && isIcpVague(icpText)) {
       document.getElementById('icpWarning').style.display = 'block';
       document.getElementById('icpGood').style.display = 'none';
-      document.getElementById('icpInput').focus();
       document.getElementById('icpInput').style.borderColor = '#ef4444';
-      currentStep = 2;
-      document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
-      document.getElementById('wizard-step-2').classList.remove('hidden');
-      updateStepProgress();
-      return;
     }
     if (!updateSelectedCombo()) return;
     buildRunSummary();
@@ -2710,12 +2704,20 @@ function onIcpInput() {
   else                  { good.style.display = 'block'; }
 }
 function isIcpVague(text) {
-  if (text.trim().length < 30) return true; // character count — works for Chinese
-  const hasSize    = /员工|规模|\d+人|中型|大型|小型|年营业|万澳|百万/.test(text);
-  const hasProject = /项目|装修|建筑|工程|住宅|商业|工厂|酒店|改建|新建/.test(text);
-  const hasBudget  = /预算|采购|万|金额|每年|年均|订单/.test(text);
-  const hasDM      = /老板|决策|采购|经理|负责人|业主/.test(text);
-  return [hasSize, hasProject, hasBudget, hasDM].filter(Boolean).length < 2;
+  if (!text || typeof text !== 'string') return true;
+  const trimmed = text.trim();
+  if (trimmed.length < 50) return true;
+  if (trimmed.length >= 300) return false;
+  const signals = [
+    /规模|size|revenue|employees|team/i,
+    /项目|project|portfolio|works/i,
+    /预算|budget|spend|cost|\$/i,
+    /职位|role|director|manager|owner|principal/i,
+    /客户|customer|client|buyer/i,
+    /排除|exclude|not interested|avoid/i,
+  ];
+  const matchCount = signals.filter(re => re.test(trimmed)).length;
+  return matchCount < 2;
 }
 
 // ── Badges ────────────────────────────────────────────────────────────────────
