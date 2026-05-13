@@ -353,13 +353,17 @@ Google评分：${company.googleRating}（${company.reviewCount}条评价）
 
 你的任务是快速初筛，只决定这家是否值得进入下一阶段的深度评分。不要评判优劣。
 
-【skip】明显不相关或无法联系或不太可能成为采购方/工厂访客，符合其一即跳过：
-- 名字含餐饮/美容/医疗/汽车/服装/酒店/超市/咨询/会计/法律/教育/金融/园艺/泳池/清洁/太阳能等非建材主业关键词
-- 评论数 ≤ 1 且无官网（可能偏包公司/已歇业）
-- 名字明显为个体手艺人（如「John's Handyman」「Mike's Repairs」「Bob the Builder」「Joe's Home Repairs」等小作坊命名）
-- 名字明显为单户翻新装修服务（如「Bathroom Renovations [City]」「Kitchen Renovation Specialists」这类仅做单户单房装修、不太可能整柜采购或来工厂的小型承包商）
+【skip】明显不相关或不是采购方,符合其一即跳过：
 
-【recommend】不符合以上 skip 条件的一律归 recommend。不要挑剔。让 Sonnet 去详细评分。
+- 名字以「Renovations / Renovation / Renos / Reno」开头或结尾(如「Bathroom Renovations Sydney」「Kitchen Reno Specialists」「Sydney Renovations」)——这些是装修施工队、给最终业主做小型翻新、不会整柜采购、不会来工厂访问、必须 skip
+- 名字含「Handyman / Repairs / Services / Maintenance / Plumber / Electrician」等单户服务关键词
+- 名字明显为个体手艺人(如「John's Handyman」「Mike's Repairs」「Joe's Home Repairs」「Bob the Builder」)
+- 名字含餐饮/美容/医疗/汽车/服装/酒店/超市/咨询/会计/法律/教育/金融/园艺/泳池/清洁/太阳能等非建材主业关键词
+- 评论数 ≤ 1 且无官网(可能偏包公司或已歇业)
+
+重要原则:我们要的是「会来中国采购的大型买家」(经销商、设计师、定制别墅商、有展厅的商家)——只做小型本地翻新的承包商不在目标内,即使他们涉及门窗/橱柜/浴缸,也必须 skip。
+
+【recommend】不符合以上 skip 条件、且有可能是建材采购方或设计/规划者,归 recommend。让 Sonnet 详细评分。
 
 只返回JSON：{"level": "recommend"|"skip", "reason": "一句话原因（中文，15字以内）"}`,
       }],
