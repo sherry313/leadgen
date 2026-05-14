@@ -1,5 +1,56 @@
 module.exports = {
 
+  'peter_kang_3part': {
+    key: 'peter_kang_3part',
+    name: 'Peter Kang 三段式框架',
+    en_name: 'Peter Kang 3-Part Framework',
+    source: 'Peter Kang 高转化冷邮件框架',
+    description: 'Personalization → Identity → Offer',
+    structure: [
+      { stage: 'Personalization', purpose: '引用对方可验证的具体细节，展示你真的研究过他们' },
+      { stage: 'Identity',        purpose: '用具体数字建立信任（工厂规模、产品、合作案例）' },
+      { stage: 'Offer',           purpose: '低门槛零承诺邀请，目标是工厂参观而非卖货' },
+    ],
+    best_for: '高价值 B2B 客户、邀请来工厂参观、100 字精准触达',
+    icon: '🎯',
+    sample_subject: 'factory visit in foshan',
+    sample_email_body: `Peter Kang 3-Part Framework example:
+
+Subject: factory visit in foshan (no commitment)
+
+Hi team,
+
+i saw [Company Name]'s recent [specific project] in [suburb] — the [specific detail] caught my eye.
+
+we run a 300,000m² factory in foshan making aluminium windows, custom cabinetry, and bathroom fixtures. a canadian distributor's been with us 3 years, $1-2M USD annually. last quarter alone: 6 containers, windows + bathroom + cabinetry, one shipment.
+
+if you'd ever want to verify a chinese factory before placing an order, reply "video" and i'll send our 5-min walkthrough. no calls, no pitch.
+
+Lucy Yang, Lens Foshan
+
+---
+Part 1 = Personalization (specific project + suburb detail — shows you looked them up)
+Part 2 = Identity (factory size + product mix + named social proof with real numbers)
+Part 3 = Offer (low-friction reply hook — factory visit goal, not a sales call)`,
+    sequence_prompt: `Each email uses Peter Kang's 3-part structure: Personalization → Identity → Offer. Total length: 80-120 words MAX. Casual tone, lowercase preferred. NO "Dear" / "Hope this finds you well" / formal openings. Do NOT start with "Hi {first_name}" — use "Hi team" or dive straight in.
+
+PART 1 — PERSONALIZATION (1-2 sentences, ~15 words): Reference a specific, verifiable detail from the prospect's website, recent projects, or industry positioning. Show you actually looked them up. Use specific project names, suburbs, design styles when possible. Do NOT use generic compliments.
+
+PART 2 — IDENTITY (2-3 sentences, ~30-40 words): Establish credibility with concrete specifics. Include: factory size ("300,000m² factory in Foshan"), products relevant to this prospect (aluminium windows, custom cabinetry, bathroom fixtures), and one social proof with real numbers ("A Canadian distributor we work with does $1-2M USD annually"). No fluffy claims. Specific numbers, specific countries, specific products.
+
+PART 3 — OFFER (1-2 sentences, ~30-40 words): A low-friction, zero-commitment ask. The PRIMARY GOAL is to invite the prospect to a half-day factory visit in Foshan — not to sell product.
+
+Email-specific CTA hooks (one per email — never multiple CTAs):
+Email 1: reply 'video' and I'll send our 5-min factory walkthrough
+Email 2: reply 'canada' and I'll share how a Canadian distributor structured their first order
+Email 3: if you're sourcing in China next 6 months, reply 'visit' and I'll send a half-day Foshan factory briefing
+Email 4: List 3 objections ("we have a supplier" / "not the right time" / "send pricing first"), ask "which one's you?"
+Email 5: Breakup — "reply 'open' anytime in next 12 months, otherwise good luck"
+
+SUBJECT LINE RULES: lowercase, max 6 words, no emojis. Examples by email: "factory visit in foshan" / "the canada deal" / "your next china sourcing trip" / "which objection is yours?" / "closing the file".
+CRITICAL: No links in Email 1-3 (deliverability). Sound like a human writing to one specific person, not a template. No "I hope this email finds you well", no "Quick question", no "Following up".`,
+  },
+
   'cold_5_step': {
     key: 'cold_5_step',
     name: 'Cold Email 5 步序列',
