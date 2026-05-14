@@ -48,7 +48,51 @@ Email 4: List 3 objections ("we have a supplier" / "not the right time" / "send 
 Email 5: Breakup — "reply 'open' anytime in next 12 months, otherwise good luck"
 
 SUBJECT LINE RULES: lowercase, max 6 words, no emojis. Examples by email: "factory visit in foshan" / "the canada deal" / "your next china sourcing trip" / "which objection is yours?" / "closing the file".
-CRITICAL: No links in Email 1-3 (deliverability). Sound like a human writing to one specific person, not a template. No "I hope this email finds you well", no "Quick question", no "Following up".`,
+CRITICAL: No links in Email 1-3 (deliverability). Sound like a human writing to one specific person, not a template. No "I hope this email finds you well", no "Quick question", no "Following up".
+
+=== STRICT FACT DISCIPLINE ===
+ONLY use these VERIFIED facts about the seller (Lens):
+- 300,000m² factory in Foshan, Guangdong, China
+- Products: aluminium windows, doors, bathroom fixtures, custom cabinetry, whole-house custom
+- A Canadian distributor has been with us for 3 years (working relationship duration)
+- Canadian distributor annual revenue with us: $1-2M USD (broad range, not exact)
+
+DO NOT INVENT OR FABRICATE:
+- Specific case study details with named locations ("a Sydney developer", "a Melbourne builder doing $2M+ homes") — Lens has NOT confirmed these
+- Cost savings percentages ("17%", "20-30%", "saved them X%") — never make up numbers
+- Client counts ("23 Australian builders", "across 45 projects") — we don't have this data
+- Time-based performance claims ("18 months zero delays", "no missed deadlines") — unverified
+- Local Australian inventory ("we hold AU stock", "local warehouse") — Lens does NOT have AU warehouses
+- Specific product features not in the verified product list ("timber-look frames", "pivot doors", "oversized glazing 'units'") unless user explicitly listed them as products
+
+=== NO GUARANTEE LANGUAGE — STRICT ===
+NEVER use the following words or any equivalent:
+- "guarantee" / "guaranteed"
+- "lifetime guarantee" / "lifetime structural guarantee"
+- "zero delays" / "zero defects" / "100% on time"
+- "promise" / "we promise"
+- "warranty" (unless user explicitly mentions one)
+- "always" / "never" in performance claims
+
+REPHRASE PROMISES AS PROBABILITIES OR EXPERIENCE:
+- WRONG: "we guarantee 4-week lead time" → RIGHT: "typical lead time is 4-6 weeks"
+- WRONG: "we have zero delivery delays" → RIGHT: "we've been reliable on delivery for the clients we work with"
+- WRONG: "lifetime structural guarantee" → RIGHT: "20 years of factory production experience"
+- WRONG: "we ALWAYS deliver on time" → RIGHT: "delivery is something we take seriously"
+
+=== KEEP CLAIMS GENERAL WHEN SPECIFIC DATA IS UNAVAILABLE ===
+If the email needs specifics that aren't in the verified facts list, REPHRASE GENERALLY rather than invent:
+- WRONG: "saved them 17%" → RIGHT: "the factory-direct model usually saves significant cost vs local distributors"
+- WRONG: "Canadian distributor structured their first order as a single 6-container PO" → RIGHT: "Our Canadian distributor started small to test quality, then scaled"
+- WRONG: "23 Australian builders" → RIGHT: "We work with builders across Australia and Canada"
+
+=== TONE FOR THE CANADA CASE STUDY ===
+When mentioning the Canadian distributor in Email 2 specifically:
+- State the relationship duration (3 years) and revenue range ($1-2M USD/year) — these ARE verified
+- DO NOT invent how their first order was structured (we don't actually know)
+- DO NOT claim "phased delivery" or "minimum commitment" structures that we haven't verified
+- Frame the offer as "I'll share their general engagement pattern" rather than "exact structure"
+- Email 2 CTA hook: "reply 'canada' and I'll share how they got started with us" (not "exact structure")`,
   },
 
   'cold_5_step': {
