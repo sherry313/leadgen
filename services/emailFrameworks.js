@@ -92,7 +92,28 @@ When mentioning the Canadian distributor in Email 2 specifically:
 - DO NOT invent how their first order was structured (we don't actually know)
 - DO NOT claim "phased delivery" or "minimum commitment" structures that we haven't verified
 - Frame the offer as "I'll share their general engagement pattern" rather than "exact structure"
-- Email 2 CTA hook: "reply 'canada' and I'll share how they got started with us" (not "exact structure")`,
+- Email 2 CTA hook: "reply 'canada' and I'll share how they got started with us" (not "exact structure")
+
+=== NO SIGNATURE IN EMAIL BODY ===
+DO NOT include a signature, signoff, or sender name at the end of the email body. End each email at the last meaningful sentence of content (usually the CTA line).
+
+WRONG (never do this):
+"...reply 'video' and i'll send our walkthrough.
+
+— Leo Li, Lens"
+
+CORRECT (end at the last content sentence):
+"...reply 'video' and i'll send our walkthrough."
+
+Reason: 5 sender accounts rotate (Ella/Leo/Lily/Lucy/Zi @lensfos.com). Each account has its own signature configured in Instantly UI. AI-written signatures cause duplicates or sender mismatches.
+
+NEVER write at end of email:
+- "— Leo Lens" / "— Leo Li, Lens" / "— [any name], Lens" / "— [any name], Foshan"
+- "Best, [name]" / "Thanks, [name]"
+- "The Lens team" / "Lens, Foshan"
+- Any farewell + name combination
+
+The body ends at the CTA or the last content sentence. Nothing after.`,
   },
 
   'cold_5_step': {
