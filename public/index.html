@@ -1148,7 +1148,7 @@
     .hub-btn.danger { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.35); color:#fca5a5; }
     .hub-btn.danger:hover:not(:disabled) { background:rgba(239,68,68,0.2); }
     .hub-btn:disabled { opacity:0.4; cursor:not-allowed; }
-    .account-item { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:6px; border:1px solid var(--border); margin-bottom:6px; cursor:pointer; transition:border-color 0.15s; }
+    .account-item { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:6px; border:1px solid var(--border); margin-bottom:6px; cursor:pointer; transition:border-color 0.15s; text-transform:none; letter-spacing:normal; }
     .account-item:hover { border-color:var(--blue); }
     .account-item.selected { border-color:var(--blue); background:rgba(37,99,235,0.08); }
     .account-item input[type="checkbox"] { accent-color:var(--blue); width:14px; height:14px; flex-shrink:0; cursor:pointer; }
@@ -4611,7 +4611,11 @@ function updateInstantlyButtons() {
 }
 
 function renderAccountsList() {
-  const saved = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]');
+  // Normalize any stale uppercase entries in localStorage before reading
+  const rawSaved = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]');
+  const saved = [...new Set(rawSaved.map(e => e.toLowerCase().trim()))];
+  localStorage.setItem(_LS_ACCOUNTS, JSON.stringify(saved));
+
   const container = document.getElementById('hubAccountsList');
   if (!_hubAccounts.length) {
     container.innerHTML = `<div style="color:var(--sub);font-size:0.79rem">未找到邮箱账户。<a href="https://app.instantly.ai/app/accounts" target="_blank" style="color:#93c5fd">前往 Instantly 添加 →</a></div>`;
@@ -4626,7 +4630,7 @@ function renderAccountsList() {
       : warmupRaw === 0 || warmupRaw === 'inactive' ? '' : '';
     const sentToday = acc.sent_count_today ?? '';
     return `<label class="account-item${isSelected ? ' selected' : ''}">
-      <input type="checkbox" ${isSelected ? 'checked' : ''} value="${email}" onchange="onAccountToggle(this)">
+      <input type="checkbox" ${isSelected ? 'checked' : ''} value="${email}" data-email="${email}" onchange="onAccountToggle(this)">
       <span style="font-size:0.81rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${email}</span>
       ${warmupLabel ? `<span style="font-size:0.68rem;color:#fbbf24">${warmupLabel}</span>` : ''}
       ${sentToday !== '' ? `<span style="font-size:0.68rem;color:var(--sub)">${sentToday}/d</span>` : ''}
@@ -4635,19 +4639,24 @@ function renderAccountsList() {
 }
 
 function onAccountToggle(checkbox) {
-  const email = checkbox.value;
-  const saved = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]');
+  // data-email is the authoritative lowercase value set at render time
+  const email = (checkbox.dataset.email || checkbox.value).toLowerCase().trim();
+  const saved = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]')
+    .map(e => e.toLowerCase().trim());
   const idx = saved.indexOf(email);
   if (checkbox.checked && idx === -1) saved.push(email);
   if (!checkbox.checked && idx !== -1) saved.splice(idx, 1);
-  localStorage.setItem(_LS_ACCOUNTS, JSON.stringify(saved));
+  localStorage.setItem(_LS_ACCOUNTS, JSON.stringify([...new Set(saved)]));
   checkbox.closest('.account-item').classList.toggle('selected', checkbox.checked);
 }
 
 async function syncAccountsToCampaign() {
   const id = getSelectedCampaignId();
   if (!id) { _showToast('请先选择 Campaign'); return; }
-  const selected = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]').map(e => e.toLowerCase().trim());
+  const selected = [...new Set(
+    JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]').map(e => e.toLowerCase().trim())
+  )];
+  console.log('[Sync] emails to send →', selected);
   if (!selected.length) { _showToast('请先勾选发件邮箱'); return; }
   try {
     const r = await fetch(`/api/instantly/campaign/${id}/accounts`, {

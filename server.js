@@ -785,6 +785,8 @@ app.get('/api/instantly/accounts', requireAuth, async (req, res) => {
 app.patch('/api/instantly/campaign/:id/accounts', requireAuth, async (req, res) => {
   const { emails } = req.body;
   const normalizedEmails = (emails || []).map(e => typeof e === 'string' ? e.toLowerCase().trim() : e);
+  console.log('[PATCH /campaign/:id/accounts] raw body emails:', JSON.stringify(emails));
+  console.log('[PATCH /campaign/:id/accounts] normalized:', JSON.stringify(normalizedEmails));
   try {
     const axios = require('axios');
     await axios.patch(`${INSTANTLY_BASE}/campaigns/${req.params.id}`,
@@ -793,6 +795,7 @@ app.patch('/api/instantly/campaign/:id/accounts', requireAuth, async (req, res) 
     );
     res.json({ success: true });
   } catch (err) {
+    console.error('[PATCH /campaign/:id/accounts] Instantly error:', JSON.stringify(err.response?.data), '| emails sent:', JSON.stringify(normalizedEmails));
     res.status(500).json({ success: false, error: err.response?.data || err.message });
   }
 });
