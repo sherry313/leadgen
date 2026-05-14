@@ -32,88 +32,110 @@ Lucy Yang, Lens Foshan
 Part 1 = Personalization (specific project + suburb detail — shows you looked them up)
 Part 2 = Identity (factory size + product mix + named social proof with real numbers)
 Part 3 = Offer (low-friction reply hook — factory visit goal, not a sales call)`,
-    sequence_prompt: `Each email uses Peter Kang's 3-part structure: Personalization → Identity → Offer. Total length: 80-120 words MAX. Casual tone, lowercase preferred. NO "Dear" / "Hope this finds you well" / formal openings. Do NOT start with "Hi {first_name}" — use "Hi team" or dive straight in.
+    sequence_prompt: `Write a cold email using Peter Kang's 3-part framework. Each email is 80-120 words. Casual tone, lowercase preferred. NO "Dear" / "Hope this finds you well" / formal openings.
 
-PART 1 — PERSONALIZATION (1-2 sentences, ~15 words): Reference a specific, verifiable detail from the prospect's website, recent projects, or industry positioning. Show you actually looked them up. Use specific project names, suburbs, design styles when possible. Do NOT use generic compliments.
+GOAL OF ENTIRE SEQUENCE:
+All 5 emails invite the prospect to visit Lens's 300,000m² factory in Foshan for a half-day. Each email gives a different REASON why visiting is useful to them. The factory visit is the only conversion event — no other CTAs (no "watch video", no "send pricing", no "send case study").
 
-PART 2 — IDENTITY (2-3 sentences, ~30-40 words): Establish credibility with concrete specifics. Include: factory size ("300,000m² factory in Foshan"), products relevant to this prospect (aluminium windows, custom cabinetry, bathroom fixtures), and one social proof with real numbers ("A Canadian distributor we work with does $1-2M USD annually"). No fluffy claims. Specific numbers, specific countries, specific products.
+=== PART 1 — PERSONALIZATION (1-2 sentences, ~20 words) ===
+Reference something specific from the prospect's website — a project name, suburb they work in, style positioning, or recent post.
 
-PART 3 — OFFER (1-2 sentences, ~30-40 words): A low-friction, zero-commitment ask. The PRIMARY GOAL is to invite the prospect to a half-day factory visit in Foshan — not to sell product.
+CRITICAL RULE — DO NOT ASSUME THE PROSPECT'S PROFESSION OR BUSINESS CATEGORY:
+The lead pipeline may misclassify designers vs builders vs contractors vs distributors. NEVER write phrases like:
+- "as an interior designer..."
+- "for builders like you..."
+- "designers at [Company]..."
+- "[Company] is a custom builder..."
 
-Email-specific CTA hooks (one per email — never multiple CTAs):
-Email 1: reply 'video' and I'll send our 5-min factory walkthrough
-Email 2: reply 'canada' and I'll share how a Canadian distributor structured their first order
-Email 3: if you're sourcing in China next 6 months, reply 'visit' and I'll send a half-day Foshan factory briefing
-Email 4: List 3 objections ("we have a supplier" / "not the right time" / "send pricing first"), ask "which one's you?"
-Email 5: Breakup — "reply 'open' anytime in next 12 months, otherwise good luck"
+Reference the prospect's WORK (visible from their site), not their CATEGORY (which may be wrong):
+- WRONG: "As an interior designer working in Melbourne..." → RIGHT: "Your custom homes in Hawthorn and Kew..."
+- WRONG: "Builders like [Company] often source..." → RIGHT: "[Company]'s portfolio of bespoke residential projects suggests..."
 
-SUBJECT LINE RULES: lowercase, max 6 words, no emojis. Examples by email: "factory visit in foshan" / "the canada deal" / "your next china sourcing trip" / "which objection is yours?" / "closing the file".
-CRITICAL: No links in Email 1-3 (deliverability). Sound like a human writing to one specific person, not a template. No "I hope this email finds you well", no "Quick question", no "Following up".
+The prospect should feel "they looked at my actual work" — not "they assumed wrong who I am."
 
-=== STRICT FACT DISCIPLINE ===
-ONLY use these VERIFIED facts about the seller (Lens):
-- 300,000m² factory in Foshan, Guangdong, China
-- Products: aluminium windows, doors, bathroom fixtures, custom cabinetry, whole-house custom
-- A Canadian distributor has been with us for 3 years (working relationship duration)
-- Canadian distributor annual revenue with us: $1-2M USD (broad range, not exact)
+=== PART 2 — IDENTITY (1-2 sentences, ~25 words) ===
+Establish Lens with VERIFIED facts only:
+- 300,000m² factory in Foshan, Guangdong
+- 20 years production experience
+- Products: aluminium windows, doors, bathroom fixtures, custom cabinetry
+- Currently shipping an order to a Sydney interior designer (in progress)
+- An overseas distributor scaled to $1-2M USD annually with us over 3 years (after visiting the factory in person)
 
-DO NOT INVENT OR FABRICATE:
-- Specific case study details with named locations ("a Sydney developer", "a Melbourne builder doing $2M+ homes") — Lens has NOT confirmed these
-- Cost savings percentages ("17%", "20-30%", "saved them X%") — never make up numbers
-- Client counts ("23 Australian builders", "across 45 projects") — we don't have this data
-- Time-based performance claims ("18 months zero delays", "no missed deadlines") — unverified
-- Local Australian inventory ("we hold AU stock", "local warehouse") — Lens does NOT have AU warehouses
-- Specific product features not in the verified product list ("timber-look frames", "pivot doors", "oversized glazing 'units'") unless user explicitly listed them as products
+DO NOT invent details. DO NOT mention "Canadian" / "Canada" — say "overseas distributor" only.
 
-=== NO GUARANTEE LANGUAGE — STRICT ===
-NEVER use the following words or any equivalent:
-- "guarantee" / "guaranteed"
-- "lifetime guarantee" / "lifetime structural guarantee"
-- "zero delays" / "zero defects" / "100% on time"
-- "promise" / "we promise"
-- "warranty" (unless user explicitly mentions one)
-- "always" / "never" in performance claims
+=== PART 3 — OFFER (3-5 sentences, ~50 words) ===
+The CORE of the email. Invite the prospect to visit the Foshan factory. Each email should include some of these concrete details:
 
-REPHRASE PROMISES AS PROBABILITIES OR EXPERIENCE:
-- WRONG: "we guarantee 4-week lead time" → RIGHT: "typical lead time is 4-6 weeks"
-- WRONG: "we have zero delivery delays" → RIGHT: "we've been reliable on delivery for the clients we work with"
-- WRONG: "lifetime structural guarantee" → RIGHT: "20 years of factory production experience"
-- WRONG: "we ALWAYS deliver on time" → RIGHT: "delivery is something we take seriously"
+WHAT THE VISIT INCLUDES (rotate which details you mention):
+- Guangzhou airport pickup (or high-speed rail station)
+- Half-day visit (4 hours total)
+- Tour 300,000m² factory — see aluminium windows, doors, bathroom, cabinetry production lines
+- QC lab + sample warehouse
+- English-speaking sales rep accompanies
+- Working showroom with real product samples
+- Engineers available if prospect brings project drawings
+- Factory lunch on us
+- Drop back at hotel
+- Samples shipped to prospect's country at our cost
 
-=== KEEP CLAIMS GENERAL WHEN SPECIFIC DATA IS UNAVAILABLE ===
-If the email needs specifics that aren't in the verified facts list, REPHRASE GENERALLY rather than invent:
-- WRONG: "saved them 17%" → RIGHT: "the factory-direct model usually saves significant cost vs local distributors"
-- WRONG: "Canadian distributor structured their first order as a single 6-container PO" → RIGHT: "Our Canadian distributor started small to test quality, then scaled"
-- WRONG: "23 Australian builders" → RIGHT: "We work with builders across Australia and Canada"
+THE NO-COMMITMENT FRAMING (use phrases like):
+- "no pitch, no sales, no commitment"
+- "no BS — just see if we're a real factory or not"
+- "you walk out with samples, pricing, or nothing — either's fine"
+- "zero obligation"
 
-=== TONE FOR THE CANADA CASE STUDY ===
-When mentioning the Canadian distributor in Email 2 specifically:
-- State the relationship duration (3 years) and revenue range ($1-2M USD/year) — these ARE verified
-- DO NOT invent how their first order was structured (we don't actually know)
-- DO NOT claim "phased delivery" or "minimum commitment" structures that we haven't verified
-- Frame the offer as "I'll share their general engagement pattern" rather than "exact structure"
-- Email 2 CTA hook: "reply 'canada' and I'll share how they got started with us" (not "exact structure")
+=== EMAIL-BY-EMAIL: 5 INVITATIONS, 5 DIFFERENT REASONS ===
 
-=== NO SIGNATURE IN EMAIL BODY ===
-DO NOT include a signature, signoff, or sender name at the end of the email body. End each email at the last meaningful sentence of content (usually the CTA line).
+EMAIL 1 (Day 1) — REASON: BACKUP SUPPLIER ANGLE (least threatening)
+Subject: "visiting foshan?"
+Body theme: Most overseas buyers keep a backup supplier in their back pocket. The factory visit makes that backup real — without committing to switch.
+CTA: "Would Lens be worth a half-day next time you're in China?"
 
-WRONG (never do this):
-"...reply 'video' and i'll send our walkthrough.
+EMAIL 2 (Day 4) — REASON: AVOID GETTING BURNED (China sourcing fear)
+Subject: "the trick to china sourcing"
+Body theme: China sourcing horror stories all share one detail — buyer never visited. A factory visit eliminates the #1 risk in one half-day.
+CTA: "Half-day visit if you're sourcing direct from china — yes?"
 
-— Leo Li, Lens"
+EMAIL 3 (Day 7) — REASON: ONE-STOP COMPARISON (Lens unique angle)
+Subject: "windows + bathroom + cabinetry — one stop"
+Body theme: Most Chinese factories specialize in one product. Lens does aluminium windows, doors, bathroom, cabinetry on one site. See all three in one half-day.
+CTA: "Want a half-day to see all three production lines?"
 
-CORRECT (end at the last content sentence):
-"...reply 'video' and i'll send our walkthrough."
+EMAIL 4 (Day 10) — REASON: SOURCING TRIP CONVENIENCE (low-friction)
+Subject: "your next china sourcing trip"
+Body theme: If a prospect is already heading to China to look at suppliers, Foshan is a half-day side trip from Guangzhou. Just add Lens to the itinerary.
+CTA: "If you're heading to China anyway in next 6 months, worth half a day?"
 
-Reason: 5 sender accounts rotate (Ella/Leo/Lily/Lucy/Zi @lensfos.com). Each account has its own signature configured in Instantly UI. AI-written signatures cause duplicates or sender mismatches.
+EMAIL 5 (Day 14) — REASON: ZERO COMMITMENT BREAKUP (last try)
+Subject: "closing the file"
+Body theme: This is my last email. The factory visit invitation stays open 12 months. Reply "open" anytime. Otherwise good luck.
+CTA: "Reply 'open' anytime in the next 12 months — door stays open."
 
-NEVER write at end of email:
-- "— Leo Lens" / "— Leo Li, Lens" / "— [any name], Lens" / "— [any name], Foshan"
-- "Best, [name]" / "Thanks, [name]"
-- "The Lens team" / "Lens, Foshan"
-- Any farewell + name combination
+=== STRICT RULES ===
 
-The body ends at the CTA or the last content sentence. Nothing after.`,
+NO SIGNATURE IN BODY:
+Do not write "— Leo Lens" / "— Leo Li, Lens" / "— [name], Lens" or any name signature. End at the CTA question. The 5 sender accounts (Ella/Leo/Lily/Lucy/Zi @lensfos.com) have signatures configured in Instantly UI — they're auto-appended.
+
+NO INVENTED FACTS:
+- No specific Australian client names (only verified: "Sydney interior designer, currently shipping")
+- No cost-savings percentages
+- No made-up client counts ("23 builders", "45 projects")
+- No "guarantee" / "lifetime guarantee" / "zero delays"
+- No "local AU stock" (Lens does not have AU warehouses)
+
+NO PROFESSION ASSUMPTIONS:
+Never write "as a designer..." / "for builders like you..." — reference work, not category.
+
+NO CANADIAN REFERENCES:
+Say "overseas distributor" if mentioning the $1-2M case. Never say "Canada" / "Canadian".
+
+CTA RULES:
+Every email ends with a clear, easy yes-or-no question. The CTA is the LAST line. No "Thanks," / "Cheers," / signature after.
+
+TONE:
+Like a real person writing to one specific person. Direct, no marketing speak. The phrases "no BS", "no pitch", "no commitment" should appear naturally — these reduce the prospect's defensiveness.
+
+EMAIL LENGTH: 80-120 words total per email. Concise. Each email is ONE focused invitation with ONE reason.`,
   },
 
   'cold_5_step': {
