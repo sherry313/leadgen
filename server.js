@@ -784,10 +784,11 @@ app.get('/api/instantly/accounts', requireAuth, async (req, res) => {
 // PATCH /api/instantly/campaign/:id/accounts — update campaign's sending accounts
 app.patch('/api/instantly/campaign/:id/accounts', requireAuth, async (req, res) => {
   const { emails } = req.body;
+  const normalizedEmails = (emails || []).map(e => typeof e === 'string' ? e.toLowerCase().trim() : e);
   try {
     const axios = require('axios');
     await axios.patch(`${INSTANTLY_BASE}/campaigns/${req.params.id}`,
-      { email_list: emails || [] },
+      { email_list: normalizedEmails },
       { headers: instantlyHeaders() }
     );
     res.json({ success: true });

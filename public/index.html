@@ -4618,7 +4618,7 @@ function renderAccountsList() {
     return;
   }
   container.innerHTML = _hubAccounts.map(acc => {
-    const email = acc.email || acc.address || '';
+    const email = (acc.email || acc.address || '').toLowerCase().trim();
     const isSelected = saved.includes(email);
     const warmupRaw = acc.warmup_status ?? acc.warmupStatus;
     const warmupLabel = warmupRaw === 1 || warmupRaw === 'active' ? '🔥 热身中'
@@ -4647,7 +4647,7 @@ function onAccountToggle(checkbox) {
 async function syncAccountsToCampaign() {
   const id = getSelectedCampaignId();
   if (!id) { _showToast('请先选择 Campaign'); return; }
-  const selected = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]');
+  const selected = JSON.parse(localStorage.getItem(_LS_ACCOUNTS) || '[]').map(e => e.toLowerCase().trim());
   if (!selected.length) { _showToast('请先勾选发件邮箱'); return; }
   try {
     const r = await fetch(`/api/instantly/campaign/${id}/accounts`, {
