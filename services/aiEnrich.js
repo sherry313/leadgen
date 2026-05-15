@@ -37,7 +37,13 @@ Your job:
 1. Score the prospect's buying intent based on their website content
 2. Score how well this prospect matches the seller's Ideal Customer Profile (ICP)
 
-Always respond with valid JSON only — no markdown code fences, no explanation outside the JSON.`;
+JSON OUTPUT RULES — read carefully, they are the most common failure mode:
+1. Respond with a single valid JSON object. No markdown code fences. No explanation outside the JSON.
+2. When you need to quote an English phrase, product name, or website title inside a Chinese string value, you MUST use the Chinese full-width brackets 「 and 」 — NOT ASCII double quotes. Example:
+   ❌ WRONG (breaks JSON parser):  "intentReasoning": "标题为"Luxury Home Builders"，定位高端..."
+   ✅ RIGHT:                        "intentReasoning": "标题为「Luxury Home Builders」，定位高端..."
+3. The ONLY ASCII double quotes (") in your output are the JSON syntax characters that wrap string values. Any " inside a string value MUST either be escaped as \\" or — preferably — replaced with 「 or 」.
+4. Do not use smart/curly quotes (" " ' ') anywhere in the JSON syntax — only plain ASCII " around values.`;
 
 async function analyzeICP(company, websiteContent, companyProfile = {}, icp = '', keepSignals = [], lowSignal = false, claimsLocalManufacturing = false, pageMetadata = {}) {
   console.log(`[AI] Analyzing ICP: ${company.companyName}`);
@@ -128,11 +134,29 @@ ${websiteContent || 'No website content available.'}
 - icpScore: integer 1-10 (how well this prospect matches the ICP above)
 - icpReasoning: 用中文写1-2句话解释ICP匹配度原因
 
-Return only valid JSON. No markdown, no extra text.`;
+JSON RULES (apply to every string value):
+- 用 「」 包裹中文 reasoning 里的英文引述，绝对不要用半角双引号。例如：标题为「Custom Home Builders」、官网标榜「award-winning」。
+- 字符串值里出现的任何半角 " 都会破坏 JSON 解析。改用 「」 是最安全的做法。
+- Return ONLY the JSON object. No markdown fences. No prose before or after.`;
 
   let rawText = '';
   let totalIn = 0, totalOut = 0;
   const strip = s => s.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+
+  // Last-ditch JSON repair: Sonnet sometimes embeds unescaped ASCII double
+  // quotes inside Chinese reasoning strings:
+  //   "intentReasoning": "标注"Custom Home Builders Melbourne"，定位高端…"
+  //
+  // A structural JSON quote can only have one of [whitespace , : { } [ ]] (or
+  // a backslash for an escape) as its neighbour. Any " whose neighbour on
+  // BOTH sides is something other than those chars must be an interior quote
+  // and needs escaping. Backslash in the lookbehind preserves any quotes
+  // Sonnet has already escaped correctly.
+  //
+  // Walking the failing example "Melbourne"， — preceded by `e`, followed by
+  // `，` (U+FF0C fullwidth comma, NOT ASCII) — that " gets escaped here even
+  // though both narrower patterns (alphanumeric-on-both-sides) would miss it.
+  const repairInteriorQuotes = (s) => s.replace(/(?<=[^\s,:{[\\])"(?=[^\s,:}\]])/g, '\\"');
 
   // Trace exactly what reaches Sonnet — length of website content,
   // title from page metadata, and the head of the prompt. Lets us confirm
@@ -159,18 +183,37 @@ Return only valid JSON. No markdown, no extra text.`;
     } catch (parseErr) {
       console.error(`[AI] ICP JSON parse failed for ${company.companyName}: ${parseErr.message}`);
       console.error(`[AI] Raw (first 300): ${rawText.slice(0, 300)}`);
-      console.log(`[AI] Retrying JSON reformat for ${company.companyName}…`);
-      const retryResp = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 800,
-        messages: [{
-          role: 'user',
-          content: `Your previous response was not valid JSON. Re-output the same content as strict valid JSON only — no markdown fences, no extra text.\n\nPrevious response:\n${rawText}`,
-        }],
-      });
-      totalIn  += retryResp.usage.input_tokens;
-      totalOut += retryResp.usage.output_tokens;
-      result = JSON.parse(strip(retryResp.content[0].text));
+
+      // Step A: try the cheap local repair first — no extra API call.
+      // Catches the dominant failure mode (unescaped " inside Chinese reasoning).
+      try {
+        result = JSON.parse(repairInteriorQuotes(strip(rawText)));
+        console.log(`[AI] ${company.companyName}: local quote-repair succeeded — no retry needed`);
+      } catch (repairErr) {
+        // Step B: ask Sonnet to fix it, with explicit instructions on the
+        // exact failure mode. The previous retry prompt was too vague —
+        // it failed identically because Sonnet had the same blindspot.
+        console.log(`[AI] Local repair failed (${repairErr.message}) — retrying via Sonnet for ${company.companyName}…`);
+        const retryResp = await client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 800,
+          messages: [{
+            role: 'user',
+            content: `The JSON below has unescaped ASCII double quotes inside string values, which breaks JSON.parse. Fix it by replacing every interior " (a " that is NOT the start or end of a JSON string value) with the Chinese full-width bracket 「 or 」. The outer JSON syntax quotes around keys and values must stay as ASCII ". Return ONLY the corrected JSON object — no markdown, no commentary.\n\nBROKEN JSON:\n${rawText}`,
+          }],
+        });
+        totalIn  += retryResp.usage.input_tokens;
+        totalOut += retryResp.usage.output_tokens;
+        const retryRaw = retryResp.content[0].text;
+        try {
+          result = JSON.parse(strip(retryRaw));
+        } catch (retry1Err) {
+          // Step C: apply local repair to Sonnet's retry output too — covers
+          // the case where Sonnet still slips a quote through.
+          result = JSON.parse(repairInteriorQuotes(strip(retryRaw)));
+          console.log(`[AI] ${company.companyName}: parsed after Sonnet retry + local repair`);
+        }
+      }
     }
 
     console.log(`[AI] ${company.companyName}: intent=${result.intentScore}/10  icp=${result.icpScore}/10`);
