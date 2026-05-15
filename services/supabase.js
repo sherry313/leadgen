@@ -23,6 +23,7 @@ function getClient() {
 //
 // ALTER TABLE leads
 //   ADD COLUMN IF NOT EXISTS icp_score           TEXT,
+//   ADD COLUMN IF NOT EXISTS icp_reasoning       TEXT,
 //   ADD COLUMN IF NOT EXISTS email1_subject      TEXT,
 //   ADD COLUMN IF NOT EXISTS email1_body         TEXT,
 //   ADD COLUMN IF NOT EXISTS email2_subject      TEXT,
@@ -150,17 +151,24 @@ async function saveLeads(searchId, leads) {
     console.log(`[Supabase] Saved ${rows.length} leads (email1_subject sample: "${rows[0]?.email1_subject?.slice(0, 60) || 'empty'}")`);
     return data;
   } catch (err) {
-    // Retry without columns that don't exist yet in the schema
-    if (err.message?.includes('icp_score') || err.message?.includes('column') || err.message?.includes('schema cache')) {
-      console.warn('[Supabase] Schema missing columns — EMAIL DATA WILL BE LOST. Run migration. Error:', err.message);
-      const fallbackRows = rows.map(({ icp_score, icp_reasoning, place_id, phone_normalized, website_domain, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body, ...core }) => core);
+    // Fallback for schema drift: strip ONLY the columns we know are safe to drop
+    // because they're either non-critical (icp_reasoning) or re-persisted elsewhere
+    // (email columns are re-saved by updateLeadEmails after generate-emails).
+    //
+    // DO NOT strip icp_score — it's a documented required column and drives the
+    // frontend qualification gate (icp_score >= 5 AND intent_score >= 5). Dropping
+    // it silently turned every lead's icp_score to null and broke qualification
+    // for every search.
+    if (err.message?.includes('column') || err.message?.includes('schema cache')) {
+      console.warn(`[Supabase] Initial insert failed (${err.message}) — retrying without icp_reasoning + email columns. Run the migration in this file's header comment to fix permanently.`);
+      const fallbackRows = rows.map(({ icp_reasoning, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body, ...core }) => core);
       try {
         const { data, error: err2 } = await db.from('leads').insert(fallbackRows).select('id, company_name');
         if (err2) throw err2;
-        console.log(`[Supabase] Saved ${fallbackRows.length} leads (core fields only — run migration to save email/icp data)`);
+        console.log(`[Supabase] Saved ${fallbackRows.length} leads via fallback (icp_reasoning + emails dropped; icp_score preserved)`);
         return data;
       } catch (err2) {
-        console.warn('[Supabase] saveLeads fallback failed:', err2.message);
+        console.error('[Supabase] saveLeads fallback also failed:', err2.message, err2.details ?? '', err2.hint ?? '');
         return null;
       }
     }
