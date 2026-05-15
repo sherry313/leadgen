@@ -2782,6 +2782,32 @@ function _markSentLS(key) {
 }
 function getLeadKey(lead) { return String(lead.dbId || lead.email || lead.companyName || ''); }
 
+// Resolve email N's subject/body from a lead, trying all key shapes that
+// have ever flowed through the system:
+//   - EMAIL_1_SUBJECT  (AI output, fresh-gen merge, _normalizeLeadRow output)
+//   - email_1_subject  (legacy fallback that nothing actually writes)
+//   - email1_subject   (raw Supabase column — used to leak through pre-normalize)
+// Keeping all three keeps the push robust against any future row that
+// bypasses _normalizeLeadRow.
+function _getLeadEmail(lead, n) {
+  if (!lead) return { subject: '', body: '' };
+  return {
+    subject: lead[`EMAIL_${n}_SUBJECT`] || lead[`email_${n}_subject`] || lead[`email${n}_subject`] || '',
+    body:    lead[`EMAIL_${n}_BODY`]    || lead[`email_${n}_body`]    || lead[`email${n}_body`]    || '',
+  };
+}
+
+// True if the lead has any of its 5 emails populated with subject or body.
+// Replaces the older `lead.EMAIL_1_BODY?.trim()` gate, which excluded leads
+// where only later emails had content or where the data shape differed.
+function _leadHasEmailContent(lead) {
+  for (let n = 1; n <= 5; n++) {
+    const { subject, body } = _getLeadEmail(lead, n);
+    if ((subject || '').trim() || (body || '').trim()) return true;
+  }
+  return false;
+}
+
 // ── Render results ────────────────────────────────────────────────────────────
 function _isLeadQualified(lead) {
   if (lead.status?.startsWith('filtered')) return false;
@@ -4180,7 +4206,11 @@ async function bulkSendInstantly(targets) {
     const ibtn = document.getElementById(`ibtn-${i}`);
     if (ibtn) { ibtn.disabled = true; ibtn.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span>'; }
     try {
-      _diagLog('bulkSendInstantly.fetch.pre', { idx: t + 1, total: targets.length, email: lead.email, campaignId });
+      const outgoingEmails = [1,2,3,4,5].map(n => _getLeadEmail(lead, n));
+      _diagLog('bulkSendInstantly.fetch.pre', {
+        idx: t + 1, total: targets.length, email: lead.email, campaignId,
+        emailsResolved: outgoingEmails.map(e => ({ hasSubject: !!e.subject.trim(), hasBody: !!e.body.trim() })),
+      });
       const res = await fetch('/api/instantly/add-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getStoredToken()}` },
@@ -4189,10 +4219,7 @@ async function bulkSendInstantly(targets) {
           lead: {
             email: lead.email, companyName: lead.companyName,
             website: lead.website || '', phone: lead.phone || '',
-            emails: [1,2,3,4,5].map(n => ({
-              subject: lead[`EMAIL_${n}_SUBJECT`] || '',
-              body:    lead[`EMAIL_${n}_BODY`]    || '',
-            })),
+            emails: outgoingEmails,
           }
         }),
       });
@@ -4232,7 +4259,7 @@ function updateBulkBar() {
   if (pushBtn) {
     const pushable = [...document.querySelectorAll('.result-check:checked')]
       .map(cb => _allLeads[parseInt(cb.dataset.idx)])
-      .filter(l => l?.EMAIL_1_BODY?.trim() && l?.email?.trim() && !_isSentLS(getLeadKey(l))).length;
+      .filter(l => l && _leadHasEmailContent(l) && l?.email?.trim()).length;
     pushBtn.textContent = `📤 一键推送选中的 · ${pushable} 条`;
     pushBtn.style.display = pushable > 0 ? 'inline-flex' : 'none';
   }
@@ -4254,9 +4281,13 @@ async function startSelectedPush() {
     return;
   }
   const checkedNodes = document.querySelectorAll('.result-check:checked');
+  // Bulk push is the user explicitly saying "push these". Don't gate on
+  // _isSentLS — Instantly will dedup if a lead is already in the campaign,
+  // and we want re-push to work when an earlier push went to a different
+  // campaign or was lost.
   const targets = [...checkedNodes]
     .map(cb => { const i = parseInt(cb.dataset.idx); return { i, lead: _allLeads[i] }; })
-    .filter(({ lead }) => lead?.EMAIL_1_BODY?.trim() && lead?.email?.trim() && !_isSentLS(getLeadKey(lead)));
+    .filter(({ lead }) => lead && _leadHasEmailContent(lead) && lead?.email?.trim());
   _diagLog('startSelectedPush.entry', {
     checkboxesInDom: allCheckboxes.length,
     checkedInDom: checkedNodes.length,
@@ -4352,8 +4383,10 @@ function _revealInstantlySection() {
 function _updateBulkPushBar() {
   const bar = document.getElementById('bulkPushBar');
   if (!bar) return;
+  // Count what `startBulkPush` will actually push. _isSentLS is intentionally
+  // NOT applied — bulk push is re-pushable so the count must match.
   const eligible = (_allLeads || []).filter(l =>
-    _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && !_isSentLS(getLeadKey(l))
+    _isLeadQualified(l) && _leadHasEmailContent(l)
   );
   const n = eligible.length;
   // Data update always runs — keeps count/text current regardless of wizard step,
@@ -4372,19 +4405,23 @@ function _updateBulkPushBar() {
 }
 
 async function startBulkPush() {
-  // Build targets directly from _allLeads — do NOT depend on DOM checkboxes,
-  // which may not be rendered when this button lives in a different view.
+  // Build targets directly from _allLeads. Two intentional behaviors:
+  //   - Uses _leadHasEmailContent (any of the 5 emails populated under any
+  //     known key shape) instead of only EMAIL_1_BODY.
+  //   - Does NOT filter on _isSentLS. The button explicitly says
+  //     "push N leads"; if an earlier push went somewhere wrong (different
+  //     campaign, dropped lead, etc.), the user needs to be able to re-push.
+  //     Instantly's own workspace-level dedup is the right place for the guard.
   const targets = (_allLeads || [])
     .map((lead, i) => ({ i, lead }))
     .filter(({ lead }) =>
       _isLeadQualified(lead) &&
-      lead?.EMAIL_1_BODY?.trim() &&
-      lead?.email?.trim() &&
-      !_isSentLS(getLeadKey(lead))
+      _leadHasEmailContent(lead) &&
+      lead?.email?.trim()
     );
 
   const withContent = (_allLeads || []).filter(l =>
-    _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && !_isSentLS(getLeadKey(l))
+    _isLeadQualified(l) && _leadHasEmailContent(l)
   );
   const skippedNoEmailCount = withContent.filter(l => !l.email?.trim()).length;
 
