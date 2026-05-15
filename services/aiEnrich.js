@@ -520,9 +520,18 @@ Google评分:${company.googleRating}(${company.reviewCount}条评价)
 // returned key must match a key in services/emailTemplates.js exactly — those
 // keys are Chinese strings, not snake_case English. Order matters: more-
 // specific patterns first.
+//
 // Industry-specific buyers (hotel/supermarket/furniture) come first because
 // queries like "hotel renovation procurement" would otherwise be misrouted
 // to the generic renovation-contractor key.
+//
+// "custom / luxury / bespoke / builder / homes" maps to 装修承包商 (not
+// 房产开发商) because boutique custom builders doing $2M+ residences buy on
+// a per-project basis with custom sizes and multi-category bundles — that's
+// exactly what the 装修承包商 template's pain points + value prop are
+// written for (定制尺寸3周交货, 多品类一站式采购, 灵活小批量). 房产开发商
+// is angled at high-volume production builders (Metricon-scale, 100+ units)
+// and would mis-frame the cold-email pitch for this customer.
 const _TEMPLATE_KEY_MAP = [
   { match: /\bhotel\b/i,                                                key: '酒店装修采购' },
   { match: /\b(supermarket|hypermarket)\b/i,                            key: '超市建材采购' },
@@ -530,10 +539,10 @@ const _TEMPLATE_KEY_MAP = [
   { match: /\b(interior|designer|design\s*studio)\b/i,                  key: '室内设计师'  },
   { match: /\b(distributor|wholesale|wholesaler|importer|supplies)\b/i, key: '建材经销商'  },
   { match: /\bshowroom\b/i,                                             key: '建材经销商'  },
-  { match: /\b(renovation|renovator|renos?)\b/i,                        key: '装修承包商'  },
   { match: /\b(property\s*developer|land\s*developer)\b/i,              key: '房产开发商'  },
   { match: /\b(engineering|construction\s*contractor|general\s*contractor)\b/i, key: '工程承包商' },
-  { match: /\b(custom|luxury|bespoke|builder|homes)\b/i,                key: '房产开发商'  },
+  { match: /\b(renovation|renovator|renos?)\b/i,                        key: '装修承包商'  },
+  { match: /\b(custom|luxury|bespoke|builder|homes)\b/i,                key: '装修承包商'  },
 ];
 
 function templateKeyFromQuery(query) {
@@ -541,7 +550,7 @@ function templateKeyFromQuery(query) {
   for (const { match, key } of _TEMPLATE_KEY_MAP) {
     if (match.test(q)) return key;
   }
-  return '房产开发商';
+  return '装修承包商';
 }
 
 module.exports = { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery };
