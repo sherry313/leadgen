@@ -72,8 +72,15 @@ app.post('/api/scrape', requireAuth, async (req, res) => {
     const company = companies[i];
     console.log(`\n[Pipeline] Processing ${i + 1}/${companies.length}: ${company.companyName}`);
 
-    // Step 2: Crawl company website for content
-    const websiteContent = await crawlWebsite(company.website);
+    // Step 2: Crawl company website for content + metadata
+    const crawled = await crawlWebsite(company.website);
+    const websiteContent = crawled.content;
+    const pageMetadata = {
+      title:         crawled.title,
+      description:   crawled.description,
+      ogTitle:       crawled.ogTitle,
+      ogDescription: crawled.ogDescription,
+    };
 
     // Step 3: Filter — skip explicit competitors, keep everything else with
     // soft local-mfg flag surfaced to Sonnet for nuanced scoring.
@@ -83,6 +90,7 @@ app.post('/api/scrape', requireAuth, async (req, res) => {
       results.push({
         ...company,
         websiteContent,
+        pageMetadata,
         status: `filtered: ${reason}`,
         dateAdded: today,
       });
@@ -93,12 +101,13 @@ app.post('/api/scrape', requireAuth, async (req, res) => {
     await new Promise(r => setTimeout(r, 1000));
 
     // Step 4: AI ICP + intent scoring (email generation is now a separate step)
-    const enrichment = await analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing);
+    const enrichment = await analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing, pageMetadata);
 
     // Merge all data into the final lead object (enrichment.usage stays for post-loop cost calc)
     const lead = {
       ...company,
       websiteContent,
+      pageMetadata,
       keepSignals,
       lowSignal,
       claimsLocalManufacturing,
@@ -369,15 +378,22 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
 
   const processOne = async (company) => {
     try {
-      const websiteContent = await crawlWebsite(company.website);
+      const crawled = await crawlWebsite(company.website);
+      const websiteContent = crawled.content;
+      const pageMetadata = {
+        title:         crawled.title,
+        description:   crawled.description,
+        ogTitle:       crawled.ogTitle,
+        ogDescription: crawled.ogDescription,
+      };
       const { shouldSkip, reason, keepSignals, lowSignal, claimsLocalManufacturing } = filterCompany(websiteContent);
       if (shouldSkip) {
-        return { ...company, websiteContent, status: `filtered: ${reason}`, dateAdded: today };
+        return { ...company, websiteContent, pageMetadata, status: `filtered: ${reason}`, dateAdded: today };
       }
-      const enrichment = await analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing);
+      const enrichment = await analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing, pageMetadata);
       sonnetIn  += enrichment.usage?.input_tokens  || 0;
       sonnetOut += enrichment.usage?.output_tokens || 0;
-      return { ...company, websiteContent, keepSignals, lowSignal, claimsLocalManufacturing, ...enrichment, dateAdded: today, status: 'enriched' };
+      return { ...company, websiteContent, pageMetadata, keepSignals, lowSignal, claimsLocalManufacturing, ...enrichment, dateAdded: today, status: 'enriched' };
     } catch (err) {
       console.error(`[Enrich] ${company.companyName}:`, err.message);
       return { ...company, status: 'error', dateAdded: today };

@@ -3705,6 +3705,7 @@ function _normalizeLeadRow(r) {
     intentScore:       (r.intent_score != null) ? Number(r.intent_score) : 3,
     icpScore:          (r.icp_score    != null) ? Number(r.icp_score)    : 3,
     intentReasoning:   r.reasoning,
+    icpReasoning:      r.icp_reasoning || '',
     placeId:           r.place_id || '',
     EMAIL_1_SUBJECT:   r.email1_subject || '',  EMAIL_1_BODY: r.email1_body || '',
     EMAIL_2_SUBJECT:   r.email2_subject || '',  EMAIL_2_BODY: r.email2_body || '',

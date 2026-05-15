@@ -133,6 +133,7 @@ async function saveLeads(searchId, leads) {
       intent_score:     String(l.intentScore   ?? ''),
       icp_score:        String(l.icpScore      ?? ''),
       reasoning:        l.intentReasoning,
+      icp_reasoning:    l.icpReasoning,
       place_id:         l.placeId || '',
       phone_normalized: l.phone?.replace(/\D/g, '') || '',
       website_domain:   l.website ? (() => { try { return new URL(l.website).hostname.replace('www.', ''); } catch { return ''; } })() : '',
@@ -152,7 +153,7 @@ async function saveLeads(searchId, leads) {
     // Retry without columns that don't exist yet in the schema
     if (err.message?.includes('icp_score') || err.message?.includes('column') || err.message?.includes('schema cache')) {
       console.warn('[Supabase] Schema missing columns — EMAIL DATA WILL BE LOST. Run migration. Error:', err.message);
-      const fallbackRows = rows.map(({ icp_score, place_id, phone_normalized, website_domain, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body, ...core }) => core);
+      const fallbackRows = rows.map(({ icp_score, icp_reasoning, place_id, phone_normalized, website_domain, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body, ...core }) => core);
       try {
         const { data, error: err2 } = await db.from('leads').insert(fallbackRows).select('id, company_name');
         if (err2) throw err2;

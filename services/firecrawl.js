@@ -4,11 +4,16 @@ const axios = require('axios');
 const FIRECRAWL_KEY = process.env.FIRECRAWL_API_KEY;
 const FIRECRAWL_URL = 'https://api.firecrawl.dev/v1/scrape';
 
+// Empty shape returned when no URL is provided or all attempts fail.
+// Keep all fields present (empty string) so callers can destructure unconditionally.
+const EMPTY_CRAWL = Object.freeze({
+  content: '', title: '', description: '', ogTitle: '', ogDescription: '',
+});
+
 async function crawlWebsite(url) {
-  // Skip if no website URL provided
   if (!url || url.trim() === '') {
     console.log('[Firecrawl] No URL provided, skipping.');
-    return '';
+    return { ...EMPTY_CRAWL };
   }
 
   console.log(`[Firecrawl] Crawling: ${url}`);
@@ -29,27 +34,39 @@ async function crawlWebsite(url) {
             'Authorization': `Bearer ${FIRECRAWL_KEY}`,
             'Content-Type': 'application/json',
           },
-          timeout: 30000, // 30 second timeout for slow sites
+          timeout: 30000,
         }
       );
 
-      // Firecrawl v1 response shape: { success: true, data: { markdown: '...' } }
+      // Firecrawl v1 response shape:
+      //   { success: true, data: { markdown: '...', metadata: { title, description, ogTitle, ogDescription, ... } } }
       if (!response.data.success) {
         console.warn(`[Firecrawl] Unsuccessful response for ${url}`);
-        return '';
+        return { ...EMPTY_CRAWL };
       }
 
-      const markdown = response.data.data?.markdown || '';
-      const truncated = markdown.slice(0, 8000);
-      console.log(`[Firecrawl] Got ${truncated.length} chars for ${url}`);
+      const data     = response.data.data || {};
+      const meta     = data.metadata || {};
+      const markdown = data.markdown || '';
+      const content  = markdown.slice(0, 8000);
+
+      const result = {
+        content,
+        title:         meta.title         || '',
+        description:   meta.description   || '',
+        ogTitle:       meta.ogTitle       || '',
+        ogDescription: meta.ogDescription || '',
+      };
+
+      console.log(`[Firecrawl] Got ${content.length} chars for ${url} | title="${result.title.slice(0, 60)}"`);
 
       // Small delay to avoid rate limits
       await new Promise(r => setTimeout(r, 1000));
 
-      return truncated;
+      return result;
     } catch (err) {
       console.log(`[Firecrawl] Attempt ${attempt} failed for ${url}: ${err.message}`);
-      if (attempt === 2) return '';
+      if (attempt === 2) return { ...EMPTY_CRAWL };
       await new Promise(r => setTimeout(r, 2000));
     }
   }

@@ -39,7 +39,7 @@ Your job:
 
 Always respond with valid JSON only — no markdown code fences, no explanation outside the JSON.`;
 
-async function analyzeICP(company, websiteContent, companyProfile = {}, icp = '', keepSignals = [], lowSignal = false, claimsLocalManufacturing = false) {
+async function analyzeICP(company, websiteContent, companyProfile = {}, icp = '', keepSignals = [], lowSignal = false, claimsLocalManufacturing = false, pageMetadata = {}) {
   console.log(`[AI] Analyzing ICP: ${company.companyName}`);
 
   const sellerName = companyProfile.sellerName || 'our company';
@@ -102,7 +102,17 @@ Phone: ${company.phone}
 Google Rating: ${company.googleRating} (${company.reviewCount} reviews)
 Website: ${company.website}
 
-Website content:
+=== PAGE METADATA (treat as authoritative positioning) ===
+The page's <title> and <meta description> are the company's own self-branding —
+they reflect the positioning the business wants to project. Weight these
+strongly when scoring. A title containing "Luxury Home Builders" or "Bespoke
+Residences" is a direct positioning claim, not incidental copy.
+${pageMetadata.title         ? `PAGE TITLE: ${pageMetadata.title}`               : 'PAGE TITLE: (not available)'}
+${pageMetadata.description   ? `META DESCRIPTION: ${pageMetadata.description}`   : 'META DESCRIPTION: (not available)'}
+${pageMetadata.ogTitle       ? `OG TITLE: ${pageMetadata.ogTitle}`               : ''}
+${pageMetadata.ogDescription ? `OG DESCRIPTION: ${pageMetadata.ogDescription}`   : ''}
+
+=== PAGE CONTENT ===
 ${websiteContent || 'No website content available.'}
 
 === REQUIRED JSON FIELDS ===
