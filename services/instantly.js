@@ -73,8 +73,11 @@ async function addLeadToCampaign(lead, campaignIdOverride = null) {
 
   await ensureSequenceInstalled(campaignId);
 
-  const firstName = extractFirstName(lead.email, lead.companyName);
-  console.log(`[Instantly] Adding lead to campaign: ${lead.email} (${lead.companyName}) → first_name="${firstName}"`);
+  // Defensive: Instantly's lead emails are case-sensitive in some workspaces.
+  // Normalize before any downstream use.
+  const normalizedEmail = lead.email.toLowerCase().trim();
+  const firstName = extractFirstName(normalizedEmail, lead.companyName);
+  console.log(`[Instantly] Adding lead to campaign: ${normalizedEmail} (${lead.companyName}) → first_name="${firstName}"`);
 
   const sub = (s) => (s || '')
     .replace(/\{first_name\}/g, firstName)
@@ -86,7 +89,7 @@ async function addLeadToCampaign(lead, campaignIdOverride = null) {
       `${BASE}/leads`,
       {
         campaign:     campaignId,
-        email:        lead.email.trim(),
+        email:        normalizedEmail,
         first_name:   firstName,
         company_name: lead.companyName || '',
         phone:        lead.phone       || '',

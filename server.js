@@ -552,6 +552,18 @@ app.delete('/api/history/:id', requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+// ── DIAG: client-side log relay ──────────────────────────────────────────────
+// POST /api/diag/log  body: { tag, data }
+// Temporary endpoint to surface frontend push-flow events in docker logs.
+// Remove once push bug is confirmed fixed.
+app.post('/api/diag/log', async (req, res) => {
+  try {
+    const { tag, data } = req.body || {};
+    console.log(`[DIAG] ${tag || '?'}:`, JSON.stringify(data));
+  } catch (_) {}
+  res.json({ ok: true });
+});
+
 // ── Add lead (full 5-email sequence) to Instantly campaign ───────────────────
 // POST /api/instantly/add-lead
 // Body: { lead: { email, companyName, website?, phone?, emails?: [{subject,body}] }, campaignId? }

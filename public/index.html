@@ -4128,15 +4128,43 @@ async function confirmBulkGenerate() {
   }
 }
 
-async function bulkSendInstantly() {
-  if (_bulkSendRunning) return;
-  const idxList = [...document.querySelectorAll('.result-check:checked')]
-    .map(cb => parseInt(cb.dataset.idx));
-  const targets = idxList
-    .map(i => ({ i, lead: _allLeads[i] }))
-    .filter(({ lead }) => lead?.email?.trim() && !_isSentLS(getLeadKey(lead)));
+// DIAG: relay frontend trace to backend so it appears in `docker compose logs`.
+// Fire-and-forget; never blocks UI. Remove with the /api/diag/log endpoint
+// once the push bug is confirmed fixed.
+function _diagLog(tag, data) {
+  try { console.log('[DIAG]', tag, data); } catch (_) {}
+  try {
+    fetch('/api/diag/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tag, data }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch (_) {}
+}
 
-  if (!targets.length) { _showToast('没有待发送的线索（无邮箱或全已发送）'); return; }
+// Push the given list of {i, lead} pairs to Instantly, one by one.
+// Callers MUST pass an explicit targets array — no DOM lookup.
+async function bulkSendInstantly(targets) {
+  if (_bulkSendRunning) { _diagLog('bulkSendInstantly.reentry', { running: true }); return; }
+
+  if (!Array.isArray(targets)) {
+    _diagLog('bulkSendInstantly.exit.badArg', { typeofTargets: typeof targets });
+    return;
+  }
+
+  _diagLog('bulkSendInstantly.entry', {
+    allLeadsLen: (_allLeads || []).length,
+    targetsLen: targets.length,
+    sampleIdxs: targets.slice(0, 5).map(t => t.i),
+    campaignId: getSelectedCampaignId(),
+  });
+
+  if (!targets.length) {
+    _diagLog('bulkSendInstantly.exit.noTargets', {});
+    _showToast('没有待发送的线索（无邮箱或全已发送）');
+    return;
+  }
 
   const campaignId = getSelectedCampaignId();
   if (!campaignId) { _showToast('请先点击导航栏「📬 邮件」选择 Campaign'); return; }
@@ -4152,6 +4180,7 @@ async function bulkSendInstantly() {
     const ibtn = document.getElementById(`ibtn-${i}`);
     if (ibtn) { ibtn.disabled = true; ibtn.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span>'; }
     try {
+      _diagLog('bulkSendInstantly.fetch.pre', { idx: t + 1, total: targets.length, email: lead.email, campaignId });
       const res = await fetch('/api/instantly/add-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getStoredToken()}` },
@@ -4168,6 +4197,7 @@ async function bulkSendInstantly() {
         }),
       });
       const data = await res.json();
+      _diagLog('bulkSendInstantly.fetch.post', { idx: t + 1, status: res.status, ok: res.ok, dataSuccess: data?.success, dataError: data?.error });
       if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
       ok++;
       _markSentLS(getLeadKey(lead));
@@ -4214,12 +4244,35 @@ function updateBulkBar() {
 }
 
 async function startSelectedPush() {
-  const pushable = [...document.querySelectorAll('.result-check:checked')]
-    .map(cb => _allLeads[parseInt(cb.dataset.idx)])
-    .filter(l => l?.EMAIL_1_BODY?.trim() && l?.email?.trim() && !_isSentLS(getLeadKey(l)));
-  if (!pushable.length) { _showToast('没有可推送的线索（请先生成邮件，并确认线索有联系邮箱）'); return; }
-  if (!confirm(`确认推送 ${pushable.length} 条线索到 Instantly Campaign？`)) return;
-  await bulkSendInstantly();
+  // DOM-driven path: this button lives next to the results table, so the
+  // checkboxes are expected to exist. If they don't, tell the user explicitly
+  // instead of silently no-op'ing.
+  const allCheckboxes = document.querySelectorAll('.result-check');
+  if (allCheckboxes.length === 0) {
+    _diagLog('startSelectedPush.exit.noCheckboxesInDom', {});
+    _showToast('搜索结果未渲染，无法读取勾选项；请在「批量推送到 Instantly Campaign」按钮上推送');
+    return;
+  }
+  const checkedNodes = document.querySelectorAll('.result-check:checked');
+  const targets = [...checkedNodes]
+    .map(cb => { const i = parseInt(cb.dataset.idx); return { i, lead: _allLeads[i] }; })
+    .filter(({ lead }) => lead?.EMAIL_1_BODY?.trim() && lead?.email?.trim() && !_isSentLS(getLeadKey(lead)));
+  _diagLog('startSelectedPush.entry', {
+    checkboxesInDom: allCheckboxes.length,
+    checkedInDom: checkedNodes.length,
+    targetsLen: targets.length,
+    campaignId: getSelectedCampaignId(),
+  });
+  if (!targets.length) {
+    _diagLog('startSelectedPush.exit.noPushable', {});
+    _showToast('没有可推送的线索（请先生成邮件，并确认线索有联系邮箱）');
+    return;
+  }
+  if (!confirm(`确认推送 ${targets.length} 条线索到 Instantly Campaign？`)) {
+    _diagLog('startSelectedPush.exit.userCancelled', {});
+    return;
+  }
+  await bulkSendInstantly(targets);
   _updateBulkPushBar();
   updateBulkBar();
 }
@@ -4319,25 +4372,46 @@ function _updateBulkPushBar() {
 }
 
 async function startBulkPush() {
+  // Build targets directly from _allLeads — do NOT depend on DOM checkboxes,
+  // which may not be rendered when this button lives in a different view.
+  const targets = (_allLeads || [])
+    .map((lead, i) => ({ i, lead }))
+    .filter(({ lead }) =>
+      _isLeadQualified(lead) &&
+      lead?.EMAIL_1_BODY?.trim() &&
+      lead?.email?.trim() &&
+      !_isSentLS(getLeadKey(lead))
+    );
+
   const withContent = (_allLeads || []).filter(l =>
     _isLeadQualified(l) && l.EMAIL_1_BODY?.trim() && !_isSentLS(getLeadKey(l))
   );
-  const withContactCount    = withContent.filter(l => l.email?.trim()).length;
   const skippedNoEmailCount = withContent.filter(l => !l.email?.trim()).length;
 
-  if (withContactCount === 0 && skippedNoEmailCount > 0) {
+  _diagLog('startBulkPush.entry', {
+    allLeadsLen: (_allLeads || []).length,
+    withContentLen: withContent.length,
+    targetsLen: targets.length,
+    skippedNoEmailCount,
+    checkboxesInDom: document.querySelectorAll('.result-check').length,
+    campaignId: getSelectedCampaignId(),
+  });
+
+  if (targets.length === 0 && skippedNoEmailCount > 0) {
+    _diagLog('startBulkPush.exit.noEmails', { skippedNoEmailCount });
     alert(`这 ${skippedNoEmailCount} 条线索都没有联系邮箱，无法推送。\n\n请重新跑一次搜索，在第二步勾选「📧 抓取邮箱」选项。`);
     return;
   }
 
-  // Auto-select qualified + email + unsent leads, then delegate to bulkSendInstantly
+  // Mirror selection state to checkboxes if the results table happens to be in
+  // the DOM, so the UI stays consistent — but the push itself uses `targets`.
+  const idxSet = new Set(targets.map(t => t.i));
   document.querySelectorAll('.result-check').forEach(cb => {
-    const i = parseInt(cb.dataset.idx);
-    const lead = _allLeads[i];
-    cb.checked = !!(lead && _isLeadQualified(lead) && lead.email?.trim() && !_isSentLS(getLeadKey(lead)));
+    cb.checked = idxSet.has(parseInt(cb.dataset.idx));
   });
   updateBulkBar();
-  await bulkSendInstantly();
+  const withContactCount = targets.length;
+  await bulkSendInstantly(targets);
   _updateBulkPushBar();
   const countAfter = (_allLeads || []).filter(l =>
     _isLeadQualified(l) && l.email?.trim() && !_isSentLS(getLeadKey(l))
