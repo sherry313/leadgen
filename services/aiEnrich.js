@@ -14,7 +14,24 @@ Target prospect types (in order of factory-visit propensity, highest first):
 - Building supply / kitchen / bathroom showrooms
 - Mid-size contractors with multi-project pipelines (lower priority but not zero)
 
-Excluded: small renovation handymen, single-room renovators, individual home buyers, real estate agents, unrelated industries; volume builders (House & Land packages, display home networks, catalog-style pre-designed plans, per-unit price under $1M AUD); national-chain home builders; project home companies.
+Always excluded: small renovation handymen, single-room renovators, individual home buyers, real estate agents, unrelated industries.
+
+VOLUME-BUILDER classification — flag a prospect as a volume builder (anti-target, score 1-3) ONLY when MULTIPLE of the following appear together. A single weak signal is not enough.
+- Multiple physical display home centres OR an explicit "display village"
+- Prominently advertises "House & Land packages" as the primary offering on the home page
+- National-chain volume-builder branding (e.g. "Australia's biggest builder", "20+ display homes nationwide") or one of the recognised AU volume brands: Metricon, McDonald Jones, Coral Homes, GJ Gardner, Carlisle Homes, Henley, Boutique Homes, Simonds, Stockland, Domain by Plantation, Clarendon
+- Catalog-style website where "Browse our home designs" / dozens of pre-designed plans is clearly THE primary product (not a side service)
+- Per-unit advertised pricing visible and clearly under $500k AUD
+- Generic "starter home" / "first home buyer" / "affordable home" / "budget home" positioning
+
+LUXURY / CUSTOM override — if ANY of these signals are present, classify as custom/luxury (target, score 7-9) and DO NOT flag as volume even if the site also offers pre-designed plans, drafting services, or small-lot designs:
+- "Award winning", Master Builders Award, HIA Award, "Home of the Year", "Builder of the Year"
+- "Luxury custom homes", "bespoke residences", explicit $2M+ project pricing, multi-million-dollar residences in portfolio
+- "We limit our projects each year" or similar capacity-restriction language signalling scarcity / craftsmanship positioning
+- Project portfolio dominated by premium suburb names (e.g. Brisbane: New Farm, Hawthorne, St Lucia, Paddington, Ascot, Hamilton, Bulimba, Teneriffe; Melbourne: Toorak, South Yarra, Brighton, Albert Park, Kew; Sydney: Mosman, Vaucluse, Double Bay, Bellevue Hill, Killara)
+- Hamptons / French Provincial / Modern Coastal / heritage-restoration / architect-collaboration positioning
+
+Mixed-service builders are STILL valid targets. A custom builder that also offers drafting, home design packages, or small-lot designs as secondary services does NOT become a volume builder. Score based on the PRIMARY positioning of the homepage and portfolio, not on the presence of secondary services.
 
 Your job:
 1. Score the prospect's buying intent based on their website content
