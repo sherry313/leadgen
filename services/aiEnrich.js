@@ -515,4 +515,33 @@ Google评分:${company.googleRating}(${company.reviewCount}条评价)
   }
 }
 
-module.exports = { analyzeICP, generateEmails, preFilterLead };
+// ── Map a search-query string to one of the existing email-template keys ─────
+// Used by auto-mode to pick a customer-type angle without UI input. The
+// returned key must match a key in services/emailTemplates.js exactly — those
+// keys are Chinese strings, not snake_case English. Order matters: more-
+// specific patterns first.
+// Industry-specific buyers (hotel/supermarket/furniture) come first because
+// queries like "hotel renovation procurement" would otherwise be misrouted
+// to the generic renovation-contractor key.
+const _TEMPLATE_KEY_MAP = [
+  { match: /\bhotel\b/i,                                                key: '酒店装修采购' },
+  { match: /\b(supermarket|hypermarket)\b/i,                            key: '超市建材采购' },
+  { match: /\bfurniture\b/i,                                            key: '家具制造商'  },
+  { match: /\b(interior|designer|design\s*studio)\b/i,                  key: '室内设计师'  },
+  { match: /\b(distributor|wholesale|wholesaler|importer|supplies)\b/i, key: '建材经销商'  },
+  { match: /\bshowroom\b/i,                                             key: '建材经销商'  },
+  { match: /\b(renovation|renovator|renos?)\b/i,                        key: '装修承包商'  },
+  { match: /\b(property\s*developer|land\s*developer)\b/i,              key: '房产开发商'  },
+  { match: /\b(engineering|construction\s*contractor|general\s*contractor)\b/i, key: '工程承包商' },
+  { match: /\b(custom|luxury|bespoke|builder|homes)\b/i,                key: '房产开发商'  },
+];
+
+function templateKeyFromQuery(query) {
+  const q = (query || '').toString();
+  for (const { match, key } of _TEMPLATE_KEY_MAP) {
+    if (match.test(q)) return key;
+  }
+  return '房产开发商';
+}
+
+module.exports = { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery };

@@ -154,4 +154,22 @@ async function queueEmail({ toEmail, companyName, subject, body, emailNumber = 1
   }
 }
 
-module.exports = { addLeadToCampaign, createCampaign, queueEmail, ensureSequenceInstalled };
+// Fetch a campaign's current status. Returned `status` is the raw value from
+// the Instantly API — historically a number (1 = active, 2 = paused, 3 =
+// completed) but sometimes a string in newer responses. Callers should test
+// for active with: `status === 1 || status === 'active'`.
+// On any failure (404, network, auth) returns { status: null, name: '' } so
+// callers can decide whether to proceed or refuse.
+async function getCampaignStatus(campaignId) {
+  if (!campaignId) return { status: null, name: '' };
+  try {
+    const r = await axios.get(`${BASE}/campaigns/${campaignId}`, { headers: authHeaders() });
+    return { status: r.data?.status ?? null, name: r.data?.name || '' };
+  } catch (err) {
+    const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+    console.warn(`[Instantly] getCampaignStatus failed for ${campaignId}: ${detail}`);
+    return { status: null, name: '' };
+  }
+}
+
+module.exports = { addLeadToCampaign, createCampaign, queueEmail, ensureSequenceInstalled, getCampaignStatus };

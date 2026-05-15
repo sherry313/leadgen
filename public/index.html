@@ -1717,6 +1717,29 @@
 
     <button class="btn-start" id="btnStart" onclick="startScrapeRaw()">🔍 开始抓取</button>
 
+    <!-- ── Auto-mode: one-button pipeline (Apify → Haiku → Sonnet → Emails → Push) ── -->
+    <div id="autoModeCard" style="margin-top:20px;padding:18px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.4);border-radius:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+        <div>
+          <div style="font-size:1.05rem;font-weight:600;color:#c4b5fd">🚀 一键自动模式</div>
+          <div style="font-size:0.82rem;color:#a78bfa;margin-top:2px">抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 推送至 Instantly</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <label style="font-size:0.85rem;color:#cbd5e1">Instantly Campaign：</label>
+        <select id="autoCampaignSelect" style="padding:6px 10px;background:rgba(15,23,42,0.6);border:1px solid rgba(148,163,184,0.3);border-radius:6px;color:#e2e8f0;font-size:0.85rem;min-width:240px">
+          <option value="">（不推送 — 仅生成线索与邮件）</option>
+        </select>
+        <span id="autoCampaignHint" style="font-size:0.78rem;color:#94a3b8"></span>
+      </div>
+      <button class="btn-start" id="btnAutoRun" onclick="startAutoRun()" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">🚀 一键自动运行</button>
+      <div id="autoProgress" style="display:none;margin-top:16px;padding:14px;background:rgba(15,23,42,0.5);border-radius:8px;font-size:0.85rem;line-height:1.7">
+        <div id="autoPhases" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+        <div id="autoCurrent" style="color:#cbd5e1"></div>
+        <div id="autoSummary" style="margin-top:10px;color:#86efac;font-weight:500"></div>
+      </div>
+    </div>
+
     <div class="panel-nav" style="margin-top:14px">
       <button class="btn-ghost" onclick="goToStep(2)">← 修改配置</button>
       <span></span>
@@ -2477,6 +2500,15 @@ function goToStep(n) {
     }
     if (!updateSelectedCombo()) return;
     buildRunSummary();
+    // Populate auto-mode's campaign dropdown lazily — only when user lands on step 3
+    if (typeof _populateAutoCampaignDropdown === 'function') {
+      _populateAutoCampaignDropdown();
+      const sel = document.getElementById('autoCampaignSelect');
+      if (sel && !sel._autoChangeBound) {
+        sel.addEventListener('change', _updateAutoCampaignHint);
+        sel._autoChangeBound = true;
+      }
+    }
   }
 }
 function nextStep(n) { goToStep(n); }
@@ -3201,6 +3233,252 @@ function renderRawResults(companies) {
   _currentFilteredResults = companies;
   _renderRawBody(companies);
   _updateAIFilterRow();
+}
+
+// ── Auto-mode: one-button pipeline ───────────────────────────────────────────
+// Re-uses selectedCombos from step 1, maxResults + companyProfile + ICP from
+// step 2, and a campaign chosen from the dropdown on the auto-mode card.
+// Each combo opens an SSE stream to /api/auto/run; results are aggregated
+// into _allLeads so the existing results table picks them up unchanged.
+
+async function _populateAutoCampaignDropdown() {
+  const sel = document.getElementById('autoCampaignSelect');
+  if (!sel) return;
+  // Keep current selection if user already picked one
+  const previous = sel.value;
+  try {
+    const token = getStoredToken();
+    if (!token) return;
+    const r = await fetch('/api/instantly/campaigns', { headers: { Authorization: `Bearer ${token}` } });
+    const data = await r.json().catch(() => ({}));
+    const campaigns = (data?.campaigns || []).filter(c => c?.id);
+    // Drop existing options except the "no push" placeholder, then re-add
+    sel.innerHTML = '<option value="">（不推送 — 仅生成线索与邮件）</option>';
+    campaigns.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      const isActive = c.status === 1 || c.status === 'active';
+      opt.textContent = `${c.name}${isActive ? ' 🟢 Active' : ''}`;
+      sel.appendChild(opt);
+    });
+    // Default to whatever manual mode last selected, else previous, else none
+    const fromLs  = localStorage.getItem('selected_campaign_id') || '';
+    const desired = previous || fromLs;
+    if (desired && [...sel.options].some(o => o.value === desired)) {
+      sel.value = desired;
+    }
+    _updateAutoCampaignHint();
+  } catch (e) {
+    console.warn('[Auto] populate campaign dropdown failed:', e.message);
+  }
+}
+
+function _updateAutoCampaignHint() {
+  const sel  = document.getElementById('autoCampaignSelect');
+  const hint = document.getElementById('autoCampaignHint');
+  if (!sel || !hint) return;
+  const opt = sel.options[sel.selectedIndex];
+  if (!sel.value) {
+    hint.textContent = '推送步骤将跳过，线索仍会保存';
+    hint.style.color = '#94a3b8';
+  } else if (opt && opt.textContent.includes('🟢 Active')) {
+    hint.textContent = '⚠ Campaign 处于 Active 状态，运行时会被拒绝。请先在 Instantly 中暂停。';
+    hint.style.color = '#fbbf24';
+  } else {
+    hint.textContent = '✓ 已暂停，可安全推送';
+    hint.style.color = '#86efac';
+  }
+}
+
+function _autoPhaseChip(phase, status) {
+  const labels = {
+    apify: 'Apify 抓取', haiku: 'Haiku 筛选', 'email-filter': '邮箱过滤',
+    icp: 'Sonnet 评分', qualify: '合格筛选', emails: '生成开发信', push: '推送 Instantly',
+  };
+  const colors = {
+    start: 'background:rgba(59,130,246,0.2);color:#93c5fd;border:1px solid rgba(59,130,246,0.45)',
+    done:  'background:rgba(34,197,94,0.2);color:#86efac;border:1px solid rgba(34,197,94,0.45)',
+    skipped: 'background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.35)',
+  };
+  return `<span data-phase="${phase}" style="padding:4px 10px;border-radius:999px;font-size:0.78rem;${colors[status] || colors.start}">${labels[phase] || phase} ${status === 'done' ? '✓' : status === 'skipped' ? '⊘' : '…'}</span>`;
+}
+
+async function startAutoRun() {
+  const token = getStoredToken();
+  if (!token) { alert('请先在第二步输入访问令牌'); goToStep(2); return; }
+
+  const selectedCombos = generatedKeywords.filter(k => k.selected);
+  if (!selectedCombos.length) { _showToast('请先在第一步选择搜索目标'); goToStep(1); return; }
+
+  const maxResults = Math.min(100, parseInt(document.getElementById('maxResults').value) || 10);
+  const companyProfile = {
+    sellerName: document.getElementById('sellerName').value.trim(),
+    products:   document.getElementById('products').value.trim(),
+    advantage:  document.getElementById('advantage').value.trim(),
+  };
+  const icp        = document.getElementById('icpInput').value.trim();
+  const campaignId = document.getElementById('autoCampaignSelect').value;
+
+  const btn         = document.getElementById('btnAutoRun');
+  const manualBtn   = document.getElementById('btnStart');
+  const progressEl  = document.getElementById('autoProgress');
+  const phasesEl    = document.getElementById('autoPhases');
+  const currentEl   = document.getElementById('autoCurrent');
+  const summaryEl   = document.getElementById('autoSummary');
+
+  btn.disabled = true; if (manualBtn) manualBtn.disabled = true;
+  progressEl.style.display = 'block';
+  phasesEl.innerHTML = ''; currentEl.textContent = ''; summaryEl.textContent = '';
+  _allLeads = [];
+
+  // Phase chip state — rendered fresh on each event
+  const phaseState = {};
+  const renderPhases = () => {
+    phasesEl.innerHTML = Object.entries(phaseState)
+      .map(([phase, status]) => _autoPhaseChip(phase, status))
+      .join('');
+  };
+
+  let aggregateResults = [];
+  let aggregateSummary = null;
+  let lastSearchId = null;
+
+  for (let ci = 0; ci < selectedCombos.length; ci++) {
+    const combo = selectedCombos[ci];
+    btn.textContent = selectedCombos.length > 1
+      ? `🚀 运行中 (${ci + 1}/${selectedCombos.length})…`
+      : '🚀 运行中…';
+
+    try {
+      const res = await fetch('/api/auto/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          searchQuery: combo.query,
+          location:    combo.location,
+          countryCode: combo.countryCode,
+          maxResults,
+          campaignId,
+          companyProfile,
+          icp,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fatalError = null;
+      let doneEvent  = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop();
+        for (const part of parts) {
+          if (!part.startsWith('data: ')) continue;
+          let evt; try { evt = JSON.parse(part.slice(6)); } catch { continue; }
+
+          if (evt.type === 'phase') {
+            phaseState[evt.phase] = evt.status;
+            renderPhases();
+            if (evt.phase === 'apify' && evt.status === 'done') {
+              currentEl.textContent = `[${combo.label || combo.query}] Apify 抓取 ${evt.scraped} 条，新公司 ${evt.newLeads} 条（去重 ${evt.dedupSkipped}）`;
+            } else if (evt.phase === 'haiku' && evt.status === 'done') {
+              currentEl.textContent = `Haiku 推荐 ${evt.recommend} / 跳过 ${evt.skip}`;
+            } else if (evt.phase === 'email-filter' && evt.status === 'done') {
+              currentEl.textContent = `邮箱过滤：有邮箱 ${evt.withEmail} / 无邮箱 ${evt.withoutEmail}（无邮箱不进入 Sonnet 评分）`;
+            } else if (evt.phase === 'icp' && evt.status === 'start') {
+              currentEl.textContent = `Sonnet 正在评分 0/${evt.total}…`;
+            } else if (evt.phase === 'qualify' && evt.status === 'done') {
+              currentEl.textContent = `合格线索：${evt.qualified} 条（icp≥5 且 intent≥5）`;
+            } else if (evt.phase === 'emails' && evt.status === 'start') {
+              currentEl.textContent = `生成开发信（${evt.templateKey} · ${evt.frameworkKey}）0/${evt.total}…`;
+            } else if (evt.phase === 'emails' && evt.status === 'done') {
+              currentEl.textContent = `已生成 ${evt.generated} 条 × 5 封开发信`;
+            } else if (evt.phase === 'push' && evt.status === 'start') {
+              currentEl.textContent = `推送至 Instantly 0/${evt.total}…`;
+            } else if (evt.phase === 'push' && evt.status === 'done') {
+              currentEl.textContent = `Instantly 推送完成：成功 ${evt.pushed} / 失败 ${evt.pushFailed}`;
+            } else if (evt.phase === 'push' && evt.status === 'skipped') {
+              currentEl.textContent = `推送已跳过：${evt.reason || ''}`;
+            }
+          } else if (evt.type === 'progress') {
+            if (evt.phase === 'icp') {
+              currentEl.textContent = `Sonnet 评分 ${evt.done}/${evt.total}${evt.lead?.companyName ? ` · ${evt.lead.companyName}` : ''}`;
+              if (evt.lead) {
+                _allLeads.push(evt.lead);
+                renderResults(_allLeads);
+              }
+            } else if (evt.phase === 'emails') {
+              currentEl.textContent = `生成开发信 ${evt.done}/${evt.total}${evt.lead?.companyName ? ` · ${evt.lead.companyName}` : ''}`;
+              if (evt.lead) {
+                const idx = _allLeads.findIndex(l => l.companyName === evt.lead.companyName);
+                if (idx >= 0) _allLeads[idx] = { ..._allLeads[idx], ...evt.lead };
+              }
+            } else if (evt.phase === 'haiku') {
+              currentEl.textContent = `Haiku 筛选 ${evt.done}/${evt.total}`;
+            } else if (evt.phase === 'push') {
+              currentEl.textContent = `推送至 Instantly ${evt.done}/${evt.total}${evt.companyName ? ` · ${evt.companyName}` : ''}`;
+            }
+          } else if (evt.type === 'error') {
+            fatalError = evt.error;
+            // Surface preflight errors prominently
+            phaseState[evt.phase || 'preflight'] = 'skipped';
+            renderPhases();
+          } else if (evt.type === 'done') {
+            doneEvent = evt;
+          }
+        }
+      }
+
+      if (fatalError) {
+        alert(`❌ ${fatalError}`);
+        break;   // refuse to continue with remaining combos on a preflight error
+      }
+      if (doneEvent) {
+        if (doneEvent.searchId) lastSearchId = doneEvent.searchId;
+        aggregateResults = aggregateResults.concat(doneEvent.results || []);
+        // Sum summaries across combos
+        if (!aggregateSummary) aggregateSummary = { ...doneEvent.summary };
+        else {
+          for (const k of ['scraped','dedupSkipped','haikuRecommend','haikuSkip','withEmail','withoutEmail','icpAnalyzed','qualified','emailsGenerated','pushed','pushFailed']) {
+            aggregateSummary[k] = (aggregateSummary[k] || 0) + (doneEvent.summary?.[k] || 0);
+          }
+          if (doneEvent.summary?.costs) {
+            aggregateSummary.costs = aggregateSummary.costs || { apify:0, haiku:0, sonnet:0, firecrawl:0, total:0 };
+            for (const k of ['apify','haiku','sonnet','firecrawl','total']) {
+              aggregateSummary.costs[k] = (aggregateSummary.costs[k] || 0) + (doneEvent.summary.costs[k] || 0);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[Auto] combo failed:', err);
+      currentEl.textContent = `❌ ${combo.label || combo.query}: ${err.message}`;
+    }
+  }
+
+  // Final state
+  btn.disabled = false; btn.textContent = '🚀 一键自动运行';
+  if (manualBtn) manualBtn.disabled = false;
+  _allLeads = aggregateResults;
+  if (lastSearchId) {
+    _currentSearchId = lastSearchId;
+    localStorage.setItem('leadgen_searchId', lastSearchId);
+  }
+  renderResults(_allLeads);
+
+  if (aggregateSummary) {
+    const s = aggregateSummary;
+    const c = s.costs || {};
+    summaryEl.innerHTML = `✅ 完成 · 抓取 ${s.scraped} · Haiku 推荐 ${s.haikuRecommend} · 有邮箱 ${s.withEmail} · 合格 ${s.qualified} · 已生成 ${s.emailsGenerated} 封开发信 · Instantly 推送 ${s.pushed}/${s.pushed + s.pushFailed} · 总费用 ≈ $${(c.total || 0).toFixed(3)}`;
+  }
+
+  document.getElementById('resultsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.dispatchEvent(new Event('pipelineDone'));
 }
 
 function _updateAIFilterRow() {

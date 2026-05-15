@@ -9,7 +9,7 @@ const requireAuth = require('./middleware/auth');
 const { scrapeAustralianCompanies } = require('./services/apify');
 const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
-const { analyzeICP, generateEmails, preFilterLead } = require('./services/aiEnrich');
+const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
 const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun } = require('./services/supabase');
 
@@ -549,6 +549,329 @@ app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
 
   send({ type: 'done', results, cancelled: emailGenCancelled });
   res.end();
+});
+
+// ── Auto-mode orchestrator (one-button: Apify → Haiku → Sonnet → Emails → Push) ─
+// POST /api/auto/run — SSE
+// Body: { searchQuery, location, countryCode?, maxResults, campaignId?, companyProfile, icp? }
+//
+// Event shape: { type, phase?, status?, done?, total?, lead?, summary?, error?, ... }
+//   type='phase'    : phase transition  (status='start'|'done'|'skipped')
+//   type='progress' : per-lead step inside a phase
+//   type='error'    : non-recoverable error (preflight refused or fatal in loop)
+//   type='done'     : final summary; res.end() follows
+//
+// Re-uses every existing service-layer function verbatim. Does NOT call
+// finalizeSheets (the Sheets export currently has a latent bug — see audit).
+app.post('/api/auto/run', requireAuth, async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+  const send = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
+  const heartbeat = setInterval(() => res.write(': hb\n\n'), 5000);
+
+  try {
+    const {
+      searchQuery,
+      location,
+      countryCode = 'au',
+      maxResults: mr = 30,
+      campaignId = '',
+      companyProfile = {},
+      icp = '',
+    } = req.body;
+
+    if (!searchQuery?.trim() || !location?.trim()) {
+      send({ type: 'error', phase: 'preflight', error: '缺少搜索关键词或地区' });
+      return;
+    }
+    const maxResults = Math.min(100, Math.max(1, parseInt(mr) || 30));
+
+    console.log(`\n[Auto] ===== Auto-run start =====`);
+    console.log(`[Auto] Query: "${searchQuery}" | Location: ${location} | Max: ${maxResults} | Country: ${countryCode} | Campaign: ${campaignId || '(none)'}`);
+
+    // ── Phase 0: Active-campaign safeguard ─────────────────────────────────
+    // If user picked a campaign that's currently Active, pushing leads would
+    // start sending immediately. Refuse and ask user to pause first.
+    if (campaignId) {
+      const { getCampaignStatus } = require('./services/instantly');
+      const { status, name } = await getCampaignStatus(campaignId);
+      const isActive = status === 1 || status === 'active';
+      if (isActive) {
+        console.warn(`[Auto] Refusing — campaign "${name}" (${campaignId}) is Active`);
+        send({
+          type: 'error', phase: 'preflight',
+          error: `Campaign "${name}" 当前处于 Active 状态，推送会立刻发邮件。请先在 Instantly 中暂停 Campaign 后重试。`,
+        });
+        return;
+      }
+    }
+
+    // ── Phase 1: Apify scrape ──────────────────────────────────────────────
+    send({ type: 'phase', phase: 'apify', status: 'start' });
+    const { companies: rawCompanies, apifyCostUsd: apifyActualCost } = await scrapeAustralianCompanies(
+      searchQuery, location, maxResults,
+      { includeWebsite: true, includeEmail: true },   // auto-mode forces emails on
+      countryCode,
+    );
+
+    // Dedup against historical leads — same logic as /api/scrape-raw
+    const { placeIds, phones, emails: existingEmails, domains } = await getExistingLeadKeys();
+    const extractDomain = (url) => {
+      try { return new URL(url).hostname.replace('www.', ''); } catch { return ''; }
+    };
+    const newCompanies = rawCompanies.filter(c => {
+      if (c.placeId && placeIds.has(c.placeId)) return false;
+      const ph = c.phone?.replace(/\D/g, '');
+      if (ph && phones.has(ph)) return false;
+      if (c.email && existingEmails.has(c.email.toLowerCase())) return false;
+      const d = c.website ? extractDomain(c.website) : '';
+      if (d && domains.has(d)) return false;
+      return true;
+    });
+    const dedupSkipped = rawCompanies.length - newCompanies.length;
+    const apifyCost = apifyActualCost ?? rawCompanies.length * 0.002;
+
+    const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length });
+    send({
+      type: 'phase', phase: 'apify', status: 'done',
+      scraped: rawCompanies.length, newLeads: newCompanies.length, dedupSkipped, searchId, apifyCostUsd: apifyCost,
+    });
+
+    if (!newCompanies.length) {
+      await updateSearchRunCosts(searchId, { apifyCostUsd: apifyCost, anthropicCostUsd: 0, totalCostUsd: apifyCost, totalQualified: 0 });
+      send({
+        type: 'done', searchId,
+        summary: { scraped: rawCompanies.length, dedupSkipped, haikuRecommend: 0, withEmail: 0, qualified: 0, emailsGenerated: 0, pushed: 0, pushFailed: 0, costs: { apify: apifyCost, haiku: 0, sonnet: 0, firecrawl: 0, total: apifyCost } },
+        results: [],
+        note: dedupSkipped > 0 ? `所有 ${rawCompanies.length} 条均已在历史记录中，已跳过` : '未找到任何公司',
+      });
+      return;
+    }
+
+    // ── Phase 2: Haiku name-only pre-filter ────────────────────────────────
+    send({ type: 'phase', phase: 'haiku', status: 'start', total: newCompanies.length });
+    let haikuIn = 0, haikuOut = 0;
+    const haikuResults = new Array(newCompanies.length);
+    {
+      let idx = 0, completed = 0;
+      const worker = async () => {
+        while (idx < newCompanies.length) {
+          const i = idx++;
+          const { level, reason, usage } = await preFilterLead(newCompanies[i]);
+          haikuIn  += usage.input_tokens;
+          haikuOut += usage.output_tokens;
+          haikuResults[i] = { ...newCompanies[i], level, reason };
+          completed++;
+          send({ type: 'progress', phase: 'haiku', done: completed, total: newCompanies.length });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(5, newCompanies.length) }, () => worker()));
+    }
+    const recommended = haikuResults.filter(c => c.level !== 'skip');
+    const haikuSkipped = haikuResults.filter(c => c.level === 'skip');
+    send({ type: 'phase', phase: 'haiku', status: 'done', recommend: recommended.length, skip: haikuSkipped.length });
+
+    // ── Phase 2.5: Email-presence filter (user requirement: Sonnet only runs on leads with email) ─
+    const forSonnet  = recommended.filter(c => c.email?.trim());
+    const noEmail    = recommended.filter(c => !c.email?.trim());
+    send({
+      type: 'phase', phase: 'email-filter', status: 'done',
+      withEmail: forSonnet.length, withoutEmail: noEmail.length,
+    });
+
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!forSonnet.length) {
+      // Save Haiku results + no-email leads so user can review, then bail.
+      const persistRows = [
+        ...haikuSkipped.map(c => ({ ...c, status: 'filtered: haiku', dateAdded: today })),
+        ...noEmail.map(c     => ({ ...c, status: 'filtered: no_email', dateAdded: today })),
+      ];
+      await saveLeads(searchId, persistRows);
+      const haikuCost = (haikuIn / 1_000_000 * 0.80) + (haikuOut / 1_000_000 * 4.00);
+      await updateSearchRunCosts(searchId, { apifyCostUsd: apifyCost, anthropicCostUsd: haikuCost, totalCostUsd: apifyCost + haikuCost, totalQualified: 0 });
+      send({
+        type: 'done', searchId,
+        summary: { scraped: rawCompanies.length, dedupSkipped, haikuRecommend: recommended.length, haikuSkip: haikuSkipped.length, withEmail: 0, withoutEmail: noEmail.length, qualified: 0, emailsGenerated: 0, pushed: 0, pushFailed: 0, costs: { apify: apifyCost, haiku: haikuCost, sonnet: 0, firecrawl: 0, total: apifyCost + haikuCost } },
+        results: persistRows,
+        note: '没有可深度分析的线索（Haiku 推荐的公司都缺少邮箱）',
+      });
+      return;
+    }
+
+    // ── Phase 3: Firecrawl + Sonnet ICP analysis ───────────────────────────
+    send({ type: 'phase', phase: 'icp', status: 'start', total: forSonnet.length });
+    let sonnetIn = 0, sonnetOut = 0;
+    const icpResults = new Array(forSonnet.length);
+    {
+      let idx = 0, completed = 0;
+      const worker = async () => {
+        while (idx < forSonnet.length) {
+          const i = idx++;
+          const company = forSonnet[i];
+          try {
+            const crawled = await crawlWebsite(company.website);
+            const websiteContent = crawled.content;
+            const pageMetadata = {
+              title:         crawled.title,
+              description:   crawled.description,
+              ogTitle:       crawled.ogTitle,
+              ogDescription: crawled.ogDescription,
+            };
+            const { shouldSkip, reason, keepSignals, lowSignal, claimsLocalManufacturing } = filterCompany(websiteContent);
+            if (shouldSkip) {
+              icpResults[i] = { ...company, websiteContent, pageMetadata, status: `filtered: ${reason}`, dateAdded: today };
+            } else {
+              const enrichment = await analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing, pageMetadata);
+              sonnetIn  += enrichment.usage?.input_tokens  || 0;
+              sonnetOut += enrichment.usage?.output_tokens || 0;
+              icpResults[i] = { ...company, websiteContent, pageMetadata, keepSignals, lowSignal, claimsLocalManufacturing, ...enrichment, dateAdded: today, status: 'enriched' };
+            }
+          } catch (err) {
+            console.error(`[Auto/ICP] ${company.companyName}:`, err.message);
+            icpResults[i] = { ...company, status: 'error', dateAdded: today };
+          }
+          completed++;
+          send({ type: 'progress', phase: 'icp', done: completed, total: forSonnet.length, lead: icpResults[i] });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(3, forSonnet.length) }, () => worker()));
+    }
+    send({ type: 'phase', phase: 'icp', status: 'done' });
+
+    // ── Qualification gate ─────────────────────────────────────────────────
+    const qualified = icpResults.filter(r =>
+      !r.status?.startsWith('filtered') && !r.status?.startsWith('error') &&
+      Number(r.icpScore || 0) >= 5 && Number(r.intentScore || 0) >= 5
+    );
+    send({ type: 'phase', phase: 'qualify', status: 'done', qualified: qualified.length });
+
+    // ── Phase 4: Peter Kang email generation ───────────────────────────────
+    const templateKey  = templateKeyFromQuery(searchQuery);
+    const frameworkKey = 'peter_kang_3part';
+    let emailsGenerated = 0;
+    if (qualified.length) {
+      send({ type: 'phase', phase: 'emails', status: 'start', total: qualified.length, templateKey, frameworkKey });
+      let idx = 0, completed = 0;
+      const worker = async () => {
+        while (idx < qualified.length) {
+          const i = idx++;
+          const company = qualified[i];
+          try {
+            const emails = await generateEmails(company, templateKey, company.websiteContent || '', frameworkKey, null, companyProfile);
+            sonnetIn  += emails.usage?.input_tokens  || 0;
+            sonnetOut += emails.usage?.output_tokens || 0;
+            Object.assign(company, emails, { emailTemplateKey: frameworkKey });
+            if (company.EMAIL_1_SUBJECT || company.EMAIL_1_BODY) emailsGenerated++;
+            updateLeadEmails(searchId, company.companyName, emails, frameworkKey, templateKey)
+              .catch(e => console.warn(`[Auto/Emails] DB persist failed for "${company.companyName}":`, e.message));
+          } catch (err) {
+            console.error(`[Auto/Emails] ${company.companyName}:`, err.message);
+          }
+          completed++;
+          send({ type: 'progress', phase: 'emails', done: completed, total: qualified.length, lead: company });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(2, qualified.length) }, () => worker()));
+      send({ type: 'phase', phase: 'emails', status: 'done', generated: emailsGenerated });
+    } else {
+      send({ type: 'phase', phase: 'emails', status: 'skipped', reason: 'No qualified leads' });
+    }
+
+    // ── Persist all leads to Supabase (single batch insert) ────────────────
+    // Includes ICP-analyzed results (with or without emails) + Haiku-skipped
+    // + no-email leads, each with an appropriate status so the user can see
+    // the full funnel in the history view.
+    const allLeads = [
+      ...icpResults,
+      ...haikuSkipped.map(c => ({ ...c, status: 'filtered: haiku', dateAdded: today })),
+      ...noEmail.map(c     => ({ ...c, status: 'filtered: no_email', dateAdded: today })),
+    ];
+    try {
+      const saved = await saveLeads(searchId, allLeads);
+      if (saved?.length) {
+        const idMap = new Map(saved.map(l => [l.company_name, l.id]));
+        allLeads.forEach(r => { if (r.companyName) r.dbId = idMap.get(r.companyName) || null; });
+      }
+    } catch (e) {
+      console.warn(`[Auto] saveLeads failed: ${e.message}`);
+    }
+
+    // ── Phase 5: Push qualified-with-emails leads to Instantly ─────────────
+    let pushed = 0, pushFailed = 0;
+    const pushable = qualified.filter(q => (q.EMAIL_1_SUBJECT || q.EMAIL_1_BODY) && q.email?.trim());
+    if (campaignId && pushable.length) {
+      const { addLeadToCampaign } = require('./services/instantly');
+      send({ type: 'phase', phase: 'push', status: 'start', total: pushable.length });
+      for (let i = 0; i < pushable.length; i++) {
+        const lead = pushable[i];
+        try {
+          const result = await addLeadToCampaign(lead, campaignId);
+          if (result.success) pushed++;
+          else { pushFailed++; console.warn(`[Auto/Push] ${lead.companyName}: ${result.reason}`); }
+        } catch (err) {
+          pushFailed++;
+          console.error(`[Auto/Push] ${lead.companyName}:`, err.message);
+        }
+        send({ type: 'progress', phase: 'push', done: i + 1, total: pushable.length, companyName: lead.companyName });
+        await new Promise(r => setTimeout(r, 350));
+      }
+      send({ type: 'phase', phase: 'push', status: 'done', pushed, pushFailed });
+    } else if (!campaignId) {
+      send({ type: 'phase', phase: 'push', status: 'skipped', reason: '未选择 Campaign，推送步骤已跳过' });
+    } else {
+      send({ type: 'phase', phase: 'push', status: 'skipped', reason: '没有合格且有邮件内容的线索' });
+    }
+
+    // ── Final cost roll-up ─────────────────────────────────────────────────
+    const sonnetCost    = (sonnetIn / 1_000_000 * 3) + (sonnetOut / 1_000_000 * 15);
+    const haikuCost     = (haikuIn  / 1_000_000 * 0.80) + (haikuOut / 1_000_000 * 4.00);
+    const firecrawlCost = forSonnet.length * 0.003;
+    const anthropicCost = sonnetCost + haikuCost;
+    const totalCost     = apifyCost + anthropicCost + firecrawlCost;
+
+    await updateSearchRunCosts(searchId, {
+      apifyCostUsd:     apifyCost,
+      anthropicCostUsd: anthropicCost,
+      totalCostUsd:     totalCost,
+      totalQualified:   qualified.length,
+    });
+
+    console.log(`[Auto] ===== Auto-run done =====`);
+    console.log(`[Auto] Scraped=${rawCompanies.length} new=${newCompanies.length} haikuRec=${recommended.length} withEmail=${forSonnet.length} qualified=${qualified.length} emails=${emailsGenerated} pushed=${pushed}/${pushable.length}`);
+    console.log(`[Auto] Cost: apify=$${apifyCost.toFixed(4)} haiku=$${haikuCost.toFixed(4)} sonnet=$${sonnetCost.toFixed(4)} firecrawl=$${firecrawlCost.toFixed(4)} total=$${totalCost.toFixed(4)}`);
+
+    send({
+      type: 'done',
+      searchId,
+      summary: {
+        scraped:         rawCompanies.length,
+        dedupSkipped,
+        haikuRecommend:  recommended.length,
+        haikuSkip:       haikuSkipped.length,
+        withEmail:       forSonnet.length,
+        withoutEmail:    noEmail.length,
+        icpAnalyzed:     forSonnet.length,
+        qualified:       qualified.length,
+        emailsGenerated,
+        pushed,
+        pushFailed,
+        pushSkipped:     !campaignId,
+        templateKey,
+        frameworkKey,
+        costs: { apify: apifyCost, haiku: haikuCost, sonnet: sonnetCost, firecrawl: firecrawlCost, total: totalCost },
+      },
+      results: allLeads,
+    });
+  } catch (err) {
+    console.error('[Auto] FATAL:', err.message, err.stack);
+    send({ type: 'error', phase: 'fatal', error: err.message });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
 });
 
 // ── Search history ────────────────────────────────────────────────────────────
