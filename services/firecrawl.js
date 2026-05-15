@@ -55,8 +55,34 @@ async function crawlWebsite(url) {
   }
 }
 
-// Keywords that signal the company MAKES products locally — not a buyer for Chinese materials
-const SKIP_KEYWORDS = [
+// HARD-SKIP keywords — unambiguous competitor / category-manufacturer signals.
+// Any single match short-circuits the lead before Sonnet scoring.
+//
+// Why so narrow: in the AU market the MAJORITY of companies branding themselves
+// "Australian Made" / "we manufacture" are actually OEM importers (Chinese
+// factory partners) or light-assembly operations rebranding imported product.
+// Skipping on those phrases throws away real Lens prospects. Only signals that
+// strongly indicate a genuine, self-owned production operation belong here.
+const HARD_SKIP_KEYWORDS = [
+  // Category-specific competitor signals: the company self-identifies as a
+  // building-materials manufacturer in a competing product category.
+  'tile manufacturer', 'flooring manufacturer', 'stone manufacturer',
+  'ceramic manufacturer', 'building materials manufacturer',
+  'window manufacturer', 'door manufacturer', 'aluminium manufacturer',
+  'cabinet manufacturer', 'cabinetry manufacturer', 'joinery manufacturer',
+  // Specific machinery / process descriptions — only a real factory has these.
+  'our extrusion line', 'our anodizing plant', 'our anodising plant',
+  'our powder coating line', 'our cnc workshop', 'our welding line',
+  'our spray booth', 'our injection moulding',
+];
+
+// SOFT local-manufacturing signals — phrases that COULD mean self-manufacture
+// but in the AU market more often indicate marketing positioning by an OEM
+// importer. Do NOT hard-skip on these. Surface to Sonnet via
+// claimsLocalManufacturing flag so it can read the rest of the website for
+// context (factory tour photos? named production team? capacity numbers?
+// → real competitor. Catalog-style sales site? → importer-reseller, valid target.)
+const SOFT_LOCAL_MFG_KEYWORDS = [
   // Australia
   'australian made', 'made in australia', 'locally made', 'locally manufactured',
   'local manufacturer', 'australian manufacturer', 'manufactured in australia',
@@ -65,12 +91,9 @@ const SKIP_KEYWORDS = [
   'made in usa', 'made in america', 'american made', 'us manufacturer',
   // UK
   'made in britain', 'made in the uk', 'british made', 'uk manufacturer',
-  // Generic self-manufacturer signals
+  // Generic self-manufacturer phrases — high false-positive rate in AU market.
   'we manufacture', 'our factory', 'our manufacturing facility',
   'we produce', 'our production line', 'manufactured by us',
-  // Competitor signals — they ARE the building materials producer
-  'tile manufacturer', 'flooring manufacturer', 'stone manufacturer',
-  'ceramic manufacturer', 'building materials manufacturer',
 ];
 
 // Keywords that signal the company BUYS or distributes products — ideal prospects.
@@ -99,42 +122,61 @@ const AMBIGUOUS_KEYWORDS = new Set([
 ]);
 
 // Analyse crawled content to decide whether to include this company in the pipeline.
-// Returns { shouldSkip, reason, keepSignals, lowSignal }
+// Returns { shouldSkip, reason, keepSignals, lowSignal, claimsLocalManufacturing }
 function filterCompany(websiteContent) {
   if (!websiteContent || websiteContent.trim() === '') {
-    return { shouldSkip: false, reason: 'No website content to filter on', keepSignals: [], lowSignal: true };
+    return {
+      shouldSkip: false,
+      reason: 'No website content to filter on',
+      keepSignals: [],
+      lowSignal: true,
+      claimsLocalManufacturing: false,
+    };
   }
 
   const lower = websiteContent.toLowerCase();
 
-  // SKIP check — any single match is enough to exclude.
-  // Ambiguous phrases require a word-boundary on both sides to avoid false positives
-  // (e.g. "our factory-direct pricing" should NOT trigger the manufacturer filter).
-  for (const kw of SKIP_KEYWORDS) {
-    let matched;
+  const matchKeyword = (kw) => {
     if (AMBIGUOUS_KEYWORDS.has(kw)) {
       const re = new RegExp(`(^|[\\s.,!?;:\\-\\(])${kw.replace(/\s+/g, '\\s+')}([\\s.,!?;:\\-\\)]|$)`, 'i');
-      matched = re.test(lower);
-    } else {
-      matched = lower.includes(kw);
+      return re.test(lower);
     }
-    if (matched) {
-      console.log(`[Filter] SKIP — found "${kw}"`);
-      return { shouldSkip: true, reason: `manufacturer signal: "${kw}"`, keepSignals: [], lowSignal: false };
+    return lower.includes(kw);
+  };
+
+  // HARD SKIP — only unambiguous competitor / explicit machinery signals.
+  // Any single match short-circuits the lead.
+  for (const kw of HARD_SKIP_KEYWORDS) {
+    if (matchKeyword(kw)) {
+      console.log(`[Filter] HARD-SKIP — found "${kw}"`);
+      return {
+        shouldSkip: true,
+        reason: `manufacturer signal: "${kw}"`,
+        keepSignals: [],
+        lowSignal: false,
+        claimsLocalManufacturing: false,
+      };
     }
   }
 
-  // KEEP check — collect all buyer signals found
+  // SOFT local-mfg check — keep the lead, flag for Sonnet to evaluate context.
+  const softMatches = SOFT_LOCAL_MFG_KEYWORDS.filter(matchKeyword);
+  const claimsLocalManufacturing = softMatches.length > 0;
+
+  // KEEP check — collect buyer signals
   const keepSignals = KEEP_KEYWORDS.filter(kw => lower.includes(kw));
   const lowSignal = keepSignals.length === 0;
 
+  if (claimsLocalManufacturing) {
+    console.log(`[Filter] SOFT local-mfg signal — keeping for AI: ${softMatches.join(', ')}`);
+  }
   if (!lowSignal) {
     console.log(`[Filter] KEEP — buyer signals: ${keepSignals.join(', ')}`);
-  } else {
+  } else if (!claimsLocalManufacturing) {
     console.log('[Filter] LOW-SIGNAL — no buyer keywords found; keeping but flagging for AI');
   }
 
-  return { shouldSkip: false, reason: null, keepSignals, lowSignal };
+  return { shouldSkip: false, reason: null, keepSignals, lowSignal, claimsLocalManufacturing };
 }
 
 module.exports = { crawlWebsite, filterCompany };

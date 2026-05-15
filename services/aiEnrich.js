@@ -39,7 +39,7 @@ Your job:
 
 Always respond with valid JSON only — no markdown code fences, no explanation outside the JSON.`;
 
-async function analyzeICP(company, websiteContent, companyProfile = {}, icp = '', keepSignals = [], lowSignal = false) {
+async function analyzeICP(company, websiteContent, companyProfile = {}, icp = '', keepSignals = [], lowSignal = false, claimsLocalManufacturing = false) {
   console.log(`[AI] Analyzing ICP: ${company.companyName}`);
 
   const sellerName = companyProfile.sellerName || 'our company';
@@ -75,6 +75,24 @@ ${lowSignal
   ? 'NOTE: No buyer/distributor keywords were detected on this company\'s website. Apply a penalty of up to 1 point, only if the website\'s visual / branding evidence is also weak; do not penalize photo-driven sites with strong project portfolios.'
   : `Buyer signals detected on website: ${keepSignals.join(', ')}
 Use these signals as supporting evidence when scoring intentScore and icpScore.`}
+${claimsLocalManufacturing
+  ? `
+=== LOCAL-MANUFACTURING CLAIM (read carefully) ===
+This company's website contains phrases like "Australian Made", "we manufacture", "our factory", or "locally manufactured". DO NOT treat this as automatic disqualification.
+
+In the AU building-materials market, the large majority of companies marketing themselves as "Australian Made" or "we manufacture" are actually:
+  (a) OEM importers with Chinese factory partners (importing finished goods, rebranding)
+  (b) Light-assembly operations (importing components from China, assembling locally)
+  (c) Marketing-positioning only (importing 100%, labeling as "Australian Made")
+
+These are NOT competitors — they are sophisticated buyers who already understand factory sourcing and could be HIGH-value Lens prospects.
+
+Differentiate using the rest of the website content:
+- REAL COMPETITOR (score 1-3 on intent, 1-3 on icp): site has factory tour photos, named in-house production team page, specific machinery descriptions (extrusion, anodizing, powder-coat lines), stated factory area in m² with AU location, multi-decade in-house production history
+- MARKETING-ONLY / IMPORTER (score normally, often 6-9): site reads as catalog + sales, no factory imagery, talks about "designed in Australia" rather than "manufactured", no production-team mentions, no machinery detail. This is a valid Lens target.
+
+When evidence is mixed or unclear, lean toward IMPORTER (the more common case) and score on the intent/ICP merits of the rest of the site. Mention this distinction explicitly in intentReasoning.`
+  : ''}
 
 === PROSPECT ===
 Name: ${company.companyName}
