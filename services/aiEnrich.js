@@ -11,10 +11,10 @@ identify overseas prospects most likely to (1) place serious imported building m
 Target prospect types (in order of factory-visit propensity, highest first):
 - Distributors / wholesalers / importers — they typically already make China sourcing trips
 - Interior designers / bespoke home builders / custom home builders — high-end custom projects need verified suppliers; designers travel for sourcing
-- Building supply / kitchen / bathroom showrooms with import experience
+- Building supply / kitchen / bathroom showrooms
 - Mid-size contractors with multi-project pipelines (lower priority but not zero)
 
-Excluded: small renovation handymen, single-room renovators, individual home buyers, real estate agents, unrelated industries.
+Excluded: small renovation handymen, single-room renovators, individual home buyers, real estate agents, unrelated industries; volume builders (House & Land packages, display home networks, catalog-style pre-designed plans, per-unit price under $1M AUD); national-chain home builders; project home companies.
 
 Your job:
 1. Score the prospect's buying intent based on their website content
@@ -55,7 +55,7 @@ ${icpSection}
 
 === BUYER SIGNAL ANALYSIS ===
 ${lowSignal
-  ? 'WARNING: No buyer/distributor keywords were detected on this company\'s website. This is a LOW-SIGNAL lead. Apply a penalty of 1-2 points to both intentScore and icpScore unless the website content clearly contradicts this assessment.'
+  ? 'NOTE: No buyer/distributor keywords were detected on this company\'s website. Apply a penalty of up to 1 point, only if the website\'s visual / branding evidence is also weak; do not penalize photo-driven sites with strong project portfolios.'
   : `Buyer signals detected on website: ${keepSignals.join(', ')}
 Use these signals as supporting evidence when scoring intentScore and icpScore.`}
 
@@ -379,7 +379,13 @@ Google评分:${company.googleRating}(${company.reviewCount}条评价)
 "Joe's Painting Services" → 单一服务、不采购建材
 
 【skip 规则要点】
-任何名字含 "Renovations / Renos / Reno / Repairs / Handyman / Plumbing / Electrician / Maintenance" 关键词的——一律 skip。
+名字含 "Repairs / Handyman / Plumbing / Electrician / Maintenance" 关键词——一律 skip（这些是手艺人/维修工，不采购建材）。
+名字含 "Renovations / Renos / Reno" 但 **不包含** 规模词（Group / Pty Ltd / Construction / Custom / Luxury / Premier / Bespoke / Homes）——skip（纯翻新施工队）。
+名字含 "Renovations / Renos / Reno" **且**包含上述规模词之一——recommend（可能是高端翻新公司，让 Sonnet 评分）。例：
+  ✅ "Melbourne Luxury Renovations Group" → recommend（含 Luxury + Group）
+  ✅ "Premier Renovations Pty Ltd" → recommend（含 Premier + Pty Ltd）
+  ❌ "Bathroom Renovations Sydney" → skip（无规模词）
+  ❌ "Mike's Renovations" → skip（个体手艺人）
 任何名字含餐饮/美容/医疗/汽车/服装/酒店/超市/咨询/会计/法律/教育/金融/园艺/泳池/清洁/太阳能等非建材主业的——skip。
 评论数 ≤ 1 且无官网的——skip。
 
