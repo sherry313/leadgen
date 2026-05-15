@@ -3,11 +3,34 @@ const axios = require('axios');
 
 const BASE = 'https://api.instantly.ai/api/v2';
 
+// Default 5-step cadence: Day 1 / Day 4 / Day 7 / Day 10 / Day 14
+const DEFAULT_DELAYS = [0, 3, 3, 3, 4];
+const PLACEHOLDER_SEQUENCE = [{ steps: DEFAULT_DELAYS.map((delay, i) => ({
+  type: 'email', delay,
+  variants: [{ subject: `{{email_${i + 1}_subject}}`, body: `{{email_${i + 1}_body}}` }],
+}))}];
+
 function authHeaders() {
   return {
     'Authorization': `Bearer ${process.env.INSTANTLY_API_KEY}`,
     'Content-Type': 'application/json',
   };
+}
+
+// Install the 5-step {{email_N_*}} placeholder sequence on a campaign — only if
+// its sequence is truly empty. Once a user (or another call) has populated steps,
+// this is a no-op so we never clobber manual edits in the Instantly UI.
+async function ensureSequenceInstalled(campaignId) {
+  try {
+    const r = await axios.get(`${BASE}/campaigns/${campaignId}`, { headers: authHeaders() });
+    const isEmpty = !r.data?.sequences?.[0]?.steps?.length;
+    if (!isEmpty) return;
+    await axios.patch(`${BASE}/campaigns/${campaignId}`, { sequences: PLACEHOLDER_SEQUENCE }, { headers: authHeaders() });
+    console.log(`[Instantly] Placeholder sequence installed on campaign ${campaignId}`);
+  } catch (err) {
+    const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+    console.warn(`[Instantly] ensureSequenceInstalled failed for ${campaignId}: ${detail}`);
+  }
 }
 
 const GENERIC_PREFIXES = new Set([
@@ -32,6 +55,7 @@ async function createCampaign(name = '智拓客-开发信') {
   );
   const id = res.data?.id;
   console.log(`[Instantly] Created campaign "${name}" → ${id}`);
+  if (id) await ensureSequenceInstalled(id);
   return id;
 }
 
@@ -46,6 +70,8 @@ async function addLeadToCampaign(lead, campaignIdOverride = null) {
     console.warn(`[Instantly] No email for "${lead.companyName}". Skipping.`);
     return { success: false, reason: 'No email address' };
   }
+
+  await ensureSequenceInstalled(campaignId);
 
   const firstName = extractFirstName(lead.email, lead.companyName);
   console.log(`[Instantly] Adding lead to campaign: ${lead.email} (${lead.companyName}) → first_name="${firstName}"`);
@@ -125,4 +151,4 @@ async function queueEmail({ toEmail, companyName, subject, body, emailNumber = 1
   }
 }
 
-module.exports = { addLeadToCampaign, createCampaign, queueEmail };
+module.exports = { addLeadToCampaign, createCampaign, queueEmail, ensureSequenceInstalled };

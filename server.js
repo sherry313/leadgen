@@ -763,6 +763,11 @@ app.post('/api/instantly/campaigns', requireAuth, async (req, res) => {
       { name: name.trim(), email_list: emailAccount ? [emailAccount] : [] },
       { headers: instantlyHeaders() }
     );
+    const newId = r.data?.id;
+    if (newId) {
+      const { ensureSequenceInstalled } = require('./services/instantly');
+      await ensureSequenceInstalled(newId);
+    }
     res.json({ success: true, campaign: r.data });
   } catch (err) {
     res.status(500).json({ success: false, error: err.response?.data || err.message });
