@@ -133,6 +133,13 @@ Return only valid JSON. No markdown, no extra text.`;
   let rawText = '';
   let totalIn = 0, totalOut = 0;
   const strip = s => s.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+
+  // Trace exactly what reaches Sonnet — length of website content,
+  // title from page metadata, and the head of the prompt. Lets us confirm
+  // the Firecrawl-→-Sonnet chain on every call rather than guessing from
+  // canned fallback text.
+  console.log(`[analyzeICP] Sending to Sonnet — websiteContent length: ${(websiteContent || '').length} | pageTitle="${(pageMetadata.title || '').slice(0, 80)}" | userPrompt chars: ${userPrompt.length}`);
+
   try {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
@@ -178,8 +185,15 @@ Return only valid JSON. No markdown, no extra text.`;
       usage: { input_tokens: totalIn, output_tokens: totalOut },
     };
   } catch (err) {
-    console.error(`[AI] ICP analysis FAILED for ${company.companyName}: ${err.message}`);
-    if (rawText) console.error(`[AI] Raw (first 300): ${rawText.slice(0, 300)}`);
+    // Surface enough detail to distinguish auth vs rate-limit vs network vs
+    // parse-retry failures. The Anthropic SDK exposes .status / .name on its
+    // error objects; printing the stack head catches anything else.
+    console.error(
+      `[AI] ICP analysis FAILED for ${company.companyName}: ` +
+      `name=${err.name || 'Error'} status=${err.status ?? 'n/a'} message="${err.message}"`
+    );
+    if (err.stack) console.error(`[AI] Stack (head): ${err.stack.split('\n').slice(0, 4).join(' | ')}`);
+    if (rawText)   console.error(`[AI] Raw (first 300): ${rawText.slice(0, 300)}`);
     return {
       intentScore: 3, intentReasoning: '官网信息不完整，难以判断采购意向',
       icpScore:    3, icpReasoning:    '官网内容不足，不能充分评估匹配度',
