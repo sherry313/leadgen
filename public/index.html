@@ -1709,35 +1709,48 @@
   <!-- Step 3: Scrape -->
   <div class="wizard-panel hidden" id="wizard-step-3">
     <div class="panel-title">第三步：抓取原始数据</div>
-    <div class="panel-sub">先查看所有原始公司数据，再决定是否使用 AI 预筛选</div>
+    <div class="panel-sub">选择手动模式逐步筛选，或一键自动模式完成整个流程</div>
 
     <div id="runSummary" style="margin-bottom:18px"></div>
 
     <div id="statusBar"></div>
 
-    <button class="btn-start" id="btnStart" onclick="startScrapeRaw()">🔍 开始抓取</button>
+    <!-- ── Mode chooser: manual (left) vs auto (right) ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px">
 
-    <!-- ── Auto-mode: one-button pipeline (Apify → Haiku → Sonnet → Emails → Push) ── -->
-    <div id="autoModeCard" style="margin-top:20px;padding:18px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.4);border-radius:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-        <div>
-          <div style="font-size:1.05rem;font-weight:600;color:#c4b5fd">🚀 一键自动模式</div>
-          <div style="font-size:0.82rem;color:#a78bfa;margin-top:2px">抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 推送至 Instantly</div>
+      <!-- Manual mode card -->
+      <div id="manualModeCard" style="padding:18px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.35);border-radius:12px;display:flex;flex-direction:column">
+        <div style="margin-bottom:12px">
+          <div style="font-size:1.05rem;font-weight:600;color:#93c5fd">🔍 手动模式</div>
+          <div style="font-size:0.82rem;color:#60a5fa;margin-top:2px">抓取原始数据 → 自行筛选 → 选择条目深度分析</div>
+        </div>
+        <div style="flex:1"></div>
+        <button class="btn-start" id="btnStart" onclick="startScrapeRaw()">🔍 开始抓取</button>
+      </div>
+
+      <!-- Auto-mode: one-button pipeline (Apify → Haiku → Sonnet → Emails → Push) -->
+      <div id="autoModeCard" style="padding:18px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.4);border-radius:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+          <div>
+            <div style="font-size:1.05rem;font-weight:600;color:#c4b5fd">🚀 一键自动模式</div>
+            <div style="font-size:0.82rem;color:#a78bfa;margin-top:2px">抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 推送至 Instantly</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <label style="font-size:0.85rem;color:#cbd5e1">Instantly Campaign：</label>
+          <select id="autoCampaignSelect" style="padding:6px 10px;background:rgba(15,23,42,0.6);border:1px solid rgba(148,163,184,0.3);border-radius:6px;color:#e2e8f0;font-size:0.85rem;min-width:240px">
+            <option value="">（不推送 — 仅生成线索与邮件）</option>
+          </select>
+          <span id="autoCampaignHint" style="font-size:0.78rem;color:#94a3b8"></span>
+        </div>
+        <button class="btn-start" id="btnAutoRun" onclick="startAutoRun()" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">🚀 一键自动运行</button>
+        <div id="autoProgress" style="display:none;margin-top:16px;padding:14px;background:rgba(15,23,42,0.5);border-radius:8px;font-size:0.85rem;line-height:1.7">
+          <div id="autoPhases" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+          <div id="autoCurrent" style="color:#cbd5e1"></div>
+          <div id="autoSummary" style="margin-top:10px;color:#86efac;font-weight:500"></div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-        <label style="font-size:0.85rem;color:#cbd5e1">Instantly Campaign：</label>
-        <select id="autoCampaignSelect" style="padding:6px 10px;background:rgba(15,23,42,0.6);border:1px solid rgba(148,163,184,0.3);border-radius:6px;color:#e2e8f0;font-size:0.85rem;min-width:240px">
-          <option value="">（不推送 — 仅生成线索与邮件）</option>
-        </select>
-        <span id="autoCampaignHint" style="font-size:0.78rem;color:#94a3b8"></span>
-      </div>
-      <button class="btn-start" id="btnAutoRun" onclick="startAutoRun()" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">🚀 一键自动运行</button>
-      <div id="autoProgress" style="display:none;margin-top:16px;padding:14px;background:rgba(15,23,42,0.5);border-radius:8px;font-size:0.85rem;line-height:1.7">
-        <div id="autoPhases" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
-        <div id="autoCurrent" style="color:#cbd5e1"></div>
-        <div id="autoSummary" style="margin-top:10px;color:#86efac;font-weight:500"></div>
-      </div>
+
     </div>
 
     <div class="panel-nav" style="margin-top:14px">
@@ -3479,6 +3492,7 @@ async function startAutoRun() {
 
   document.getElementById('resultsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   window.dispatchEvent(new Event('pipelineDone'));
+  document.getElementById('analysisCompletePanel').style.display = 'none';
 }
 
 function _updateAIFilterRow() {
