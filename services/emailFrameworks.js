@@ -13,129 +13,118 @@ module.exports = {
     ],
     best_for: '高价值 B2B 客户、邀请来工厂参观、100 字精准触达',
     icon: '🎯',
-    sample_subject: 'factory visit in foshan',
-    sample_email_body: `Peter Kang 3-Part Framework example:
+    sample_subject: 'before your next custom build',
+    sample_email_body: `Peter Kang v2 customer-angle example (Email 1):
 
-Subject: factory visit in foshan (no commitment)
+Subject: quick thought on your supplier risk
 
-Hi team,
+Hi James,
 
-i saw [Company Name]'s recent [specific project] in [suburb] — the [specific detail] caught my eye.
+Saw [Company]'s recent Hawthorn custom home — the curved aluminium facade caught my eye.
 
-we run a 300,000m² factory in foshan making aluminium windows, custom cabinetry, and bathroom fixtures. a canadian distributor's been with us 3 years, $1-2M USD annually. last quarter alone: 6 containers, windows + bathroom + cabinetry, one shipment.
+if your aluminium supplier ghosts mid-build, how many days does your client wait?
 
-if you'd ever want to verify a chinese factory before placing an order, reply "video" and i'll send our 5-min walkthrough. no calls, no pitch.
+Lens is a 300,000m² aluminium factory in Foshan, 20 years. Currently working with a Sydney designer on a residential project.
 
-Lucy Yang, Lens Foshan
+Worth a half-day next time you're in China? No sales, no commitment — just one more option in your back pocket.
+
+Lili
 
 ---
-Part 1 = Personalization (specific project + suburb detail — shows you looked them up)
-Part 2 = Identity (factory size + product mix + named social proof with real numbers)
-Part 3 = Offer (low-friction reply hook — factory visit goal, not a sales call)`,
-    sequence_prompt: `Write a cold email using Peter Kang's 3-part framework. Each email is 80-120 words. Casual tone, lowercase preferred. NO "Dear" / "Hope this finds you well" / formal openings.
+~60 words. Lowercase-first subject with proper-noun caps. Customer-angle pain question, low-friction CTA, "Lili" sign-off only — no "— Lens".`,
+    sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
+- Body length: 45-70 words per email (NOT "under 100")
+- Sign-off: the single word "Lili" on its own line. Do NOT append "— [seller name]". Do NOT write "— Lili" or "Lili, Lens". Just "Lili".
+- Subject length: 5-8 words
+- Subject case: first letter LOWERCASE, common words lowercase. ONLY capitalise proper nouns (China, Foshan, Sydney, Guangdong, country/city/brand names). Numbers as-is.
+- Never Title Case. Never ALL CAPS. Never capitalise the first letter of the subject as a default.
 
-GOAL OF ENTIRE SEQUENCE:
-All 5 emails invite the prospect to visit Lens's 300,000m² factory in Foshan for a half-day. Each email gives a different REASON why visiting is useful to them. The factory visit is the only conversion event — no other CTAs (no "watch video", no "send pricing", no "send case study").
+STYLE: short, customer-angle "for you" — not "buy from us".
 
-=== PART 1 — PERSONALIZATION (1-2 sentences, ~20 words) ===
-Reference something specific from the prospect's website — a project name, suburb they work in, style positioning, or recent post.
+FACTS YOU MAY USE (do not invent others):
+- Lens: 300,000m² aluminium factory in Foshan, 20 years experience
+- Currently working with a Sydney designer on a residential project (no name given, no specifics beyond "residential")
+- Do NOT say "Canadian distributor" / "$1-2M USD" / "23 builders" / cost-savings % / AU warehouse / "zero delays guarantee"
 
-CRITICAL RULE — DO NOT ASSUME THE PROSPECT'S PROFESSION OR BUSINESS CATEGORY:
-The lead pipeline may misclassify designers vs builders vs contractors vs distributors. NEVER write phrases like:
-- "as an interior designer..."
-- "for builders like you..."
-- "designers at [Company]..."
-- "[Company] is a custom builder..."
+NEVER:
+- Fabricate website details. If the website scrape is empty, the Email 1 hook line becomes exactly: "Saw [Company] — quick thought." The Email 1 subject still follows the curiosity-gap style (e.g. "quick thought on your supplier risk") — do NOT use "Saw X" as the subject.
+- Mention specific customer names (no MADOYE, no real Sydney designer name).
+- Use "I run sales at..." / "I'm with...".
+- Assume profession ("as a designer", "for builders like you") — reference WORK, not category.
 
-Reference the prospect's WORK (visible from their site), not their CATEGORY (which may be wrong):
-- WRONG: "As an interior designer working in Melbourne..." → RIGHT: "Your custom homes in Hawthorn and Kew..."
-- WRONG: "Builders like [Company] often source..." → RIGHT: "[Company]'s portfolio of bespoke residential projects suggests..."
+=== EMAIL 1 (Day 1) — personalised hook (THE ONLY FULLY PERSONALISED EMAIL) ===
+Greeting: "Hi [first_name]," — derive first_name from the prospect's email (e.g. james@... → "James"). If no first name can be derived, use "Hi [company] team,".
+Body structure (45-70 words total):
+  1. One sentence hook referencing something SPECIFIC from their website (a project, suburb, style detail). If website scrape is empty: "Saw [Company] — quick thought."
+  2. Pain question: "if your aluminium supplier ghosts mid-[project type], how many days does your client wait?" — adapt [project type] to their work (mid-build, mid-fit-out, mid-install, mid-renovation).
+  3. Credentials line, verbatim: "Lens is a 300,000m² aluminium factory in Foshan, 20 years. Currently working with a Sydney designer on a residential project."
+  4. CTA, verbatim: "Worth a half-day next time you're in China? No sales, no commitment — just one more option in your back pocket."
+Sign-off: Lili
+Subject: curiosity-gap, lowercase-first, 5-8 words. Examples: "quick thought on your supplier risk", "before your next custom build", "when your supplier ghosts".
 
-The prospect should feel "they looked at my actual work" — not "they assumed wrong who I am."
+=== EMAIL 2 (Day 3) — audit-supplier insight ===
+FIXED TEMPLATE. Output the subject and body BELOW VERBATIM. ONLY swap [Name] (use the same first_name as Email 1, or "[company] team" if unknown). Do not rephrase, do not add sentences, do not change the subject.
+Subject: before you sign your next supplier
+Body:
+Hi [Name],
+Quick follow-up.
+Most builders we talk to only audit their China supplier once — at the start. Then they hope for the best.
+One thing that helps: a factory video before any order. If you want, I can send ours — no commitment, just for your file.
+Lili
 
-=== PART 2 — IDENTITY (1-2 sentences, ~25 words) ===
-Establish Lens with VERIFIED facts only:
-- 300,000m² factory in Foshan, Guangdong
-- 20 years production experience
-- Products: aluminium windows, doors, bathroom fixtures, custom cabinetry
-- Currently shipping an order to a Sydney interior designer (in progress)
-- An overseas distributor scaled to $1-2M USD annually with us over 3 years (after visiting the factory in person)
+=== EMAIL 3 (Day 5) — value ===
+FIXED TEMPLATE. Output the subject and body BELOW VERBATIM. ONLY swap [Name]. Do not rephrase.
+Subject: 3 things to ask any China supplier
+Body:
+Hi [Name],
+If you ever evaluate a new China supplier (us or anyone else), 3 questions that cut through the BS:
+1. "Can you send me a video of the production line you're proposing?"
+2. "What's your lead time if something needs to be redone?"
+3. "Who's the actual factory owner — and can I email them directly?"
+Most won't answer #3.
+If you want, I can send our answers to all 3 — no commitment, just for your file.
+Lili
 
-DO NOT invent details. DO NOT mention "Canadian" / "Canada" — say "overseas distributor" only.
+=== EMAIL 4 (Day 7) — factory visit invite ===
+FIXED TEMPLATE. Output the subject and body BELOW VERBATIM. ONLY swap [Name]. Do not rephrase.
+Subject: in case you're sourcing in China
+Body:
+Hi [Name],
+If you ever come to China for sourcing (most builders we work with do 1-2 trips a year), and you're in Guangdong — we cover airport pickup, all meals, factory tour, QC lab walkthrough.
+You cover flight + hotel.
+No contract. No pitch deck. Most builders stay 1-2 nights, see 4-5 factories, ours included.
+If your trip is on the horizon, reply with the month and we'll figure it out.
+Lili
 
-=== PART 3 — OFFER (3-5 sentences, ~50 words) ===
-The CORE of the email. Invite the prospect to visit the Foshan factory. Each email should include some of these concrete details:
+=== EMAIL 5 (Day 10) — breakup ===
+FIXED TEMPLATE. Output the subject and body BELOW VERBATIM. ONLY swap [Name] and [Company]. Do not rephrase.
+Subject: closing your file
+Body:
+Hi [Name],
+I've emailed 4 times — no reply. All good.
+Closing your file today. If your current supplier ever falls over, my email stays open.
+One last thing — is there someone else at [Company] who handles aluminium/cabinetry sourcing I should know about?
+Lili
 
-WHAT THE VISIT INCLUDES (rotate which details you mention):
-- Guangzhou airport pickup (or high-speed rail station)
-- Half-day visit (4 hours total)
-- Tour 300,000m² factory — see aluminium windows, doors, bathroom, cabinetry production lines
-- QC lab + sample warehouse
-- English-speaking sales rep accompanies
-- Working showroom with real product samples
-- Engineers available if prospect brings project drawings
-- Factory lunch on us
-- Drop back at hotel
-- Samples shipped to prospect's country at our cost
+CRITICAL — EMAILS 2-5 ARE FIXED TEMPLATES:
+Do NOT rephrase the body. Do NOT add extra sentences. Do NOT change the subject. ONLY swap [Name] (and [Company] in Email 5). Their word counts will be tighter than the 45-70 range — that is correct, the templates are authoritative as written.
 
-THE NO-COMMITMENT FRAMING (use phrases like):
-- "no pitch, no sales, no commitment"
-- "no BS — just see if we're a real factory or not"
-- "you walk out with samples, pricing, or nothing — either's fine"
-- "zero obligation"
-
-=== EMAIL-BY-EMAIL: 5 INVITATIONS, 5 DIFFERENT REASONS ===
-
-EMAIL 1 (Day 1) — REASON: BACKUP SUPPLIER ANGLE (least threatening)
-Subject: "visiting foshan?"
-Body theme: Most overseas buyers keep a backup supplier in their back pocket. The factory visit makes that backup real — without committing to switch.
-CTA: "Would Lens be worth a half-day next time you're in China?"
-
-EMAIL 2 (Day 4) — REASON: AVOID GETTING BURNED (China sourcing fear)
-Subject: "the trick to china sourcing"
-Body theme: China sourcing horror stories all share one detail — buyer never visited. A factory visit eliminates the #1 risk in one half-day.
-CTA: "Half-day visit if you're sourcing direct from china — yes?"
-
-EMAIL 3 (Day 7) — REASON: ONE-STOP COMPARISON (Lens unique angle)
-Subject: "windows + bathroom + cabinetry — one stop"
-Body theme: Most Chinese factories specialize in one product. Lens does aluminium windows, doors, bathroom, cabinetry on one site. See all three in one half-day.
-CTA: "Want a half-day to see all three production lines?"
-
-EMAIL 4 (Day 10) — REASON: SOURCING TRIP CONVENIENCE (low-friction)
-Subject: "your next china sourcing trip"
-Body theme: If a prospect is already heading to China to look at suppliers, Foshan is a half-day side trip from Guangzhou. Just add Lens to the itinerary.
-CTA: "If you're heading to China anyway in next 6 months, worth half a day?"
-
-EMAIL 5 (Day 14) — REASON: ZERO COMMITMENT BREAKUP (last try)
-Subject: "closing the file"
-Body theme: This is my last email. The factory visit invitation stays open 12 months. Reply "open" anytime. Otherwise good luck.
-CTA: "Reply 'open' anytime in the next 12 months — door stays open."
-
-=== STRICT RULES ===
-
-NO SIGNATURE IN BODY:
-Do not write "— Leo Lens" / "— Leo Li, Lens" / "— [name], Lens" or any name signature. End at the CTA question. The 5 sender accounts (Ella/Leo/Lily/Lucy/Zi @lensfos.com) have signatures configured in Instantly UI — they're auto-appended.
-
-NO INVENTED FACTS:
-- No specific Australian client names (only verified: "Sydney interior designer, currently shipping")
-- No cost-savings percentages
-- No made-up client counts ("23 builders", "45 projects")
-- No "guarantee" / "lifetime guarantee" / "zero delays"
-- No "local AU stock" (Lens does not have AU warehouses)
-
-NO PROFESSION ASSUMPTIONS:
-Never write "as a designer..." / "for builders like you..." — reference work, not category.
-
-NO CANADIAN REFERENCES:
-Say "overseas distributor" if mentioning the $1-2M case. Never say "Canada" / "Canadian".
-
-CTA RULES:
-Every email ends with a clear, easy yes-or-no question. The CTA is the LAST line. No "Thanks," / "Cheers," / signature after.
-
-TONE:
-Like a real person writing to one specific person. Direct, no marketing speak. The phrases "no BS", "no pitch", "no commitment" should appear naturally — these reduce the prospect's defensiveness.
-
-EMAIL LENGTH: 80-120 words total per email. Concise. Each email is ONE focused invitation with ONE reason.`,
+SUBJECT-LINE CAPITALISATION EXAMPLES:
+GOOD:
+- "quick thought on your supplier risk"
+- "before your next custom build"
+- "3 things to ask any China supplier"      (China capitalised)
+- "in case you're sourcing in China"         (China capitalised)
+- "when your supplier ghosts"
+- "closing your file"
+- "before you sign your next supplier"
+BAD:
+- "Quick thought on your supplier risk"      (first letter capitalised — wrong)
+- "Quick Thought On Your Supplier Risk"      (Title Case — wrong)
+- "QUICK THOUGHT"                             (all caps — wrong)
+- "3 things to ask any china supplier"       (China should be capitalised)
+- "Saw Your DKO Partnership"                 (Title Case + formal — wrong)
+- "Backup factory for X?"                     (too salesy/direct — wrong)`,
   },
 
   'cold_5_step': {
