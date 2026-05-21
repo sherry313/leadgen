@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV 导入 — 名单</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>📥</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2563eb; --blue-dark: #1d4ed8;
+      --border: rgba(99,179,237,0.15);
+      --text: #f8fafc; --sub: #94a3b8; --bg: #0f172a;
+      --card: rgba(30,41,59,0.85);
+      --input-bg: rgba(15,23,42,0.6);
+      --ok: #22c55e; --err: #ef4444;
+    }
+    body {
+      font-family: -apple-system,'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+
+    /* Password gate */
+    #gate {
+      position: fixed; inset: 0; z-index: 999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gate-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 32px 36px; width: 320px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .gate-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
+    .gate-sub { font-size: 0.82rem; color: var(--sub); margin-bottom: 18px; }
+    .gate-input {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      color: var(--text); font-size: 0.92rem; outline: none;
+    }
+    .gate-input:focus { border-color: var(--blue); }
+    .gate-err { color: #f87171; font-size: 0.78rem; margin-top: 8px; min-height: 1em; }
+    .gate-btn {
+      margin-top: 14px; width: 100%; padding: 10px;
+      background: var(--blue); color: #fff; border: none; border-radius: 8px;
+      font-weight: 600; cursor: pointer;
+    }
+    .gate-btn:hover { background: var(--blue-dark); }
+
+    /* App layout */
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px 56px; }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .logo {
+      font-size: 1.5rem; font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #2563eb, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: -0.5px;
+    }
+    .header-sub { font-size: 0.82rem; color: var(--sub); }
+
+    .panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 22px 24px; margin-bottom: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+    .panel-title {
+      font-size: 1rem; font-weight: 700; margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    .panel-sub { font-size: 0.78rem; color: var(--sub); margin-bottom: 16px; }
+
+    /* Step labels */
+    .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--blue); color: #fff;
+      font-size: 0.78rem; font-weight: 700; margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    /* File drop zone */
+    .drop {
+      border: 2px dashed rgba(99,179,237,0.35);
+      border-radius: 10px; padding: 36px 20px;
+      text-align: center; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: rgba(15,23,42,0.4);
+    }
+    .drop:hover, .drop.dragover {
+      border-color: var(--blue);
+      background: rgba(37,99,235,0.08);
+    }
+    .drop-icon { font-size: 2.2rem; margin-bottom: 10px; }
+    .drop-text { font-size: 0.95rem; font-weight: 600; }
+    .drop-sub  { font-size: 0.78rem; color: var(--sub); margin-top: 4px; }
+    #fileInput { display: none; }
+    .file-info {
+      margin-top: 14px; padding: 10px 14px;
+      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 7px; font-size: 0.85rem; color: #86efac;
+      display: none;
+    }
+    .file-info.show { display: block; }
+
+    /* Table preview */
+    .preview-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border); border-radius: 8px;
+      background: rgba(15,23,42,0.4);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th, td {
+      text-align: left; padding: 8px 12px;
+      border-bottom: 1px solid rgba(148,163,184,0.1);
+      white-space: nowrap; max-width: 220px;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    th {
+      background: rgba(37,99,235,0.12);
+      color: #93c5fd; font-weight: 600;
+      font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    /* Mapping table */
+    .map-row {
+      display: grid; grid-template-columns: 200px 1fr 1.6fr;
+      gap: 12px; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,0.1);
+    }
+    .map-row:last-child { border-bottom: none; }
+    .map-label .cn { color: var(--text); font-weight: 500; font-size: 0.92rem; }
+    .map-label .en { color: var(--sub); font-size: 0.75rem; margin-top: 2px; }
+    .map-label .req { color: #fbbf24; font-size: 0.7rem; margin-left: 4px; }
+    .map-arrow {
+      font-size: 0.82rem; color: var(--sub); text-align: center;
+    }
+    .map-select {
+      width: 100%; padding: 8px 11px; border-radius: 7px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      color: var(--text); font-size: 0.88rem; outline: none;
+      font-family: inherit;
+    }
+    .map-select:focus { border-color: var(--blue); }
+    .map-select.unmapped { color: var(--sub); }
+    .sample {
+      font-size: 0.72rem; color: var(--sub); margin-top: 4px;
+      font-family: ui-monospace,Menlo,Monaco,Consolas,monospace;
+    }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .btn {
+      padding: 11px 18px; border-radius: 8px; font-weight: 600;
+      font-size: 0.92rem; cursor: pointer; transition: 0.15s;
+      font-family: inherit; border: 1px solid transparent;
+    }
+    .btn-primary {
+      background: var(--blue); color: #fff; border-color: var(--blue);
+    }
+    .btn-primary:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .btn-primary:disabled {
+      background: #475569; border-color: #475569;
+      cursor: not-allowed; transform: none;
+    }
+    .btn-ghost {
+      background: rgba(148,163,184,0.1);
+      border-color: rgba(148,163,184,0.25); color: #cbd5e1;
+    }
+    .btn-ghost:hover { background: rgba(148,163,184,0.18); }
+
+    /* Result panel */
+    .result-ok {
+      padding: 18px 20px;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.32);
+      border-radius: 10px;
+    }
+    .result-ok .big { font-size: 1.4rem; font-weight: 800; color: #4ade80; }
+    .result-ok .sub { font-size: 0.85rem; color: #86efac; margin-top: 4px; }
+    .result-err {
+      padding: 14px 16px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.32);
+      border-radius: 10px;
+      color: #fca5a5; font-size: 0.88rem;
+    }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(30,41,59,0.95); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 20px; border-radius: 8px;
+      font-size: 0.88rem; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      z-index: 200;
+    }
+    .toast.show { opacity: 1; }
+    .toast.err { border-color: rgba(239,68,68,0.5); }
+
+    .hidden { display: none !important; }
+
+    .meta {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      font-size: 0.8rem; color: var(--sub); margin-bottom: 12px;
+    }
+    .meta strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- Password gate -->
+  <div id="gate">
+    <div class="gate-card">
+      <div class="gate-title">📥 CSV 名单导入</div>
+      <div class="gate-sub">请输入访问密码</div>
+      <input id="gatePwd" class="gate-input" type="password" placeholder="访问密码" autocomplete="off">
+      <div id="gateErr" class="gate-err"></div>
+      <button class="gate-btn" onclick="checkGate()">进入</button>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div class="container" id="app" style="display:none">
+    <div class="header">
+      <div>
+        <div class="logo">CSV 名单导入</div>
+        <div class="header-sub">上传 CSV → 预览 → 列映射 → 导入至 Supabase leads 表</div>
+      </div>
+    </div>
+
+    <!-- Stage 1: file upload -->
+    <div class="panel" id="stage1">
+      <div class="panel-title"><span class="step-num">1</span>选择 CSV 文件</div>
+      <div class="panel-sub">支持 UTF-8 / 带 BOM 的 CSV，首行需为列名</div>
+
+      <div class="drop" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="drop-icon">📂</div>
+        <div class="drop-text">点击或拖拽 CSV 文件到此处</div>
+        <div class="drop-sub">或粘贴文件路径后选择</div>
+      </div>
+      <input id="fileInput" type="file" accept=".csv,text/csv" onchange="onFileChosen(this.files[0])">
+
+      <div class="file-info" id="fileInfo"></div>
+    </div>
+
+    <!-- Stage 2: preview + mapping -->
+    <div class="panel hidden" id="stage2">
+      <div class="panel-title"><span class="step-num">2</span>预览前 5 行</div>
+      <div class="panel-sub" id="previewSub">— rows total</div>
+      <div class="preview-wrap">
+        <table id="previewTable">
+          <thead><tr id="previewHead"></tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+
+      <div style="height:24px"></div>
+
+      <div class="panel-title" style="margin-top:6px"><span class="step-num">3</span>列映射 Column Mapping</div>
+      <div class="panel-sub">将 CSV 列对应到 Supabase <code style="background:rgba(15,23,42,0.6);padding:1px 5px;border-radius:3px">leads</code> 表字段。未对应的列将被忽略。</div>
+
+      <div id="mappingBody"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="resetAll()">← 重新选择文件</button>
+        <button class="btn btn-primary" id="importBtn" onclick="runImport()">📥 导入 <span id="importCount">0</span> 条到 Supabase</button>
+      </div>
+    </div>
+
+    <!-- Stage 3: result -->
+    <div class="panel hidden" id="stage3">
+      <div class="panel-title"><span class="step-num">✓</span>导入结果</div>
+      <div id="resultBox"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="resetAll()">📥 再导入一批</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const PWD_KEY = 'lens_import_pwd';
+    let _parsed = null;          // { headers: [...], rows: [{...}, ...] }
+    let _filename = '';
+
+    // Target Supabase leads columns we'll let the user map to.
+    const TARGETS = [
+      { key: 'company_name', cn: '公司名称',   en: 'company_name', required: true  },
+      { key: 'email',        cn: '邮箱',       en: 'email',        required: false },
+      { key: 'website',      cn: '官网',       en: 'website',      required: false },
+      { key: 'phone',        cn: '电话',       en: 'phone',        required: false },
+      { key: 'city',         cn: '城市',       en: 'city',         required: false },
+    ];
+
+    // ── Gate ────────────────────────────────────────────────────────────
+    function checkGate() {
+      const v = $('gatePwd').value;
+      if (!v) { $('gateErr').textContent = '请输入密码'; return; }
+      sessionStorage.setItem(PWD_KEY, v);
+      enterApp();
+    }
+    $('gatePwd').addEventListener('keydown', e => { if (e.key === 'Enter') checkGate(); });
+    if (sessionStorage.getItem(PWD_KEY)) enterApp();
+
+    function enterApp() {
+      $('gate').style.display = 'none';
+      $('app').style.display  = '';
+    }
+
+    function lockOut(reason) {
+      sessionStorage.removeItem(PWD_KEY);
+      $('gateErr').textContent = reason || '密码错误';
+      $('app').style.display = 'none';
+      $('gate').style.display = 'flex';
+      $('gatePwd').value = '';
+      $('gatePwd').focus();
+    }
+
+    function pwd() { return sessionStorage.getItem(PWD_KEY) || ''; }
+
+    function toast(msg, opts = {}) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.classList.toggle('err', !!opts.err);
+      el.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove('show'), opts.ms || 2800);
+    }
+
+    // ── Drop zone wiring ───────────────────────────────────────────────
+    const dz = $('dropZone');
+    ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+    ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
+    dz.addEventListener('drop', e => {
+      const f = e.dataTransfer?.files?.[0];
+      if (f) onFileChosen(f);
+    });
+
+    // ── File parsing ───────────────────────────────────────────────────
+    function onFileChosen(file) {
+      if (!file) return;
+      if (!/\.csv$/i.test(file.name) && file.type !== 'text/csv') {
+        toast('请选择 .csv 文件', { err: true });
+        return;
+      }
+      _filename = file.name;
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: h => String(h || '').trim(),
+        complete: results => {
+          if (results.errors?.length) {
+            console.warn('Papa errors:', results.errors);
+          }
+          const headers = (results.meta?.fields || []).filter(Boolean);
+          const rows = results.data || [];
+          if (!headers.length || !rows.length) {
+            toast('CSV 中没有可识别的行', { err: true });
+            return;
+          }
+          _parsed = { headers, rows };
+          renderPreviewAndMapping();
+        },
+        error: err => {
+          toast('解析失败：' + err.message, { err: true });
+        },
+      });
+
+      const sizeKb = (file.size / 1024).toFixed(1);
+      const fi = $('fileInfo');
+      fi.textContent = `✓ 已选择：${file.name} · ${sizeKb} KB`;
+      fi.classList.add('show');
+    }
+
+    // ── Render preview + mapping ───────────────────────────────────────
+    function renderPreviewAndMapping() {
+      const { headers, rows } = _parsed;
+
+      // Preview
+      $('previewSub').innerHTML = `共 <strong style="color:var(--text)">${rows.length}</strong> 行 · 显示前 5 行 · ${headers.length} 列`;
+      $('previewHead').innerHTML = headers.map(h => `<th>${escHtml(h)}</th>`).join('');
+      $('previewBody').innerHTML = rows.slice(0, 5).map(r =>
+        '<tr>' + headers.map(h => `<td>${escHtml(r[h] ?? '')}</td>`).join('') + '</tr>'
+      ).join('');
+
+      // Mapping — auto-guess for each target
+      const guesses = autoMap(headers);
+      const body = $('mappingBody');
+      body.innerHTML = TARGETS.map(t => {
+        const guess = guesses[t.key] || '';
+        const opts = ['<option value="">（不导入此字段）</option>']
+          .concat(headers.map(h => `<option value="${escHtml(h)}"${h === guess ? ' selected' : ''}>${escHtml(h)}</option>`))
+          .join('');
+        return `
+          <div class="map-row">
+            <div class="map-label">
+              <div class="cn">${t.cn}${t.required ? '<span class="req">* 必填</span>' : ''}</div>
+              <div class="en">${t.en}</div>
+            </div>
+            <div class="map-arrow">←</div>
+            <div>
+              <select class="map-select" data-target="${t.key}" onchange="onMapChange()">${opts}</select>
+              <div class="sample" id="sample-${t.key}"></div>
+            </div>
+          </div>`;
+      }).join('');
+
+      onMapChange();
+      $('stage2').classList.remove('hidden');
+      $('stage2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function autoMap(headers) {
+      const norm = s => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
+      const idx = {};
+      headers.forEach(h => idx[norm(h)] = h);
+      const synonyms = {
+        company_name: ['companyname', 'company', 'name', 'businessname', 'business'],
+        email:        ['email', 'emailaddress', 'mail', 'contactemail'],
+        website:      ['website', 'site', 'url', 'web', 'domain', 'homepage'],
+        phone:        ['phone', 'telephone', 'mobile', 'cell', 'tel', 'contactnumber'],
+        city:         ['city', 'town', 'location', 'suburb'],
+      };
+      const out = {};
+      for (const [target, alts] of Object.entries(synonyms)) {
+        for (const alt of alts) {
+          if (idx[alt]) { out[target] = idx[alt]; break; }
+        }
+      }
+      return out;
+    }
+
+    function onMapChange() {
+      // Update sample text for each target + the import button count.
+      const { rows } = _parsed;
+      const mapping = readMapping();
+      TARGETS.forEach(t => {
+        const csvCol = mapping[t.key];
+        const sampleEl = $(`sample-${t.key}`);
+        const sel = document.querySelector(`.map-select[data-target="${t.key}"]`);
+        if (!csvCol) {
+          sampleEl.textContent = '';
+          sel?.classList.add('unmapped');
+          return;
+        }
+        sel?.classList.remove('unmapped');
+        const samples = rows.slice(0, 2).map(r => r[csvCol]).filter(v => v != null && v !== '').slice(0, 2);
+        sampleEl.textContent = samples.length ? `示例: ${samples.join(' · ')}` : '示例: （此列为空）';
+      });
+
+      // Count importable rows: company_name OR email OR website non-empty.
+      const importable = countImportable(mapping);
+      $('importCount').textContent = importable;
+      $('importBtn').disabled = importable === 0;
+    }
+
+    function readMapping() {
+      const m = {};
+      document.querySelectorAll('.map-select').forEach(sel => {
+        m[sel.dataset.target] = sel.value || null;
+      });
+      return m;
+    }
+
+    function countImportable(mapping) {
+      const { rows } = _parsed;
+      const keyCols = ['company_name', 'email', 'website']
+        .map(k => mapping[k])
+        .filter(Boolean);
+      if (!keyCols.length) return 0;
+      return rows.filter(r => keyCols.some(c => String(r[c] || '').trim())).length;
+    }
+
+    function buildPayloadRows(mapping) {
+      const { rows } = _parsed;
+      return rows.map(r => {
+        const out = {};
+        for (const t of TARGETS) {
+          const csvCol = mapping[t.key];
+          if (csvCol) out[t.key] = String(r[csvCol] ?? '').trim();
+        }
+        return out;
+      });
+    }
+
+    // ── Import ─────────────────────────────────────────────────────────
+    async function runImport() {
+      const mapping = readMapping();
+      const payloadRows = buildPayloadRows(mapping);
+
+      const btn = $('importBtn');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = '导入中…';
+
+      try {
+        const r = await fetch('/api/import-leads', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Import-Password': pwd(),
+          },
+          body: JSON.stringify({ rows: payloadRows, filename: _filename }),
+        });
+        if (r.status === 401) {
+          btn.disabled = false; btn.innerHTML = orig;
+          lockOut('密码错误，请重新登录');
+          return;
+        }
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.success) throw new Error(j.error || `HTTP ${r.status}`);
+
+        $('resultBox').innerHTML = `
+          <div class="result-ok">
+            <div class="big">✓ 成功导入 ${j.imported} 条线索</div>
+            <div class="sub">
+              ${j.skipped ? `跳过 ${j.skipped} 条空行 · ` : ''}search_id: <code>${escHtml(j.searchId)}</code>
+            </div>
+          </div>`;
+        $('stage2').classList.add('hidden');
+        $('stage3').classList.remove('hidden');
+        $('stage3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        $('resultBox').innerHTML = `<div class="result-err">❌ 导入失败：${escHtml(err.message)}</div>`;
+        $('stage3').classList.remove('hidden');
+        $('stage3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    }
+
+    function resetAll() {
+      _parsed = null;
+      _filename = '';
+      $('fileInput').value = '';
+      $('fileInfo').classList.remove('show');
+      $('stage2').classList.add('hidden');
+      $('stage3').classList.add('hidden');
+      $('stage1').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function escHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+  </script>
+
+</body>
+</html>

@@ -1258,6 +1258,91 @@ app.post('/api/admin/products', requireAdminPassword, async (req, res) => {
   }
 });
 
+// ── CSV import: paste rows + password → INSERT into leads ────────────────────
+const IMPORT_PASSWORD = process.env.IMPORT_PASSWORD || 'lens2026';
+
+function requireImportPassword(req, res, next) {
+  if (req.headers['x-import-password'] !== IMPORT_PASSWORD) {
+    return res.status(401).json({ success: false, error: 'invalid import password' });
+  }
+  next();
+}
+
+function _normalizePhone(s) { return String(s || '').replace(/\D/g, ''); }
+function _normalizeDomain(url) {
+  if (!url) return '';
+  try { return new URL(/^https?:\/\//i.test(url) ? url : `http://${url}`).hostname.replace(/^www\./, ''); }
+  catch { return ''; }
+}
+
+app.post('/api/import-leads', requireImportPassword, async (req, res) => {
+  if (!_productsDb) return res.status(503).json({ success: false, error: 'supabase not configured' });
+  const { rows, filename } = req.body || {};
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({ success: false, error: 'rows must be a non-empty array' });
+  }
+
+  const clean = rows
+    .map(r => ({
+      company_name: String(r.company_name || '').trim(),
+      website:      String(r.website      || '').trim(),
+      phone:        String(r.phone        || '').trim(),
+      email:        String(r.email        || '').trim().toLowerCase(),
+      city:         String(r.city         || '').trim(),
+    }))
+    .filter(r => r.company_name || r.email || r.website);
+
+  if (clean.length === 0) {
+    return res.status(400).json({ success: false, error: 'no rows have company_name, email, or website' });
+  }
+
+  try {
+    const { data: histRow, error: histErr } = await _productsDb
+      .from('search_history')
+      .insert({
+        query:         `CSV 导入${filename ? ': ' + String(filename).slice(0, 80) : ''}`,
+        location:      'CSV import',
+        max_results:   clean.length,
+        total_scraped: clean.length,
+      })
+      .select('id')
+      .single();
+    if (histErr) throw histErr;
+    const searchId = histRow.id;
+
+    const insertRows = clean.map(r => ({
+      search_id:        searchId,
+      company_name:     r.company_name,
+      website:          r.website,
+      phone:            r.phone,
+      email:            r.email,
+      city:             r.city,
+      rating:           '',
+      intent_score:     '',
+      icp_score:        '',
+      reasoning:        '',
+      place_id:         '',
+      phone_normalized: _normalizePhone(r.phone),
+      website_domain:   _normalizeDomain(r.website),
+    }));
+
+    let imported = 0;
+    const batchSize = 500;
+    for (let i = 0; i < insertRows.length; i += batchSize) {
+      const batch = insertRows.slice(i, i + batchSize);
+      const { data, error } = await _productsDb.from('leads').insert(batch).select('id');
+      if (error) throw error;
+      imported += data.length;
+    }
+
+    console.log(`[Import] ${imported} leads imported into search_id=${searchId} (${filename || 'unknown'})`);
+    res.json({ success: true, imported, searchId, skipped: rows.length - clean.length });
+  } catch (err) {
+    console.error('[Import] failed:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ── Send quote PDF email via Gmail SMTP ──────────────────────────────────────
 const _gmailTransporter = (() => {
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return null;
