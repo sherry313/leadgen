@@ -143,6 +143,86 @@
       z-index: 200;
     }
     .toast.show { opacity: 1; }
+
+    /* ── Send preview modal ─────────────────────────────────────────── */
+    .preview-modal {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(2,6,23,0.72);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .preview-card {
+      width: 100%; max-width: 540px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      max-height: 90vh; display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .preview-head {
+      padding: 20px 24px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .preview-title { font-size: 1.05rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+    .preview-sub   { font-size: 0.78rem; color: var(--sub); margin-top: 4px; }
+    .preview-body  { padding: 6px 24px 20px; overflow-y: auto; }
+    .prv-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 9px 0; font-size: 0.88rem; gap: 12px;
+      border-bottom: 1px dashed rgba(148,163,184,0.1);
+    }
+    .prv-row:last-child { border-bottom: none; }
+    .prv-row .prv-label { color: var(--sub); flex-shrink: 0; }
+    .prv-row .prv-val   { color: var(--text); font-weight: 500; text-align: right; word-break: break-word; }
+    .prv-sep { height: 1px; background: var(--border); margin: 8px 0; }
+    .prv-row.major {
+      padding: 14px 14px;
+      margin: 6px 0 4px;
+      background: rgba(37,99,235,0.12);
+      border: 1px solid rgba(37,99,235,0.35);
+      border-radius: 8px;
+      border-bottom: 1px solid rgba(37,99,235,0.35);
+    }
+    .prv-row.major .prv-label { color: #93c5fd; font-weight: 600; }
+    .prv-row.major .prv-val   { color: #60a5fa; font-weight: 800; font-size: 1.05rem; }
+    .prv-row.profit {
+      padding: 10px 14px;
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.22);
+      border-radius: 7px;
+      border-bottom: 1px solid rgba(34,197,94,0.22);
+      margin-top: 4px;
+    }
+    .prv-row.profit .prv-label { color: #86efac; }
+    .prv-row.profit .prv-val   { color: #4ade80; font-weight: 700; }
+    .preview-foot {
+      padding: 14px 20px 18px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 10px;
+    }
+    .preview-btn-cancel, .preview-btn-confirm {
+      flex: 1; padding: 11px 14px; border-radius: 8px;
+      font-weight: 600; font-size: 0.92rem; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+      font-family: inherit;
+    }
+    .preview-btn-cancel {
+      background: rgba(148,163,184,0.1);
+      border: 1px solid rgba(148,163,184,0.25);
+      color: #cbd5e1;
+    }
+    .preview-btn-cancel:hover { background: rgba(148,163,184,0.18); border-color: rgba(148,163,184,0.4); }
+    .preview-btn-confirm {
+      background: var(--blue); color: #fff; border: 1px solid var(--blue);
+      font-weight: 700;
+    }
+    .preview-btn-confirm:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .preview-btn-confirm:disabled {
+      background: #475569; border-color: #475569;
+      cursor: not-allowed; transform: none;
+    }
   </style>
 </head>
 <body>
@@ -331,9 +411,37 @@
         <div class="calc-sub">报价 AUD/m²: A$<span id="calcQuotePerSqm">204</span></div>
 
         <button class="pdf-btn" id="pdfBtn" onclick="generatePdf()">📄 生成报价单 PDF</button>
-        <button class="email-btn" id="emailBtn" onclick="sendQuoteEmail()">✉️ 发送报价单到客户邮箱</button>
+        <button class="email-btn" id="emailBtn" onclick="openSendPreview()">✉️ 发送报价单到客户邮箱</button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ── Send preview modal ── -->
+  <div class="preview-modal" id="previewModal" onclick="closeSendPreviewIfBackdrop(event)">
+    <div class="preview-card" onclick="event.stopPropagation()">
+      <div class="preview-head">
+        <div class="preview-title">📧 确认报价单发送</div>
+        <div class="preview-sub">请核对以下信息无误后点击「确认发送」</div>
+      </div>
+      <div class="preview-body">
+        <div class="prv-row"><span class="prv-label">收件人</span><span class="prv-val" id="prvEmail">—</span></div>
+        <div class="prv-row"><span class="prv-label">客户姓名</span><span class="prv-val" id="prvName">—</span></div>
+        <div class="prv-row"><span class="prv-label">项目名称</span><span class="prv-val" id="prvProject">—</span></div>
+        <div class="prv-sep"></div>
+        <div class="prv-row"><span class="prv-label">产品</span><span class="prv-val" id="prvProduct">—</span></div>
+        <div class="prv-row"><span class="prv-label">尺寸</span><span class="prv-val" id="prvSize">—</span></div>
+        <div class="prv-row"><span class="prv-label">面积</span><span class="prv-val" id="prvArea">—</span></div>
+        <div class="prv-row"><span class="prv-label">规格</span><span class="prv-val" id="prvSpec">—</span></div>
+        <div class="prv-sep"></div>
+        <div class="prv-row major"><span class="prv-label">报价</span><span class="prv-val" id="prvQuote">—</span></div>
+        <div class="prv-row profit"><span class="prv-label">利润</span><span class="prv-val" id="prvProfit">—</span></div>
+        <div class="prv-row"><span class="prv-label">有效期</span><span class="prv-val">30 天</span></div>
+      </div>
+      <div class="preview-foot">
+        <button class="preview-btn-cancel"  onclick="closeSendPreview()">返回修改</button>
+        <button class="preview-btn-confirm" id="prvConfirmBtn" onclick="confirmSendQuote()">确认发送</button>
+      </div>
     </div>
   </div>
 
@@ -570,8 +678,10 @@
       toast(`✓ 已生成 ${qn}.pdf`);
     }
 
-    // ── Send quote by email ──────────────────────────────────────────────
-    async function sendQuoteEmail() {
+    // ── Send quote by email (preview → confirm flow) ─────────────────────
+    let _pendingQuotePayload = null;
+
+    function openSendPreview() {
       const c = calc();
       if (!c.area || c.area <= 0) { toast('请输入有效的尺寸'); return; }
       if (!c.quoteAud || c.quoteAud <= 0) { toast('报价为零，请检查利润率与汇率'); return; }
@@ -592,7 +702,7 @@
       const valid        = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
       const qn           = quoteNumber();
 
-      const payload = {
+      _pendingQuotePayload = {
         customerEmail,
         customerName,
         projectName,
@@ -608,7 +718,32 @@
         profitAud:     fmt(c.profitAud),
       };
 
-      const btn = $('emailBtn');
+      $('prvEmail').textContent   = customerEmail;
+      $('prvName').textContent    = customerName;
+      $('prvProject').textContent = projectName;
+      $('prvProduct').textContent = productEn;
+      $('prvSize').textContent    = sizeStr;
+      $('prvArea').textContent    = `${c.area.toFixed(2)} m²`;
+      $('prvSpec').textContent    = spec;
+      $('prvQuote').textContent   = `AUD $${fmt(c.quoteAud)}`;
+      $('prvProfit').textContent  = `AUD $${fmt(c.profitAud)}`;
+
+      $('previewModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSendPreview() {
+      $('previewModal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function closeSendPreviewIfBackdrop(e) {
+      if (e.target === $('previewModal')) closeSendPreview();
+    }
+
+    async function confirmSendQuote() {
+      if (!_pendingQuotePayload) { toast('请重新打开预览'); return; }
+      const btn = $('prvConfirmBtn');
       const orig = btn.textContent;
       btn.disabled = true;
       btn.textContent = '发送中…';
@@ -616,11 +751,13 @@
         const r = await fetch('/api/send-quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(_pendingQuotePayload),
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok || !j.success) throw new Error(j.error || `HTTP ${r.status}`);
-        toast(`✓ 报价单已发送到 ${customerEmail}`, 3500);
+        toast(`✓ 报价单已发送到 ${_pendingQuotePayload.customerEmail}`, 3500);
+        closeSendPreview();
+        _pendingQuotePayload = null;
       } catch (err) {
         console.error('[Quote] send failed:', err);
         toast('发送失败：' + err.message, 4500);
