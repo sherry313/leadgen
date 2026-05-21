@@ -21,34 +21,6 @@
       background: var(--bg); color: var(--text); min-height: 100vh;
     }
 
-    /* ── Password gate ── */
-    #gate {
-      position: fixed; inset: 0; z-index: 999;
-      background: var(--bg);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .gate-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; padding: 32px 36px; width: 320px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-    .gate-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
-    .gate-sub { font-size: 0.82rem; color: var(--sub); margin-bottom: 18px; }
-    .gate-input {
-      width: 100%; padding: 10px 12px; border-radius: 8px;
-      background: var(--input-bg); border: 1px solid var(--border);
-      color: var(--text); font-size: 0.92rem; outline: none;
-      transition: border-color 0.15s;
-    }
-    .gate-input:focus { border-color: var(--blue); }
-    .gate-err { color: #f87171; font-size: 0.78rem; margin-top: 8px; min-height: 1em; }
-    .gate-btn {
-      margin-top: 14px; width: 100%; padding: 10px;
-      background: var(--blue); color: #fff; border: none; border-radius: 8px;
-      font-weight: 600; cursor: pointer; transition: background 0.15s;
-    }
-    .gate-btn:hover { background: var(--blue-dark); }
-
     /* ── App layout ── */
     .container { max-width: 1280px; margin: 0 auto; padding: 32px 24px 56px; }
     .header {
@@ -166,19 +138,8 @@
 </head>
 <body>
 
-  <!-- ── Password gate ── -->
-  <div id="gate">
-    <div class="gate-card">
-      <div class="gate-title">🪟 Lens 报价生成器</div>
-      <div class="gate-sub">请输入访问密码</div>
-      <input id="gatePwd" class="gate-input" type="password" placeholder="访问密码" autocomplete="off">
-      <div id="gateErr" class="gate-err"></div>
-      <button class="gate-btn" onclick="checkGate()">进入</button>
-    </div>
-  </div>
-
   <!-- ── App ── -->
-  <div class="container" id="app" style="display:none">
+  <div class="container" id="app">
     <div class="header">
       <div>
         <div class="logo">Lens 铝合金门窗</div>
@@ -381,27 +342,6 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    // ── Password gate ────────────────────────────────────────────────────
-    const PASSWORD = 'lens2026';
-    function checkGate() {
-      const v = document.getElementById('gatePwd').value;
-      if (v === PASSWORD) {
-        document.getElementById('gate').style.display = 'none';
-        document.getElementById('app').style.display  = '';
-        sessionStorage.setItem('lens_unlocked', '1');
-        recalc();
-      } else {
-        document.getElementById('gateErr').textContent = '密码错误';
-      }
-    }
-    document.getElementById('gatePwd').addEventListener('keydown', e => {
-      if (e.key === 'Enter') checkGate();
-    });
-    if (sessionStorage.getItem('lens_unlocked') === '1') {
-      document.getElementById('gate').style.display = 'none';
-      document.getElementById('app').style.display  = '';
-    }
-
     // ── Helpers ──────────────────────────────────────────────────────────
     const $ = id => document.getElementById(id);
     const num = id => parseFloat($(id).value) || 0;
