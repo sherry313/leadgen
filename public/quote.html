@@ -124,6 +124,15 @@
     }
     .pdf-btn:hover { background: var(--blue-dark); transform: translateY(-1px); }
     .pdf-btn:disabled { background: #475569; cursor: not-allowed; transform: none; }
+    .email-btn {
+      margin-top: 10px; width: 100%; padding: 13px;
+      background: rgba(37,99,235,0.12); color: #93c5fd;
+      border: 1px solid rgba(37,99,235,0.4); border-radius: 9px;
+      font-weight: 600; font-size: 0.95rem; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    }
+    .email-btn:hover { background: rgba(37,99,235,0.22); border-color: var(--blue); transform: translateY(-1px); }
+    .email-btn:disabled { background: rgba(71,85,105,0.2); color: #64748b; border-color: rgba(71,85,105,0.3); cursor: not-allowed; transform: none; }
 
     .toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -322,6 +331,7 @@
         <div class="calc-sub">报价 AUD/m²: A$<span id="calcQuotePerSqm">204</span></div>
 
         <button class="pdf-btn" id="pdfBtn" onclick="generatePdf()">📄 生成报价单 PDF</button>
+        <button class="email-btn" id="emailBtn" onclick="sendQuoteEmail()">✉️ 发送报价单到客户邮箱</button>
       </div>
 
     </div>
@@ -558,6 +568,66 @@
 
       doc.save(`${qn}.pdf`);
       toast(`✓ 已生成 ${qn}.pdf`);
+    }
+
+    // ── Send quote by email ──────────────────────────────────────────────
+    async function sendQuoteEmail() {
+      const c = calc();
+      if (!c.area || c.area <= 0) { toast('请输入有效的尺寸'); return; }
+      if (!c.quoteAud || c.quoteAud <= 0) { toast('报价为零，请检查利润率与汇率'); return; }
+
+      const customerEmail = $('custEmail').value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+        toast('请填写有效的客户邮箱', 3000);
+        $('custEmail').focus();
+        return;
+      }
+
+      const customerName = $('custName').value.trim()    || 'Customer';
+      const projectName  = $('projectName').value.trim() || '—';
+      const productEn    = selectedOption('product').dataset.en;
+      const spec         = buildSpecification();
+      const sizeStr      = `${num('width')} × ${num('height')} mm`;
+      const today        = new Date();
+      const valid        = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const qn           = quoteNumber();
+
+      const payload = {
+        customerEmail,
+        customerName,
+        projectName,
+        quoteNumber:   qn,
+        quoteDate:     formatDate(today),
+        validUntil:    formatDate(valid),
+        product:       productEn,
+        size:          sizeStr,
+        areaSqm:       c.area.toFixed(2),
+        specification: spec,
+        unitPriceAud:  fmt(c.quotePerSqm),
+        totalAud:      fmt(c.quoteAud),
+        profitAud:     fmt(c.profitAud),
+      };
+
+      const btn = $('emailBtn');
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '发送中…';
+      try {
+        const r = await fetch('/api/send-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.success) throw new Error(j.error || `HTTP ${r.status}`);
+        toast(`✓ 报价单已发送到 ${customerEmail}`, 3500);
+      } catch (err) {
+        console.error('[Quote] send failed:', err);
+        toast('发送失败：' + err.message, 4500);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
     }
 
     // ── Load products & adders from backend ──────────────────────────────

@@ -1258,6 +1258,117 @@ app.post('/api/admin/products', requireAdminPassword, async (req, res) => {
   }
 });
 
+// ── Send quote PDF email via Gmail SMTP ──────────────────────────────────────
+const _gmailTransporter = (() => {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return null;
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+})();
+
+function _escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function _buildQuoteEmailHtml(q) {
+  const e = _escHtml;
+  return `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f5f7fa;font-family:-apple-system,Helvetica,Arial,sans-serif;color:#1e293b">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f5f7fa;padding:24px 0">
+  <tr><td align="center">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+      <tr><td style="background:#1d4ed8;padding:24px 28px;color:#ffffff">
+        <div style="font-size:22px;font-weight:700;letter-spacing:-0.3px">Lens Aluminium Windows &amp; Doors</div>
+        <div style="font-size:13px;opacity:0.85;margin-top:4px">Factory Direct — Foshan, China</div>
+      </td></tr>
+
+      <tr><td style="padding:28px">
+        <div style="font-size:13px;color:#64748b;margin-bottom:8px">
+          <strong style="color:#1e293b">Quote No:</strong> ${e(q.quoteNumber)} &nbsp;·&nbsp;
+          <strong style="color:#1e293b">Date:</strong> ${e(q.quoteDate)}
+        </div>
+
+        <p style="font-size:15px;margin:18px 0 6px">Dear ${e(q.customerName) || 'Customer'},</p>
+        <p style="font-size:14px;line-height:1.55;color:#475569;margin:0 0 18px">
+          Thank you for your enquiry. Please find your quote below.
+        </p>
+
+        ${q.projectName && q.projectName !== '—' ? `<p style="font-size:14px;color:#475569;margin:0 0 18px"><strong style="color:#1e293b">Project:</strong> ${e(q.projectName)}</p>` : ''}
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:8px 0 18px">
+          <tr><td style="background:#1d4ed8;color:#ffffff;padding:10px 12px;font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase">Product</td>
+              <td style="background:#1d4ed8;color:#ffffff;padding:10px 12px;font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;text-align:right">Details</td></tr>
+          <tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;color:#1e293b">Product</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;text-align:right">${e(q.product)}</td></tr>
+          <tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;color:#1e293b">Size</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;text-align:right">${e(q.size)}</td></tr>
+          <tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;color:#1e293b">Area</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;text-align:right">${e(q.areaSqm)} m²</td></tr>
+          <tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;color:#1e293b">Specification</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;text-align:right">${e(q.specification)}</td></tr>
+          <tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;color:#1e293b">Unit price</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;text-align:right">A$ ${e(q.unitPriceAud)} / m²</td></tr>
+        </table>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin-bottom:18px">
+          <tr><td style="background:#eff6ff;padding:14px 16px;border-radius:6px;border:1px solid #bfdbfe">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td style="font-size:13px;color:#1e40af;font-weight:600;letter-spacing:0.02em;text-transform:uppercase">Total</td>
+                <td align="right" style="font-size:22px;font-weight:800;color:#1d4ed8;letter-spacing:-0.5px">AUD $${e(q.totalAud)}</td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
+
+        <p style="font-size:12.5px;color:#64748b;margin:0 0 4px">Valid until <strong style="color:#1e293b">${e(q.validUntil)}</strong></p>
+        <p style="font-size:12px;color:#94a3b8;margin:0 0 4px">Prices in Australian Dollars (AUD), EXW Foshan unless otherwise stated.</p>
+        <p style="font-size:12px;color:#94a3b8;margin:0">Lead time: 25–35 working days from deposit. Payment: 30% deposit / 70% before shipment.</p>
+      </td></tr>
+
+      <tr><td style="background:#0f172a;padding:18px 28px;color:#cbd5e1;font-size:12px;text-align:center;line-height:1.6">
+        <div>20 years manufacturing experience &nbsp;|&nbsp; 300,000m² factory in Foshan</div>
+        <div style="margin-top:4px">zhuolu34@gmail.com &nbsp;|&nbsp; +86 187 8960 4353</div>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+}
+
+app.post('/api/send-quote', async (req, res) => {
+  if (!_gmailTransporter) {
+    return res.status(503).json({ success: false, error: 'Gmail SMTP not configured (set GMAIL_USER and GMAIL_APP_PASSWORD)' });
+  }
+  const q = req.body || {};
+  if (!q.customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.customerEmail)) {
+    return res.status(400).json({ success: false, error: 'valid customerEmail required' });
+  }
+  if (!q.quoteNumber) {
+    return res.status(400).json({ success: false, error: 'quoteNumber required' });
+  }
+
+  try {
+    const info = await _gmailTransporter.sendMail({
+      from: `"Lens Aluminium Windows & Doors" <${process.env.GMAIL_USER}>`,
+      to:      q.customerEmail,
+      subject: `Your Quote from Lens Aluminium Windows & Doors — ${q.quoteNumber}`,
+      html:    _buildQuoteEmailHtml(q),
+    });
+    console.log(`[Quote] Sent to ${q.customerEmail} (${q.quoteNumber}) messageId=${info.messageId}`);
+    res.json({ success: true, messageId: info.messageId });
+  } catch (err) {
+    console.error('[Quote] sendMail failed:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ── Global error handler (Express 5 forwards async rejections here) ───────────
 app.use((err, req, res, next) => {
   console.error('[Server] Unhandled error:', err.message);
