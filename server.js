@@ -1209,6 +1209,55 @@ app.get('/api/instantly/campaign/:id/analytics', requireAuth, async (req, res) =
   }
 });
 
+// ── Products (public read + admin-password-gated edit) ───────────────────────
+const _productsDb = (() => {
+  const { createClient } = require('@supabase/supabase-js');
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) return null;
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+})();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin2026';
+
+function requireAdminPassword(req, res, next) {
+  if (req.headers['x-admin-password'] !== ADMIN_PASSWORD) {
+    return res.status(401).json({ success: false, error: 'invalid admin password' });
+  }
+  next();
+}
+
+app.get('/api/products', async (req, res) => {
+  if (!_productsDb) return res.status(503).json({ success: false, error: 'supabase not configured' });
+  try {
+    const [{ data: products, error: pe }, { data: adders, error: ae }] = await Promise.all([
+      _productsDb.from('products').select('*').order('base_price_cny', { ascending: true }),
+      _productsDb.from('product_adders').select('*').order('category').order('price_cny'),
+    ]);
+    if (pe) throw pe;
+    if (ae) throw ae;
+    res.json({ success: true, products, adders });
+  } catch (err) {
+    console.error('[Products] GET failed:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/products', requireAdminPassword, async (req, res) => {
+  if (!_productsDb) return res.status(503).json({ success: false, error: 'supabase not configured' });
+  const { type, id, price_cny } = req.body || {};
+  if (!['product', 'adder'].includes(type) || !id || typeof price_cny !== 'number' || price_cny < 0) {
+    return res.status(400).json({ success: false, error: 'expected { type: "product"|"adder", id: number, price_cny: number >= 0 }' });
+  }
+  try {
+    const table = type === 'product' ? 'products' : 'product_adders';
+    const column = type === 'product' ? 'base_price_cny' : 'price_cny';
+    const { data, error } = await _productsDb.from(table).update({ [column]: price_cny }).eq('id', id).select().single();
+    if (error) throw error;
+    res.json({ success: true, row: data });
+  } catch (err) {
+    console.error('[Admin] price update failed:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ── Global error handler (Express 5 forwards async rejections here) ───────────
 app.use((err, req, res, next) => {
   console.error('[Server] Unhandled error:', err.message);

@@ -158,12 +158,7 @@
           <div class="field">
             <label>产品类型 Product</label>
             <select id="product">
-              <option value="sliding-window"     data-price="400"  data-en="Sliding Window">推拉窗 Sliding Window — ¥400/m²</option>
-              <option value="casement-window"    data-price="600"  data-en="Casement Window">平开窗 Casement Window — ¥600/m²</option>
-              <option value="fixed-window"       data-price="350"  data-en="Fixed Window">固定窗 Fixed Window — ¥350/m²</option>
-              <option value="sliding-door"       data-price="800"  data-en="Sliding Door">推拉门 Sliding Door — ¥800/m²</option>
-              <option value="bifold-door"        data-price="1500" data-en="Bifold Door">折叠门 Bifold Door — ¥1500/m²</option>
-              <option value="lift-slide-door"    data-price="2500" data-en="Lift & Slide Door">提升推拉门 Lift &amp; Slide Door — ¥2500/m²</option>
+              <option value="" disabled selected>加载中…</option>
             </select>
           </div>
         </div>
@@ -191,17 +186,13 @@
           <div class="field">
             <label>材料 Material</label>
             <select id="material">
-              <option value="0"   data-en="Standard Aluminium">普通铝合金 +¥0/m²</option>
-              <option value="300" data-en="Thermal Break Aluminium">断桥铝 Thermal Break +¥300/m²</option>
+              <option value="0" disabled selected>加载中…</option>
             </select>
           </div>
           <div class="field">
             <label>玻璃 Glass</label>
             <select id="glass">
-              <option value="0"   data-en="Single Glazing">单玻 +¥0/m²</option>
-              <option value="150" data-en="Double Glazing">双玻 +¥150/m²</option>
-              <option value="250" data-en="Double Glazing Low-E">双玻 Low-E +¥250/m²</option>
-              <option value="350" data-en="Double Glazing Low-E with Argon">双玻 Low-E 充氩气 +¥350/m²</option>
+              <option value="0" disabled selected>加载中…</option>
             </select>
           </div>
         </div>
@@ -210,16 +201,13 @@
           <div class="field">
             <label>表面处理 Surface</label>
             <select id="surface">
-              <option value="0"   data-en="Powder Coating">粉末喷涂 +¥0/m²</option>
-              <option value="150" data-en="Fluorocarbon Coating">氟碳喷涂 +¥150/m²</option>
-              <option value="300" data-en="Wood Grain Transfer">木纹转印 +¥300/m²</option>
+              <option value="0" disabled selected>加载中…</option>
             </select>
           </div>
           <div class="field">
             <label>五金 Hardware</label>
             <select id="hardware">
-              <option value="0"   data-en="Domestic Hardware">国产五金 +¥0/m²</option>
-              <option value="200" data-en="German Hardware">德国五金 +¥200/m²</option>
+              <option value="0" disabled selected>加载中…</option>
             </select>
           </div>
         </div>
@@ -572,8 +560,47 @@
       toast(`✓ 已生成 ${qn}.pdf`);
     }
 
-    // initial render
-    recalc();
+    // ── Load products & adders from backend ──────────────────────────────
+    async function loadProducts() {
+      try {
+        const r = await fetch('/api/products');
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'load failed');
+
+        const prodSel = $('product');
+        prodSel.innerHTML = '';
+        j.products.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.product_key;
+          opt.dataset.price = p.base_price_cny;
+          opt.dataset.en    = p.product_name_en;
+          opt.textContent   = `${p.product_name_cn} ${p.product_name_en} — ¥${p.base_price_cny}/m²`;
+          prodSel.appendChild(opt);
+        });
+
+        const byCat = { material: [], glass: [], surface: [], hardware: [] };
+        j.adders.forEach(a => { if (byCat[a.category]) byCat[a.category].push(a); });
+        for (const [cat, list] of Object.entries(byCat)) {
+          const sel = $(cat);
+          if (!sel) continue;
+          sel.innerHTML = '';
+          list.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.price_cny;
+            opt.dataset.en = a.option_name_en;
+            opt.textContent = `${a.option_name_cn} +¥${a.price_cny}/m²`;
+            sel.appendChild(opt);
+          });
+        }
+
+        recalc();
+      } catch (err) {
+        console.error('[Quote] loadProducts failed:', err);
+        toast('加载产品失败：' + err.message, 4000);
+      }
+    }
+
+    loadProducts();
   </script>
 
 </body>

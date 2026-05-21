@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lens 价格管理</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>⚙️</text></svg>">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2563eb; --blue-dark: #1d4ed8;
+      --border: rgba(99,179,237,0.15);
+      --text: #f8fafc; --sub: #94a3b8; --bg: #0f172a;
+      --card: rgba(30,41,59,0.85);
+      --input-bg: rgba(15,23,42,0.6);
+      --ok: #22c55e; --err: #ef4444;
+    }
+    body {
+      font-family: -apple-system,'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+
+    /* Password gate */
+    #gate {
+      position: fixed; inset: 0; z-index: 999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gate-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 32px 36px; width: 320px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .gate-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
+    .gate-sub { font-size: 0.82rem; color: var(--sub); margin-bottom: 18px; }
+    .gate-input {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      color: var(--text); font-size: 0.92rem; outline: none;
+    }
+    .gate-input:focus { border-color: var(--blue); }
+    .gate-err { color: #f87171; font-size: 0.78rem; margin-top: 8px; min-height: 1em; }
+    .gate-btn {
+      margin-top: 14px; width: 100%; padding: 10px;
+      background: var(--blue); color: #fff; border: none; border-radius: 8px;
+      font-weight: 600; cursor: pointer;
+    }
+    .gate-btn:hover { background: var(--blue-dark); }
+
+    /* App layout */
+    .container { max-width: 980px; margin: 0 auto; padding: 32px 24px 56px; }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .logo {
+      font-size: 1.5rem; font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #2563eb, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: -0.5px;
+    }
+    .header-sub { font-size: 0.82rem; color: var(--sub); }
+    .header-link { font-size: 0.85rem; color: #93c5fd; text-decoration: none; }
+    .header-link:hover { color: #60a5fa; }
+
+    .panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 22px 24px; margin-bottom: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+    .panel-title {
+      font-size: 1rem; font-weight: 700; margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    .panel-sub { font-size: 0.78rem; color: var(--sub); margin-bottom: 18px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      text-align: left; padding: 10px 12px;
+      border-bottom: 1px solid rgba(148,163,184,0.12);
+      font-size: 0.88rem;
+    }
+    th {
+      font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--sub); font-weight: 600; padding-bottom: 8px;
+    }
+    td.price-cell { text-align: right; width: 160px; }
+    td.cat-cell { color: #93c5fd; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; width: 90px; }
+    td .cn { color: var(--text); font-weight: 500; }
+    td .en { color: var(--sub); font-size: 0.78rem; margin-top: 2px; }
+    td .desc { color: var(--sub); font-size: 0.75rem; margin-top: 3px; font-style: italic; }
+
+    .price-input {
+      width: 100px; padding: 6px 10px; border-radius: 6px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      color: var(--text); font-size: 0.88rem; outline: none;
+      font-family: inherit; font-variant-numeric: tabular-nums; text-align: right;
+      transition: border-color 0.15s;
+    }
+    .price-input:focus { border-color: var(--blue); }
+    .price-input.saving { border-color: #fbbf24; }
+    .price-input.saved  { border-color: var(--ok); }
+    .price-input.error  { border-color: var(--err); }
+    .price-prefix { color: var(--sub); margin-right: 4px; font-size: 0.85rem; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(30,41,59,0.95); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 20px; border-radius: 8px;
+      font-size: 0.88rem; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      z-index: 200;
+    }
+    .toast.show { opacity: 1; }
+    .toast.err { border-color: rgba(239,68,68,0.5); }
+
+    .empty { color: var(--sub); font-size: 0.85rem; padding: 12px 0; }
+    .help {
+      font-size: 0.78rem; color: var(--sub); margin-top: 12px;
+      padding: 10px 12px; background: rgba(59,130,246,0.08); border-radius: 6px;
+      border: 1px solid rgba(59,130,246,0.18);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Password gate -->
+  <div id="gate">
+    <div class="gate-card">
+      <div class="gate-title">⚙️ Lens 价格管理</div>
+      <div class="gate-sub">请输入管理密码</div>
+      <input id="gatePwd" class="gate-input" type="password" placeholder="管理密码" autocomplete="off">
+      <div id="gateErr" class="gate-err"></div>
+      <button class="gate-btn" onclick="checkGate()">进入</button>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div class="container" id="app" style="display:none">
+    <div class="header">
+      <div>
+        <div class="logo">Lens 价格管理</div>
+        <div class="header-sub">编辑产品基础单价和附加项价格</div>
+      </div>
+      <a class="header-link" href="quote.html">→ 打开报价工具</a>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">产品基础价 Products</div>
+      <div class="panel-sub">修改价格后失焦自动保存</div>
+      <table>
+        <thead>
+          <tr>
+            <th>产品 Product</th>
+            <th style="text-align:right">基础单价 (¥/m²)</th>
+          </tr>
+        </thead>
+        <tbody id="productsBody">
+          <tr><td colspan="2" class="empty">加载中…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">附加项 Adders</div>
+      <div class="panel-sub">材料 / 玻璃 / 表面 / 五金 — 修改后失焦自动保存</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:90px">类别</th>
+            <th>选项</th>
+            <th style="text-align:right">加价 (¥/m²)</th>
+          </tr>
+        </thead>
+        <tbody id="addersBody">
+          <tr><td colspan="3" class="empty">加载中…</td></tr>
+        </tbody>
+      </table>
+      <div class="help">提示：加价为 0 表示该选项不收取附加费用（默认选项）。</div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const PWD_STORAGE_KEY = 'lens_admin_pwd';
+
+    // Gate
+    function checkGate() {
+      const v = $('gatePwd').value;
+      if (!v) { $('gateErr').textContent = '请输入密码'; return; }
+      sessionStorage.setItem(PWD_STORAGE_KEY, v);
+      enterApp();
+    }
+    $('gatePwd').addEventListener('keydown', e => { if (e.key === 'Enter') checkGate(); });
+    if (sessionStorage.getItem(PWD_STORAGE_KEY)) enterApp();
+
+    async function enterApp() {
+      // Try a privileged ping by issuing a noop save (zero-update on a fake id) — skip; just load and let user attempt edit
+      $('gate').style.display = 'none';
+      $('app').style.display  = '';
+      await loadAll();
+    }
+
+    function toast(msg, opts = {}) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.classList.toggle('err', !!opts.err);
+      el.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove('show'), opts.ms || 2500);
+    }
+
+    function pwd() { return sessionStorage.getItem(PWD_STORAGE_KEY) || ''; }
+
+    function lockOut(reason) {
+      sessionStorage.removeItem(PWD_STORAGE_KEY);
+      $('gateErr').textContent = reason || '密码错误';
+      $('app').style.display = 'none';
+      $('gate').style.display = 'flex';
+      $('gatePwd').value = '';
+      $('gatePwd').focus();
+    }
+
+    async function loadAll() {
+      try {
+        const r = await fetch('/api/products');
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'load failed');
+        renderProducts(j.products || []);
+        renderAdders(j.adders || []);
+      } catch (err) {
+        toast('加载失败：' + err.message, { err: true });
+      }
+    }
+
+    function renderProducts(rows) {
+      const body = $('productsBody');
+      if (!rows.length) { body.innerHTML = '<tr><td colspan="2" class="empty">无数据</td></tr>'; return; }
+      body.innerHTML = '';
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <div class="cn">${r.product_name_cn}</div>
+            <div class="en">${r.product_name_en}</div>
+            ${r.description ? `<div class="desc">${r.description}</div>` : ''}
+          </td>
+          <td class="price-cell">
+            <span class="price-prefix">¥</span>
+            <input class="price-input" type="number" min="0" step="1"
+                   data-type="product" data-id="${r.id}" value="${r.base_price_cny}">
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+      bindInputs();
+    }
+
+    function renderAdders(rows) {
+      const body = $('addersBody');
+      if (!rows.length) { body.innerHTML = '<tr><td colspan="3" class="empty">无数据</td></tr>'; return; }
+      body.innerHTML = '';
+      const labels = { material: '材料', glass: '玻璃', surface: '表面', hardware: '五金' };
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="cat-cell">${labels[r.category] || r.category}</td>
+          <td>
+            <div class="cn">${r.option_name_cn}</div>
+            <div class="en">${r.option_name_en}</div>
+          </td>
+          <td class="price-cell">
+            <span class="price-prefix">+¥</span>
+            <input class="price-input" type="number" min="0" step="1"
+                   data-type="adder" data-id="${r.id}" value="${r.price_cny}">
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+      bindInputs();
+    }
+
+    function bindInputs() {
+      document.querySelectorAll('.price-input').forEach(inp => {
+        if (inp._bound) return;
+        inp._bound = true;
+        inp.dataset.original = inp.value;
+        inp.addEventListener('blur', () => saveIfChanged(inp));
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') inp.blur();
+          if (e.key === 'Escape') { inp.value = inp.dataset.original; inp.blur(); }
+        });
+      });
+    }
+
+    async function saveIfChanged(inp) {
+      const newVal = parseFloat(inp.value);
+      const oldVal = parseFloat(inp.dataset.original);
+      if (isNaN(newVal) || newVal < 0) {
+        inp.value = inp.dataset.original;
+        toast('价格必须是非负数', { err: true });
+        return;
+      }
+      if (newVal === oldVal) return;
+
+      inp.classList.remove('saved', 'error');
+      inp.classList.add('saving');
+      try {
+        const r = await fetch('/api/admin/products', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Password': pwd(),
+          },
+          body: JSON.stringify({
+            type: inp.dataset.type,
+            id:   Number(inp.dataset.id),
+            price_cny: newVal,
+          }),
+        });
+        if (r.status === 401) {
+          inp.classList.remove('saving');
+          lockOut('密码错误，请重新登录');
+          return;
+        }
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'save failed');
+
+        inp.dataset.original = String(newVal);
+        inp.classList.remove('saving');
+        inp.classList.add('saved');
+        setTimeout(() => inp.classList.remove('saved'), 1500);
+        toast(`✓ 已保存：¥${newVal}`);
+      } catch (err) {
+        inp.classList.remove('saving');
+        inp.classList.add('error');
+        inp.value = inp.dataset.original;
+        toast('保存失败：' + err.message, { err: true });
+      }
+    }
+  </script>
+
+</body>
+</html>
