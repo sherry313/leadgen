@@ -265,6 +265,81 @@
       background-color: #1a2744;
       color: #63b3ed;
     }
+
+    /* Card-style option group */
+    .card-option-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: .75rem;
+    }
+
+    .card-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem 1rem;
+      border: 1px solid #1e2d4a;
+      border-radius: 10px;
+      background: #0d1520;
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .card-option:hover {
+      border-color: #2a4a6a;
+    }
+
+    .card-option.selected {
+      border-color: #4299e1;
+      background: #0a1628;
+      box-shadow: 0 0 0 1px #4299e133;
+    }
+
+    .card-option-name {
+      font-size: 14px;
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+
+    .card-option.selected .card-option-name {
+      color: #63b3ed;
+    }
+
+    .card-option-price {
+      font-size: 12px;
+      color: #4a5568;
+      margin-top: 2px;
+    }
+
+    .card-option.selected .card-option-price {
+      color: #2a5f8a;
+    }
+
+    .card-option-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid #1e2d4a;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .15s;
+    }
+
+    .card-option.selected .card-option-check {
+      background: #4299e1;
+      border-color: #4299e1;
+    }
+
+    .card-option.selected .card-option-check::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
@@ -316,30 +391,30 @@
         <div class="row">
           <div class="field">
             <label>材料 Material</label>
-            <select id="material">
-              <option value="0" disabled selected>加载中…</option>
-            </select>
+            <input type="hidden" id="material" value="0">
+            <span id="material-en" style="display:none"></span>
+            <div id="material-group" class="card-option-group"></div>
           </div>
           <div class="field">
             <label>玻璃 Glass</label>
-            <select id="glass">
-              <option value="0" disabled selected>加载中…</option>
-            </select>
+            <input type="hidden" id="glass" value="0">
+            <span id="glass-en" style="display:none"></span>
+            <div id="glass-group" class="card-option-group"></div>
           </div>
         </div>
 
         <div class="row">
           <div class="field">
             <label>表面处理 Surface</label>
-            <select id="surface">
-              <option value="0" disabled selected>加载中…</option>
-            </select>
+            <input type="hidden" id="surface" value="0">
+            <span id="surface-en" style="display:none"></span>
+            <div id="surface-group" class="card-option-group"></div>
           </div>
           <div class="field">
             <label>五金 Hardware</label>
-            <select id="hardware">
-              <option value="0" disabled selected>加载中…</option>
-            </select>
+            <input type="hidden" id="hardware" value="0">
+            <span id="hardware-en" style="display:none"></span>
+            <div id="hardware-group" class="card-option-group"></div>
           </div>
         </div>
 
@@ -579,12 +654,12 @@
     }
 
     function buildSpecification() {
-      const parts = [];
-      const matEn  = selectedOption('material').dataset.en;
-      const glsEn  = selectedOption('glass').dataset.en;
-      const surfEn = selectedOption('surface').dataset.en;
-      const hwEn   = selectedOption('hardware').dataset.en;
-      parts.push(matEn, glsEn, surfEn, hwEn);
+      const parts = [
+        $('material-en').textContent,
+        $('glass-en').textContent,
+        $('surface-en').textContent,
+        $('hardware-en').textContent,
+      ];
       return parts.join(' / ');
     }
 
@@ -809,6 +884,20 @@
       }
     }
 
+    // ── Card-option selection (shared click handler) ─────────────────────
+    function selectCardOption(card) {
+      const group = card.parentElement;
+      const cat   = group.id.replace(/-group$/, '');
+      const hiddenInput = $(cat);
+      const hiddenEn    = $(cat + '-en');
+      if (!hiddenInput || !hiddenEn) return;
+      group.querySelectorAll('.card-option').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      hiddenInput.value     = card.dataset.value;
+      hiddenEn.textContent  = card.dataset.en;
+      hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
     // ── Load products & adders from backend ──────────────────────────────
     async function loadProducts() {
       try {
@@ -830,15 +919,43 @@
         const byCat = { material: [], glass: [], surface: [], hardware: [] };
         j.adders.forEach(a => { if (byCat[a.category]) byCat[a.category].push(a); });
         for (const [cat, list] of Object.entries(byCat)) {
-          const sel = $(cat);
-          if (!sel) continue;
-          sel.innerHTML = '';
-          list.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.price_cny;
-            opt.dataset.en = a.option_name_en;
-            opt.textContent = `${a.option_name_cn} +¥${a.price_cny}/m²`;
-            sel.appendChild(opt);
+          const group = $(cat + '-group');
+          if (!group) continue;
+          const hiddenInput = $(cat);
+          const hiddenEn    = $(cat + '-en');
+          group.innerHTML = '';
+          list.forEach((a, i) => {
+            const card = document.createElement('div');
+            card.className = 'card-option' + (i === 0 ? ' selected' : '');
+            card.dataset.value = a.price_cny;
+            card.dataset.en    = a.option_name_en;
+
+            const content = document.createElement('div');
+            content.className = 'card-option-content';
+
+            const name = document.createElement('div');
+            name.className = 'card-option-name';
+            name.textContent = a.option_name_cn;
+            content.appendChild(name);
+
+            const price = document.createElement('div');
+            price.className = 'card-option-price';
+            price.textContent = `+¥${a.price_cny}/m²`;
+            content.appendChild(price);
+
+            card.appendChild(content);
+
+            const check = document.createElement('div');
+            check.className = 'card-option-check';
+            card.appendChild(check);
+
+            card.addEventListener('click', () => selectCardOption(card));
+            group.appendChild(card);
+
+            if (i === 0) {
+              hiddenInput.value    = a.price_cny;
+              hiddenEn.textContent = a.option_name_en;
+            }
           });
         }
 
