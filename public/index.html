@@ -1456,7 +1456,8 @@
     #wizard-step-2 {
       position: relative;
       overflow: hidden;
-      background: #0d1117;
+      background: #080c14;
+      border-radius: 14px;
     }
 
     #step2Canvas {
@@ -1472,116 +1473,97 @@
       z-index: 1;
     }
 
-    /* Cards — give each section a dark glass card */
+    #wizard-step-2 .panel-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+    }
+
+    #wizard-step-2 .panel-sub {
+      color: #6b7a99;
+      font-size: 13px;
+    }
+
     #wizard-step-2 .form-row,
     #wizard-step-2 .source-toggle,
-    #wizard-step-2 .depth-seg,
-    #wizard-step-2 .seller-info-card {
-      background: rgba(22,27,34,0.85);
-      border: 0.5px solid #30363d;
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: .75rem;
-      backdrop-filter: blur(8px);
-      transition: transform .2s, box-shadow .2s;
+    #wizard-step-2 .depth-seg {
+      background: linear-gradient(135deg, #0d1420, #111827);
+      border: 1px solid #1a2540;
+      border-radius: 14px;
+      padding: 1.1rem 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: inset 0 1px 0 rgba(55,138,221,0.08);
     }
 
-    #wizard-step-2 .form-row:hover,
-    #wizard-step-2 .source-toggle:hover,
-    #wizard-step-2 .depth-seg:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(55,138,221,0.15);
+    #wizard-step-2 .source-toggle {
+      box-shadow: inset 0 1px 0 rgba(83,74,183,0.08);
     }
 
-    /* Source buttons */
+    #wizard-step-2 .depth-seg {
+      box-shadow: inset 0 1px 0 rgba(29,158,117,0.08);
+    }
+
+    #wizard-step-2 label,
+    #wizard-step-2 .form-label {
+      font-size: 12px;
+      color: #6b7a99;
+      font-weight: 500;
+    }
+
+    #wizard-step-2 input[type="text"],
+    #wizard-step-2 input[type="number"],
+    #wizard-step-2 input[type="password"],
+    #wizard-step-2 textarea,
+    #wizard-step-2 select {
+      background: #080c14;
+      border: 1px solid #1a2540;
+      border-radius: 8px;
+      color: #c9d1d9;
+      outline: none;
+      transition: .2s;
+    }
+
+    #wizard-step-2 input:focus,
+    #wizard-step-2 textarea:focus,
+    #wizard-step-2 select:focus {
+      border-color: #378ADD;
+      box-shadow: 0 0 0 3px rgba(55,138,221,0.1);
+    }
+
     #wizard-step-2 .src-btn {
-      background: rgba(13,17,23,0.8);
-      border: 0.5px solid #30363d;
+      background: #080c14;
+      border: 1px solid #1a2540;
       border-radius: 10px;
+      color: #c9d1d9;
       transition: .2s;
     }
 
     #wizard-step-2 .src-btn.selected {
       border-color: #378ADD;
-      background: linear-gradient(135deg, #0d1117, #0c1e33);
-      box-shadow: 0 0 20px rgba(55,138,221,0.25);
+      background: #0a1628;
+      box-shadow: 0 0 20px rgba(55,138,221,0.12), inset 0 0 20px rgba(55,138,221,0.04);
+      color: #e6edf3;
     }
 
-    /* Depth segment buttons */
     #wizard-step-2 .dseg-btn {
-      background: rgba(13,17,23,0.8);
-      border: 0.5px solid #30363d;
+      background: #080c14;
+      border: 1px solid #1a2540;
       border-radius: 8px;
+      color: #c9d1d9;
       transition: .2s;
-      color: #e6edf3;
     }
 
     #wizard-step-2 .dseg-btn:hover {
-      border-color: rgba(55,138,221,0.4);
-      transform: translateY(-1px);
+      border-color: #2d4060;
     }
 
     #wizard-step-2 .dseg-btn.selected {
-      border-color: #378ADD;
-      background: linear-gradient(135deg, #0d1117, #0c1e33);
-      box-shadow: 0 0 12px rgba(55,138,221,0.3);
-      color: #378ADD;
-      font-weight: 500;
-    }
-
-    /* Inputs */
-    #wizard-step-2 input[type="text"],
-    #wizard-step-2 input[type="number"],
-    #wizard-step-2 textarea {
-      background: rgba(13,17,23,0.8);
-      border: 0.5px solid #30363d;
-      border-radius: 8px;
-      color: #e6edf3;
-      transition: .2s;
-    }
-
-    #wizard-step-2 input:focus,
-    #wizard-step-2 textarea:focus {
-      border-color: #378ADD;
-      box-shadow: 0 0 0 3px rgba(55,138,221,0.15);
-      outline: none;
-    }
-
-    /* Next button */
-    #step2NextBtn {
-      background: linear-gradient(135deg, #378ADD, #534AB7) !important;
-      border: none !important;
-      box-shadow: 0 4px 20px rgba(55,138,221,0.4) !important;
-      transition: .2s !important;
-    }
-
-    #step2NextBtn:hover {
-      box-shadow: 0 6px 28px rgba(55,138,221,0.6) !important;
-      transform: translateY(-1px) !important;
-    }
-
-    /* Text readability */
-    #wizard-step-2 .panel-title {
-      color: #e6edf3;
-      font-size: 20px;
+      border-color: #534AB7;
+      background: #0a0d1a;
+      box-shadow: 0 0 16px rgba(83,74,183,0.15), inset 0 0 16px rgba(83,74,183,0.05);
+      color: #a78bfa;
       font-weight: 600;
-    }
-
-    #wizard-step-2 .panel-sub {
-      color: #8b949e;
-    }
-
-    #wizard-step-2 label,
-    #wizard-step-2 .form-label {
-      color: #c9d1d9;
-    }
-
-    #wizard-step-2 .dseg-btn {
-      color: #c9d1d9;
-    }
-
-    #wizard-step-2 .src-btn {
-      color: #c9d1d9;
     }
 
     #wizard-step-2 .field-opt-name {
@@ -1589,11 +1571,41 @@
     }
 
     #wizard-step-2 .field-opt-desc {
-      color: #8b949e;
+      color: #6b7a99;
+    }
+
+    #wizard-step-2 .field-badge.paid {
+      background: rgba(234,179,8,0.1);
+      color: #eab308;
+      border: 1px solid rgba(234,179,8,0.2);
+      border-radius: 20px;
     }
 
     #wizard-step-2 .advanced-toggle {
       color: #c9d1d9;
+    }
+
+    #wizard-step-2 .seller-info-card,
+    #wizard-step-2 .seller-card {
+      background: linear-gradient(135deg, #0d1420, #111827);
+      border: 1px solid #1a2540;
+      border-radius: 14px;
+      padding: 1.1rem 1.25rem;
+      box-shadow: inset 0 1px 0 rgba(29,158,117,0.08);
+    }
+
+    #step2NextBtn {
+      background: linear-gradient(135deg, #378ADD, #534AB7) !important;
+      border: none !important;
+      box-shadow: 0 0 24px rgba(55,138,221,0.35), 0 4px 12px rgba(55,138,221,0.2) !important;
+      font-weight: 600 !important;
+      letter-spacing: .01em !important;
+      transition: .2s !important;
+    }
+
+    #step2NextBtn:hover {
+      box-shadow: 0 0 32px rgba(55,138,221,0.5), 0 6px 16px rgba(55,138,221,0.3) !important;
+      transform: translateY(-1px) !important;
     }
 
   </style>
@@ -6311,7 +6323,7 @@ window.addEventListener('pipelineDone', () => {
 // ── Step 2 particle background ───────────────────────────────────────────
 (function(){
   let animId;
-  const colors = ['#378ADD','#534AB7','#1D9E75','#D4537E','#EF9F27'];
+  const colors = ['#378ADD','#534AB7','#1D9E75','#a78bfa','#60a5fa'];
   let dots = [];
 
   function initCanvas(){
@@ -6320,16 +6332,15 @@ window.addEventListener('pipelineDone', () => {
     const panel = document.getElementById('wizard-step-2');
     canvas.width = panel.offsetWidth;
     canvas.height = panel.offsetHeight;
-    dots = Array.from({length:40}, () => ({
+    dots = Array.from({length:50}, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      r: Math.random() * 2 + 1,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: (Math.random() - 0.5) * 0.4,
+      r: Math.random() * 1.5 + 0.5,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
       color: colors[Math.floor(Math.random()*colors.length)],
-      alpha: Math.random() * 0.4 + 0.15
+      alpha: Math.random() * 0.5 + 0.2
     }));
-    return canvas;
   }
 
   function drawParticles(){
@@ -6346,20 +6357,20 @@ window.addEventListener('pipelineDone', () => {
       ctx.fillStyle = d.color + Math.floor(d.alpha*255).toString(16).padStart(2,'0');
       ctx.fill();
     });
-    dots.forEach((a,i) => {
-      dots.slice(i+1).forEach(b => {
-        const dist = Math.hypot(a.x-b.x, a.y-b.y);
-        if(dist < 120){
-          const ctx2 = canvas.getContext('2d');
-          ctx2.beginPath();
-          ctx2.moveTo(a.x,a.y);
-          ctx2.lineTo(b.x,b.y);
-          ctx2.strokeStyle = a.color + Math.floor((1-dist/120)*35).toString(16).padStart(2,'0');
-          ctx2.lineWidth = 0.5;
-          ctx2.stroke();
+    for(let i=0;i<dots.length;i++){
+      for(let j=i+1;j<dots.length;j++){
+        const dx=dots[i].x-dots[j].x, dy=dots[i].y-dots[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<100){
+          ctx.beginPath();
+          ctx.moveTo(dots[i].x,dots[i].y);
+          ctx.lineTo(dots[j].x,dots[j].y);
+          ctx.strokeStyle=dots[i].color+Math.floor((1-dist/100)*30).toString(16).padStart(2,'0');
+          ctx.lineWidth=0.5;
+          ctx.stroke();
         }
-      });
-    });
+      }
+    }
     animId = requestAnimationFrame(drawParticles);
   }
 
@@ -6367,7 +6378,8 @@ window.addEventListener('pipelineDone', () => {
   window.goToStep = function(n){
     origGoToStep(n);
     if(n === 2){
-      setTimeout(() => { initCanvas(); cancelAnimationFrame(animId); drawParticles(); }, 50);
+      cancelAnimationFrame(animId);
+      setTimeout(() => { initCanvas(); drawParticles(); }, 80);
     } else {
       cancelAnimationFrame(animId);
     }
