@@ -1493,34 +1493,6 @@
       box-shadow: 0 8px 32px rgba(55,138,221,0.15);
     }
 
-    /* Top accent line on each card */
-    #wizard-step-2 .form-row::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #378ADD, #534AB7);
-      border-radius: 12px 12px 0 0;
-    }
-
-    #wizard-step-2 .source-toggle::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #534AB7, #D4537E);
-      border-radius: 12px 12px 0 0;
-    }
-
-    #wizard-step-2 .depth-seg::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #1D9E75, #378ADD);
-      border-radius: 12px 12px 0 0;
-    }
-
     /* Source buttons */
     #wizard-step-2 .src-btn {
       background: rgba(13,17,23,0.8);
@@ -1588,13 +1560,40 @@
       transform: translateY(-1px) !important;
     }
 
-    /* Panel title */
+    /* Text readability */
     #wizard-step-2 .panel-title {
       color: #e6edf3;
+      font-size: 20px;
+      font-weight: 600;
     }
 
     #wizard-step-2 .panel-sub {
       color: #8b949e;
+    }
+
+    #wizard-step-2 label,
+    #wizard-step-2 .form-label {
+      color: #c9d1d9;
+    }
+
+    #wizard-step-2 .dseg-btn {
+      color: #c9d1d9;
+    }
+
+    #wizard-step-2 .src-btn {
+      color: #c9d1d9;
+    }
+
+    #wizard-step-2 .field-opt-name {
+      color: #c9d1d9;
+    }
+
+    #wizard-step-2 .field-opt-desc {
+      color: #8b949e;
+    }
+
+    #wizard-step-2 .advanced-toggle {
+      color: #c9d1d9;
     }
 
   </style>
