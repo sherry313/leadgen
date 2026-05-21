@@ -223,6 +223,48 @@
       background: #475569; border-color: #475569;
       cursor: not-allowed; transform: none;
     }
+
+    /* Custom select styling */
+    #wizard-step-2 select,
+    .quote-select,
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-color: #0f1318;
+      border: 1px solid #252d3d;
+      border-radius: 8px;
+      color: #e2e8f0;
+      padding: .55rem .85rem;
+      cursor: pointer;
+      transition: .2s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234299e1' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .75rem center;
+      padding-right: 2rem;
+    }
+
+    select:hover {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 2px rgba(66,153,225,0.1);
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66,153,225,0.15);
+    }
+
+    select option {
+      background-color: #0f1318;
+      color: #e2e8f0;
+      padding: .5rem;
+    }
+
+    select option:hover,
+    select option:checked {
+      background-color: #1a2744;
+      color: #63b3ed;
+    }
   </style>
 </head>
 <body>
