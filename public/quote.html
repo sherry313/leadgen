@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lens 报价生成器</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🪟</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2563eb; --blue-dark: #1d4ed8;
+      --blue-light: rgba(59,130,246,0.25); --blue-bg: rgba(37,99,235,0.12);
+      --border: rgba(99,179,237,0.15);
+      --text: #f8fafc; --sub: #94a3b8; --bg: #0f172a;
+      --card: rgba(30,41,59,0.85);
+      --input-bg: rgba(15,23,42,0.6);
+    }
+    body {
+      font-family: -apple-system,'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+
+    /* ── Password gate ── */
+    #gate {
+      position: fixed; inset: 0; z-index: 999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gate-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 32px 36px; width: 320px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .gate-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
+    .gate-sub { font-size: 0.82rem; color: var(--sub); margin-bottom: 18px; }
+    .gate-input {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      color: var(--text); font-size: 0.92rem; outline: none;
+      transition: border-color 0.15s;
+    }
+    .gate-input:focus { border-color: var(--blue); }
+    .gate-err { color: #f87171; font-size: 0.78rem; margin-top: 8px; min-height: 1em; }
+    .gate-btn {
+      margin-top: 14px; width: 100%; padding: 10px;
+      background: var(--blue); color: #fff; border: none; border-radius: 8px;
+      font-weight: 600; cursor: pointer; transition: background 0.15s;
+    }
+    .gate-btn:hover { background: var(--blue-dark); }
+
+    /* ── App layout ── */
+    .container { max-width: 1280px; margin: 0 auto; padding: 32px 24px 56px; }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .logo {
+      font-size: 1.5rem; font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #2563eb, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: -0.5px;
+    }
+    .header-sub { font-size: 0.82rem; color: var(--sub); }
+
+    .grid {
+      display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px;
+    }
+    @media(max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 22px 24px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+    .panel-title {
+      font-size: 1rem; font-weight: 700; margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    .panel-sub { font-size: 0.78rem; color: var(--sub); margin-bottom: 18px; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .row.full { grid-template-columns: 1fr; }
+    .field label {
+      display: block; font-size: 0.78rem; color: var(--sub);
+      margin-bottom: 6px; font-weight: 500;
+    }
+    .field input, .field select {
+      width: 100%; padding: 9px 11px; border-radius: 7px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      color: var(--text); font-size: 0.88rem; outline: none;
+      font-family: inherit; transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--blue); }
+    .field .suffix-wrap { position: relative; }
+    .field .suffix {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--sub); font-size: 0.78rem; pointer-events: none;
+    }
+    .field .suffix-wrap input { padding-right: 38px; }
+
+    .section-head {
+      font-size: 0.82rem; font-weight: 700; color: #93c5fd;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin: 18px 0 10px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-head:first-child { margin-top: 0; }
+
+    /* ── Live calc panel ── */
+    .calc-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 9px 0; font-size: 0.88rem;
+      border-bottom: 1px dashed rgba(148,163,184,0.12);
+    }
+    .calc-row:last-child { border-bottom: none; }
+    .calc-row .label { color: var(--sub); }
+    .calc-row .val { font-variant-numeric: tabular-nums; font-weight: 600; }
+    .calc-row.major {
+      padding: 14px 0; font-size: 1rem;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border) !important;
+      margin: 8px 0;
+    }
+    .calc-row.final {
+      padding: 18px 16px; margin-top: 12px;
+      background: rgba(37,99,235,0.12);
+      border: 1px solid rgba(37,99,235,0.35);
+      border-radius: 10px;
+      font-size: 1.1rem;
+    }
+    .calc-row.final .label { color: #93c5fd; font-weight: 600; }
+    .calc-row.final .val {
+      color: #60a5fa; font-weight: 800; font-size: 1.35rem;
+    }
+    .calc-row.profit {
+      padding: 12px 14px; margin-top: 8px;
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 8px;
+    }
+    .calc-row.profit .label { color: #86efac; }
+    .calc-row.profit .val { color: #4ade80; }
+
+    .calc-sub { font-size: 0.72rem; color: var(--sub); margin-top: 4px; }
+
+    .pdf-btn {
+      margin-top: 18px; width: 100%; padding: 13px;
+      background: var(--blue); color: #fff; border: none; border-radius: 9px;
+      font-weight: 700; font-size: 0.95rem; cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .pdf-btn:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .pdf-btn:disabled { background: #475569; cursor: not-allowed; transform: none; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(30,41,59,0.95); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 20px; border-radius: 8px;
+      font-size: 0.88rem; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      z-index: 200;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Password gate ── -->
+  <div id="gate">
+    <div class="gate-card">
+      <div class="gate-title">🪟 Lens 报价生成器</div>
+      <div class="gate-sub">请输入访问密码</div>
+      <input id="gatePwd" class="gate-input" type="password" placeholder="访问密码" autocomplete="off">
+      <div id="gateErr" class="gate-err"></div>
+      <button class="gate-btn" onclick="checkGate()">进入</button>
+    </div>
+  </div>
+
+  <!-- ── App ── -->
+  <div class="container" id="app" style="display:none">
+    <div class="header">
+      <div>
+        <div class="logo">Lens 铝合金门窗</div>
+        <div class="header-sub">内部报价工具 · Factory Direct — Foshan, China</div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- ── Inputs ── -->
+      <div class="panel">
+
+        <div class="section-head">产品信息</div>
+
+        <div class="row full">
+          <div class="field">
+            <label>产品类型 Product</label>
+            <select id="product">
+              <option value="sliding-window"     data-price="400"  data-en="Sliding Window">推拉窗 Sliding Window — ¥400/m²</option>
+              <option value="casement-window"    data-price="600"  data-en="Casement Window">平开窗 Casement Window — ¥600/m²</option>
+              <option value="fixed-window"       data-price="350"  data-en="Fixed Window">固定窗 Fixed Window — ¥350/m²</option>
+              <option value="sliding-door"       data-price="800"  data-en="Sliding Door">推拉门 Sliding Door — ¥800/m²</option>
+              <option value="bifold-door"        data-price="1500" data-en="Bifold Door">折叠门 Bifold Door — ¥1500/m²</option>
+              <option value="lift-slide-door"    data-price="2500" data-en="Lift & Slide Door">提升推拉门 Lift &amp; Slide Door — ¥2500/m²</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>宽度 Width</label>
+            <div class="suffix-wrap">
+              <input id="width" type="number" min="0" step="1" value="1500">
+              <span class="suffix">mm</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>高度 Height</label>
+            <div class="suffix-wrap">
+              <input id="height" type="number" min="0" step="1" value="1500">
+              <span class="suffix">mm</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head">规格选项</div>
+
+        <div class="row">
+          <div class="field">
+            <label>材料 Material</label>
+            <select id="material">
+              <option value="0"   data-en="Standard Aluminium">普通铝合金 +¥0/m²</option>
+              <option value="300" data-en="Thermal Break Aluminium">断桥铝 Thermal Break +¥300/m²</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>玻璃 Glass</label>
+            <select id="glass">
+              <option value="0"   data-en="Single Glazing">单玻 +¥0/m²</option>
+              <option value="150" data-en="Double Glazing">双玻 +¥150/m²</option>
+              <option value="250" data-en="Double Glazing Low-E">双玻 Low-E +¥250/m²</option>
+              <option value="350" data-en="Double Glazing Low-E with Argon">双玻 Low-E 充氩气 +¥350/m²</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>表面处理 Surface</label>
+            <select id="surface">
+              <option value="0"   data-en="Powder Coating">粉末喷涂 +¥0/m²</option>
+              <option value="150" data-en="Fluorocarbon Coating">氟碳喷涂 +¥150/m²</option>
+              <option value="300" data-en="Wood Grain Transfer">木纹转印 +¥300/m²</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>五金 Hardware</label>
+            <select id="hardware">
+              <option value="0"   data-en="Domestic Hardware">国产五金 +¥0/m²</option>
+              <option value="200" data-en="German Hardware">德国五金 +¥200/m²</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-head">附加成本 (可编辑)</div>
+
+        <div class="row">
+          <div class="field">
+            <label>包装费 Packaging (¥/m²)</label>
+            <input id="packaging" type="number" min="0" step="1" value="80">
+          </div>
+          <div class="field">
+            <label>国内运费 Domestic Freight (¥/m²)</label>
+            <input id="domesticFreight" type="number" min="0" step="1" value="40">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>海运费 Sea Freight (¥/m²)</label>
+            <input id="seaFreight" type="number" min="0" step="1" value="150">
+          </div>
+          <div class="field">
+            <label>利润率 Profit Margin (%)</label>
+            <input id="profitMargin" type="number" min="0" max="99" step="0.1" value="30">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>汇率 AUD/CNY</label>
+            <input id="exchangeRate" type="number" min="0" step="0.01" value="4.7">
+          </div>
+          <div class="field"></div>
+        </div>
+
+        <div class="section-head">客户信息</div>
+
+        <div class="row">
+          <div class="field">
+            <label>客户姓名 Customer Name</label>
+            <input id="custName" type="text" placeholder="John Smith">
+          </div>
+          <div class="field">
+            <label>客户邮箱 Customer Email</label>
+            <input id="custEmail" type="email" placeholder="john@example.com">
+          </div>
+        </div>
+
+        <div class="row full">
+          <div class="field">
+            <label>项目名称 Project Name</label>
+            <input id="projectName" type="text" placeholder="Sydney Residential Tower">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Live calculation ── -->
+      <div class="panel">
+        <div class="panel-title">实时计算 Live Calculation</div>
+        <div class="panel-sub">输入参数后自动更新</div>
+
+        <div class="calc-row">
+          <span class="label">面积 Area</span>
+          <span class="val"><span id="calcArea">2.25</span> m²</span>
+        </div>
+
+        <div class="calc-row">
+          <span class="label">出厂单价 Factory ¥/m²</span>
+          <span class="val">¥<span id="calcFactoryPerSqm">400</span></span>
+        </div>
+
+        <div class="calc-row major">
+          <span class="label">出厂总价 Factory CNY</span>
+          <span class="val">¥<span id="calcFactoryTotal">900</span></span>
+        </div>
+
+        <div class="calc-row">
+          <span class="label">+ 包装费</span>
+          <span class="val">¥<span id="calcPackaging">180</span></span>
+        </div>
+        <div class="calc-row">
+          <span class="label">+ 国内运费</span>
+          <span class="val">¥<span id="calcDomestic">90</span></span>
+        </div>
+        <div class="calc-row">
+          <span class="label">+ 海运费</span>
+          <span class="val">¥<span id="calcSea">338</span></span>
+        </div>
+
+        <div class="calc-row major">
+          <span class="label">总成本 Total Cost CNY</span>
+          <span class="val">¥<span id="calcTotalCost">1508</span></span>
+        </div>
+
+        <div class="calc-row">
+          <span class="label">总成本 AUD</span>
+          <span class="val">A$<span id="calcTotalCostAud">321</span></span>
+        </div>
+
+        <div class="calc-row final">
+          <span class="label">报价 Quote AUD</span>
+          <span class="val">A$<span id="calcQuoteAud">458</span></span>
+        </div>
+
+        <div class="calc-row profit">
+          <span class="label">利润 Profit AUD</span>
+          <span class="val">A$<span id="calcProfitAud">137</span></span>
+        </div>
+
+        <div class="calc-sub">报价 AUD/m²: A$<span id="calcQuotePerSqm">204</span></div>
+
+        <button class="pdf-btn" id="pdfBtn" onclick="generatePdf()">📄 生成报价单 PDF</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // ── Password gate ────────────────────────────────────────────────────
+    const PASSWORD = 'lens2026';
+    function checkGate() {
+      const v = document.getElementById('gatePwd').value;
+      if (v === PASSWORD) {
+        document.getElementById('gate').style.display = 'none';
+        document.getElementById('app').style.display  = '';
+        sessionStorage.setItem('lens_unlocked', '1');
+        recalc();
+      } else {
+        document.getElementById('gateErr').textContent = '密码错误';
+      }
+    }
+    document.getElementById('gatePwd').addEventListener('keydown', e => {
+      if (e.key === 'Enter') checkGate();
+    });
+    if (sessionStorage.getItem('lens_unlocked') === '1') {
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('app').style.display  = '';
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const num = id => parseFloat($(id).value) || 0;
+    const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+    function selectedOption(id) {
+      const sel = $(id);
+      return sel.options[sel.selectedIndex];
+    }
+
+    // ── Live calculation ─────────────────────────────────────────────────
+    function calc() {
+      const w  = num('width');
+      const h  = num('height');
+      const area = (w * h) / 1_000_000;
+
+      const basePrice = parseFloat(selectedOption('product').dataset.price) || 0;
+      const material  = num('material');
+      const glass     = num('glass');
+      const surface   = num('surface');
+      const hardware  = num('hardware');
+
+      const factoryPerSqm = basePrice + material + glass + surface + hardware;
+      const factoryTotal  = factoryPerSqm * area;
+
+      const packaging = num('packaging') * area;
+      const domestic  = num('domesticFreight') * area;
+      const sea       = num('seaFreight') * area;
+      const totalCostCny = factoryTotal + packaging + domestic + sea;
+
+      const rate   = num('exchangeRate') || 1;
+      const margin = num('profitMargin') / 100;
+      const totalCostAud = totalCostCny / rate;
+      const quoteAud   = margin < 1 ? totalCostAud / (1 - margin) : 0;
+      const profitAud  = quoteAud - totalCostAud;
+      const quotePerSqm = area > 0 ? quoteAud / area : 0;
+
+      return {
+        area, basePrice, material, glass, surface, hardware,
+        factoryPerSqm, factoryTotal,
+        packaging, domestic, sea,
+        totalCostCny, rate, margin, totalCostAud,
+        quoteAud, profitAud, quotePerSqm,
+      };
+    }
+
+    function recalc() {
+      const c = calc();
+      $('calcArea').textContent           = fmt(c.area, 2);
+      $('calcFactoryPerSqm').textContent  = fmt(c.factoryPerSqm);
+      $('calcFactoryTotal').textContent   = fmt(c.factoryTotal);
+      $('calcPackaging').textContent      = fmt(c.packaging);
+      $('calcDomestic').textContent       = fmt(c.domestic);
+      $('calcSea').textContent            = fmt(c.sea);
+      $('calcTotalCost').textContent      = fmt(c.totalCostCny);
+      $('calcTotalCostAud').textContent   = fmt(c.totalCostAud);
+      $('calcQuoteAud').textContent       = fmt(c.quoteAud);
+      $('calcProfitAud').textContent      = fmt(c.profitAud);
+      $('calcQuotePerSqm').textContent    = fmt(c.quotePerSqm);
+    }
+
+    ['product','width','height','material','glass','surface','hardware',
+     'packaging','domesticFreight','seaFreight','profitMargin','exchangeRate']
+      .forEach(id => $(id).addEventListener('input', recalc));
+
+    // ── Toast ────────────────────────────────────────────────────────────
+    function toast(msg, ms = 2500) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove('show'), ms);
+    }
+
+    // ── PDF generation ───────────────────────────────────────────────────
+    function quoteNumber() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const rand = String(Math.floor(1000 + Math.random() * 9000));
+      return `LENS-${yyyy}${mm}${dd}-${rand}`;
+    }
+
+    function formatDate(d) {
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function buildSpecification() {
+      const parts = [];
+      const matEn  = selectedOption('material').dataset.en;
+      const glsEn  = selectedOption('glass').dataset.en;
+      const surfEn = selectedOption('surface').dataset.en;
+      const hwEn   = selectedOption('hardware').dataset.en;
+      parts.push(matEn, glsEn, surfEn, hwEn);
+      return parts.join(' / ');
+    }
+
+    function generatePdf() {
+      const c = calc();
+      if (!c.area || c.area <= 0)   { toast('请输入有效的尺寸'); return; }
+      if (!c.quoteAud || c.quoteAud <= 0) { toast('报价为零，请检查利润率与汇率'); return; }
+
+      const customerName  = $('custName').value.trim()    || '—';
+      const customerEmail = $('custEmail').value.trim()   || '—';
+      const projectName   = $('projectName').value.trim() || '—';
+
+      const productEn = selectedOption('product').dataset.en;
+      const spec      = buildSpecification();
+      const sizeStr   = `${num('width')} × ${num('height')} mm`;
+
+      const today  = new Date();
+      const valid  = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const qn     = quoteNumber();
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 18;
+
+      // Header band
+      doc.setFillColor(37, 99, 235);
+      doc.rect(0, 0, pageW, 32, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.text('Lens Aluminium Windows & Doors', margin, 15);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Factory Direct — Foshan, China', margin, 23);
+
+      doc.setFontSize(9);
+      doc.text(`Quote No: ${qn}`, pageW - margin, 14, { align: 'right' });
+      doc.text(`Date: ${formatDate(today)}`, pageW - margin, 20, { align: 'right' });
+      doc.text(`Valid Until: ${formatDate(valid)}`, pageW - margin, 26, { align: 'right' });
+
+      // Customer block
+      doc.setTextColor(30, 41, 59);
+      let y = 46;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('QUOTATION FOR', margin, y);
+      y += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Customer: ${customerName}`, margin, y); y += 5;
+      doc.text(`Email:    ${customerEmail}`, margin, y); y += 5;
+      doc.text(`Project:  ${projectName}`,    margin, y); y += 10;
+
+      // Product table
+      const cols = [
+        { label: 'Product',        w: 32 },
+        { label: 'Size (mm)',      w: 26 },
+        { label: 'm²',             w: 14 },
+        { label: 'Specification',  w: 60 },
+        { label: 'AUD/m²',         w: 22 },
+        { label: 'Total AUD',      w: 20 },
+      ];
+      const tableX = margin;
+      const tableW = cols.reduce((s, c) => s + c.w, 0);
+
+      // Header row
+      doc.setFillColor(37, 99, 235);
+      doc.rect(tableX, y, tableW, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      let cx = tableX;
+      cols.forEach(col => {
+        doc.text(col.label, cx + 2, y + 5.5);
+        cx += col.w;
+      });
+      y += 8;
+
+      // Body row
+      doc.setTextColor(30, 41, 59);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      const rowH = 18;
+      doc.setDrawColor(220, 226, 234);
+      doc.rect(tableX, y, tableW, rowH);
+
+      const cells = [
+        productEn,
+        sizeStr,
+        c.area.toFixed(2),
+        spec,
+        `A$ ${fmt(c.quotePerSqm)}`,
+        `A$ ${fmt(c.quoteAud)}`,
+      ];
+      cx = tableX;
+      cells.forEach((txt, i) => {
+        const wrapped = doc.splitTextToSize(String(txt), cols[i].w - 4);
+        doc.text(wrapped, cx + 2, y + 5);
+        cx += cols[i].w;
+      });
+      y += rowH + 4;
+
+      // Total
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`TOTAL: A$ ${fmt(c.quoteAud)}`, pageW - margin, y + 4, { align: 'right' });
+      y += 14;
+
+      // Notes
+      doc.setTextColor(100, 116, 139);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      const notes = [
+        'Prices in Australian Dollars (AUD), EXW Foshan unless otherwise stated.',
+        'Quote valid for 30 days from issue date.',
+        'Lead time: 25–35 working days from deposit. Payment: 30% deposit / 70% before shipment.',
+      ];
+      notes.forEach(line => { doc.text(line, margin, y); y += 4.5; });
+
+      // Footer band
+      const footerY = doc.internal.pageSize.getHeight() - 18;
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, footerY, pageW, 18, 'F');
+      doc.setTextColor(226, 232, 240);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text('20 years experience  |  300,000m² factory  |  zhuolu34@gmail.com  |  +86 187 8960 4353',
+        pageW / 2, footerY + 11, { align: 'center' });
+
+      doc.save(`${qn}.pdf`);
+      toast(`✓ 已生成 ${qn}.pdf`);
+    }
+
+    // initial render
+    recalc();
+  </script>
+
+</body>
+</html>
