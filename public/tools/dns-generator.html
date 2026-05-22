@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DNS 邮件验证记录生成器 — 免费工具</title>
+  <meta name="description" content="一键生成 SPF、DKIM、DMARC DNS 记录，让你的邮件不再进垃圾箱。免费工具，无需注册。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🛡️</text></svg>">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0a0f1a;
+      --card:      #0d1520;
+      --card-on:   #0a1628;
+      --border:    #1e2d4a;
+      --border-on: #4299e1;
+      --text:      #e2e8f0;
+      --text-dim:  #94a3b8;
+      --text-mute: #4a5568;
+      --blue:      #4299e1;
+      --purple:    #7f5af0;
+      --green:     #1D9E75;
+      --amber:     #BA7517;
+    }
+    html, body { background: var(--bg); }
+    body {
+      font-family: -apple-system,'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;
+      color: var(--text); min-height: 100vh; line-height: 1.5;
+    }
+
+    .container { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 36px; }
+    .header h1 {
+      font-size: 1.85rem; font-weight: 800; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #60a5fa, #4299e1, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header p {
+      margin-top: 10px; font-size: 0.92rem; color: var(--text-dim);
+      max-width: 540px; margin-left: auto; margin-right: auto;
+    }
+
+    /* ── Section ── */
+    .section { margin-bottom: 24px; }
+    .section-title {
+      font-size: 0.78rem; font-weight: 700; color: #93c5fd;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    /* ── Card option (radio) ── */
+    .card-opt-grid { display: flex; flex-direction: column; gap: 8px; }
+    .card-opt {
+      padding: .85rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .card-opt:hover { border-color: #2a4a6a; }
+    .card-opt.on {
+      border-color: var(--border-on);
+      background: var(--card-on);
+      box-shadow: 0 0 0 1px #4299e133;
+    }
+    .card-opt-text { flex: 1; min-width: 0; }
+    .card-opt-name { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+    .card-opt-sub  { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
+    .card-opt.on .card-opt-name { color: #63b3ed; }
+    .card-opt.on .card-opt-sub  { color: #93c5fd; }
+    .card-opt-radio {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 1.5px solid var(--border); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .card-opt.on .card-opt-radio { background: var(--blue); border-color: var(--blue); }
+    .card-opt.on .card-opt-radio::after {
+      content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff;
+    }
+
+    /* ── Input ── */
+    .input {
+      width: 100%; padding: .75rem 1rem;
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 0.95rem; outline: none;
+      font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(66,153,225,0.15); }
+    .input.error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.15); }
+    .input-err {
+      font-size: 0.78rem; color: #fca5a5;
+      margin-top: 6px; display: none;
+    }
+    .input-err.show { display: block; }
+
+    /* ── Generate button ── */
+    .gen-btn {
+      margin-top: 28px; width: 100%;
+      padding: 14px; border-radius: 11px; border: none;
+      background: linear-gradient(135deg, #378ADD, #534AB7);
+      color: #fff; font-size: 1rem; font-weight: 700;
+      letter-spacing: 0.02em; cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 20px rgba(55,138,221,0.3);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .gen-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(55,138,221,0.45);
+    }
+    .gen-btn:disabled {
+      background: #334155; box-shadow: none;
+      cursor: not-allowed; transform: none;
+    }
+
+    /* ── Result cards ── */
+    .results { margin-top: 36px; display: none; }
+    .results.show { display: block; }
+    .result-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 14px;
+    }
+    .result-head {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .result-badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 9px; border-radius: 4px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .result-badge.spf   { background: rgba(29,158,117,0.15);  color: #4ade80; border: 1px solid rgba(29,158,117,0.4); }
+    .result-badge.dkim  { background: rgba(83,74,183,0.18);   color: #a78bfa; border: 1px solid rgba(83,74,183,0.45); }
+    .result-badge.dmarc { background: rgba(186,117,23,0.15);  color: #fbbf24; border: 1px solid rgba(186,117,23,0.45); }
+    .result-name { font-size: 1rem; font-weight: 700; color: var(--text); }
+
+    .result-row {
+      display: grid; grid-template-columns: 70px 1fr;
+      gap: 10px 14px; align-items: start;
+      padding: 8px 0; font-size: 0.88rem;
+      border-bottom: 1px dashed rgba(148,163,184,0.1);
+    }
+    .result-row:last-of-type { border-bottom: none; }
+    .result-row .label { color: var(--text-dim); font-weight: 500; }
+    .result-row .val {
+      color: var(--text); font-family: ui-monospace,Menlo,Monaco,Consolas,monospace;
+      font-size: 0.84rem; word-break: break-all;
+    }
+    .val-wrap {
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .val-wrap .val { flex: 1; }
+    .copy-btn {
+      flex-shrink: 0; padding: 5px 11px;
+      background: rgba(66,153,225,0.12); border: 1px solid rgba(66,153,225,0.32);
+      color: #93c5fd; font-size: 0.76rem; font-weight: 600;
+      border-radius: 6px; cursor: pointer; font-family: inherit;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: rgba(66,153,225,0.22); }
+    .copy-btn.copied {
+      background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.45); color: #4ade80;
+    }
+
+    .dkim-note {
+      margin-top: 10px; padding: 10px 12px;
+      background: rgba(186,117,23,0.08); border: 1px solid rgba(186,117,23,0.25);
+      border-radius: 7px; font-size: 0.8rem; color: #fde68a; line-height: 1.5;
+    }
+
+    /* ── Setup steps ── */
+    .steps-card {
+      margin-top: 28px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 22px;
+    }
+    .steps-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; color: var(--text); }
+    .steps-card ol {
+      padding-left: 22px; font-size: 0.88rem; color: var(--text);
+    }
+    .steps-card li { margin-bottom: 7px; line-height: 1.55; }
+    .steps-card li:last-child { margin-bottom: 0; }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 40px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+      text-align: center; font-size: 0.78rem; color: var(--text-mute);
+    }
+    .footer p { line-height: 1.6; }
+    .footer a {
+      display: inline-block; margin-top: 10px;
+      color: #93c5fd; text-decoration: none; font-weight: 500;
+    }
+    .footer a:hover { color: #60a5fa; }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      .container { padding: 32px 16px 60px; }
+      .header h1 { font-size: 1.5rem; }
+      .header p  { font-size: 0.85rem; }
+      .result-row { grid-template-columns: 1fr; gap: 4px; padding: 10px 0; }
+      .result-row .label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      .val-wrap { flex-direction: column; }
+      .copy-btn { align-self: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="header">
+      <h1>DNS 邮件验证记录生成器</h1>
+      <p>一键生成 SPF、DKIM、DMARC 记录，让你的邮件不再进垃圾箱</p>
+    </div>
+
+    <!-- 1. Provider -->
+    <div class="section">
+      <div class="section-title">1. 选择邮件服务商</div>
+      <div class="card-opt-grid" id="providerGrid">
+        <div class="card-opt on" data-key="google">
+          <div class="card-opt-text">
+            <div class="card-opt-name">Google Workspace / Gmail</div>
+            <div class="card-opt-sub">最常用的企业邮箱</div>
+          </div>
+          <div class="card-opt-radio"></div>
+        </div>
+        <div class="card-opt" data-key="outlook">
+          <div class="card-opt-text">
+            <div class="card-opt-name">Microsoft Outlook / Office 365</div>
+            <div class="card-opt-sub">微软企业邮箱</div>
+          </div>
+          <div class="card-opt-radio"></div>
+        </div>
+        <div class="card-opt" data-key="zoho">
+          <div class="card-opt-text">
+            <div class="card-opt-name">Zoho Mail</div>
+            <div class="card-opt-sub">免费企业邮箱</div>
+          </div>
+          <div class="card-opt-radio"></div>
+        </div>
+        <div class="card-opt" data-key="other">
+          <div class="card-opt-text">
+            <div class="card-opt-name">其他</div>
+            <div class="card-opt-sub">手动输入</div>
+          </div>
+          <div class="card-opt-radio"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Domain -->
+    <div class="section">
+      <div class="section-title">2. 输入你的域名</div>
+      <input id="domain" class="input" type="text" placeholder="example.com" autocomplete="off" spellcheck="false">
+      <div id="domainErr" class="input-err"></div>
+    </div>
+
+    <!-- 3. DMARC policy -->
+    <div class="section">
+      <div class="section-title">3. DMARC 策略</div>
+      <div class="card-opt-grid" id="policyGrid">
+        <div class="card-opt on" data-key="none">
+          <div class="card-opt-text">
+            <div class="card-opt-name">none — 先监控，不拦截</div>
+            <div class="card-opt-sub">推荐新手先用这个</div>
+          </div>
+          <div class="card-opt-radio"></div>
+        </div>
+        <div class="card-opt" data-key="quarantine">
+          <div class="card-opt-text">
+            <div class="card-opt-name">quarantine — 丢垃圾箱</div>
+            <div class="card-opt-sub">可疑邮件进垃圾箱</div>
+          </div>
+          <div class="card-opt-radio"></div>
+        </div>
+        <div class="card-opt" data-key="reject">
+          <div class="card-opt-text">
+            <div class="card-opt-name">reject — 直接拒收</div>
+            <div class="card-opt-sub">最严格，冒充邮件门都别进</div>
+          </div>
+          <div class="card-opt-radio"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Report email -->
+    <div class="section">
+      <div class="section-title">4. 接收报告的邮箱</div>
+      <input id="reportEmail" class="input" type="email" placeholder="your@email.com" autocomplete="off" spellcheck="false">
+      <div id="emailErr" class="input-err"></div>
+    </div>
+
+    <button class="gen-btn" id="genBtn" onclick="generate()">生成 DNS 记录</button>
+
+    <!-- Results -->
+    <div class="results" id="results">
+
+      <div class="result-card">
+        <div class="result-head">
+          <span class="result-badge spf">SPF</span>
+          <span class="result-name">发件人验证</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Type</span>
+          <span class="val">TXT</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Host</span>
+          <span class="val">@</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Value</span>
+          <div class="val-wrap">
+            <span class="val" id="spfVal">—</span>
+            <button class="copy-btn" data-copy="#spfVal">复制</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div class="result-head">
+          <span class="result-badge dkim">DKIM</span>
+          <span class="result-name">数字签名</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Type</span>
+          <span class="val">TXT</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Host</span>
+          <span class="val" id="dkimHost">—</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Value</span>
+          <span class="val" style="color: var(--text-dim); font-style: italic;">请从你的邮件服务商后台复制 DKIM 密钥</span>
+        </div>
+        <div class="dkim-note">
+          ⚠ DKIM 密钥每个域名不同，无法自动生成。请登录你的邮件服务商后台复制公钥（public key），完整长度通常 200+ 字符。
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div class="result-head">
+          <span class="result-badge dmarc">DMARC</span>
+          <span class="result-name">综合策略 + 报告</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Type</span>
+          <span class="val">TXT</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Host</span>
+          <span class="val">_dmarc</span>
+        </div>
+        <div class="result-row">
+          <span class="label">Value</span>
+          <div class="val-wrap">
+            <span class="val" id="dmarcVal">—</span>
+            <button class="copy-btn" data-copy="#dmarcVal">复制</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="steps-card">
+        <div class="steps-title">📌 设置步骤</div>
+        <ol>
+          <li>登录你的域名服务商（Namecheap、阿里云、腾讯云）</li>
+          <li>找到 DNS 设置 / Advanced DNS</li>
+          <li>添加上面三条 TXT 记录</li>
+          <li>等待 15-30 分钟生效</li>
+          <li>去 <a href="https://www.mail-tester.com" target="_blank" rel="noopener noreferrer" style="color:#93c5fd">mail-tester.com</a> 测试</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>免责声明：本工具仅提供参考信息，请自行核实后操作。</p>
+      <a href="/">← 返回智拓客</a>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    // ── State ──────────────────────────────────────────────────────────
+    let provider = 'google';
+    let policy   = 'none';
+
+    const SPF_BY_PROVIDER = {
+      google:  'v=spf1 include:_spf.google.com ~all',
+      outlook: 'v=spf1 include:spf.protection.outlook.com ~all',
+      zoho:    'v=spf1 include:zoho.com ~all',
+      other:   'v=spf1 ~all',
+    };
+
+    const DKIM_HOST_BY_PROVIDER = {
+      google:  'google._domainkey',
+      outlook: 'selector1._domainkey',
+      zoho:    'zmail._domainkey',
+      other:   'default._domainkey',
+    };
+
+    // ── Card radio behaviour ──────────────────────────────────────────
+    function wireGrid(gridId, onChange) {
+      const grid = $(gridId);
+      grid.querySelectorAll('.card-opt').forEach(card => {
+        card.addEventListener('click', () => {
+          grid.querySelectorAll('.card-opt').forEach(c => c.classList.remove('on'));
+          card.classList.add('on');
+          onChange(card.dataset.key);
+        });
+      });
+    }
+    wireGrid('providerGrid', k => { provider = k; });
+    wireGrid('policyGrid',   k => { policy   = k; });
+
+    // ── Validation ────────────────────────────────────────────────────
+    function validateDomain(v) {
+      if (!v) return '请输入域名';
+      if (/^https?:\/\//i.test(v)) return '不要加 http:// 或 https://';
+      if (v.includes('/')) return '不要包含斜杠（/）';
+      if (!v.includes('.')) return '域名格式不对，应包含点号（例如 example.com）';
+      if (!/^[a-z0-9.-]+$/i.test(v)) return '域名只能包含字母、数字、点号、连字符';
+      return null;
+    }
+
+    function validateEmail(v) {
+      if (!v) return '请输入接收报告的邮箱';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return '邮箱格式不对';
+      return null;
+    }
+
+    function setFieldError(input, errEl, msg) {
+      if (msg) {
+        input.classList.add('error');
+        errEl.textContent = msg;
+        errEl.classList.add('show');
+      } else {
+        input.classList.remove('error');
+        errEl.classList.remove('show');
+      }
+    }
+
+    // ── Generate ───────────────────────────────────────────────────────
+    function generate() {
+      const domain = $('domain').value.trim().toLowerCase();
+      const email  = $('reportEmail').value.trim();
+
+      const dErr = validateDomain(domain);
+      const eErr = validateEmail(email);
+      setFieldError($('domain'), $('domainErr'), dErr);
+      setFieldError($('reportEmail'), $('emailErr'), eErr);
+      if (dErr || eErr) {
+        const firstBad = dErr ? $('domain') : $('reportEmail');
+        firstBad.focus();
+        return;
+      }
+
+      $('spfVal').textContent   = SPF_BY_PROVIDER[provider];
+      $('dkimHost').textContent = DKIM_HOST_BY_PROVIDER[provider];
+      $('dmarcVal').textContent = `v=DMARC1; p=${policy}; rua=mailto:${email}`;
+
+      const results = $('results');
+      results.classList.add('show');
+      setTimeout(() => results.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+
+    // ── Copy buttons ──────────────────────────────────────────────────
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const target = document.querySelector(btn.dataset.copy);
+        if (!target) return;
+        const text = target.textContent;
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          // Fallback for older browsers / non-HTTPS contexts
+          const ta = document.createElement('textarea');
+          ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch {}
+          document.body.removeChild(ta);
+        }
+        const orig = btn.textContent;
+        btn.textContent = '已复制';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+  </script>
+
+</body>
+</html>
