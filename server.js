@@ -565,12 +565,23 @@ app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
 // Re-uses every existing service-layer function verbatim. Does NOT call
 // finalizeSheets (the Sheets export currently has a latent bug — see audit).
 app.post('/api/auto/run', requireAuth, async (req, res) => {
+  function withTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error(label + ' timeout after ' + (ms/1000) + 's')), ms))
+    ]);
+  }
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
   const send = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
-  const heartbeat = setInterval(() => res.write(': hb\n\n'), 5000);
+
+  let aborted = false;
+  req.on('close', () => { aborted = true; });
+
+  const heartbeat = setInterval(() => { if (!aborted) res.write('data: {"type":"heartbeat"}\n\n'); }, 5000);
 
   try {
     const {
@@ -597,7 +608,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
     // start sending immediately. Refuse and ask user to pause first.
     if (campaignId) {
       const { getCampaignStatus } = require('./services/instantly');
-      const { status, name } = await getCampaignStatus(campaignId);
+      const { status, name } = await withTimeout(getCampaignStatus(campaignId), 30000, 'Instantly campaign check');
       const isActive = status === 1 || status === 'active';
       if (isActive) {
         console.warn(`[Auto] Refusing — campaign "${name}" (${campaignId}) is Active`);
@@ -611,10 +622,14 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
 
     // ── Phase 1: Apify scrape ──────────────────────────────────────────────
     send({ type: 'phase', phase: 'apify', status: 'start' });
-    const { companies: rawCompanies, apifyCostUsd: apifyActualCost } = await scrapeAustralianCompanies(
-      searchQuery, location, maxResults,
-      { includeWebsite: true, includeEmail: true },   // auto-mode forces emails on
-      countryCode,
+    const { companies: rawCompanies, apifyCostUsd: apifyActualCost } = await withTimeout(
+      scrapeAustralianCompanies(
+        searchQuery, location, maxResults,
+        { includeWebsite: true, includeEmail: true },   // auto-mode forces emails on
+        countryCode,
+      ),
+      360000,
+      'Apify scrape',
     );
 
     // Dedup against historical leads — same logic as /api/scrape-raw
@@ -659,8 +674,9 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
       let idx = 0, completed = 0;
       const worker = async () => {
         while (idx < newCompanies.length) {
+          if (aborted) break;
           const i = idx++;
-          const { level, reason, usage } = await preFilterLead(newCompanies[i]);
+          const { level, reason, usage } = await withTimeout(preFilterLead(newCompanies[i]), 60000, 'Haiku pre-filter');
           haikuIn  += usage.input_tokens;
           haikuOut += usage.output_tokens;
           haikuResults[i] = { ...newCompanies[i], level, reason };
@@ -710,10 +726,11 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
       let idx = 0, completed = 0;
       const worker = async () => {
         while (idx < forSonnet.length) {
+          if (aborted) break;
           const i = idx++;
           const company = forSonnet[i];
           try {
-            const crawled = await crawlWebsite(company.website);
+            const crawled = await withTimeout(crawlWebsite(company.website), 60000, 'Firecrawl');
             const websiteContent = crawled.content;
             const pageMetadata = {
               title:         crawled.title,
@@ -725,7 +742,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
             if (shouldSkip) {
               icpResults[i] = { ...company, websiteContent, pageMetadata, status: `filtered: ${reason}`, dateAdded: today };
             } else {
-              const enrichment = await analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing, pageMetadata);
+              const enrichment = await withTimeout(analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing, pageMetadata), 120000, 'Sonnet ICP');
               sonnetIn  += enrichment.usage?.input_tokens  || 0;
               sonnetOut += enrichment.usage?.output_tokens || 0;
               icpResults[i] = { ...company, websiteContent, pageMetadata, keepSignals, lowSignal, claimsLocalManufacturing, ...enrichment, dateAdded: today, status: 'enriched' };
@@ -758,10 +775,11 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
       let idx = 0, completed = 0;
       const worker = async () => {
         while (idx < qualified.length) {
+          if (aborted) break;
           const i = idx++;
           const company = qualified[i];
           try {
-            const emails = await generateEmails(company, templateKey, company.websiteContent || '', frameworkKey, null, companyProfile);
+            const emails = await withTimeout(generateEmails(company, templateKey, company.websiteContent || '', frameworkKey, null, companyProfile), 120000, 'Sonnet emails');
             sonnetIn  += emails.usage?.input_tokens  || 0;
             sonnetOut += emails.usage?.output_tokens || 0;
             Object.assign(company, emails, { emailTemplateKey: frameworkKey });
@@ -807,9 +825,10 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
       const { addLeadToCampaign } = require('./services/instantly');
       send({ type: 'phase', phase: 'push', status: 'start', total: pushable.length });
       for (let i = 0; i < pushable.length; i++) {
+        if (aborted) break;
         const lead = pushable[i];
         try {
-          const result = await addLeadToCampaign(lead, campaignId);
+          const result = await withTimeout(addLeadToCampaign(lead, campaignId), 30000, 'Instantly push');
           if (result.success) pushed++;
           else { pushFailed++; console.warn(`[Auto/Push] ${lead.companyName}: ${result.reason}`); }
         } catch (err) {

@@ -3499,6 +3499,8 @@ async function startAutoRun() {
       ? `🚀 运行中 (${ci + 1}/${selectedCombos.length})…`
       : '🚀 运行中…';
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 600000);
     try {
       const res = await fetch('/api/auto/run', {
         method: 'POST',
@@ -3512,6 +3514,7 @@ async function startAutoRun() {
           companyProfile,
           icp,
         }),
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -3608,6 +3611,8 @@ async function startAutoRun() {
     } catch (err) {
       console.error('[Auto] combo failed:', err);
       currentEl.textContent = `❌ ${combo.label || combo.query}: ${err.message}`;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
