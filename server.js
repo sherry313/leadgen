@@ -654,8 +654,10 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
       type: 'phase', phase: 'apify', status: 'done',
       scraped: rawCompanies.length, newLeads: newCompanies.length, dedupSkipped, searchId, apifyCostUsd: apifyCost,
     });
+    send({ type: 'phase', phase: 'dedup', total: rawCompanies.length, new: newCompanies.length, skipped: dedupSkipped });
 
     if (!newCompanies.length) {
+      send({ type: 'phase', phase: 'dedup_all', message: '所有线索已存在，无新数据' });
       await updateSearchRunCosts(searchId, { apifyCostUsd: apifyCost, anthropicCostUsd: 0, totalCostUsd: apifyCost, totalQualified: 0 });
       send({
         type: 'done', searchId,
@@ -689,6 +691,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
     const recommended = haikuResults.filter(c => c.level !== 'skip');
     const haikuSkipped = haikuResults.filter(c => c.level === 'skip');
     send({ type: 'phase', phase: 'haiku', status: 'done', recommend: recommended.length, skip: haikuSkipped.length });
+    send({ type: 'phase', phase: 'haiku_done', recommended: recommended.length, skipped: haikuSkipped.length });
 
     // ── Phase 2.5: Email-presence filter (user requirement: Sonnet only runs on leads with email) ─
     const forSonnet  = recommended.filter(c => c.email?.trim());

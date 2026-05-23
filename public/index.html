@@ -3539,6 +3539,12 @@ async function startAutoRun() {
             renderPhases();
             if (evt.phase === 'apify' && evt.status === 'done') {
               currentEl.textContent = `[${combo.label || combo.query}] Apify 抓取 ${evt.scraped} 条，新公司 ${evt.newLeads} 条（去重 ${evt.dedupSkipped}）`;
+            } else if (evt.phase === 'dedup') {
+              currentEl.textContent = `去重：抓取 ${evt.total} 条，新数据 ${evt.new} 条，已存在 ${evt.skipped} 条`;
+            } else if (evt.phase === 'dedup_all') {
+              currentEl.textContent = `⚠️ 所有线索已存在数据库中，请换一个城市或关键词`;
+            } else if (evt.phase === 'haiku_done') {
+              currentEl.textContent = `Haiku 筛选：推荐 ${evt.recommended} 条，跳过 ${evt.skipped} 条`;
             } else if (evt.phase === 'haiku' && evt.status === 'done') {
               currentEl.textContent = `Haiku 推荐 ${evt.recommend} / 跳过 ${evt.skip}`;
             } else if (evt.phase === 'email-filter' && evt.status === 'done') {
