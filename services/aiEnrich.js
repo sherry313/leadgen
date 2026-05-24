@@ -439,14 +439,14 @@ Follow the framework structure above strictly for all 5 emails. Each body under 
 }
 
 // ── Haiku pre-filter ──────────────────────────────────────────────────────────
-async function preFilterLead(company) {
+async function preFilterLead(company, companyProfile = {}) {
   try {
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 100,
       messages: [{
         role: 'user',
-        content: `你是建材采购意向初筛师。我们卖门窗、橱柜、浴缸,工厂在中国佛山,目标客户是:海外建材经销商/批发商/进口商、室内设计师、高端定制住宅建筑商、有持续项目的中端建筑商。理想客户是有可能未来 6-12 个月内来中国采购或访问工厂的买家。
+        content: `你是建材采购意向初筛师。我们是${companyProfile.companyName}，主要产品：${companyProfile.products}，优势：${companyProfile.advantages}，目标客户：${companyProfile.icp || '海外建材采购商、建筑商、设计师、经销商'}。理想客户是有可能未来 6-12 个月内来中国采购或访问工厂的买家。
 
 公司名:${company.companyName}
 地址:${company.address}
@@ -494,6 +494,10 @@ Google评分:${company.googleRating}(${company.reviewCount}条评价)
 【recommend 规则要点】
 名字暗示其是经销商/设计师/批发/展厅/定制建筑商/橱柜制造商/joinery/建材供应——recommend。
 名字明确专注于"design / interior / showroom / supplies / warehouse / wholesale / joinery / cabinetry / bespoke / luxury / custom homes / building products"——recommend。
+名字含 "home builder / custom home builder / residential builder"——recommend（住宅建筑商，长期采购建材）。
+名字含 "renovation contractor / remodeling"——recommend（装修承包商，项目采购）。
+名字含 "property developer / land developer"——recommend（房产开发商，规模采购）。
+名字含 "construction company / building company"——recommend（建筑/施工公司，持续项目）。
 
 只返回JSON:{"level": "recommend"|"skip", "reason": "一句话原因(中文,15字以内)"}`,
       }],

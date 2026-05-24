@@ -193,7 +193,7 @@ app.post('/api/generate', requireAuth, async (req, res) => {
   // Haiku pre-filter — all companies in parallel (low token cost)
   let haikuIn = 0, haikuOut = 0;
   const preFiltered = await Promise.all(companies.map(async (company) => {
-    const { level, reason, usage } = await preFilterLead(company);
+    const { level, reason, usage } = await preFilterLead(company, {});
     haikuIn  += usage.input_tokens;
     haikuOut += usage.output_tokens;
     return { ...company, level, reason };
@@ -315,7 +315,7 @@ app.post('/api/prefilter', requireAuth, async (req, res) => {
     const worker = async () => {
       while (idx < companies.length) {
         const i = idx++;
-        const { level, reason, usage } = await preFilterLead(companies[i]);
+        const { level, reason, usage } = await preFilterLead(companies[i], {});
         haikuIn  += usage.input_tokens;
         haikuOut += usage.output_tokens;
         results[i] = { ...companies[i], level, reason };
@@ -678,7 +678,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
         while (idx < newCompanies.length) {
           if (aborted) break;
           const i = idx++;
-          const { level, reason, usage } = await withTimeout(preFilterLead(newCompanies[i]), 60000, 'Haiku pre-filter');
+          const { level, reason, usage } = await withTimeout(preFilterLead(newCompanies[i], companyProfile), 60000, 'Haiku pre-filter');
           haikuIn  += usage.input_tokens;
           haikuOut += usage.output_tokens;
           haikuResults[i] = { ...newCompanies[i], level, reason };
