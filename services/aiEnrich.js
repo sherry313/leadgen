@@ -33,6 +33,17 @@ identify overseas prospects most likely to (1) place serious imported building m
 ║ 5. Do NOT penalize a company for being "too small" or "not mentioning    ║
 ║    windows specifically". ALL builders need windows and doors.           ║
 ║                                                                          ║
+║ 6. EXCEPTION to Rules 1-5: Companies that ONLY do sheds, garages,        ║
+║    carports, roller doors, garage doors, steel structures, or patios     ║
+║    are NOT target customers. They use steel/colorbond, NOT aluminium     ║
+║    windows and doors. Score them 1-3/10.                                 ║
+║    Key exclusion words: "shed", "sheds", "garage door", "roller door",   ║
+║    "carport", "patio", "steel building", "colorbond", "BlueScope".       ║
+║    If a company ONLY does these products, they are NOT a match even      ║
+║    if they have "door" in their name.                                    ║
+║    Logic: Builds HOMES with windows/doors → HIGH (7-10). Builds          ║
+║    SHEDS with roller doors → LOW (1-3).                                  ║
+║                                                                          ║
 ║ NOTE: The VOLUME-BUILDER anti-target classification below is             ║
 ║ SUPERSEDED by Rule 1 & 2 above. A company named "X Homes" that builds    ║
 ║ residential properties scores 7+, even if it shows volume-builder        ║
