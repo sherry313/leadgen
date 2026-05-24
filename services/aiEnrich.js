@@ -121,6 +121,12 @@ ${pageMetadata.ogDescription ? `OG DESCRIPTION: ${pageMetadata.ogDescription}`  
 === PAGE CONTENT ===
 ${websiteContent || 'No website content available.'}
 
+=== SCORING RULES (read carefully) ===
+1. If a company has multiple business divisions and ANY division involves residential construction, custom homes, luxury homes, or renovation — score based on that division, not the overall company.
+2. Companies that build luxury homes, custom homes, or high-end residential projects are IDEAL customers (score 8-10) because they need premium windows and doors.
+3. Do NOT penalize a company for also having commercial, security, or unrelated divisions. Focus on whether they build or renovate homes.
+4. home builder, custom home builder, residential builder, renovation contractor, property developer — these are all HIGH VALUE targets, not low value.
+
 === REQUIRED JSON FIELDS ===
 
 - intentScore: integer 1-10 — likelihood of becoming a serious customer AND being open to a factory visit
