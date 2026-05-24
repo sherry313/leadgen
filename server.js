@@ -669,6 +669,12 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
     }
 
     // ── Phase 2: Haiku name-only pre-filter ────────────────────────────────
+    const profileForHaiku = {
+      companyName: companyProfile.sellerName || companyProfile.companyName || '',
+      products: companyProfile.products || '',
+      advantages: companyProfile.advantage || companyProfile.advantages || '',
+      icp: icp || companyProfile.icp || ''
+    };
     send({ type: 'phase', phase: 'haiku', status: 'start', total: newCompanies.length });
     let haikuIn = 0, haikuOut = 0;
     const haikuResults = new Array(newCompanies.length);
@@ -678,7 +684,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
         while (idx < newCompanies.length) {
           if (aborted) break;
           const i = idx++;
-          const { level, reason, usage } = await withTimeout(preFilterLead(newCompanies[i], companyProfile), 60000, 'Haiku pre-filter');
+          const { level, reason, usage } = await withTimeout(preFilterLead(newCompanies[i], profileForHaiku), 60000, 'Haiku pre-filter');
           haikuIn  += usage.input_tokens;
           haikuOut += usage.output_tokens;
           haikuResults[i] = { ...newCompanies[i], level, reason };
