@@ -241,7 +241,7 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
   const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
 
   let aborted = false;
-  req.on('close', () => { aborted = true; });
+  res.on('close', () => { aborted = true; });
 
   const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
 
@@ -336,7 +336,7 @@ app.post('/api/prefilter', requireAuth, async (req, res) => {
   const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
 
   let aborted = false;
-  req.on('close', () => { aborted = true; });
+  res.on('close', () => { aborted = true; });
 
   let haikuIn = 0, haikuOut = 0;
   const results = new Array(companies.length);
@@ -409,7 +409,7 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
   const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
 
   let aborted = false;
-  req.on('close', () => { aborted = true; });
+  res.on('close', () => { aborted = true; });
 
   const today = new Date().toISOString().split('T')[0];
   await createRunSheet('enrich', today);
@@ -552,7 +552,7 @@ app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
   const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
 
   let aborted = false;
-  req.on('close', () => { aborted = true; });
+  res.on('close', () => { aborted = true; });
 
   const results = new Array(companies.length);
   let sonnetIn = 0, sonnetOut = 0;
@@ -624,7 +624,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
   const send = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
 
   let aborted = false;
-  req.on('close', () => { aborted = true; });
+  res.on('close', () => { aborted = true; });
 
   const heartbeat = setInterval(() => { if (!aborted) res.write('data: {"type":"heartbeat"}\n\n'); }, 5000);
 
