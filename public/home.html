@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智拓客 — 外贸获客自动化</title>
-  <meta name="description" content="帮建材工厂用AI找到海外客户。免费外贸工具 + 企业定制自动化。">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🎯</text></svg>">
+  <title>智拓客 — AI外贸获客自动化</title>
+  <meta name="description" content="帮外贸企业自动化获客：从找客户到发开发信全流程自动化。AI一天帮你触达200个海外客户，每封邮件成本仅¥0.35。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>⚡</text></svg>">
   <style>
-    *,*::before,*::after { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
@@ -22,9 +22,10 @@
     /* ── Nav ─────────────────────────────────────────────────────────── */
     .nav {
       position: sticky; top: 0; z-index: 50;
-      background: rgba(10,15,26,0.85);
+      background: rgba(10, 15, 26, 0.9);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(30,58,95,0.4);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #1e2d4a;
     }
     .nav-inner {
       max-width: 1180px; margin: 0 auto;
@@ -32,317 +33,451 @@
       padding: 14px 24px;
     }
     .nav-logo {
-      font-size: 1.15rem; font-weight: 700;
-      background: linear-gradient(135deg, #60a5fa, #a78bfa);
-      -webkit-background-clip: text; background-clip: text;
-      color: transparent;
+      font-size: 18px; font-weight: 700; color: #e2e8f0;
+      display: inline-flex; align-items: center; gap: 6px;
     }
-    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links {
+      display: flex; align-items: center; gap: 22px;
+      font-size: 14px;
+    }
     .nav-links a {
-      color: #cbd5e1; font-size: 0.92rem;
-      transition: color 0.2s;
+      color: #94a3b8;
+      transition: color 0.15s;
     }
-    .nav-links a:hover { color: #fff; }
-    .nav-links a.cta {
-      padding: 8px 18px;
-      border: 1px solid #3b82f6;
+    .nav-links a:hover { color: #e2e8f0; }
+    .nav-cta {
+      padding: 7px 16px;
+      border: 1px solid #4299e1;
       border-radius: 8px;
-      color: #93c5fd;
+      color: #4299e1!important;
+      font-weight: 600;
+      transition: all 0.15s;
     }
-    .nav-links a.cta:hover {
-      background: #3b82f6; color: #fff;
+    .nav-cta:hover {
+      background: #4299e1;
+      color: #fff!important;
+    }
+    @media (max-width: 560px) {
+      .nav-inner { padding: 12px 16px; }
+      .nav-links { gap: 12px; font-size: 13px; }
+    }
+
+    /* ── Layout helpers ──────────────────────────────────────────────── */
+    .section { padding: 90px 24px; }
+    .section-narrow { max-width: 1080px; margin: 0 auto; }
+    .section-title {
+      font-size: 36px; font-weight: 700;
+      text-align: center; color: #f7fafc;
+      letter-spacing: -0.01em;
+      margin: 0 0 12px;
+    }
+    .section-sub {
+      text-align: center; color: #94a3b8;
+      font-size: 16px; margin: 0 auto 48px;
+      max-width: 640px;
+    }
+    @media (max-width: 640px) {
+      .section { padding: 64px 20px; }
+      .section-title { font-size: 28px; }
     }
 
     /* ── Hero ────────────────────────────────────────────────────────── */
     .hero {
-      min-height: calc(100vh - 60px);
-      display: flex; align-items: center; justify-content: center;
-      padding: 60px 24px;
+      padding: 110px 24px 90px;
       text-align: center;
-      background: radial-gradient(ellipse at center top, rgba(59,130,246,0.12), transparent 60%);
+      background: radial-gradient(ellipse at top, rgba(66, 153, 225, 0.08) 0%, transparent 60%);
     }
-    .hero-inner { max-width: 820px; }
-    .hero h1 {
-      font-size: clamp(2.2rem, 6vw, 4rem);
-      font-weight: 800;
-      margin: 0 0 20px;
-      background: linear-gradient(135deg, #fff 0%, #93c5fd 100%);
-      -webkit-background-clip: text; background-clip: text;
-      color: transparent;
-      letter-spacing: -0.02em;
+    .hero-inner { max-width: 880px; margin: 0 auto; }
+    .hero-title {
+      font-size: 52px; font-weight: 800;
+      color: #f7fafc;
+      letter-spacing: -0.02em; line-height: 1.15;
+      margin: 0 0 14px;
     }
-    .hero p {
-      font-size: clamp(1rem, 2.5vw, 1.35rem);
-      color: #94a3b8;
-      margin: 0 0 44px;
+    .hero-title-blue {
+      display: block;
+      font-size: 52px; font-weight: 800;
+      color: #4299e1;
+      letter-spacing: -0.02em; line-height: 1.15;
+      margin-bottom: 24px;
     }
-    .hero-buttons {
-      display: flex; gap: 16px;
-      justify-content: center; flex-wrap: wrap;
+    .hero-sub {
+      font-size: 18px; color: #94a3b8;
+      margin: 0 auto 44px;
+      max-width: 640px;
     }
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 14px 32px;
-      border-radius: 10px;
-      font-size: 1rem; font-weight: 600;
-      cursor: pointer; border: none;
-      transition: all 0.2s ease;
+    .hero-stats {
+      display: flex; justify-content: center;
+      gap: 48px; flex-wrap: wrap;
+      margin-bottom: 44px;
+    }
+    .hero-stat-num {
+      font-size: 30px; font-weight: 700;
+      color: #4299e1; line-height: 1;
+      margin-bottom: 6px;
+    }
+    .hero-stat-label {
+      font-size: 13px; color: #94a3b8;
     }
     .btn-primary {
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      display: inline-block;
+      padding: 14px 36px;
+      background: #4299e1;
       color: #fff;
-      box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+      border-radius: 10px;
+      font-size: 16px; font-weight: 700;
+      transition: all 0.18s;
+      border: none; cursor: pointer;
+      font-family: inherit;
     }
     .btn-primary:hover {
+      background: #3182ce;
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(59,130,246,0.5);
+      box-shadow: 0 10px 24px rgba(66, 153, 225, 0.3);
     }
-    .btn-outline {
+    .btn-secondary {
+      display: inline-block;
+      padding: 13px 30px;
       background: transparent;
-      color: #cbd5e1;
-      border: 1px solid #334155;
+      color: #94a3b8;
+      border: 1px solid #1e2d4a;
+      border-radius: 10px;
+      font-size: 15px; font-weight: 600;
+      transition: all 0.18s;
+      font-family: inherit;
     }
-    .btn-outline:hover {
-      background: rgba(59,130,246,0.1);
-      border-color: #3b82f6;
-      color: #fff;
+    .btn-secondary:hover {
+      border-color: #4299e1;
+      color: #e2e8f0;
+    }
+    @media (max-width: 640px) {
+      .hero { padding: 70px 20px 60px; }
+      .hero-title, .hero-title-blue { font-size: 34px; }
+      .hero-sub { font-size: 16px; }
+      .hero-stats { gap: 28px; }
+      .hero-stat-num { font-size: 24px; }
     }
 
-    /* ── Sections ────────────────────────────────────────────────────── */
-    .section {
-      padding: 96px 24px;
-      max-width: 1180px;
-      margin: 0 auto;
+    /* ── Pain points ─────────────────────────────────────────────────── */
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
     }
-    .section-header {
-      text-align: center;
-      margin-bottom: 56px;
+    .pain-card {
+      background: #1a2332;
+      border-radius: 10px;
+      padding: 22px 20px;
+      display: flex; gap: 14px;
+      align-items: flex-start;
     }
-    .section-header h2 {
-      font-size: clamp(1.8rem, 4vw, 2.6rem);
-      font-weight: 700;
-      margin: 0 0 14px;
-      color: #f1f5f9;
+    .pain-icon {
+      font-size: 22px; line-height: 1;
+      flex-shrink: 0;
     }
-    .section-header p {
-      font-size: 1.05rem;
-      color: #94a3b8;
+    .pain-title {
+      font-size: 16px; font-weight: 700;
+      color: #f7fafc;
+      margin: 0 0 4px;
+    }
+    .pain-desc {
+      font-size: 14px; color: #94a3b8;
       margin: 0;
     }
-
-    /* ── Card grid ───────────────────────────────────────────────────── */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
+    @media (max-width: 640px) {
+      .pain-grid { grid-template-columns: 1fr; }
     }
-    .card {
+
+    /* ── Solutions ───────────────────────────────────────────────────── */
+    .sol-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+    .sol-card {
+      background: #111827;
+      border: 1px solid #1e2d4a;
+      border-radius: 12px;
+      padding: 26px 24px;
+      display: flex; flex-direction: column;
+      transition: border-color 0.18s, transform 0.18s;
+    }
+    .sol-card:hover {
+      border-color: #4299e1;
+      transform: translateY(-2px);
+    }
+    .sol-icon {
+      font-size: 28px; line-height: 1;
+      margin-bottom: 14px;
+    }
+    .sol-title {
+      font-size: 17px; font-weight: 700;
+      color: #f7fafc;
+      margin: 0 0 8px;
+    }
+    .sol-desc {
+      font-size: 14px; color: #94a3b8;
+      margin: 0 0 16px;
+      flex: 1;
+    }
+    .sol-stat {
+      font-size: 15px; font-weight: 700;
+      color: #4299e1;
+      padding-top: 14px;
+      border-top: 1px solid #1e2d4a;
+    }
+    @media (max-width: 640px) {
+      .sol-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Free tools ──────────────────────────────────────────────────── */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .tool-card {
       display: block;
       background: #111827;
-      border: 1px solid #1e3a5f;
+      border: 1px solid #1e2d4a;
       border-radius: 12px;
-      padding: 28px 24px;
-      transition: all 0.25s ease;
-      color: inherit;
+      padding: 24px;
+      transition: border-color 0.18s, transform 0.18s;
+      position: relative;
+      cursor: pointer;
     }
-    .card:hover {
-      transform: translateY(-4px);
-      border-color: #3b82f6;
-      box-shadow: 0 12px 32px rgba(59,130,246,0.18), 0 0 0 1px rgba(59,130,246,0.3);
+    .tool-card:hover {
+      border-color: #4299e1;
+      transform: translateY(-2px);
     }
-    .card-icon {
-      font-size: 2rem;
+    .tool-icon {
+      font-size: 26px; line-height: 1;
       margin-bottom: 14px;
-      display: block;
     }
-    .card h3 {
-      font-size: 1.15rem;
-      font-weight: 600;
-      margin: 0 0 10px;
-      color: #f1f5f9;
+    .tool-title {
+      font-size: 16px; font-weight: 700;
+      color: #f7fafc;
+      margin: 0 0 8px;
     }
-    .card p {
-      font-size: 0.92rem;
-      color: #94a3b8;
-      margin: 0;
+    .tool-desc {
+      font-size: 13.5px; color: #94a3b8;
+      margin: 0 0 14px;
       line-height: 1.55;
     }
-    .card-tag {
+    .tool-tag {
       display: inline-block;
-      margin-top: 14px;
       padding: 3px 10px;
-      font-size: 0.72rem;
-      font-weight: 500;
-      border-radius: 999px;
-      letter-spacing: 0.02em;
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 12px;
+      font-size: 11px; font-weight: 700;
     }
-    .card-tag.live    { background: rgba(34,197,94,0.12);  color: #86efac; border: 1px solid rgba(34,197,94,0.28); }
-    .card-tag.soon    { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.28); }
-    .card-tag.consult { background: rgba(59,130,246,0.12); color: #93c5fd; border: 1px solid rgba(59,130,246,0.28); }
-
-    /* ── Enterprise CTA ──────────────────────────────────────────────── */
-    .enterprise-cta {
-      text-align: center;
-      margin-top: 48px;
+    @media (max-width: 860px) {
+      .tools-grid { grid-template-columns: 1fr; }
     }
 
-    /* ── Customer entry section ──────────────────────────────────────── */
-    .customer-entry {
-      text-align: center;
+    /* ── CTA ─────────────────────────────────────────────────────────── */
+    .cta {
+      background: linear-gradient(135deg, #0a1628 0%, #111827 100%);
+      border-top: 1px solid #1e2d4a;
+      border-bottom: 1px solid #1e2d4a;
       padding: 80px 24px;
-      background: rgba(59,130,246,0.04);
-      border-top: 1px solid rgba(30,58,95,0.3);
-      border-bottom: 1px solid rgba(30,58,95,0.3);
+      text-align: center;
     }
-    .customer-entry h2 {
-      font-size: 2rem; font-weight: 700;
-      margin: 0 0 28px; color: #f1f5f9;
+    .cta-title {
+      font-size: 32px; font-weight: 700;
+      color: #f7fafc;
+      letter-spacing: -0.01em;
+      margin: 0 0 14px;
     }
-    .customer-entry .hint {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin: 16px 0 0;
+    .cta-sub {
+      color: #94a3b8;
+      font-size: 16px;
+      margin: 0 auto 32px;
+      max-width: 560px;
+    }
+    .cta-btns {
+      display: flex; justify-content: center;
+      gap: 14px; flex-wrap: wrap;
+    }
+    @media (max-width: 640px) {
+      .cta { padding: 60px 20px; }
+      .cta-title { font-size: 24px; }
     }
 
     /* ── Footer ──────────────────────────────────────────────────────── */
-    footer {
-      padding: 36px 24px;
+    .footer {
+      padding: 30px 24px;
       text-align: center;
-      color: #64748b;
-      font-size: 0.85rem;
-    }
-    footer a {
-      color: #94a3b8;
-      margin: 0 12px;
-      transition: color 0.2s;
-    }
-    footer a:hover { color: #cbd5e1; }
-    .copyright {
-      margin-top: 14px;
       color: #475569;
+      font-size: 13px;
+      border-top: 1px solid #1e2d4a;
     }
-
-    /* ── Mobile ──────────────────────────────────────────────────────── */
-    @media (max-width: 640px) {
-      .nav-inner { padding: 12px 16px; }
-      .nav-links { gap: 14px; }
-      .nav-links a { font-size: 0.85rem; }
-      .nav-links a.cta { padding: 6px 12px; }
-      .section { padding: 64px 16px; }
-      .customer-entry { padding: 60px 16px; }
-      .card { padding: 22px 18px; }
-      .btn { padding: 12px 24px; font-size: 0.95rem; }
-      .hero-buttons { flex-direction: column; width: 100%; max-width: 280px; margin: 0 auto; }
-      .hero-buttons .btn { width: 100%; }
-    }
+    .footer a { color: #94a3b8; margin: 0 10px; }
+    .footer a:hover { color: #e2e8f0; }
   </style>
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav class="nav">
-    <div class="nav-inner">
-      <a href="/" class="nav-logo">智拓客</a>
-      <div class="nav-links">
-        <a href="/tools/">免费工具</a>
-        <a href="#services">服务</a>
-        <a href="/app" class="cta">客户入口</a>
-      </div>
-    </div>
-  </nav>
-
-  <!-- SECTION 1 — Hero -->
-  <section class="hero">
-    <div class="hero-inner">
-      <h1>企业定制自动化工作流</h1>
-      <p>用AI把你的业务流程变成自动化系统</p>
-      <div class="hero-buttons">
-        <a href="/tools/" class="btn btn-primary">免费工具</a>
-        <a href="#services" class="btn btn-outline">了解更多</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- SECTION 2 — Free Tools -->
-  <section class="section" id="tools">
-    <div class="section-header">
-      <h2>免费工具箱</h2>
-      <p>解决外贸获客的每一个问题，全部免费</p>
-    </div>
-    <div class="card-grid">
-      <a class="card" href="/tools/dns-generator.html">
-        <span class="card-icon">🛡</span>
-        <h3>DNS 邮件验证记录生成器</h3>
-        <p>一键生成 SPF、DKIM、DMARC 记录</p>
-      </a>
-      <a class="card" href="/tools/spam-word-checker.html">
-        <span class="card-icon">🔍</span>
-        <h3>邮件垃圾词检测器</h3>
-        <p>检查邮件有没有触发垃圾箱的词</p>
-      </a>
-      <a class="card" href="/quote.html">
-        <span class="card-icon">💰</span>
-        <h3>AI 报价工具</h3>
-        <p>30秒生成专业报价单</p>
-      </a>
-    </div>
-  </section>
-
-  <!-- SECTION 3 — Services -->
-  <section class="section" id="services">
-    <div class="section-header">
-      <h2>我们做什么</h2>
-      <p>把复杂的业务流程，变成一键自动化</p>
-    </div>
-    <div class="card-grid">
-      <div class="card">
-        <span class="card-icon">✉️</span>
-        <h3>外贸冷邮件自动化</h3>
-        <p>自动抓取海外客户 → AI写个性化开发信 → 自动发送跟进</p>
-        <span class="card-tag live">已上线</span>
-      </div>
-      <div class="card">
-        <span class="card-icon">📊</span>
-        <h3>客户管理自动化</h3>
-        <p>自动评分筛选 → 智能分类 → 跟进提醒 → 不漏掉任何商机</p>
-        <span class="card-tag soon">即将上线</span>
-      </div>
-      <div class="card">
-        <span class="card-icon">🏭</span>
-        <h3>报价与订单自动化</h3>
-        <p>30秒生成报价单 → 自动发送 → 订单进度实时追踪</p>
-        <span class="card-tag live">已上线</span>
-      </div>
-      <div class="card">
-        <span class="card-icon">🔧</span>
-        <h3>定制你的自动化流程</h3>
-        <p>告诉我你的业务痛点，我帮你设计专属自动化方案</p>
-        <span class="card-tag consult">接受咨询</span>
-      </div>
-    </div>
-    <div class="enterprise-cta">
-      <a href="mailto:zhuolu34@gmail.com" class="btn btn-primary">联系我定制方案</a>
-    </div>
-  </section>
-
-  <!-- SECTION 4 — Customer Entry -->
-  <section class="customer-entry">
-    <h2>已有客户？</h2>
-    <a href="/app" class="btn btn-primary">进入系统</a>
-    <p class="hint">使用您的专属Token登录</p>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <div>
+<!-- ── Nav ──────────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">⚡ 智拓客</a>
+    <div class="nav-links">
       <a href="/tools/">免费工具</a>
-      |
-      <a href="/privacy.html">隐私政策</a>
-      |
-      <a href="/terms.html">用户协议</a>
+      <a href="/pricing.html">定价</a>
+      <a href="/app" class="nav-cta">客户入口</a>
     </div>
-    <div class="copyright">© 2026 智拓客</div>
-  </footer>
+  </div>
+</nav>
+
+<!-- ── Section 1: Hero ─────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title">你的业务员每天能联系多少个客户？</h1>
+    <span class="hero-title-blue">AI一天帮你联系200个</span>
+    <p class="hero-sub">帮外贸企业自动化获客流程，从找客户到发开发信，全程自动化</p>
+
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-num">¥0.35</div>
+        <div class="hero-stat-label">每封邮件成本</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">200+</div>
+        <div class="hero-stat-label">每天触达客户数</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">30秒</div>
+        <div class="hero-stat-label">生成报价单</div>
+      </div>
+    </div>
+
+    <a href="/app" class="btn-primary">免费试用</a>
+  </div>
+</section>
+
+<!-- ── Section 2: Pain points ──────────────────────────────────────── -->
+<section class="section">
+  <div class="section-narrow">
+    <h2 class="section-title">你是不是也遇到了这些问题？</h2>
+    <p class="section-sub">90%的外贸企业都在这些地方卡住</p>
+
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="pain-icon">⚠️</div>
+        <div>
+          <h3 class="pain-title">找不到客户</h3>
+          <p class="pain-desc">不知道海外买家在哪里，手动搜太慢</p>
+        </div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">⚠️</div>
+        <div>
+          <h3 class="pain-title">邮件进垃圾箱</h3>
+          <p class="pain-desc">发了100封，对方一封都没收到</p>
+        </div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">⚠️</div>
+        <div>
+          <h3 class="pain-title">开发信没人回</h3>
+          <p class="pain-desc">不会写英文邮件，模板千篇一律</p>
+        </div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">⚠️</div>
+        <div>
+          <h3 class="pain-title">报价太慢</h3>
+          <p class="pain-desc">客户问价格，等工厂2天才回</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 3: Solutions ────────────────────────────────────────── -->
+<section class="section" style="background: rgba(17, 24, 39, 0.4);">
+  <div class="section-narrow">
+    <h2 class="section-title">我们怎么帮你解决</h2>
+    <p class="section-sub">从找客户到发邮件，每一步都自动化</p>
+
+    <div class="sol-grid">
+      <div class="sol-card">
+        <div class="sol-icon">🎯</div>
+        <h3 class="sol-title">精准找到海外客户</h3>
+        <p class="sol-desc">从Google Maps、Instagram、LinkedIn等8个渠道自动抓取目标客户数据</p>
+        <div class="sol-stat">100条客户数据 ≈ ¥5.6</div>
+      </div>
+      <div class="sol-card">
+        <div class="sol-icon">🧠</div>
+        <h3 class="sol-title">AI自动筛选优质客户</h3>
+        <p class="sol-desc">AI分析每个客户的官网，自动评分，帮你找到最值得联系的人</p>
+        <div class="sol-stat">筛选准确率 85%+</div>
+      </div>
+      <div class="sol-card">
+        <div class="sol-icon">✉️</div>
+        <h3 class="sol-title">AI写个性化开发信</h3>
+        <p class="sol-desc">根据每个客户的官网内容，AI自动生成5封个性化邮件，不是群发模板</p>
+        <div class="sol-stat">每封邮件成本 ¥0.35</div>
+      </div>
+      <div class="sol-card">
+        <div class="sol-icon">🚀</div>
+        <h3 class="sol-title">自动发送和跟进</h3>
+        <p class="sol-desc">按时间序列自动发送5封邮件，没回复自动跟进，你只需要处理回复</p>
+        <div class="sol-stat">每天自动触达 200+ 客户</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 4: Free tools ───────────────────────────────────────── -->
+<section class="section">
+  <div class="section-narrow">
+    <h2 class="section-title">免费工具</h2>
+    <p class="section-sub">先用免费工具解决你的问题</p>
+
+    <div class="tools-grid">
+      <a href="/tools/dns-generator.html" class="tool-card">
+        <div class="tool-icon">🛡</div>
+        <h3 class="tool-title">DNS验证记录生成器</h3>
+        <p class="tool-desc">一键生成SPF、DKIM、DMARC，邮件不再进垃圾箱</p>
+        <span class="tool-tag">免费</span>
+      </a>
+      <a href="/tools/spam-word-checker.html" class="tool-card">
+        <div class="tool-icon">🔍</div>
+        <h3 class="tool-title">邮件垃圾词检测器</h3>
+        <p class="tool-desc">检查邮件有没有触发垃圾箱的词</p>
+        <span class="tool-tag">免费</span>
+      </a>
+      <a href="/quote.html" class="tool-card">
+        <div class="tool-icon">💰</div>
+        <h3 class="tool-title">AI报价工具</h3>
+        <p class="tool-desc">30秒生成专业报价单PDF</p>
+        <span class="tool-tag">免费</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 5: CTA ──────────────────────────────────────────────── -->
+<section class="cta">
+  <h2 class="cta-title">现在开始，让AI帮你找客户</h2>
+  <p class="cta-sub">无需安装，注册即可使用。每天自动触达200+海外客户</p>
+  <div class="cta-btns">
+    <a href="/app" class="btn-primary">免费试用</a>
+    <a href="/tools/" class="btn-secondary">先看免费工具</a>
+  </div>
+</section>
+
+<!-- ── Footer ──────────────────────────────────────────────────────── -->
+<footer class="footer">
+  © 2026 智拓客 ·
+  <a href="/privacy.html">隐私政策</a> ·
+  <a href="/terms.html">用户协议</a> ·
+  <a href="/pricing.html">定价</a>
+</footer>
 
 </body>
 </html>
