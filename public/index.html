@@ -3272,9 +3272,10 @@ async function startScrapeRaw() {
   btn.disabled = true;
   btn.style.display = '';
   btn.textContent = '抓取中...';
-  _rawResults = [];
-  _currentSearchId = null;
-  localStorage.removeItem('leadgen_searchId');
+  // Use temp accumulators so an in-progress/failed scrape doesn't destroy prior _rawResults.
+  // Only swap into _rawResults/_currentSearchId after at least one combo succeeds.
+  let tempResults = [];
+  let tempSearchId = null;
   _pfMode = null;
   let _totalRaw = 0, _totalSkipped = 0;
   document.getElementById('rawSection').style.display = 'none';
@@ -3326,8 +3327,8 @@ async function startScrapeRaw() {
 
       if (!data || !data.success) throw new Error(data?.error || '抓取失败');
 
-      if (!_currentSearchId) { _currentSearchId = data.searchId; localStorage.setItem('leadgen_searchId', data.searchId); }
-      _rawResults = _rawResults.concat(data.companies || []);
+      if (!tempSearchId) tempSearchId = data.searchId;
+      tempResults = tempResults.concat(data.companies || []);
       _totalRaw     += data.totalRaw     ?? (data.companies?.length ?? 0);
       _totalSkipped += data.skippedCount ?? 0;
       if (dot) { dot.className = 'combo-dot done'; dot.textContent = '✓'; }
@@ -3340,7 +3341,13 @@ async function startScrapeRaw() {
   btn.disabled = false;
   btn.textContent = '🔍 开始抓取';
 
-  if (_rawResults.length) {
+  if (tempResults.length) {
+    // Scrape succeeded — commit the new results, replacing any prior in-memory state.
+    _rawResults = tempResults;
+    if (tempSearchId) {
+      _currentSearchId = tempSearchId;
+      localStorage.setItem('leadgen_searchId', tempSearchId);
+    }
     _pTimers.forEach(clearTimeout); _pTimers = [];
     const wrap = document.getElementById('searchProgress');
     if (wrap) wrap.style.display = 'none';
@@ -5462,6 +5469,35 @@ function _restoreStep() {
   currentStep = saved;
   updateStepProgress();
   console.log('[RestoreStep] 恢复到 step', saved, '成功, wizard-step-' + saved + ' hidden?', panel.classList.contains('hidden'));
+
+  // Restore raw scraped leads from Supabase if user was on step 3 and has a prior searchId.
+  if (saved === 3) {
+    const savedSearchId = localStorage.getItem('leadgen_searchId');
+    if (savedSearchId) {
+      _currentSearchId = savedSearchId;
+      const token = getStoredToken();
+      if (token) {
+        fetch(`/api/raw/${savedSearchId}`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => r.json())
+          .then(data => {
+            if (data?.success && Array.isArray(data.leads) && data.leads.length) {
+              _rawResults = data.leads.map(_normalizeLeadRow);
+              renderRawResults(_rawResults);
+              document.getElementById('rawSection').style.display = 'block';
+              setStatus(`已恢复上次搜索结果（${_rawResults.length}条）`, 'success');
+            } else if (_allLeads.length === 0) {
+              _showRefreshWarning(panel);
+            }
+          })
+          .catch(err => {
+            console.warn('[RestoreStep] raw restore failed:', err.message);
+            if (_allLeads.length === 0) _showRefreshWarning(panel);
+          });
+        return;
+      }
+    }
+  }
+
   if (saved >= 3 && _allLeads.length === 0) _showRefreshWarning(panel);
 }
 

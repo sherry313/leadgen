@@ -259,6 +259,15 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
     const searchId  = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length });
     await updateSearchRunCosts(searchId, { apifyCostUsd: apifyCost, anthropicCostUsd: 0, totalCostUsd: apifyCost, totalQualified: 0 });
 
+    // Persist raw scraped companies so the user can navigate away and return.
+    // status:'raw' satisfies saveLeads' filter (which drops 'filtered:*') even
+    // though the leads table has no status column — only the row itself persists.
+    try {
+      await saveLeads(searchId, companies.map(c => ({ ...c, status: 'raw' })));
+    } catch (e) {
+      console.warn(`[ScrapeRaw] saveLeads failed (non-fatal): ${e.message}`);
+    }
+
     for (let i = 0; i < companies.length; i++) {
       console.log('[ScrapeRaw] Sending company event:', i + 1);
       send({ type: 'company', company: companies[i], done: i + 1, total: companies.length });
@@ -912,6 +921,16 @@ app.get('/api/history', requireAuth, async (req, res) => {
 app.get('/api/history/:id', requireAuth, async (req, res) => {
   const leads = await getLeadsForSearch(req.params.id);
   console.log(`[History] 加载 ID: ${req.params.id}，找到 ${leads.length} 条 leads`);
+  res.json({ success: true, leads });
+});
+
+// Load the raw scraped leads for a given searchId so the frontend can rehydrate
+// _rawResults after a page refresh. The leads table has no status column, so we
+// return everything for the searchId — manual scrape runs only ever produce raw
+// rows here, so no filtering is needed in practice.
+app.get('/api/raw/:searchId', requireAuth, async (req, res) => {
+  const leads = await getLeadsForSearch(req.params.searchId);
+  console.log(`[Raw] 加载 searchId: ${req.params.searchId}，找到 ${leads.length} 条 raw leads`);
   res.json({ success: true, leads });
 });
 
