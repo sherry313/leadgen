@@ -167,6 +167,18 @@
       margin: 0;
       line-height: 1.55;
     }
+    .card-tag {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+    }
+    .card-tag.live    { background: rgba(34,197,94,0.12);  color: #86efac; border: 1px solid rgba(34,197,94,0.28); }
+    .card-tag.soon    { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.28); }
+    .card-tag.consult { background: rgba(59,130,246,0.12); color: #93c5fd; border: 1px solid rgba(59,130,246,0.28); }
 
     /* ── Enterprise CTA ──────────────────────────────────────────────── */
     .enterprise-cta {
@@ -233,7 +245,7 @@
       <a href="/" class="nav-logo">智拓客</a>
       <div class="nav-links">
         <a href="/tools/">免费工具</a>
-        <a href="#enterprise">企业定制</a>
+        <a href="#services">服务</a>
         <a href="/app" class="cta">客户入口</a>
       </div>
     </div>
@@ -242,11 +254,11 @@
   <!-- SECTION 1 — Hero -->
   <section class="hero">
     <div class="hero-inner">
-      <h1>外贸获客自动化</h1>
-      <p>帮建材工厂用AI找到海外客户</p>
+      <h1>企业定制自动化工作流</h1>
+      <p>用AI把你的业务流程变成自动化系统</p>
       <div class="hero-buttons">
         <a href="/tools/" class="btn btn-primary">免费工具</a>
-        <a href="#enterprise" class="btn btn-outline">企业定制</a>
+        <a href="#services" class="btn btn-outline">了解更多</a>
       </div>
     </div>
   </section>
@@ -276,36 +288,40 @@
     </div>
   </section>
 
-  <!-- SECTION 3 — Enterprise Services -->
-  <section class="section" id="enterprise">
+  <!-- SECTION 3 — Services -->
+  <section class="section" id="services">
     <div class="section-header">
-      <h2>企业定制自动化</h2>
-      <p>从找客户到成交，整条链路自动化</p>
+      <h2>我们做什么</h2>
+      <p>把复杂的业务流程，变成一键自动化</p>
     </div>
     <div class="card-grid">
       <div class="card">
-        <span class="card-icon">🎯</span>
-        <h3>海外客户数据抓取</h3>
-        <p>从Google Maps自动抓取目标市场的精准客户数据</p>
-      </div>
-      <div class="card">
         <span class="card-icon">✉️</span>
-        <h3>AI个性化开发信</h3>
-        <p>根据客户官网内容，AI自动生成5封个性化邮件</p>
-      </div>
-      <div class="card">
-        <span class="card-icon">🚀</span>
-        <h3>冷邮件自动发送</h3>
-        <p>自动按时间序列发送，智能跟进未回复客户</p>
+        <h3>外贸冷邮件自动化</h3>
+        <p>自动抓取海外客户 → AI写个性化开发信 → 自动发送跟进</p>
+        <span class="card-tag live">已上线</span>
       </div>
       <div class="card">
         <span class="card-icon">📊</span>
-        <h3>客户评分筛选</h3>
-        <p>AI自动评估客户质量，优先跟进高价值客户</p>
+        <h3>客户管理自动化</h3>
+        <p>自动评分筛选 → 智能分类 → 跟进提醒 → 不漏掉任何商机</p>
+        <span class="card-tag soon">即将上线</span>
+      </div>
+      <div class="card">
+        <span class="card-icon">🏭</span>
+        <h3>报价与订单自动化</h3>
+        <p>30秒生成报价单 → 自动发送 → 订单进度实时追踪</p>
+        <span class="card-tag live">已上线</span>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔧</span>
+        <h3>定制你的自动化流程</h3>
+        <p>告诉我你的业务痛点，我帮你设计专属自动化方案</p>
+        <span class="card-tag consult">接受咨询</span>
       </div>
     </div>
     <div class="enterprise-cta">
-      <a href="mailto:zhuolu34@gmail.com" class="btn btn-primary">联系我了解更多</a>
+      <a href="mailto:zhuolu34@gmail.com" class="btn btn-primary">联系我定制方案</a>
     </div>
   </section>
 
