@@ -21,8 +21,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Page routes — explicit handlers before static so '/' isn't captured by index.html default
-app.get('/',            (req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
+app.get('/',            (req, res) => res.sendFile(path.join(__dirname, 'public', 'home.html')));
 app.get('/app',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/landing',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
 app.get('/landing.html',(req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
 app.get(['/tools', '/tools/'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'tools', 'index.html')));
 
