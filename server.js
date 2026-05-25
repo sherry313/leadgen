@@ -29,6 +29,15 @@ app.get(['/tools', '/tools/'], (req, res) => res.sendFile(path.join(__dirname, '
 
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
+// Race a promise against a timeout. Used by manual-mode endpoints to bound
+// long-running external calls (Apify, Anthropic, Firecrawl, Instantly).
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(label + ' timeout after ' + (ms/1000) + 's')), ms))
+  ]);
+}
+
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/status', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -230,7 +239,11 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
   res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
   res.flushHeaders();
   const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
-  const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 15000);
+
+  let aborted = false;
+  req.on('close', () => { aborted = true; });
+
+  const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
 
   try {
     const { companies: rawCompanies, apifyCostUsd: apifyActualCost } = dataSource === 'google_search'
@@ -270,6 +283,7 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
     }
 
     for (let i = 0; i < companies.length; i++) {
+      if (aborted) break;
       console.log('[ScrapeRaw] Sending company event:', i + 1);
       send({ type: 'company', company: companies[i], done: i + 1, total: companies.length });
     }
@@ -304,6 +318,16 @@ app.post('/api/prefilter', requireAuth, async (req, res) => {
   if (!Array.isArray(companies) || !companies.length)
     return res.status(400).json({ success: false, error: 'companies array required' });
 
+  // Remap frontend seller profile fields to the shape preFilterLead expects.
+  // Same remap pattern used by /api/auto/run (commit 5ffbb93).
+  const companyProfile = req.body.companyProfile || {};
+  const profileForHaiku = {
+    companyName: companyProfile.sellerName || companyProfile.companyName || '',
+    products:    companyProfile.products   || '',
+    advantages:  companyProfile.advantage  || companyProfile.advantages || '',
+    icp:         req.body.icp || companyProfile.icp || '',
+  };
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -311,12 +335,16 @@ app.post('/api/prefilter', requireAuth, async (req, res) => {
 
   const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
 
+  let aborted = false;
+  req.on('close', () => { aborted = true; });
+
   let haikuIn = 0, haikuOut = 0;
   const results = new Array(companies.length);
   let completed = 0;
   let idx = 0;
   let elapsed = 0;
   const heartbeat = setInterval(() => {
+    if (aborted) return;
     elapsed += 2;
     send({ type: 'heartbeat', elapsed });
   }, 2000);
@@ -324,8 +352,9 @@ app.post('/api/prefilter', requireAuth, async (req, res) => {
   try {
     const worker = async () => {
       while (idx < companies.length) {
+        if (aborted) break;
         const i = idx++;
-        const { level, reason, usage } = await preFilterLead(companies[i], {});
+        const { level, reason, usage } = await withTimeout(preFilterLead(companies[i], profileForHaiku), 60000, 'Haiku pre-filter');
         haikuIn  += usage.input_tokens;
         haikuOut += usage.output_tokens;
         results[i] = { ...companies[i], level, reason };
@@ -379,6 +408,9 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
 
   const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
 
+  let aborted = false;
+  req.on('close', () => { aborted = true; });
+
   const today = new Date().toISOString().split('T')[0];
   await createRunSheet('enrich', today);
 
@@ -389,7 +421,7 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
 
   const processOne = async (company) => {
     try {
-      const crawled = await crawlWebsite(company.website);
+      const crawled = await withTimeout(crawlWebsite(company.website), 60000, 'Firecrawl');
       const websiteContent = crawled.content;
       const pageMetadata = {
         title:         crawled.title,
@@ -401,7 +433,7 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
       if (shouldSkip) {
         return { ...company, websiteContent, pageMetadata, status: `filtered: ${reason}`, dateAdded: today };
       }
-      const enrichment = await analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing, pageMetadata);
+      const enrichment = await withTimeout(analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing, pageMetadata), 120000, 'Sonnet ICP');
       sonnetIn  += enrichment.usage?.input_tokens  || 0;
       sonnetOut += enrichment.usage?.output_tokens || 0;
       return { ...company, websiteContent, pageMetadata, keepSignals, lowSignal, claimsLocalManufacturing, ...enrichment, dateAdded: today, status: 'enriched' };
@@ -412,7 +444,7 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
   };
 
   const worker = async () => {
-    while (idx < companies.length && !enrichCancelled) {
+    while (idx < companies.length && !enrichCancelled && !aborted) {
       const i = idx++;
       const lead = await processOne(companies[i]);
       results[i] = lead;
@@ -519,17 +551,20 @@ app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
 
   const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
 
+  let aborted = false;
+  req.on('close', () => { aborted = true; });
+
   const results = new Array(companies.length);
   let sonnetIn = 0, sonnetOut = 0;
   let completed = 0;
   let idx = 0;
 
   const worker = async () => {
-    while (idx < companies.length && !emailGenCancelled) {
+    while (idx < companies.length && !emailGenCancelled && !aborted) {
       const i = idx++;
       const company = companies[i];
       try {
-        const emails = await generateEmails(company, frameworkKey, company.websiteContent || '', framework_key, custom_framework, companyProfile);
+        const emails = await withTimeout(generateEmails(company, frameworkKey, company.websiteContent || '', framework_key, custom_framework, companyProfile), 120000, 'Sonnet emails');
         sonnetIn  += emails.usage?.input_tokens  || 0;
         sonnetOut += emails.usage?.output_tokens || 0;
         results[i] = { ...company, ...emails, emailTemplateKey: frameworkKey };
@@ -963,7 +998,26 @@ app.post('/api/instantly/add-lead', requireAuth, async (req, res) => {
     return res.status(400).json({ success: false, error: 'lead.email is required' });
   }
 
-  const { addLeadToCampaign } = require('./services/instantly');
+  const { addLeadToCampaign, getCampaignStatus } = require('./services/instantly');
+
+  // Refuse to push if the target campaign is Active — same safeguard as /api/auto/run.
+  // Pushing into an Active campaign triggers immediate sending.
+  const effectiveCampaignId = campaignIdOverride || process.env.INSTANTLY_CAMPAIGN_ID;
+  if (effectiveCampaignId) {
+    try {
+      const { status, name } = await withTimeout(getCampaignStatus(effectiveCampaignId), 30000, 'Instantly campaign check');
+      const isActive = status === 1 || status === 'active';
+      if (isActive) {
+        console.warn(`[Instantly] Refusing add-lead — campaign "${name}" (${effectiveCampaignId}) is Active`);
+        return res.status(400).json({
+          success: false,
+          error: `Campaign "${name}" 当前处于 Active 状态，推送会立刻发邮件。请先在 Instantly 中暂停 Campaign 后重试。`,
+        });
+      }
+    } catch (e) {
+      console.warn(`[Instantly] Campaign status check failed (non-fatal): ${e.message}`);
+    }
+  }
 
   // Normalize emails[] array → EMAIL_N_SUBJECT / EMAIL_N_BODY fields
   const normalized = { ...lead };

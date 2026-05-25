@@ -3776,10 +3776,16 @@ async function startAIFilter() {
 
   let succeeded = false;
   try {
+    const companyProfile = {
+      sellerName: document.getElementById('sellerName')?.value.trim() || '',
+      products:   document.getElementById('products')?.value.trim()   || '',
+      advantage:  document.getElementById('advantage')?.value.trim()  || '',
+    };
+    const icp = document.getElementById('icpInput')?.value.trim() || '';
     const res = await fetch('/api/prefilter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ companies: toFilter, searchId: _currentSearchId }),
+      body: JSON.stringify({ companies: toFilter, searchId: _currentSearchId, companyProfile, icp }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
