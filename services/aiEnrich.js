@@ -319,6 +319,9 @@ BODY IRON RULES:
 4. Reference specific Australian cities, company names, or numbers
 5. Sign every email with "— ${name}"
 6. Use {first_name} as salutation placeholder; {company} and {website} where natural
+7. BANNED PHRASES — these trigger spam filters, NEVER use them in any email under any framework:
+'no sales', 'no commitment', 'no obligation', 'no contract', 'no risk', 'no strings', 'no catch', 'no pitch', 'completely free', '100% free', 'risk free', 'guarantee', 'act now', 'limited time', 'don't miss', 'exclusive offer', 'winner', 'congratulations'.
+USE INSTEAD: 'see if it makes sense', 'whenever it works for you', 'just for your reference', 'happy to share more', 'we stand behind our work', 'totally understand if the timing isn't right'.
 
 Return ONLY valid JSON. All string values must escape internal double quotes with a backslash (\\"). No markdown code fences. No extra text before or after the JSON object.`;
 }

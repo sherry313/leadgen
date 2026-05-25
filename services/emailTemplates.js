@@ -158,7 +158,7 @@ Worth a look?
 
 A fair pushback I get: "Chinese suppliers sound great until specs come out wrong."
 
-Here's what we do differently: English-speaking AU liaison on every order, CAD drawings approved before production, replacement guarantee if anything's off.
+Here's what we do differently: English-speaking AU liaison on every order, CAD drawings approved before production, we replace anything that doesn't meet spec.
 
 Solved this for 40+ AU contractors. Would the same process work for {company}?
 

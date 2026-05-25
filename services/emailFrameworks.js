@@ -26,7 +26,7 @@ if your aluminium supplier ghosts mid-build, how many days does your client wait
 
 Lens is a 300,000m² aluminium factory in Foshan, 20 years. Currently working with a Sydney designer on a residential project.
 
-Worth a half-day next time you're in China? No sales, no commitment — just one more option in your back pocket.
+Worth a half-day next time you're in China? Just a chance to see if it makes sense — one more option in your back pocket.
 
 Lili
 
@@ -44,7 +44,7 @@ STYLE: short, customer-angle "for you" — not "buy from us".
 FACTS YOU MAY USE (do not invent others):
 - Lens: 300,000m² aluminium factory in Foshan, 20 years experience
 - Currently working with a Sydney designer on a residential project (no name given, no specifics beyond "residential")
-- Do NOT say "Canadian distributor" / "$1-2M USD" / "23 builders" / cost-savings % / AU warehouse / "zero delays guarantee"
+- Do NOT say "Canadian distributor" / "$1-2M USD" / "23 builders" / cost-savings % / AU warehouse / any delay-related promises
 
 NEVER:
 - Fabricate website details. If the website scrape is empty, the Email 1 hook line becomes exactly: "Saw [Company] — quick thought." The Email 1 subject still follows the curiosity-gap style (e.g. "quick thought on your supplier risk") — do NOT use "Saw X" as the subject.
@@ -58,7 +58,7 @@ Body structure (45-70 words total):
   1. One sentence hook referencing something SPECIFIC from their website (a project, suburb, style detail). If website scrape is empty: "Saw [Company] — quick thought."
   2. Pain question: "if your aluminium supplier ghosts mid-[project type], how many days does your client wait?" — adapt [project type] to their work (mid-build, mid-fit-out, mid-install, mid-renovation).
   3. Credentials line, verbatim: "Lens is a 300,000m² aluminium factory in Foshan, 20 years. Currently working with a Sydney designer on a residential project."
-  4. CTA, verbatim: "Worth a half-day next time you're in China? No sales, no commitment — just one more option in your back pocket."
+  4. CTA, verbatim: "Worth a half-day next time you're in China? Just a chance to see if it makes sense — one more option in your back pocket."
 Sign-off: Lili
 Subject: curiosity-gap, lowercase-first, 5-8 words. Examples: "quick thought on your supplier risk", "before your next custom build", "when your supplier ghosts".
 
@@ -69,7 +69,7 @@ Body:
 Hi [Name],
 Quick follow-up.
 Most builders we talk to only audit their China supplier once — at the start. Then they hope for the best.
-One thing that helps: a factory video before any order. If you want, I can send ours — no commitment, just for your file.
+One thing that helps: a factory video before any order. If you want, I can send ours — just for your reference.
 Lili
 
 === EMAIL 3 (Day 5) — value ===
@@ -82,7 +82,7 @@ If you ever evaluate a new China supplier (us or anyone else), 3 questions that 
 2. "What's your lead time if something needs to be redone?"
 3. "Who's the actual factory owner — and can I email them directly?"
 Most won't answer #3.
-If you want, I can send our answers to all 3 — no commitment, just for your file.
+If you want, I can send our answers to all 3 — just for your reference.
 Lili
 
 === EMAIL 4 (Day 7) — factory visit invite ===
@@ -92,7 +92,7 @@ Body:
 Hi [Name],
 If you ever come to China for sourcing (most builders we work with do 1-2 trips a year), and you're in Guangdong — we cover airport pickup, all meals, factory tour, QC lab walkthrough.
 You cover flight + hotel.
-No contract. No pitch deck. Most builders stay 1-2 nights, see 4-5 factories, ours included.
+Flexible, straightforward. Most builders stay 1-2 nights, see 4-5 factories, ours included.
 If your trip is on the horizon, reply with the month and we'll figure it out.
 Lili
 
@@ -250,7 +250,7 @@ Email 1 (Day 1): Before = their current frustration specific to their business t
 Email 2 (Day 4): Before = a different pain angle (e.g. cost rather than time); After = measurable improvement with a number; Bridge = a specific invitation.
 Email 3 (Day 7): Before = named AU client's past situation; After = results they achieved (specific numbers); Bridge = "could the same apply to {company}?"
 Email 4 (Day 10): Before = the objection scenario ("I know suppliers like us often seem…"); After = what it looks like when the concern is resolved; Bridge = show how you address it.
-Email 5 (Day 14): Before = the unresolved situation if they never try; After = what's possible; Bridge = leave a resource, no obligation, no hard feelings.`,
+Email 5 (Day 14): Before = the unresolved situation if they never try; After = what's possible; Bridge = leave a resource, just for your reference, no hard feelings.`,
   },
 
   'pas': {
@@ -292,7 +292,7 @@ Email 1 (Day 1): Problem = one specific, concrete pain for their business type; 
 Email 2 (Day 4): Problem = a different angle (e.g. profit margin erosion rather than delays); Agitate = quantify the financial loss; Solve = your specific differentiator.
 Email 3 (Day 7): Problem = named AU client's original struggle; Agitate = their situation before you; Solve = specific outcome achieved (numbers and results).
 Email 4 (Day 10): Problem = the objection itself (e.g. "switching suppliers is risky"); Agitate = what happens if that fear keeps them stuck; Solve = how you remove that risk specifically.
-Email 5 (Day 14): Problem = the persistent unresolved issue; Agitate = "one last thought — every month without a solution means…"; Solve = leave a specific resource (catalog/case study), no pressure.`,
+Email 5 (Day 14): Problem = the persistent unresolved issue; Agitate = "one last thought — every month without a solution means…"; Solve = leave a specific resource (catalog/case study), whenever it makes sense.`,
   },
 
   'byaf': {
@@ -326,15 +326,15 @@ Have a great day 😊
 
 ---
 Main ask: share the blog post on social media
-Freedom phrase: "If not, no worries, I appreciate you reading this far."
+Freedom phrase: "If not, totally understand, I appreciate you reading this far."
 
 Psychology: explicitly giving permission to decline actually increases response rate (psychology-validated technique).`,
     sequence_prompt: `Each email follows BYAF — make your ask, then explicitly give the recipient permission to decline:
-Email 1 (Day 1): Normal value-focused ask specific to their business type; end with a natural freedom phrase like "If not, no worries at all — I appreciate you reading this."
+Email 1 (Day 1): Normal value-focused ask specific to their business type; end with a natural freedom phrase like "If not, totally understand — I appreciate you reading this."
 Email 2 (Day 4): Different angle on the value; end with "Completely up to you, of course."
 Email 3 (Day 7): Social proof email; end with "Either way, hope this is useful regardless."
-Email 4 (Day 10): Handle a common objection; end with "No pressure if the timing isn't right."
-Email 5 (Day 14): Breakup email; explicitly release the prospect with warmth, offer a resource with zero obligation.
+Email 4 (Day 10): Handle a common objection; end with "Totally understand if the timing isn't right."
+Email 5 (Day 14): Breakup email; explicitly release the prospect with warmth, offer a resource just for your reference.
 CRITICAL RULE: EVERY single email MUST include a clear, natural-sounding sentence that explicitly gives the reader permission to ignore or decline — this is the defining characteristic of BYAF and cannot be omitted from any email in the sequence.`,
   },
 
