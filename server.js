@@ -653,6 +653,9 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
       campaignId = '',
       companyProfile = {},
       icp = '',
+      // User-picked email framework from the /app wizard ws5 step. The
+      // /lens flow doesn't send this — falls back to peter_kang_3part below.
+      framework_key: clientFrameworkKey = null,
     } = req.body;
 
     if (!searchQuery?.trim() || !location?.trim()) {
@@ -836,9 +839,16 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
     );
     send({ type: 'phase', phase: 'qualify', status: 'done', qualified: qualified.length });
 
-    // ── Phase 4: Peter Kang email generation ───────────────────────────────
+    // ── Phase 4: email generation ──────────────────────────────────────────
+    // templateKey (customer-type angle) is still server-derived from the query.
+    // frameworkKey now honors the user's wizard pick (ws5 on /app). /lens auto
+    // and any caller that omits framework_key continues to get peter_kang_3part.
+    const ALLOWED_FW_KEYS = new Set(['peter_kang_3part','cold_5_step','aida','bab','pas','byaf','sch','three_ps']);
     const templateKey  = templateKeyFromQuery(searchQuery);
-    const frameworkKey = 'peter_kang_3part';
+    const frameworkKey = (clientFrameworkKey && ALLOWED_FW_KEYS.has(clientFrameworkKey))
+      ? clientFrameworkKey
+      : 'peter_kang_3part';
+    console.log(`[Auto] frameworkKey=${frameworkKey} (client sent: ${clientFrameworkKey || '(none)'})`);
     let emailsGenerated = 0;
     if (qualified.length) {
       send({ type: 'phase', phase: 'emails', status: 'start', total: qualified.length, templateKey, frameworkKey });

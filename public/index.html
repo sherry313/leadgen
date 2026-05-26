@@ -1962,6 +1962,47 @@
     }
     .ws-start .ti { font-size: 17px; }
 
+    /* Framework grid inside wizard (ws5) — 2 columns of compact cards */
+    .wiz-fw-card {
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      cursor: pointer;
+      transition: all 0.25s;
+      font-family: 'Outfit', sans-serif;
+    }
+    .wiz-fw-card:hover {
+      border-color: rgba(99,179,237,0.4);
+      transform: translateY(-1px);
+    }
+    .wiz-fw-card.on {
+      border: 2px solid #63b3ed;
+      background: rgba(99,179,237,0.1);
+      /* Compensate for 2px border so card doesn't visually grow */
+      padding: 13px;
+    }
+    .wiz-fw-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #f1f5f9;
+      margin-bottom: 4px;
+    }
+    .wiz-fw-desc {
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.4;
+    }
+    .ws-start:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .ws-start:disabled:hover {
+      transform: none;
+      box-shadow: 0 4px 24px rgba(16,185,129,0.2);
+    }
+
     /* Data source grid inside wizard: 2 columns + tidier card padding */
     .ws-body #dsGrid {
       display: grid;
@@ -2339,6 +2380,7 @@
         <div class="ws-pip" id="wsp2"></div>
         <div class="ws-pip" id="wsp3"></div>
         <div class="ws-pip" id="wsp4"></div>
+        <div class="ws-pip" id="wsp5"></div>
       </div>
 
       <div class="ws-card" id="ws1">
@@ -2346,7 +2388,7 @@
         <h3 class="ws-title">你想开发哪个市场？</h3>
         <div class="ws-sub">选择目标国家</div>
         <div class="ws-body" id="ws1Body"></div>
-        <div class="ws-hint">1 / 4</div>
+        <div class="ws-hint">1 / 5</div>
       </div>
 
       <div class="ws-card" id="ws2" style="display:none">
@@ -2358,7 +2400,7 @@
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(3)">下一步 →</button>
         </div>
-        <div class="ws-hint">2 / 4</div>
+        <div class="ws-hint">2 / 5</div>
       </div>
 
       <div class="ws-card" id="ws3" style="display:none">
@@ -2370,21 +2412,36 @@
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(4)">下一步 →</button>
         </div>
-        <div class="ws-hint">3 / 4</div>
+        <div class="ws-hint">3 / 5</div>
       </div>
 
       <div class="ws-card" id="ws4" style="display:none">
         <button type="button" class="ws-back" onclick="wizardGo(3)">← 返回</button>
         <div class="ws-icon ws-icon-amber"><i class="ti ti-building"></i></div>
-        <h3 class="ws-title">最后，告诉我你是谁</h3>
+        <h3 class="ws-title">告诉我你是谁</h3>
         <div class="ws-sub">AI 用这些信息写个性化邮件</div>
         <div class="ws-body" id="ws4Body"></div>
         <div class="ws-nav">
-          <button type="button" class="ws-start" onclick="wizardStart()">
+          <button type="button" class="ws-next" onclick="wizardGo(5)">下一步 →</button>
+        </div>
+        <div class="ws-hint">4 / 5</div>
+      </div>
+
+      <div class="ws-card" id="ws5" style="display:none">
+        <button type="button" class="ws-back" onclick="wizardGo(4)">← 返回</button>
+        <div class="ws-icon ws-icon-purple" style="background:linear-gradient(135deg,#4c1d95,#6d28d9)"><i class="ti ti-mail-forward"></i></div>
+        <h3 class="ws-title">选择邮件写作风格</h3>
+        <div class="ws-sub">AI 根据你选的风格写开发信</div>
+        <div class="ws-body" id="ws5Body">
+          <div id="wizFrameworkGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;text-align:left;"></div>
+          <div id="wizFrameworkLoading" style="color:#64748b;font-size:12px;padding:14px 0;text-align:center">加载框架中…</div>
+        </div>
+        <div class="ws-nav">
+          <button type="button" class="ws-start" id="ws5Start" disabled onclick="wizardStart()">
             <i class="ti ti-rocket"></i>一键开始
           </button>
         </div>
-        <div class="ws-hint">4 / 4</div>
+        <div class="ws-hint">5 / 5</div>
       </div>
 
     </div>
@@ -3492,8 +3549,11 @@ function selectPillCountry(code) {
 }
 
 // ── Step 2 wizard navigation (/app new users) ─────────────────────────────────
+// 5 sub-cards now: country → data source → search → seller info → framework.
+const WIZ_STEP_COUNT = 5;
+
 function wizardGo(n) {
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= WIZ_STEP_COUNT; i++) {
     const card = document.getElementById('ws' + i);
     if (card) card.style.display = (i === n) ? '' : 'none';
 
@@ -3507,6 +3567,12 @@ function wizardGo(n) {
       else if (i === n) pip.classList.add('active');
     }
   }
+
+  // Lazy-load framework cards when the user first lands on ws5
+  if (n === 5 && typeof renderWizardFrameworks === 'function') {
+    renderWizardFrameworks();
+  }
+
   // Replay the entrance fade-up on the newly-visible card (reflow trick so
   // the animation restarts even when the same class was already applied).
   const target = document.getElementById('ws' + n);
@@ -3516,6 +3582,63 @@ function wizardGo(n) {
     target.classList.add('ws-fade-in');
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
+
+// ── Wizard framework picker (ws5) ─────────────────────────────────────────────
+// Chinese labels per framework, keyed on the same `key` strings as
+// services/emailFrameworks.js. Used because that module ships English+pinyin
+// names but no zh-name/zh-description fields.
+const WIZ_FW_LABELS = {
+  peter_kang_3part: { name: 'Peter Kang 三段式',       desc: '高价值 B2B 客户，邀请来工厂参观' },
+  cold_5_step:      { name: 'Cold Email 5 步序列',     desc: '正式 B2B 客户，需要长期跟进' },
+  aida:             { name: 'AIDA 经典 4 段',          desc: '初次冷接触，决策路径较长' },
+  bab:              { name: 'Before-After-Bridge',     desc: '正在经历明显问题的客户' },
+  pas:              { name: 'Problem-Agitate-Solve',   desc: '当前供应商有明显问题的客户' },
+  byaf:             { name: 'But You Are Free',        desc: '高姿态客户，被骚扰过的决策者' },
+  sch:              { name: 'Star-Chain-Hook',         desc: '数据驱动型决策者' },
+  three_ps:         { name: 'Praise-Picture-Push',     desc: '室内设计师、建筑师、作品导向客户' },
+};
+
+async function renderWizardFrameworks() {
+  const grid    = document.getElementById('wizFrameworkGrid');
+  const loading = document.getElementById('wizFrameworkLoading');
+  if (!grid) return;
+
+  // Reuse the global _frameworks list (server-of-truth for available keys).
+  // Falls back to the WIZ_FW_LABELS keys if backend hasn't responded yet.
+  if (!_frameworksLoaded) {
+    try { await loadFrameworks(); } catch (_) {}
+  }
+
+  const list = (_frameworks && _frameworks.length)
+    ? _frameworks.filter(fw => !fw.is_custom)
+    : Object.keys(WIZ_FW_LABELS).map(k => ({ key: k }));
+
+  if (loading) loading.style.display = list.length ? 'none' : '';
+
+  grid.innerHTML = list.map(fw => {
+    const lbl = WIZ_FW_LABELS[fw.key] || { name: fw.en_name || fw.key, desc: fw.description || '' };
+    const sel = (fw.key === _selectedFrameworkKey) ? ' on' : '';
+    return `<div class="wiz-fw-card${sel}" data-key="${fw.key}" onclick="selectWizFramework('${fw.key.replace(/'/g,"\\'")}')">
+      <div class="wiz-fw-name">${lbl.name}</div>
+      <div class="wiz-fw-desc">${lbl.desc}</div>
+    </div>`;
+  }).join('');
+
+  // If the user already picked a framework on a prior visit, enable the start
+  // button immediately. Otherwise it stays disabled until they pick.
+  const startBtn = document.getElementById('ws5Start');
+  if (startBtn) startBtn.disabled = !_selectedFrameworkKey;
+}
+
+function selectWizFramework(key) {
+  _selectedFrameworkKey = key;
+  _selectedCustomFramework = null;
+  document.querySelectorAll('#wizFrameworkGrid .wiz-fw-card').forEach(c => {
+    c.classList.toggle('on', c.dataset.key === key);
+  });
+  const startBtn = document.getElementById('ws5Start');
+  if (startBtn) startBtn.disabled = false;
 }
 
 function wizardStart() {
@@ -4631,6 +4754,9 @@ async function startAutoRun() {
           campaignId,
           companyProfile,
           icp,
+          // User-picked framework from wizard ws5. Server falls back to the
+          // default if absent so the legacy /lens auto-run path keeps working.
+          framework_key: _selectedFrameworkKey || null,
         }),
         signal: controller.signal,
       });
