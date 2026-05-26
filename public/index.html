@@ -2406,26 +2406,14 @@
         <span class="name">美国</span>
       </div>
       <div class="country-card select-card" id="cc-2" onclick="toggleCountry(2)">
-        <img class="flag-img" src="https://flagcdn.com/w80/gb.png" alt="GB">
-        <span class="name">英国</span>
-      </div>
-      <div class="country-card select-card" id="cc-3" onclick="toggleCountry(3)">
-        <img class="flag-img" src="https://flagcdn.com/w80/ca.png" alt="CA">
-        <span class="name">加拿大</span>
-      </div>
-      <div class="country-card select-card" id="cc-4" onclick="toggleCountry(4)">
-        <img class="flag-img" src="https://flagcdn.com/w80/de.png" alt="DE">
-        <span class="name">德国</span>
-      </div>
-      <div class="country-card select-card" id="cc-5" onclick="toggleCountry(5)">
         <img class="flag-img" src="https://flagcdn.com/w80/ae.png" alt="AE">
         <span class="name">阿联酋</span>
       </div>
-      <div class="country-card select-card" id="cc-6" onclick="toggleCountry(6)">
+      <div class="country-card select-card" id="cc-3" onclick="toggleCountry(3)">
         <img class="flag-img" src="https://flagcdn.com/w80/sg.png" alt="SG">
         <span class="name">新加坡</span>
       </div>
-      <div class="country-card select-card" id="cc-7" onclick="toggleCountry(7)">
+      <div class="country-card select-card" id="cc-4" onclick="toggleCountry(4)">
         <img class="flag-img" src="https://flagcdn.com/w80/jp.png" alt="JP">
         <span class="name">日本</span>
       </div>
@@ -2443,8 +2431,6 @@
         <div class="pill-region-list">
           <button type="button" class="pill-country" data-code="AU" data-name="澳大利亚" onclick="selectPillCountry('AU')"><img src="https://flagcdn.com/w20/au.png" alt="">澳大利亚</button>
           <button type="button" class="pill-country" data-code="US" data-name="美国"     onclick="selectPillCountry('US')"><img src="https://flagcdn.com/w20/us.png" alt="">美国</button>
-          <button type="button" class="pill-country" data-code="UK" data-name="英国"     onclick="selectPillCountry('UK')"><img src="https://flagcdn.com/w20/gb.png" alt="">英国</button>
-          <button type="button" class="pill-country" data-code="DE" data-name="德国"     onclick="selectPillCountry('DE')"><img src="https://flagcdn.com/w20/de.png" alt="">德国</button>
           <button type="button" class="pill-country" data-code="AE" data-name="阿联酋"   onclick="selectPillCountry('AE')"><img src="https://flagcdn.com/w20/ae.png" alt="">阿联酋</button>
         </div>
       </div>
@@ -3373,27 +3359,9 @@
 
 <script>
 // ── Static data ───────────────────────────────────────────────────────────────
-const CITY_OPTIONS = {
-  0: ['Sydney Australia', 'Melbourne Australia', 'Brisbane Australia', 'Perth Australia'],
-  1: ['New York USA', 'Los Angeles USA', 'Houston USA', 'Chicago USA'],
-  2: ['London UK', 'Manchester UK', 'Birmingham UK'],
-  3: ['Toronto Canada', 'Vancouver Canada', 'Calgary Canada'],
-  4: ['Berlin Germany', 'Munich Germany', 'Hamburg Germany'],
-  5: ['Dubai UAE', 'Abu Dhabi UAE'],
-  6: ['Singapore'],
-  7: ['Tokyo Japan', 'Osaka Japan'],
-};
-
-const COUNTRIES = [
-  { flag:'🇦🇺', zh:'澳大利亚', en:'Australia' },
-  { flag:'🇺🇸', zh:'美国',     en:'United States' },
-  { flag:'🇬🇧', zh:'英国',     en:'United Kingdom' },
-  { flag:'🇨🇦', zh:'加拿大',   en:'Canada' },
-  { flag:'🇩🇪', zh:'德国',     en:'Germany' },
-  { flag:'🇦🇪', zh:'阿联酋',   en:'UAE' },
-  { flag:'🇸🇬', zh:'新加坡',   en:'Singapore' },
-  { flag:'🇯🇵', zh:'日本',     en:'Japan' },
-];
+// (CITY_OPTIONS and COUNTRIES — legacy declarations referenced nowhere — removed
+//  along with European + Canadian markets. The live data structures are
+//  COUNTRY_CODES / COUNTRY_NAMES / APIFY_COUNTRY_ISO / CITY_PRESETS below.)
 const CUSTOMER_TYPES = [
   { icon:'🔨', zh:'装修承包商',   en:'renovation contractor',      lucide:'hammer' },
   { icon:'🎨', zh:'室内设计师',   en:'interior designer',           lucide:'paintbrush' },
@@ -3406,14 +3374,14 @@ const CUSTOMER_TYPES = [
 ];
 
 // ── City presets ──────────────────────────────────────────────────────────────
-// First 8 entries (AU..JP) must keep their indices — /lens flag cards reference
-// them by hardcoded index (cc-0..cc-7). New countries are appended after.
+// First 5 entries (AU, US, AE, SG, JP) must keep their indices — /lens flag
+// cards reference them by hardcoded index (cc-0..cc-4). New countries are
+// appended after. European countries and Canada are intentionally excluded —
+// this app targets Asia-Pacific, Middle East, Africa, and Americas markets.
 const COUNTRY_CODES = [
-  'AU','US','UK','CA','DE','AE','SG','JP',
+  'AU','US','AE','SG','JP',
   // Asia
   'KR','MY','TH','ID','IN','PH','VN',
-  // Europe
-  'FR','NL','IT','ES','SE','NO','PL',
   // Middle East / Africa
   'SA','QA','ZA','NG',
   // Americas
@@ -3422,27 +3390,22 @@ const COUNTRY_CODES = [
   'NZ',
 ];
 const COUNTRY_NAMES = {
-  AU:'澳大利亚', US:'美国', UK:'英国', CA:'加拿大', DE:'德国', AE:'阿联酋', SG:'新加坡', JP:'日本',
+  AU:'澳大利亚', US:'美国', AE:'阿联酋', SG:'新加坡', JP:'日本',
   KR:'韩国', MY:'马来西亚', TH:'泰国', ID:'印尼', IN:'印度', PH:'菲律宾', VN:'越南',
-  FR:'法国', NL:'荷兰', IT:'意大利', ES:'西班牙', SE:'瑞典', NO:'挪威', PL:'波兰',
   SA:'沙特', QA:'卡塔尔', ZA:'南非', NG:'尼日利亚',
   BR:'巴西', MX:'墨西哥', AR:'阿根廷', CL:'智利', CO:'哥伦比亚',
   NZ:'新西兰',
 };
 const APIFY_COUNTRY_ISO = {
-  AU:'au', US:'us', UK:'gb', CA:'ca', DE:'de', AE:'ae', SG:'sg', JP:'jp',
+  AU:'au', US:'us', AE:'ae', SG:'sg', JP:'jp',
   KR:'kr', MY:'my', TH:'th', ID:'id', IN:'in', PH:'ph', VN:'vn',
-  FR:'fr', NL:'nl', IT:'it', ES:'es', SE:'se', NO:'no', PL:'pl',
   SA:'sa', QA:'qa', ZA:'za', NG:'ng',
   BR:'br', MX:'mx', AR:'ar', CL:'cl', CO:'co',
   NZ:'nz',
 };
 const CITY_PRESETS = {
   AU: ['Melbourne','Sydney','Brisbane','Perth','Adelaide','Canberra','Gold Coast','Hobart','Darwin','Newcastle','Wollongong','Geelong','Townsville','Cairns','Toowoomba','Ballarat','Bendigo','Launceston','Mackay','Rockhampton'],
-  CA: ['Toronto','Vancouver','Montreal','Calgary','Ottawa','Edmonton','Quebec City','Winnipeg','Hamilton','Kitchener','London (ON)','Victoria','Halifax','Oshawa','Windsor','Saskatoon','Regina',"St. John's",'Kelowna','Sherbrooke'],
   US: ['New York','Los Angeles','Chicago','Houston','Phoenix','Philadelphia','San Antonio','San Diego','Dallas','San Jose','Austin','Jacksonville','Fort Worth','Columbus','San Francisco','Charlotte','Seattle','Denver','Washington DC','Boston','Miami'],
-  UK: ['London','Manchester','Birmingham','Liverpool','Leeds','Glasgow','Edinburgh','Bristol','Sheffield','Newcastle','Cardiff','Belfast'],
-  DE: ['Berlin','Hamburg','Munich','Cologne','Frankfurt','Stuttgart','Düsseldorf','Leipzig','Dortmund','Essen'],
   AE: ['Dubai','Abu Dhabi','Sharjah','Ajman','Ras Al Khaimah','Fujairah','Umm Al Quwain'],
   SG: ['Singapore'],
   JP: ['Tokyo','Osaka','Yokohama','Nagoya','Sapporo','Fukuoka','Kobe','Kyoto','Kawasaki','Saitama'],
