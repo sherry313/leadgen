@@ -7,6 +7,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🏗️</text></svg>">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -1765,15 +1766,16 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 10px 18px;
-      border-radius: 12px;
-      border: 1px solid #1e2d4a;
-      background: #1a2332;
-      color: #cbd5e0;
-      font-size: 13px;
+      padding: 12px 20px;
+      border-radius: 50px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: #cbd5e1;
+      font-size: 14px;
+      font-weight: 500;
       font-family: inherit;
       cursor: pointer;
-      transition: 0.2s;
+      transition: all 0.25s;
     }
     .pill-country img {
       width: 18px; height: 12px;
@@ -1782,15 +1784,16 @@
       display: block;
     }
     .pill-country:hover {
-      border-color: #4299e1;
-      transform: translateY(-1px);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+      transform: scale(1.03);
     }
     .pill-country.on {
-      border: 2px solid #4299e1;
-      background: #0a1628;
-      color: #63b3ed;
-      /* Compensate for 2px border so the pill doesn't visually grow/shift */
-      padding: 9px 17px;
+      background: rgba(99,179,237,0.1);
+      border-color: rgba(99,179,237,0.5);
+      color: #f1f5f9;
+      transform: scale(1.05);
+      box-shadow: 0 0 24px rgba(99,179,237,0.12);
     }
 
     /* ── Customer type free-text input (/app) ── */
@@ -1819,121 +1822,144 @@
       color: #64748b;
     }
 
-    /* ── Step 2 Wizard (/app new users) — one card visible at a time ── */
+    /* ── Step 2 Wizard (/app new users) — polished design ── */
     #step2Wizard { margin-top: 8px; }
-    .ws-progress {
-      display: flex; align-items: center; justify-content: center;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-    .ws-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #1a2332;
-      transition: 0.3s;
-    }
-    .ws-dot.active {
-      width: 24px;
-      border-radius: 12px;
-      background: #1e3a5f;
-    }
-    .ws-dot.done { background: #0d2010; }
 
+    @keyframes wsFloat {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+    @keyframes wsFadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Progress pips (bars) — replaces old dots */
+    .ws-pips {
+      display: flex; gap: 4px;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .ws-pip {
+      height: 4px; flex: 1; max-width: 60px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.08);
+      transition: all 0.4s;
+    }
+    .ws-pip.active { background: linear-gradient(90deg, #63b3ed, #7c3aed); flex: 2; }
+    .ws-pip.done   { background: rgba(99,179,237,0.5); }
+
+    /* Card — centered, transparent, fades in when activated */
     .ws-card {
-      background: #111827;
-      border: 1px solid #1e2d4a;
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 520px;
+      font-family: 'Outfit', sans-serif;
+      max-width: 480px;
       margin: 0 auto;
-      position: relative;
-      overflow: hidden;
-    }
-    .ws-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #378ADD, #534AB7);
-    }
-    .ws-step-label {
-      font-size: 11px;
-      color: #63b3ed;
-      font-weight: 500;
-      letter-spacing: 0.05em;
-      margin-bottom: 6px;
+      padding: 2rem;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 6px;
+      text-align: center;
     }
-    .ws-step-label i { font-size: 14px; }
-    .ws-title {
-      font-size: 20px;
-      font-weight: 500;
-      color: #f7fafc;
-      margin: 0 0 4px;
+    .ws-card.ws-fade-in { animation: wsFadeUp 0.4s ease-out; }
+
+    /* Body slot — restore left alignment + full width for moved form content */
+    .ws-body {
+      width: 100%;
+      text-align: left;
+      margin-bottom: 0;
     }
-    .ws-sub {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-    .ws-body { margin-bottom: 18px; }
-    .ws-nav { margin-top: 0; }
+
+    /* Back link — top-left of the card */
     .ws-back {
-      display: flex; align-items: center; gap: 4px;
-      font-size: 12px;
-      color: #4a5568;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      color: #374151;
       cursor: pointer;
+      display: flex; align-items: center; gap: 4px;
+      margin-bottom: 2rem;
+      align-self: flex-start;
       background: transparent;
       border: none;
       padding: 0;
-      margin-bottom: 16px;
-      font-family: inherit;
-      transition: color 0.12s;
+      transition: 0.15s;
     }
     .ws-back:hover { color: #94a3b8; }
+
+    /* Floating icon */
+    .ws-icon {
+      width: 72px; height: 72px;
+      border-radius: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      margin-bottom: 1.5rem;
+      animation: wsFloat 3s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .ws-icon-blue   { background: linear-gradient(135deg, #1a365d, #2b4c7e); color: #63b3ed; box-shadow: 0 8px 32px rgba(99,179,237,0.2); }
+    .ws-icon-purple { background: linear-gradient(135deg, #2d1f4e, #4c2882); color: #b794f6; box-shadow: 0 8px 32px rgba(183,148,246,0.2); }
+    .ws-icon-teal   { background: linear-gradient(135deg, #134e4a, #0d6e6e); color: #5eead4; box-shadow: 0 8px 32px rgba(94,234,212,0.15); }
+    .ws-icon-amber  { background: linear-gradient(135deg, #451a03, #78350f); color: #fbbf24; box-shadow: 0 8px 32px rgba(251,191,36,0.15); }
+
+    .ws-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: #f8fafc;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .ws-sub {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 2rem;
+      font-weight: 300;
+    }
+
+    /* Bottom step counter ("1 / 4", etc.) */
+    .ws-hint {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      color: #374151;
+      margin-top: 1.5rem;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+    }
+
+    /* Action buttons — rounded pill */
+    .ws-nav { width: 100%; }
+    .ws-next, .ws-start {
+      width: 100%;
+      padding: 16px;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      margin-top: 2rem;
+      border: none;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px;
+      transition: all 0.25s;
+    }
     .ws-next {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      margin-top: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: 0.15s;
-      background: #1e3a5f;
-      color: #63b3ed;
-      border: 1px solid #2a4a6a;
-      font-family: inherit;
+      background: #f1f5f9;
+      color: #0f172a;
+      box-shadow: 0 4px 24px rgba(241,245,249,0.1);
     }
-    .ws-next:hover { transform: translateY(-1px); }
+    .ws-next:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(241,245,249,0.15);
+    }
     .ws-start {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      margin-top: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: 0.15s;
-      background: #0d2010;
-      color: #5DCAA5;
-      border: 1px solid #1f4d2a;
-      font-family: inherit;
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(16,185,129,0.2);
     }
-    .ws-start:hover { transform: translateY(-1px); }
+    .ws-start:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(16,185,129,0.3);
+    }
     .ws-start .ti { font-size: 17px; }
 
     /* Data source grid inside wizard: 2 columns + tidier card padding */
@@ -2011,15 +2037,16 @@
       /* Auto-mode campaign select: ditch min-width so it fits, go full-width */
       .auto-campaign-select { min-width: 0 !important; width: 100% !important; }
 
-      /* Step 2 wizard cards (/app new users) */
-      .ws-card  { padding: 1.25rem; border-radius: 14px; max-width: 100%; }
-      .ws-title { font-size: 18px; }
-      .ws-sub   { font-size: 12.5px; margin-bottom: 16px; }
-      .ws-next, .ws-start { padding: 12px; font-size: 14px; }
+      /* Step 2 wizard cards (/app new users) — polished design */
+      .ws-card  { padding: 1.5rem 1rem; max-width: 100%; }
+      .ws-icon  { width: 56px; height: 56px; font-size: 24px; border-radius: 18px; margin-bottom: 1rem; }
+      .ws-title { font-size: 22px; }
+      .ws-sub   { font-size: 13px; margin-bottom: 1.5rem; }
+      .ws-next, .ws-start { padding: 14px; font-size: 15px; margin-top: 1.5rem; }
+      .ws-pip   { max-width: 48px; }
 
-      /* Country pills inside wizard — already wrap; tighten padding */
-      .pill-country     { padding: 8px 14px; font-size: 12.5px; }
-      .pill-country.on  { padding: 7px 13px; }
+      /* Country pills inside wizard — slightly tighter on mobile */
+      .pill-country { padding: 10px 16px; font-size: 13px; }
 
       /* ICP builder: pills + textareas already full-width; just smaller text */
       #icpBuilder { padding: 14px; }
@@ -2307,53 +2334,57 @@
          into the .ws-body slots below. /lens leaves everything in #step2Legacy. -->
     <div id="step2Wizard" style="display:none">
 
-      <div class="ws-progress" id="wsProgress">
-        <div class="ws-dot active" id="wsd1"></div>
-        <div class="ws-dot" id="wsd2"></div>
-        <div class="ws-dot" id="wsd3"></div>
-        <div class="ws-dot" id="wsd4"></div>
+      <div class="ws-pips">
+        <div class="ws-pip active" id="wsp1"></div>
+        <div class="ws-pip" id="wsp2"></div>
+        <div class="ws-pip" id="wsp3"></div>
+        <div class="ws-pip" id="wsp4"></div>
       </div>
 
       <div class="ws-card" id="ws1">
-        <div class="ws-step-label"><i class="ti ti-map-pin"></i> STEP 1</div>
-        <h3 class="ws-title">你要开发哪个市场？</h3>
-        <div class="ws-sub">选择一个目标国家</div>
+        <div class="ws-icon ws-icon-blue"><i class="ti ti-world"></i></div>
+        <h3 class="ws-title">你想开发哪个市场？</h3>
+        <div class="ws-sub">选择目标国家</div>
         <div class="ws-body" id="ws1Body"></div>
+        <div class="ws-hint">1 / 4</div>
       </div>
 
       <div class="ws-card" id="ws2" style="display:none">
         <button type="button" class="ws-back" onclick="wizardGo(1)">← 返回</button>
-        <div class="ws-step-label"><i class="ti ti-database"></i> STEP 2</div>
+        <div class="ws-icon ws-icon-purple"><i class="ti ti-database"></i></div>
         <h3 class="ws-title">从哪里搜索？</h3>
         <div class="ws-sub">选择数据来源</div>
         <div class="ws-body" id="ws2Body"></div>
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(3)">下一步 →</button>
         </div>
+        <div class="ws-hint">2 / 4</div>
       </div>
 
       <div class="ws-card" id="ws3" style="display:none">
         <button type="button" class="ws-back" onclick="wizardGo(2)">← 返回</button>
-        <div class="ws-step-label"><i class="ti ti-search"></i> STEP 3</div>
-        <h3 class="ws-title">你要找什么客户？</h3>
-        <div class="ws-sub">输入关键词描述你要找的客户类型</div>
+        <div class="ws-icon ws-icon-teal"><i class="ti ti-search"></i></div>
+        <h3 class="ws-title">你想找什么客户？</h3>
+        <div class="ws-sub">用关键词描述</div>
         <div class="ws-body" id="ws3Body"></div>
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(4)">下一步 →</button>
         </div>
+        <div class="ws-hint">3 / 4</div>
       </div>
 
       <div class="ws-card" id="ws4" style="display:none">
         <button type="button" class="ws-back" onclick="wizardGo(3)">← 返回</button>
-        <div class="ws-step-label"><i class="ti ti-building"></i> STEP 4</div>
+        <div class="ws-icon ws-icon-amber"><i class="ti ti-building"></i></div>
         <h3 class="ws-title">最后，告诉我你是谁</h3>
-        <div class="ws-sub">AI 根据你的信息写个性化邮件</div>
+        <div class="ws-sub">AI 用这些信息写个性化邮件</div>
         <div class="ws-body" id="ws4Body"></div>
         <div class="ws-nav">
           <button type="button" class="ws-start" onclick="wizardStart()">
             <i class="ti ti-rocket"></i>一键开始
           </button>
         </div>
+        <div class="ws-hint">4 / 4</div>
       </div>
 
     </div>
@@ -3503,18 +3534,25 @@ function wizardGo(n) {
     const card = document.getElementById('ws' + i);
     if (card) card.style.display = (i === n) ? '' : 'none';
 
-    // Paint the progress dot: past = done (green), current = active (wide blue),
-    // future = default (gray). Classes are mutually exclusive.
-    const dot = document.getElementById('wsd' + i);
-    if (dot) {
-      dot.classList.remove('active', 'done');
-      if (i < n)      dot.classList.add('done');
-      else if (i === n) dot.classList.add('active');
+    // Paint the progress pip: past = done (faded blue), current = active
+    // (wide gradient), future = default (faint white). Classes are mutually
+    // exclusive.
+    const pip = document.getElementById('wsp' + i);
+    if (pip) {
+      pip.classList.remove('active', 'done');
+      if (i < n)        pip.classList.add('done');
+      else if (i === n) pip.classList.add('active');
     }
   }
-  // Scroll the visible card into view smoothly
+  // Replay the entrance fade-up on the newly-visible card (reflow trick so
+  // the animation restarts even when the same class was already applied).
   const target = document.getElementById('ws' + n);
-  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (target) {
+    target.classList.remove('ws-fade-in');
+    void target.offsetWidth;
+    target.classList.add('ws-fade-in');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function wizardStart() {
