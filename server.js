@@ -1008,25 +1008,46 @@ app.post('/api/diag/log', async (req, res) => {
 // ── Add lead (full 5-email sequence) to Instantly campaign ───────────────────
 // POST /api/instantly/add-lead
 // Body: { lead: { email, companyName, website?, phone?, emails?: [{subject,body}] }, campaignId? }
+//
+// Bulk pushes from the UI fire this endpoint N times in quick succession. To
+// avoid hitting Instantly's /campaigns/{id} API once per lead, cache the
+// status response for 10 seconds keyed on campaignId. Status changes are rare
+// inside a single bulk-push window.
+const _campaignStatusCache = new Map(); // id → { status, name, expires }
+const CAMPAIGN_STATUS_TTL_MS = 10_000;
+async function _cachedCampaignStatus(id) {
+  const { getCampaignStatus } = require('./services/instantly');
+  const now = Date.now();
+  const cached = _campaignStatusCache.get(id);
+  if (cached && cached.expires > now) return { status: cached.status, name: cached.name };
+  const fresh = await withTimeout(getCampaignStatus(id), 30000, 'Instantly campaign check');
+  _campaignStatusCache.set(id, { ...fresh, expires: now + CAMPAIGN_STATUS_TTL_MS });
+  return fresh;
+}
+
 app.post('/api/instantly/add-lead', requireAuth, async (req, res) => {
   const { lead, campaignId: campaignIdOverride } = req.body;
   if (!lead?.email?.trim()) {
-    return res.status(400).json({ success: false, error: 'lead.email is required' });
+    return res.status(400).json({ success: false, error_code: 'BAD_INPUT', error: 'lead.email is required' });
   }
 
-  const { addLeadToCampaign, getCampaignStatus } = require('./services/instantly');
+  const { addLeadToCampaign } = require('./services/instantly');
 
   // Refuse to push if the target campaign is Active — same safeguard as /api/auto/run.
-  // Pushing into an Active campaign triggers immediate sending.
+  // Pushing into an Active campaign triggers immediate sending. The error_code
+  // lets the frontend recognize this specific failure and abort the rest of a
+  // bulk loop instead of hammering N identical 400s.
   const effectiveCampaignId = campaignIdOverride || process.env.INSTANTLY_CAMPAIGN_ID;
   if (effectiveCampaignId) {
     try {
-      const { status, name } = await withTimeout(getCampaignStatus(effectiveCampaignId), 30000, 'Instantly campaign check');
+      const { status, name } = await _cachedCampaignStatus(effectiveCampaignId);
       const isActive = status === 1 || status === 'active';
       if (isActive) {
         console.warn(`[Instantly] Refusing add-lead — campaign "${name}" (${effectiveCampaignId}) is Active`);
         return res.status(400).json({
           success: false,
+          error_code: 'CAMPAIGN_ACTIVE',
+          campaign_name: name || '',
           error: `Campaign "${name}" 当前处于 Active 状态，推送会立刻发邮件。请先在 Instantly 中暂停 Campaign 后重试。`,
         });
       }
@@ -1047,7 +1068,15 @@ app.post('/api/instantly/add-lead', requireAuth, async (req, res) => {
   const result = await addLeadToCampaign(normalized, campaignIdOverride || null);
   if (!result.success) {
     console.error(`[Instantly] add-lead failed for ${lead.email}: ${result.reason}`);
-    return res.status(400).json({ success: false, error: result.reason });
+    // Detect Instantly's duplicate-lead rejection — frontend may want to treat
+    // it as a soft-success ("already in campaign") rather than a hard error.
+    const reasonStr = String(result.reason || '').toLowerCase();
+    const isDuplicate = reasonStr.includes('already') || reasonStr.includes('duplicate') || reasonStr.includes('exists');
+    return res.status(400).json({
+      success: false,
+      error_code: isDuplicate ? 'DUPLICATE_LEAD' : 'INSTANTLY_REJECTED',
+      error: result.reason,
+    });
   }
 
   console.log(`[Instantly] Lead added to campaign: ${lead.email} (${lead.companyName || '?'})`);

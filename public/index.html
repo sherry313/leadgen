@@ -5766,12 +5766,18 @@ async function bulkSendInstantly(targets) {
   const btn = document.getElementById('btnBulkInstantly');
   if (btn) btn.disabled = true;
 
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, dupe = 0;
+  let consecutiveFails = 0;
+  let abortReason = null;        // set to a string to break out of the loop
+  const MAX_CONSECUTIVE_FAILS = 3;
+
   for (let t = 0; t < targets.length; t++) {
     const { i, lead } = targets[t];
     if (btn) btn.textContent = `发送中 ${t + 1}/${targets.length}…`;
     const ibtn = document.getElementById(`ibtn-${i}`);
     if (ibtn) { ibtn.disabled = true; ibtn.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span>'; }
+
+    let errorCode = null;
     try {
       const outgoingEmails = [1,2,3,4,5].map(n => _getLeadEmail(lead, n));
       _diagLog('bulkSendInstantly.fetch.pre', {
@@ -5790,24 +5796,61 @@ async function bulkSendInstantly(targets) {
           }
         }),
       });
-      const data = await res.json();
-      _diagLog('bulkSendInstantly.fetch.post', { idx: t + 1, status: res.status, ok: res.ok, dataSuccess: data?.success, dataError: data?.error });
-      if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
-      ok++;
-      _markSentLS(getLeadKey(lead));
-      if (ibtn) { ibtn.innerHTML = '✓ 已加入'; ibtn.classList.add('sent'); ibtn.title = '已加入 Instantly'; }
+      const data = await res.json().catch(() => ({}));
+      errorCode = data?.error_code || null;
+      _diagLog('bulkSendInstantly.fetch.post', { idx: t + 1, status: res.status, ok: res.ok, dataSuccess: data?.success, errorCode, dataError: data?.error });
+
+      if (data?.success) {
+        ok++;
+        consecutiveFails = 0;
+        _markSentLS(getLeadKey(lead));
+        if (ibtn) { ibtn.innerHTML = '✓ 已加入'; ibtn.classList.add('sent'); ibtn.title = '已加入 Instantly'; }
+      } else if (errorCode === 'DUPLICATE_LEAD') {
+        // Already in the campaign — treat as soft-success so we don't re-push
+        // and don't alarm the user with a fail count.
+        dupe++;
+        consecutiveFails = 0;
+        _markSentLS(getLeadKey(lead));
+        if (ibtn) { ibtn.innerHTML = '✓ 已存在'; ibtn.classList.add('sent'); ibtn.title = '已在该 Campaign 中'; }
+      } else {
+        throw new Error(data?.error || `HTTP ${res.status}`);
+      }
     } catch (err) {
       fail++;
+      consecutiveFails++;
       if (ibtn) { ibtn.disabled = false; ibtn.innerHTML = '📧 Instantly'; ibtn.classList.add('error'); ibtn.title = '失败：' + err.message; }
+
+      // Fail-fast: if the campaign is Active, no point continuing — every
+      // subsequent lead will hit the same refusal. Stop, show ONE alert.
+      if (errorCode === 'CAMPAIGN_ACTIVE') {
+        abortReason = err.message || 'Campaign 处于 Active 状态';
+        break;
+      }
+      // Bail out after N consecutive failures regardless of cause — protects
+      // the user from watching 17 leads fail one by one with the same error.
+      if (consecutiveFails >= MAX_CONSECUTIVE_FAILS) {
+        abortReason = `连续 ${MAX_CONSECUTIVE_FAILS} 条推送失败，已中止。最后一个错误：${err.message}`;
+        break;
+      }
     }
-    await new Promise(r => setTimeout(r, 350));
+    if (t < targets.length - 1) await new Promise(r => setTimeout(r, 350));
   }
 
   _bulkSendRunning = false;
   if (btn) { btn.disabled = false; btn.textContent = '📧 批量加入 Instantly'; }
-  _showToast(`✅ 批量发送完成：${ok} 成功${fail ? `，${fail} 失败` : ''}`);
+
+  if (abortReason) {
+    // One clear message + restore the bulk bar so the user can fix and retry.
+    alert(`❌ 推送已中止\n\n${abortReason}\n\n已成功 ${ok} 条${dupe ? `，跳过重复 ${dupe} 条` : ''}，失败 ${fail} 条。`);
+  } else {
+    const parts = [`✅ 推送完成：${ok} 成功`];
+    if (dupe) parts.push(`${dupe} 已存在`);
+    if (fail) parts.push(`${fail} 失败`);
+    _showToast(parts.join(' · '));
+  }
+
   updateBulkBar();
-  if (ok > 0) { _wizardPushDone = true; _updateWizardNav(); }
+  if (ok > 0 || dupe > 0) { _wizardPushDone = true; _updateWizardNav(); }
 }
 
 function toggleAllResults(el) {
