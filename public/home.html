@@ -133,92 +133,83 @@
     .btn-ghost:hover { border-color: #4299e1; color: #e2e8f0; }
 
     /* ── Services ────────────────────────────────────────────────────── */
-    .services-row {
-      display: flex; gap: 18px;
-      align-items: stretch;
-    }
     .service-card {
       background: #111827;
       border: 1px solid #1e2d4a;
       border-radius: 12px;
-      padding: 1.5rem;
-      display: flex; flex-direction: column;
-      transition: border-color 0.18s, transform 0.18s;
+      padding: 1.25rem;
+      margin-bottom: 12px;
+      display: flex; gap: 16px;
+      align-items: flex-start;
+      transition: border-color 0.18s;
     }
     .service-card:hover { border-color: #4299e1; }
-    .service-card.main { flex: 1.5; }
-    .service-card.minor { flex: 1; }
-    .service-head {
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 14px;
-    }
-    .service-icon {
-      width: 36px; height: 36px;
-      border-radius: 8px;
+    .service-icon-lg {
+      width: 48px; height: 48px;
+      border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    .service-icon .ti { font-size: 20px; }
-    .service-icon.blue { background: #1e3a5f; }
-    .service-icon.blue .ti { color: #63b3ed; }
-    .service-icon.amber { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
-    .service-icon.amber .ti { color: #fbbf24; }
+    .service-icon-lg .ti { font-size: 24px; }
+    .service-icon-lg.blue { background: #1e3a5f; }
+    .service-icon-lg.blue .ti { color: #63b3ed; }
+    .service-icon-lg.amber { background: #3d2500; }
+    .service-icon-lg.amber .ti { color: #fbbf24; }
+    .service-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .service-content-head {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .service-title {
+      font-size: 16px; font-weight: 700;
+      color: #f7fafc;
+      margin: 0;
+    }
     .service-tag {
-      margin-left: auto;
       padding: 3px 10px;
       border-radius: 10px;
       font-size: 11px; font-weight: 700;
     }
     .service-tag.live { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
     .service-tag.soon { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
-    .service-title {
-      font-size: 16px; font-weight: 700;
-      color: #f7fafc;
-      margin: 0 0 6px;
-    }
     .service-desc {
       font-size: 13px;
       color: #94a3b8;
-      margin: 0 0 16px;
+      margin: 0 0 14px;
     }
-    .service-stats {
-      display: flex; gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
+    .service-stats-inline {
+      display: flex; flex-wrap: wrap;
+      gap: 4px 10px;
+      align-items: center;
+      margin-bottom: 14px;
+      font-size: 12px;
     }
-    .service-stat {
-      flex: 1;
-      min-width: 100px;
-      background: #1a2332;
-      border-radius: 8px;
-      padding: 8px 10px;
+    .ss-item {
+      display: inline-flex; align-items: baseline; gap: 4px;
+      white-space: nowrap;
     }
-    .service-stat-num {
-      font-size: 14px; font-weight: 700;
-      color: #4299e1;
-      line-height: 1.2;
-    }
-    .service-stat-label {
-      font-size: 10.5px; color: #64748b;
-      margin-top: 2px;
-    }
-    .service-btn-row { margin-bottom: 18px; }
+    .ss-num { color: #4299e1; font-weight: 700; }
+    .ss-lbl { color: #94a3b8; }
+    .ss-sep { color: #1e2d4a; }
+    .service-btn-row { margin-bottom: 16px; }
     .service-coming {
       color: #64748b;
       font-size: 12px;
-      margin-top: auto;
-      padding-top: 20px;
+      font-style: italic;
     }
-    @media (max-width: 860px) {
-      .services-row { flex-direction: column; }
-      .service-card.main, .service-card.minor { flex: 1; }
+    @media (max-width: 640px) {
+      .service-card { flex-direction: column; gap: 12px; }
     }
 
     /* ── Embedded product preview (inside Card 1) ────────────────────── */
     .preview-mini {
       background: #1a2332;
       border-radius: 10px;
-      padding: 14px;
+      padding: 12px;
       margin-top: auto;
     }
     .preview-mini-flow {
@@ -545,34 +536,24 @@
     <h2 class="section-title">我们的服务</h2>
     <p class="section-sub">每一个服务都是为你定制的自动化方案</p>
 
-    <div class="services-row">
-
-      <!-- Card 1: Cold email (main) -->
-      <div class="service-card main">
-        <div class="service-head">
-          <div class="service-icon blue"><i class="ti ti-mail-forward"></i></div>
+    <!-- Card 1: Cold email -->
+    <div class="service-card">
+      <div class="service-icon-lg blue"><i class="ti ti-mail-forward"></i></div>
+      <div class="service-content">
+        <div class="service-content-head">
           <h3 class="service-title">外贸冷邮件自动化</h3>
           <span class="service-tag live">已上线</span>
         </div>
         <p class="service-desc">从8个数据源自动抓取海外客户 → AI筛选 → AI写个性化开发信 → 自动发送跟进</p>
 
-        <div class="service-stats">
-          <div class="service-stat">
-            <div class="service-stat-num">¥0.35/封</div>
-            <div class="service-stat-label">邮件成本</div>
-          </div>
-          <div class="service-stat">
-            <div class="service-stat-num">200+/天</div>
-            <div class="service-stat-label">触达客户</div>
-          </div>
-          <div class="service-stat">
-            <div class="service-stat-num">85%</div>
-            <div class="service-stat-label">筛选准确率</div>
-          </div>
-          <div class="service-stat">
-            <div class="service-stat-num">8个</div>
-            <div class="service-stat-label">数据源</div>
-          </div>
+        <div class="service-stats-inline">
+          <span class="ss-item"><span class="ss-num">¥0.35/封</span></span>
+          <span class="ss-sep">|</span>
+          <span class="ss-item"><span class="ss-num">200+/天</span></span>
+          <span class="ss-sep">|</span>
+          <span class="ss-item"><span class="ss-num">85%</span><span class="ss-lbl">准确率</span></span>
+          <span class="ss-sep">|</span>
+          <span class="ss-item"><span class="ss-num">8</span><span class="ss-lbl">数据源</span></span>
         </div>
 
         <div class="service-btn-row">
@@ -714,19 +695,21 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Card 2: Quote automation (coming soon) -->
-      <div class="service-card minor">
-        <div class="service-head">
-          <div class="service-icon amber"><i class="ti ti-file-invoice"></i></div>
+    <!-- Card 2: Quote automation (coming soon) -->
+    <div class="service-card">
+      <div class="service-icon-lg amber"><i class="ti ti-file-invoice"></i></div>
+      <div class="service-content">
+        <div class="service-content-head">
           <h3 class="service-title">报价自动化</h3>
           <span class="service-tag soon">即将上线</span>
         </div>
         <p class="service-desc">选择产品配置，30秒生成专业报价单PDF，自动发送到客户邮箱</p>
         <div class="service-coming">敬请期待</div>
       </div>
-
     </div>
+
   </div>
 </section>
 
