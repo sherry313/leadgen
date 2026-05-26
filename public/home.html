@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>智拓客 — 企业定制自动化工作流</title>
-  <meta name="description" content="用AI把你的业务流程变成自动化系统。免费工具 + 企业定制自动化工作流。">
+  <meta name="description" content="用AI把你的业务流程变成自动化系统。外贸冷邮件自动化、报价自动化、企业定制方案。">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>⚡</text></svg>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
   <style>
@@ -41,10 +41,7 @@
       display: flex; align-items: center; gap: 22px;
       font-size: 14px;
     }
-    .nav-links a {
-      color: #94a3b8;
-      transition: color 0.15s;
-    }
+    .nav-links a { color: #94a3b8; transition: color 0.15s; }
     .nav-links a:hover { color: #e2e8f0; }
     .nav-cta {
       padding: 7px 16px;
@@ -54,20 +51,17 @@
       font-weight: 600;
       transition: all 0.15s;
     }
-    .nav-cta:hover {
-      background: #4299e1;
-      color: #fff !important;
-    }
+    .nav-cta:hover { background: #4299e1; color: #fff !important; }
     @media (max-width: 560px) {
       .nav-inner { padding: 12px 16px; }
       .nav-links { gap: 12px; font-size: 13px; }
     }
 
-    /* ── Generic layout ──────────────────────────────────────────────── */
+    /* ── Layout ──────────────────────────────────────────────────────── */
     .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
     .section { padding: 64px 0; }
     .section-title {
-      font-size: 22px; font-weight: 700;
+      font-size: 18px; font-weight: 700;
       color: #f7fafc; margin: 0 0 6px;
       letter-spacing: -0.01em;
       text-align: center;
@@ -83,58 +77,37 @@
     }
 
     /* ── Hero ────────────────────────────────────────────────────────── */
-    .hero { padding: 60px 0 70px; }
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px;
-      align-items: center;
+    .hero {
+      padding: 90px 0 80px;
+      text-align: center;
+      background: radial-gradient(ellipse at top, rgba(66,153,225,0.08) 0%, transparent 60%);
     }
     .hero-title {
-      font-size: 22px; font-weight: 700;
+      font-size: 26px; font-weight: 700;
       color: #f7fafc;
-      line-height: 1.35;
       letter-spacing: -0.01em;
-      margin: 0 0 4px;
-    }
-    .hero-title-blue {
-      display: block;
-      font-size: 22px; font-weight: 700;
-      color: #4299e1;
+      margin: 0 auto 14px;
+      max-width: 720px;
       line-height: 1.35;
-      letter-spacing: -0.01em;
-      margin-bottom: 14px;
     }
     .hero-sub {
-      font-size: 14px;
+      font-size: 15px;
       color: #94a3b8;
-      margin: 0 0 22px;
-      max-width: 460px;
+      margin: 0 auto 28px;
+      max-width: 580px;
     }
-    .hero-stats {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
+    .hero-btns {
+      display: flex; justify-content: center;
+      gap: 10px; flex-wrap: wrap;
     }
-    .stat-card {
-      background: #1a2332;
-      border-radius: 8px;
-      padding: 10px 14px;
-      flex: 1;
-      min-width: 110px;
+    @media (max-width: 640px) {
+      .hero { padding: 60px 0 56px; }
+      .hero-title { font-size: 22px; }
+      .hero-sub { font-size: 14px; }
     }
-    .stat-num {
-      font-size: 18px; font-weight: 700;
-      color: #4299e1;
-      line-height: 1.2;
-    }
-    .stat-label {
-      font-size: 11px;
-      color: #4a5568;
-      margin-top: 2px;
-    }
-    .btn-hero {
+
+    /* ── Buttons ─────────────────────────────────────────────────────── */
+    .btn-primary {
       display: inline-flex; align-items: center; gap: 6px;
       background: #1e3a5f;
       color: #63b3ed;
@@ -143,306 +116,299 @@
       padding: 10px 20px;
       font-size: 14px; font-weight: 600;
       transition: all 0.15s;
-      font-family: inherit; cursor: pointer;
+      cursor: pointer; font-family: inherit;
     }
-    .btn-hero:hover {
-      background: #25446e;
-      border-color: #4299e1;
+    .btn-primary:hover { background: #25446e; border-color: #4299e1; }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: transparent;
+      color: #94a3b8;
+      border: 1px solid #1e2d4a;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px; font-weight: 600;
+      transition: all 0.15s;
+      cursor: pointer; font-family: inherit;
     }
-    @media (max-width: 860px) {
-      .hero-grid { grid-template-columns: 1fr; gap: 36px; }
-    }
-    @media (max-width: 480px) {
-      .hero-stats .stat-card { min-width: 100%; }
-    }
+    .btn-ghost:hover { border-color: #4299e1; color: #e2e8f0; }
 
-    /* ── Product preview ─────────────────────────────────────────────── */
-    .preview {
-      background: #1a2332;
+    /* ── Services ────────────────────────────────────────────────────── */
+    .services-row {
+      display: flex; gap: 18px;
+      align-items: stretch;
+    }
+    .service-card {
+      background: #111827;
+      border: 1px solid #1e2d4a;
       border-radius: 12px;
       padding: 1.5rem;
+      display: flex; flex-direction: column;
+      transition: border-color 0.18s, transform 0.18s;
     }
-    .preview-flow {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+    .service-card:hover { border-color: #4299e1; }
+    .service-card.main { flex: 1.5; }
+    .service-card.minor { flex: 1; }
+    .service-head {
+      display: flex; align-items: center; gap: 10px;
       margin-bottom: 14px;
+    }
+    .service-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .service-icon .ti { font-size: 20px; }
+    .service-icon.blue { background: #1e3a5f; }
+    .service-icon.blue .ti { color: #63b3ed; }
+    .service-icon.amber { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
+    .service-icon.amber .ti { color: #fbbf24; }
+    .service-tag {
+      margin-left: auto;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px; font-weight: 700;
+    }
+    .service-tag.live { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+    .service-tag.soon { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .service-title {
+      font-size: 16px; font-weight: 700;
+      color: #f7fafc;
+      margin: 0 0 6px;
+    }
+    .service-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      margin: 0 0 16px;
+    }
+    .service-stats {
+      display: flex; gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .service-stat {
+      flex: 1;
+      min-width: 100px;
+      background: #1a2332;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .service-stat-num {
+      font-size: 14px; font-weight: 700;
+      color: #4299e1;
+      line-height: 1.2;
+    }
+    .service-stat-label {
+      font-size: 10.5px; color: #64748b;
+      margin-top: 2px;
+    }
+    .service-btn-row { margin-bottom: 18px; }
+    .service-coming {
+      color: #64748b;
+      font-size: 12px;
+      margin-top: auto;
+      padding-top: 20px;
+    }
+    @media (max-width: 860px) {
+      .services-row { flex-direction: column; }
+      .service-card.main, .service-card.minor { flex: 1; }
+    }
+
+    /* ── Embedded product preview (inside Card 1) ────────────────────── */
+    .preview-mini {
+      background: #1a2332;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: auto;
+    }
+    .preview-mini-flow {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; margin-bottom: 10px;
       flex-wrap: wrap;
     }
     .preview-pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 10px;
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px;
       border-radius: 999px;
-      font-size: 11px; font-weight: 600;
+      font-size: 10px; font-weight: 600;
     }
-    .preview-pill.blue {
-      background: #1e3a5f; color: #63b3ed;
-    }
-    .preview-pill.green {
-      background: #0d2010; color: #5DCAA5;
-    }
-    .preview-arrow {
-      color: #475569; font-size: 13px; line-height: 1;
-    }
+    .preview-pill.blue { background: #1e3a5f; color: #63b3ed; }
+    .preview-pill.green { background: #0d2010; color: #5DCAA5; }
+    .preview-pill .ti { font-size: 11px; }
+    .preview-arrow { color: #475569; font-size: 11px; line-height: 1; }
     .preview-panels {
-      display: flex; gap: 12px;
+      display: flex; gap: 8px;
       align-items: stretch;
     }
     .preview-panel {
       flex: 1;
       background: #111827;
       border: 1px solid #1e2d4a;
-      border-radius: 10px;
-      padding: 12px;
+      border-radius: 8px;
+      padding: 9px;
       min-width: 0;
     }
     .preview-panel-header {
-      display: flex; align-items: center; gap: 6px;
-      padding-bottom: 8px;
-      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 5px;
+      padding-bottom: 6px;
+      margin-bottom: 6px;
       border-bottom: 1px solid #1e2d4a;
-      font-size: 12px; font-weight: 600;
+      font-size: 10.5px; font-weight: 600;
       color: #cbd5e0;
     }
-    .preview-panel-header .ti { color: #4299e1; font-size: 14px; }
+    .preview-panel-header .ti { color: #4299e1; font-size: 12px; }
     .preview-badge {
       margin-left: auto;
       background: #1e3a5f;
       color: #63b3ed;
-      padding: 1px 7px;
-      border-radius: 8px;
-      font-size: 10px; font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 7px;
+      font-size: 9px; font-weight: 600;
     }
     .preview-badge.green-badge { background: #0d2010; color: #5DCAA5; }
 
-    /* lead row */
+    /* lead row (compact) */
     .lead-row {
-      display: flex; align-items: center; gap: 8px;
-      padding: 5px 0;
+      display: flex; align-items: center; gap: 6px;
+      padding: 3px 0;
       border-bottom: 1px solid rgba(30,45,74,0.4);
     }
     .lead-row:last-child { border-bottom: none; }
     .lead-avatar {
-      width: 28px; height: 28px;
+      width: 22px; height: 22px;
       border-radius: 50%;
       background: #1a2332;
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700;
+      font-size: 9px; font-weight: 700;
       color: #94a3b8;
       flex-shrink: 0;
     }
-    .lead-info {
-      flex: 1; min-width: 0;
-    }
+    .lead-info { flex: 1; min-width: 0; }
     .lead-name {
-      font-size: 11px; font-weight: 700;
+      font-size: 9.5px; font-weight: 700;
       color: #e2e8f0;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .lead-meta {
-      display: flex; align-items: center; gap: 4px;
-      font-size: 10px; color: #94a3b8;
+      display: flex; align-items: center; gap: 3px;
+      font-size: 8.5px; color: #94a3b8;
       margin-top: 1px;
     }
-    .lead-stars { color: #fbbf24; letter-spacing: -1px; }
-    .lead-contacts {
-      display: flex; gap: 3px;
-      font-size: 11px;
-    }
-    .lead-contacts .ti { font-size: 12px; }
+    .lead-stars { color: #fbbf24; letter-spacing: -1px; font-size: 8.5px; }
+    .lead-contacts { display: flex; gap: 2px; }
+    .lead-contacts .ti { font-size: 10px; }
     .ci-on { color: #63b3ed; }
     .ci-off { color: #334155; }
     .lead-score {
-      width: 22px; height: 22px;
+      width: 18px; height: 18px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 700;
-      color: #fff;
+      font-size: 9px; font-weight: 700;
       flex-shrink: 0;
     }
-    .score-9, .score-8, .score-7 {
-      background: #0d2010;
-      color: #5DCAA5;
-      border: 1px solid #1f4d2a;
-    }
-    .score-6 {
-      background: #2d2510;
-      color: #fbbf24;
-      border: 1px solid #5a4a1c;
-    }
+    .score-9, .score-8, .score-7 { background: #0d2010; color: #5DCAA5; border: 1px solid #1f4d2a; }
+    .score-6 { background: #2d2510; color: #fbbf24; border: 1px solid #5a4a1c; }
 
-    /* email card */
+    /* email card (compact) */
     .email-card {
       background: #0f1623;
       border-left: 3px solid #4299e1;
-      border-radius: 6px;
-      padding: 8px 10px;
-      margin-bottom: 8px;
+      border-radius: 5px;
+      padding: 6px 8px;
+      margin-bottom: 6px;
     }
     .email-card.blue { border-left-color: #4299e1; }
     .email-card.purple { border-left-color: #a78bfa; }
     .email-card.green { border-left-color: #5DCAA5; }
     .email-card.amber { border-left-color: #fbbf24; }
     .email-head {
-      display: flex; align-items: center; gap: 6px;
-      margin-bottom: 4px;
+      display: flex; align-items: center; gap: 5px;
+      margin-bottom: 3px;
     }
     .email-num {
       background: #1e3a5f; color: #63b3ed;
-      font-size: 9px; font-weight: 700;
-      padding: 1px 5px; border-radius: 4px;
+      font-size: 8.5px; font-weight: 700;
+      padding: 1px 4px; border-radius: 3px;
     }
     .email-card.purple .email-num { background: #2d1e5f; color: #a78bfa; }
     .email-card.green .email-num { background: #0d2010; color: #5DCAA5; }
     .email-card.amber .email-num { background: #2d2510; color: #fbbf24; }
-    .email-day {
-      font-size: 9px; color: #64748b;
-    }
+    .email-day { font-size: 8.5px; color: #64748b; }
     .email-subject {
-      font-size: 11px; font-weight: 700;
+      font-size: 10px; font-weight: 700;
       color: #e2e8f0;
-      margin-bottom: 2px;
+      margin-bottom: 1px;
       line-height: 1.3;
     }
     .email-preview {
-      font-size: 10px; color: #64748b;
+      font-size: 9px; color: #64748b;
       line-height: 1.3;
-    }
-    .email-send-btn {
-      width: 100%;
-      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-      background: #1e3a5f;
-      color: #63b3ed;
-      border: 1px solid #2a4a6a;
-      border-radius: 6px;
-      padding: 7px;
-      font-size: 11px; font-weight: 600;
-      margin-top: 4px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.15s;
-    }
-    .email-send-btn:hover {
-      background: #25446e;
-      border-color: #4299e1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
     @media (max-width: 540px) {
       .preview-panels { flex-direction: column; }
     }
 
-    /* ── Pain points ─────────────────────────────────────────────────── */
-    .pain-grid {
+    /* ── How it works ────────────────────────────────────────────────── */
+    .how-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 14px;
+      align-items: start;
     }
-    .pain-card {
-      background: #1a2332;
-      border-radius: 8px;
-      padding: 12px 14px;
-      display: flex; gap: 12px;
-      align-items: flex-start;
+    .how-step {
+      text-align: center;
+      padding: 20px 14px;
     }
-    .pain-icon {
-      width: 28px; height: 28px;
-      border-radius: 6px;
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.25);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .pain-icon .ti {
-      color: #fbbf24; font-size: 16px;
-    }
-    .pain-title {
-      font-size: 14px; font-weight: 700;
-      color: #f7fafc;
-      margin: 0 0 2px;
-    }
-    .pain-desc {
-      font-size: 12.5px;
-      color: #94a3b8;
-      margin: 0;
-    }
-    @media (max-width: 640px) {
-      .pain-grid { grid-template-columns: 1fr; }
-    }
-
-    /* ── Solutions ───────────────────────────────────────────────────── */
-    .sol-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-    .sol-card {
+    .how-icon {
+      width: 52px; height: 52px;
+      border-radius: 50%;
       background: #111827;
       border: 1px solid #1e2d4a;
-      border-radius: 12px;
-      padding: 22px 20px;
-      transition: border-color 0.18s, transform 0.18s;
-      display: flex; flex-direction: column;
-    }
-    .sol-card:hover {
-      border-color: #4299e1;
-      transform: translateY(-2px);
-    }
-    .sol-icon {
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      background: #1e3a5f;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 12px;
+      margin: 0 auto 10px;
     }
-    .sol-icon .ti {
-      color: #63b3ed; font-size: 18px;
+    .how-icon .ti {
+      color: #63b3ed;
+      font-size: 24px;
     }
-    .sol-title {
-      font-size: 15px; font-weight: 700;
+    .how-num {
+      display: inline-block;
+      font-size: 11px; font-weight: 700;
+      color: #4299e1;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+    .how-title {
+      font-size: 14.5px; font-weight: 700;
       color: #f7fafc;
       margin: 0 0 6px;
     }
-    .sol-desc {
-      font-size: 13px;
+    .how-desc {
+      font-size: 12.5px;
       color: #94a3b8;
-      margin: 0 0 14px;
-      flex: 1;
+      margin: 0;
+      line-height: 1.55;
     }
-    .sol-stat {
-      font-size: 13px; font-weight: 700;
-      color: #4299e1;
-      padding-top: 12px;
-      border-top: 1px solid #1e2d4a;
-    }
-    @media (max-width: 640px) {
-      .sol-grid { grid-template-columns: 1fr; }
-    }
-
-    /* ── Flow bar ────────────────────────────────────────────────────── */
-    .flow-bar {
-      background: #1a2332;
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-top: 24px;
-      display: flex; align-items: center; justify-content: center;
-      gap: 4px;
-      flex-wrap: wrap;
-    }
-    .flow-step {
-      font-size: 12px; font-weight: 600;
-      color: #94a3b8;
-      padding: 4px 10px;
-      border-radius: 6px;
-      white-space: nowrap;
-    }
-    .flow-step.active {
-      background: #1e3a5f;
-      color: #63b3ed;
-    }
-    .flow-arrow {
+    .how-arrow {
       color: #475569;
-      font-size: 12px;
-      line-height: 1;
+      align-self: center;
+      font-size: 20px;
+      padding-top: 60px;
+    }
+    @media (max-width: 760px) {
+      .how-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .how-arrow {
+        padding-top: 0;
+        transform: rotate(90deg);
+      }
     }
 
     /* ── Free tools ──────────────────────────────────────────────────── */
@@ -471,11 +437,11 @@
       margin-bottom: 12px;
     }
     .tool-icon .ti { font-size: 18px; }
-    .tool-icon.green { background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.3); }
+    .tool-icon.green { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); }
     .tool-icon.green .ti { color: #4ade80; }
     .tool-icon.blue { background: #1e3a5f; }
     .tool-icon.blue .ti { color: #63b3ed; }
-    .tool-icon.amber { background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.25); }
+    .tool-icon.amber { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
     .tool-icon.amber .ti { color: #fbbf24; }
     .tool-title {
       font-size: 15px; font-weight: 700;
@@ -491,9 +457,9 @@
     .tool-tag {
       display: inline-block;
       padding: 2px 9px;
-      background: rgba(34, 197, 94, 0.12);
+      background: rgba(34,197,94,0.12);
       color: #4ade80;
-      border: 1px solid rgba(34, 197, 94, 0.3);
+      border: 1px solid rgba(34,197,94,0.3);
       border-radius: 10px;
       font-size: 11px; font-weight: 700;
     }
@@ -502,7 +468,7 @@
     }
 
     /* ── CTA ─────────────────────────────────────────────────────────── */
-    .cta-wrap { padding: 60px 0; }
+    .cta-wrap { padding: 56px 0 80px; }
     .cta-box {
       background: #111827;
       border: 1px solid #1e2d4a;
@@ -513,7 +479,7 @@
       margin: 0 auto;
     }
     .cta-title {
-      font-size: 22px; font-weight: 700;
+      font-size: 20px; font-weight: 700;
       color: #f7fafc;
       margin: 0 0 8px;
       letter-spacing: -0.01em;
@@ -527,30 +493,6 @@
       display: flex; justify-content: center;
       gap: 10px; flex-wrap: wrap;
     }
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: #1e3a5f;
-      color: #63b3ed;
-      border: 1px solid #2a4a6a;
-      border-radius: 8px;
-      padding: 10px 20px;
-      font-size: 14px; font-weight: 600;
-      transition: all 0.15s;
-      cursor: pointer; font-family: inherit;
-    }
-    .btn-primary:hover { background: #25446e; border-color: #4299e1; }
-    .btn-ghost {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: transparent;
-      color: #94a3b8;
-      border: 1px solid #1e2d4a;
-      border-radius: 8px;
-      padding: 10px 20px;
-      font-size: 14px; font-weight: 600;
-      transition: all 0.15s;
-      cursor: pointer; font-family: inherit;
-    }
-    .btn-ghost:hover { border-color: #4299e1; color: #e2e8f0; }
 
     /* ── Footer ──────────────────────────────────────────────────────── */
     .footer {
@@ -584,305 +526,237 @@
 <!-- ── Section 1: Hero ─────────────────────────────────────────────── -->
 <section class="hero">
   <div class="container">
-    <div class="hero-grid">
-
-      <!-- LEFT: Copy + stats + CTA -->
-      <div>
-        <h1 class="hero-title">你的业务员每天能联系几个客户？</h1>
-        <span class="hero-title-blue">AI一天帮你联系200个</span>
-        <p class="hero-sub">从找客户到发开发信，全程自动化。你只需要处理回复。</p>
-
-        <div class="hero-stats">
-          <div class="stat-card">
-            <div class="stat-num">¥0.35</div>
-            <div class="stat-label">每封邮件成本</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num">200+</div>
-            <div class="stat-label">每天触达客户</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num">30秒</div>
-            <div class="stat-label">生成报价单</div>
-          </div>
-        </div>
-
-        <a href="/app" class="btn-hero">
-          <i class="ti ti-rocket"></i>免费试用
-        </a>
-      </div>
-
-      <!-- RIGHT: Product preview -->
-      <div class="preview">
-        <div class="preview-flow">
-          <span class="preview-pill blue"><i class="ti ti-filter"></i>AI 筛选客户</span>
-          <span class="preview-arrow"><i class="ti ti-arrow-right"></i></span>
-          <span class="preview-pill green"><i class="ti ti-mail-forward"></i>AI 写开发信</span>
-        </div>
-
-        <div class="preview-panels">
-
-          <!-- LEFT panel: Qualified leads -->
-          <div class="preview-panel">
-            <div class="preview-panel-header">
-              <i class="ti ti-users"></i>
-              <span>合格线索</span>
-              <span class="preview-badge">23 条</span>
-            </div>
-
-            <div class="lead-row">
-              <div class="lead-avatar">A</div>
-              <div class="lead-info">
-                <div class="lead-name">A****** Homes</div>
-                <div class="lead-meta"><span class="lead-stars">★★★★★</span><span>Sydney</span></div>
-              </div>
-              <div class="lead-contacts">
-                <i class="ti ti-mail ci-on"></i>
-                <i class="ti ti-phone ci-on"></i>
-                <i class="ti ti-world ci-on"></i>
-              </div>
-              <div class="lead-score score-9">9</div>
-            </div>
-
-            <div class="lead-row">
-              <div class="lead-avatar">P</div>
-              <div class="lead-info">
-                <div class="lead-name">P****** Build</div>
-                <div class="lead-meta"><span class="lead-stars">★★★★☆</span><span>Melbourne</span></div>
-              </div>
-              <div class="lead-contacts">
-                <i class="ti ti-mail ci-on"></i>
-                <i class="ti ti-phone ci-off"></i>
-                <i class="ti ti-world ci-on"></i>
-              </div>
-              <div class="lead-score score-8">8</div>
-            </div>
-
-            <div class="lead-row">
-              <div class="lead-avatar">S</div>
-              <div class="lead-info">
-                <div class="lead-name">S**** Constructions</div>
-                <div class="lead-meta"><span class="lead-stars">★★★★★</span><span>Brisbane</span></div>
-              </div>
-              <div class="lead-contacts">
-                <i class="ti ti-mail ci-on"></i>
-                <i class="ti ti-phone ci-on"></i>
-                <i class="ti ti-world ci-on"></i>
-              </div>
-              <div class="lead-score score-8">8</div>
-            </div>
-
-            <div class="lead-row">
-              <div class="lead-avatar">M</div>
-              <div class="lead-info">
-                <div class="lead-name">M***** Residential</div>
-                <div class="lead-meta"><span class="lead-stars">★★★★☆</span><span>Perth</span></div>
-              </div>
-              <div class="lead-contacts">
-                <i class="ti ti-mail ci-off"></i>
-                <i class="ti ti-phone ci-on"></i>
-                <i class="ti ti-world ci-on"></i>
-              </div>
-              <div class="lead-score score-6">6</div>
-            </div>
-
-            <div class="lead-row">
-              <div class="lead-avatar">K</div>
-              <div class="lead-info">
-                <div class="lead-name">K*** Properties</div>
-                <div class="lead-meta"><span class="lead-stars">★★★★☆</span><span>Adelaide</span></div>
-              </div>
-              <div class="lead-contacts">
-                <i class="ti ti-mail ci-on"></i>
-                <i class="ti ti-phone ci-on"></i>
-                <i class="ti ti-world ci-off"></i>
-              </div>
-              <div class="lead-score score-7">7</div>
-            </div>
-
-            <div class="lead-row">
-              <div class="lead-avatar">W</div>
-              <div class="lead-info">
-                <div class="lead-name">W*** Living</div>
-                <div class="lead-meta"><span class="lead-stars">★★★★★</span><span>Sydney</span></div>
-              </div>
-              <div class="lead-contacts">
-                <i class="ti ti-mail ci-on"></i>
-                <i class="ti ti-phone ci-on"></i>
-                <i class="ti ti-world ci-on"></i>
-              </div>
-              <div class="lead-score score-8">8</div>
-            </div>
-
-            <div class="lead-row">
-              <div class="lead-avatar">R</div>
-              <div class="lead-info">
-                <div class="lead-name">R***** Builders</div>
-                <div class="lead-meta"><span class="lead-stars">★★★★☆</span><span>Hobart</span></div>
-              </div>
-              <div class="lead-contacts">
-                <i class="ti ti-mail ci-on"></i>
-                <i class="ti ti-phone ci-off"></i>
-                <i class="ti ti-world ci-on"></i>
-              </div>
-              <div class="lead-score score-7">7</div>
-            </div>
-
-            <div class="lead-row">
-              <div class="lead-avatar">D</div>
-              <div class="lead-info">
-                <div class="lead-name">D*** Design Build</div>
-                <div class="lead-meta"><span class="lead-stars">★★★★★</span><span>Canberra</span></div>
-              </div>
-              <div class="lead-contacts">
-                <i class="ti ti-mail ci-on"></i>
-                <i class="ti ti-phone ci-on"></i>
-                <i class="ti ti-world ci-on"></i>
-              </div>
-              <div class="lead-score score-9">9</div>
-            </div>
-          </div>
-
-          <!-- RIGHT panel: AI emails -->
-          <div class="preview-panel">
-            <div class="preview-panel-header">
-              <i class="ti ti-mail-forward"></i>
-              <span>A****** Homes</span>
-              <span class="preview-badge green-badge">5 封</span>
-            </div>
-
-            <div class="email-card blue">
-              <div class="email-head">
-                <span class="email-num">01</span>
-                <span class="email-day">第1天</span>
-              </div>
-              <div class="email-subject">when your supplier ghosts mid-build</div>
-              <div class="email-preview">Hey James, saw your recent Sydney project — looks great. Quick question on supplier reliability…</div>
-            </div>
-
-            <div class="email-card purple">
-              <div class="email-head">
-                <span class="email-num">02</span>
-                <span class="email-day">第3天</span>
-              </div>
-              <div class="email-subject">before you sign your next supplier</div>
-              <div class="email-preview">3 things most builders miss when sourcing tiles & stone direct from China factories…</div>
-            </div>
-
-            <div class="email-card green">
-              <div class="email-head">
-                <span class="email-num">03</span>
-                <span class="email-day">第7天</span>
-              </div>
-              <div class="email-subject">3 things to ask any China supplier</div>
-              <div class="email-preview">Quick checklist we send to builders so they don't get burned by the wrong factory…</div>
-            </div>
-
-            <div class="email-card amber">
-              <div class="email-head">
-                <span class="email-num">04</span>
-                <span class="email-day">第14天</span>
-              </div>
-              <div class="email-subject">in case you're sourcing in China</div>
-              <div class="email-preview">Final note — happy to send pricing on the SKUs you'd use most this quarter…</div>
-            </div>
-
-            <button class="email-send-btn">
-              <i class="ti ti-send"></i>一键发送
-            </button>
-          </div>
-
-        </div>
-      </div>
-
+    <h1 class="hero-title">企业定制自动化工作流</h1>
+    <p class="hero-sub">用AI把你的业务流程变成自动化系统。告诉我你的需求，我帮你实现。</p>
+    <div class="hero-btns">
+      <a href="#services" class="btn-primary">
+        <i class="ti ti-arrow-down"></i>了解更多
+      </a>
+      <a href="/tools/" class="btn-ghost">
+        <i class="ti ti-tools"></i>免费工具
+      </a>
     </div>
   </div>
 </section>
 
-<!-- ── Section 2: Pain points ──────────────────────────────────────── -->
-<section class="section">
+<!-- ── Section 2: Services ─────────────────────────────────────────── -->
+<section class="section" id="services">
   <div class="container">
-    <h2 class="section-title">你是不是也遇到了这些问题？</h2>
-    <p class="section-sub">90%的外贸企业都卡在这几个地方</p>
+    <h2 class="section-title">我们的服务</h2>
+    <p class="section-sub">每一个服务都是为你定制的自动化方案</p>
 
-    <div class="pain-grid">
-      <div class="pain-card">
-        <div class="pain-icon"><i class="ti ti-alert-triangle"></i></div>
-        <div>
-          <h3 class="pain-title">找不到客户</h3>
-          <p class="pain-desc">不知道海外买家在哪里，手动搜太慢</p>
+    <div class="services-row">
+
+      <!-- Card 1: Cold email (main) -->
+      <div class="service-card main">
+        <div class="service-head">
+          <div class="service-icon blue"><i class="ti ti-mail-forward"></i></div>
+          <h3 class="service-title">外贸冷邮件自动化</h3>
+          <span class="service-tag live">已上线</span>
+        </div>
+        <p class="service-desc">从8个数据源自动抓取海外客户 → AI筛选 → AI写个性化开发信 → 自动发送跟进</p>
+
+        <div class="service-stats">
+          <div class="service-stat">
+            <div class="service-stat-num">¥0.35/封</div>
+            <div class="service-stat-label">邮件成本</div>
+          </div>
+          <div class="service-stat">
+            <div class="service-stat-num">200+/天</div>
+            <div class="service-stat-label">触达客户</div>
+          </div>
+          <div class="service-stat">
+            <div class="service-stat-num">85%</div>
+            <div class="service-stat-label">筛选准确率</div>
+          </div>
+          <div class="service-stat">
+            <div class="service-stat-num">8个</div>
+            <div class="service-stat-label">数据源</div>
+          </div>
+        </div>
+
+        <div class="service-btn-row">
+          <a href="/app" class="btn-primary">
+            <i class="ti ti-arrow-right"></i>查看详情
+          </a>
+        </div>
+
+        <!-- Embedded product preview mockup -->
+        <div class="preview-mini">
+          <div class="preview-mini-flow">
+            <span class="preview-pill blue"><i class="ti ti-filter"></i>AI 筛选客户</span>
+            <span class="preview-arrow"><i class="ti ti-arrow-right"></i></span>
+            <span class="preview-pill green"><i class="ti ti-mail-forward"></i>AI 写开发信</span>
+          </div>
+
+          <div class="preview-panels">
+
+            <!-- LEFT: Qualified leads -->
+            <div class="preview-panel">
+              <div class="preview-panel-header">
+                <i class="ti ti-users"></i><span>合格线索</span>
+                <span class="preview-badge">23 条</span>
+              </div>
+
+              <div class="lead-row">
+                <div class="lead-avatar">A</div>
+                <div class="lead-info">
+                  <div class="lead-name">A****** Homes</div>
+                  <div class="lead-meta"><span class="lead-stars">★★★★★</span><span>Sydney</span></div>
+                </div>
+                <div class="lead-contacts"><i class="ti ti-mail ci-on"></i><i class="ti ti-phone ci-on"></i><i class="ti ti-world ci-on"></i></div>
+                <div class="lead-score score-9">9</div>
+              </div>
+
+              <div class="lead-row">
+                <div class="lead-avatar">P</div>
+                <div class="lead-info">
+                  <div class="lead-name">P****** Build</div>
+                  <div class="lead-meta"><span class="lead-stars">★★★★☆</span><span>Melbourne</span></div>
+                </div>
+                <div class="lead-contacts"><i class="ti ti-mail ci-on"></i><i class="ti ti-phone ci-off"></i><i class="ti ti-world ci-on"></i></div>
+                <div class="lead-score score-8">8</div>
+              </div>
+
+              <div class="lead-row">
+                <div class="lead-avatar">S</div>
+                <div class="lead-info">
+                  <div class="lead-name">S**** Constructions</div>
+                  <div class="lead-meta"><span class="lead-stars">★★★★★</span><span>Brisbane</span></div>
+                </div>
+                <div class="lead-contacts"><i class="ti ti-mail ci-on"></i><i class="ti ti-phone ci-on"></i><i class="ti ti-world ci-on"></i></div>
+                <div class="lead-score score-8">8</div>
+              </div>
+
+              <div class="lead-row">
+                <div class="lead-avatar">M</div>
+                <div class="lead-info">
+                  <div class="lead-name">M***** Residential</div>
+                  <div class="lead-meta"><span class="lead-stars">★★★★☆</span><span>Perth</span></div>
+                </div>
+                <div class="lead-contacts"><i class="ti ti-mail ci-off"></i><i class="ti ti-phone ci-on"></i><i class="ti ti-world ci-on"></i></div>
+                <div class="lead-score score-6">6</div>
+              </div>
+
+              <div class="lead-row">
+                <div class="lead-avatar">K</div>
+                <div class="lead-info">
+                  <div class="lead-name">K*** Properties</div>
+                  <div class="lead-meta"><span class="lead-stars">★★★★☆</span><span>Adelaide</span></div>
+                </div>
+                <div class="lead-contacts"><i class="ti ti-mail ci-on"></i><i class="ti ti-phone ci-on"></i><i class="ti ti-world ci-off"></i></div>
+                <div class="lead-score score-7">7</div>
+              </div>
+
+              <div class="lead-row">
+                <div class="lead-avatar">W</div>
+                <div class="lead-info">
+                  <div class="lead-name">W*** Living</div>
+                  <div class="lead-meta"><span class="lead-stars">★★★★★</span><span>Sydney</span></div>
+                </div>
+                <div class="lead-contacts"><i class="ti ti-mail ci-on"></i><i class="ti ti-phone ci-on"></i><i class="ti ti-world ci-on"></i></div>
+                <div class="lead-score score-8">8</div>
+              </div>
+
+              <div class="lead-row">
+                <div class="lead-avatar">R</div>
+                <div class="lead-info">
+                  <div class="lead-name">R***** Builders</div>
+                  <div class="lead-meta"><span class="lead-stars">★★★★☆</span><span>Hobart</span></div>
+                </div>
+                <div class="lead-contacts"><i class="ti ti-mail ci-on"></i><i class="ti ti-phone ci-off"></i><i class="ti ti-world ci-on"></i></div>
+                <div class="lead-score score-7">7</div>
+              </div>
+
+              <div class="lead-row">
+                <div class="lead-avatar">D</div>
+                <div class="lead-info">
+                  <div class="lead-name">D*** Design Build</div>
+                  <div class="lead-meta"><span class="lead-stars">★★★★★</span><span>Canberra</span></div>
+                </div>
+                <div class="lead-contacts"><i class="ti ti-mail ci-on"></i><i class="ti ti-phone ci-on"></i><i class="ti ti-world ci-on"></i></div>
+                <div class="lead-score score-9">9</div>
+              </div>
+            </div>
+
+            <!-- RIGHT: AI emails -->
+            <div class="preview-panel">
+              <div class="preview-panel-header">
+                <i class="ti ti-mail-forward"></i><span>A****** Homes</span>
+                <span class="preview-badge green-badge">5 封</span>
+              </div>
+
+              <div class="email-card blue">
+                <div class="email-head"><span class="email-num">01</span><span class="email-day">第1天</span></div>
+                <div class="email-subject">when your supplier ghosts mid-build</div>
+                <div class="email-preview">Hey James, saw your recent Sydney project — looks great. Quick question on supplier reliability…</div>
+              </div>
+
+              <div class="email-card purple">
+                <div class="email-head"><span class="email-num">02</span><span class="email-day">第3天</span></div>
+                <div class="email-subject">before you sign your next supplier</div>
+                <div class="email-preview">3 things most builders miss when sourcing tiles & stone direct from China factories…</div>
+              </div>
+
+              <div class="email-card green">
+                <div class="email-head"><span class="email-num">03</span><span class="email-day">第7天</span></div>
+                <div class="email-subject">3 things to ask any China supplier</div>
+                <div class="email-preview">Quick checklist we send to builders so they don't get burned by the wrong factory…</div>
+              </div>
+
+              <div class="email-card amber">
+                <div class="email-head"><span class="email-num">04</span><span class="email-day">第14天</span></div>
+                <div class="email-subject">in case you're sourcing in China</div>
+                <div class="email-preview">Final note — happy to send pricing on the SKUs you'd use most this quarter…</div>
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
-      <div class="pain-card">
-        <div class="pain-icon"><i class="ti ti-mail-off"></i></div>
-        <div>
-          <h3 class="pain-title">邮件进垃圾箱</h3>
-          <p class="pain-desc">发了100封，对方一封都没收到</p>
+
+      <!-- Card 2: Quote automation (coming soon) -->
+      <div class="service-card minor">
+        <div class="service-head">
+          <div class="service-icon amber"><i class="ti ti-file-invoice"></i></div>
+          <h3 class="service-title">报价自动化</h3>
+          <span class="service-tag soon">即将上线</span>
         </div>
+        <p class="service-desc">选择产品配置，30秒生成专业报价单PDF，自动发送到客户邮箱</p>
+        <div class="service-coming">敬请期待</div>
       </div>
-      <div class="pain-card">
-        <div class="pain-icon"><i class="ti ti-message-off"></i></div>
-        <div>
-          <h3 class="pain-title">开发信没人回</h3>
-          <p class="pain-desc">不会写英文邮件，模板千篇一律</p>
-        </div>
-      </div>
-      <div class="pain-card">
-        <div class="pain-icon"><i class="ti ti-clock-pause"></i></div>
-        <div>
-          <h3 class="pain-title">报价太慢</h3>
-          <p class="pain-desc">客户问价格，等工厂2天才回</p>
-        </div>
-      </div>
+
     </div>
   </div>
 </section>
 
-<!-- ── Section 3: Solutions + Flow bar ─────────────────────────────── -->
+<!-- ── Section 3: How it works ─────────────────────────────────────── -->
 <section class="section" style="background: rgba(17,24,39,0.4);">
   <div class="container">
-    <h2 class="section-title">我们怎么帮你解决</h2>
-    <p class="section-sub">从找客户到发邮件，每一步都自动化</p>
+    <h2 class="section-title">怎么运作</h2>
+    <p class="section-sub">3步完成自动化</p>
 
-    <div class="sol-grid">
-      <div class="sol-card">
-        <div class="sol-icon"><i class="ti ti-target"></i></div>
-        <h3 class="sol-title">精准找到海外客户</h3>
-        <p class="sol-desc">从Google Maps、Instagram、LinkedIn等8个渠道自动抓取目标客户数据</p>
-        <div class="sol-stat">100条客户数据 ≈ ¥5.6</div>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-icon"><i class="ti ti-message-dots"></i></div>
+        <div class="how-num">STEP 01</div>
+        <h3 class="how-title">告诉我你的需求</h3>
+        <p class="how-desc">你想自动化什么流程？我们来聊一聊</p>
       </div>
-      <div class="sol-card">
-        <div class="sol-icon"><i class="ti ti-brain"></i></div>
-        <h3 class="sol-title">AI自动筛选优质客户</h3>
-        <p class="sol-desc">AI分析每个客户的官网，自动评分，帮你找到最值得联系的人</p>
-        <div class="sol-stat">筛选准确率 85%+</div>
+      <div class="how-arrow"><i class="ti ti-arrow-right"></i></div>
+      <div class="how-step">
+        <div class="how-icon"><i class="ti ti-code"></i></div>
+        <div class="how-num">STEP 02</div>
+        <h3 class="how-title">我来搭建系统</h3>
+        <p class="how-desc">用AI帮你定制自动化方案，不需要你写代码</p>
       </div>
-      <div class="sol-card">
-        <div class="sol-icon"><i class="ti ti-mail-forward"></i></div>
-        <h3 class="sol-title">AI写个性化开发信</h3>
-        <p class="sol-desc">根据每个客户的官网内容，自动生成5封个性化邮件</p>
-        <div class="sol-stat">每封邮件成本 ¥0.35</div>
+      <div class="how-arrow"><i class="ti ti-arrow-right"></i></div>
+      <div class="how-step">
+        <div class="how-icon"><i class="ti ti-rocket"></i></div>
+        <div class="how-num">STEP 03</div>
+        <h3 class="how-title">系统自动运行</h3>
+        <p class="how-desc">上线后系统自动工作，你只需要处理结果</p>
       </div>
-      <div class="sol-card">
-        <div class="sol-icon"><i class="ti ti-send"></i></div>
-        <h3 class="sol-title">自动发送和跟进</h3>
-        <p class="sol-desc">按时间序列自动发送，没回复自动跟进</p>
-        <div class="sol-stat">每天自动触达 200+ 客户</div>
-      </div>
-    </div>
-
-    <div class="flow-bar">
-      <span class="flow-step active">抓取客户</span>
-      <span class="flow-arrow"><i class="ti ti-chevron-right"></i></span>
-      <span class="flow-step">AI筛选</span>
-      <span class="flow-arrow"><i class="ti ti-chevron-right"></i></span>
-      <span class="flow-step">抓取官网</span>
-      <span class="flow-arrow"><i class="ti ti-chevron-right"></i></span>
-      <span class="flow-step">ICP评分</span>
-      <span class="flow-arrow"><i class="ti ti-chevron-right"></i></span>
-      <span class="flow-step">写开发信</span>
-      <span class="flow-arrow"><i class="ti ti-chevron-right"></i></span>
-      <span class="flow-step">自动发送</span>
     </div>
   </div>
 </section>
@@ -920,14 +794,14 @@
 <section class="cta-wrap">
   <div class="container">
     <div class="cta-box">
-      <h2 class="cta-title">准备好让AI帮你找客户了吗？</h2>
-      <p class="cta-sub">前3个客户免费试用，不满意不收费</p>
+      <h2 class="cta-title">想让AI帮你自动化？</h2>
+      <p class="cta-sub">告诉我你的业务痛点，我帮你设计方案</p>
       <div class="cta-btns">
-        <a href="/app" class="btn-primary">
-          <i class="ti ti-rocket"></i>免费试用
+        <a href="mailto:zhuolu34@gmail.com" class="btn-primary">
+          <i class="ti ti-mail"></i>联系我
         </a>
-        <a href="mailto:zhuolu34@gmail.com" class="btn-ghost">
-          <i class="ti ti-mail"></i>联系我们
+        <a href="/tools/" class="btn-ghost">
+          <i class="ti ti-tools"></i>免费工具
         </a>
       </div>
     </div>
