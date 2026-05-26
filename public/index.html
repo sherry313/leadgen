@@ -1714,21 +1714,23 @@
       position: absolute; top: 8px; right: 8px;
     }
 
-    /* ── Step 2 back button ── */
-    .step2-back-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 6px 12px;
+    /* ── Step back buttons (top + bottom) — shared style ── */
+    .step-back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 16px;
       background: transparent;
       border: 1px solid #252d3d;
       border-radius: 8px;
       color: #94a3b8;
-      font-size: 13px;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.2;
       cursor: pointer;
       font-family: inherit;
-      transition: all 0.15s;
-      margin-bottom: 14px;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
     }
-    .step2-back-btn:hover { color: #e2e8f0; border-color: #4299e1; }
+    .step-back-btn:hover { color: #e2e8f0; border-color: #4299e1; background: rgba(66,153,225,0.06); }
+    .step-back-btn.top { margin-bottom: 14px; }
 
   </style>
 </head>
@@ -1810,7 +1812,7 @@
 
   <!-- Step 2: Config -->
   <div class="wizard-panel hidden" id="wizard-step-2">
-    <button class="step2-back-btn" onclick="goToStep(1)">← Back</button>
+    <button type="button" class="step-back-btn top" onclick="goToStep(1)">← 返回方式选择</button>
     <div class="panel-title">第二步：配置搜索参数</div>
     <div class="panel-sub">填写关键词和目标城市即可开始</div>
 
@@ -2014,13 +2016,14 @@
     </div>
 
     <div class="panel-nav" style="margin-top:24px">
-      <button class="btn-ghost" onclick="goToStep(1)">← 返回方式选择</button>
+      <button type="button" class="step-back-btn" onclick="goToStep(1)">← 返回方式选择</button>
       <button class="btn-primary" id="step2NextBtn" onclick="step2Next()">下一步 →</button>
     </div>
   </div>
 
   <!-- Step 3: Scrape -->
   <div class="wizard-panel hidden" id="wizard-step-3">
+    <button type="button" class="step-back-btn top" onclick="goToStep(2)">← 修改配置</button>
     <div class="panel-title">第三步：抓取原始数据</div>
     <div class="panel-sub">选择手动模式逐步筛选，或一键自动模式完成整个流程</div>
 
@@ -2067,7 +2070,7 @@
     </div>
 
     <div class="panel-nav" style="margin-top:14px">
-      <button class="btn-ghost" onclick="goToStep(2)">← 修改配置</button>
+      <button type="button" class="step-back-btn" onclick="goToStep(2)">← 修改配置</button>
       <span></span>
     </div>
   </div>
@@ -6562,19 +6565,22 @@ document.addEventListener('click', e => {
 // 3. Step panel fade-up — override window.goToStep
 // MutationObserver approach caused infinite loop (modifying observed class triggered re-entry).
 // Override is safe: onclick attrs call goToStep by name → resolved from window at call time.
+// Back navigation (n < currentStep) skips the fade-up so it feels instant.
 (function() {
   const _orig = window.goToStep;
   let _lastVisible = null;
   window.goToStep = function(n) {
+    const prev = (typeof currentStep === 'number') ? currentStep : 1;
+    const isBack = (typeof n === 'number') && (n < prev);
     _orig(n);
     requestAnimationFrame(() => {
       const visible = document.querySelector('.wizard-panel:not(.hidden)');
-      if (visible && visible !== _lastVisible) {
-        _lastVisible = visible;
-        visible.classList.remove('panel-enter');
-        void visible.offsetWidth;
-        visible.classList.add('panel-enter');
-      }
+      if (!visible || visible === _lastVisible) return;
+      _lastVisible = visible;
+      if (isBack) return;  // back nav: no entrance animation
+      visible.classList.remove('panel-enter');
+      void visible.offsetWidth;
+      visible.classList.add('panel-enter');
     });
   };
 })();
