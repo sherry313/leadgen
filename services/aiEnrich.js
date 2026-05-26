@@ -608,4 +608,51 @@ function templateKeyFromQuery(query) {
   return '装修承包商';
 }
 
-module.exports = { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery };
+// ── ICP generator (used by /api/generate-icp) ────────────────────────────────
+// Takes the new-user wizard answers + seller context and returns a Chinese-language
+// ICP description suitable for dropping into the existing icpInput textarea.
+async function generateIcp(inputs = {}) {
+  const {
+    industries = [], companySize = '', painPoints = '', exclusions = '',
+    sellerName = '', products = '', advantage = '', country = '', keyword = '',
+  } = inputs;
+
+  const userPrompt = `我的公司：${sellerName || '(未填写)'}
+我的产品：${products || '(未填写)'}
+我的优势：${advantage || '(未填写)'}
+目标国家：${country || '(未指定)'}
+搜索关键词：${keyword || '(未指定)'}
+目标行业：${Array.isArray(industries) && industries.length ? industries.join('、') : '(未选)'}
+目标规模：${companySize || '(未选)'}
+我的产品解决的问题：${painPoints || '(未填写)'}
+排除的客户：${exclusions || '(未填写)'}
+
+请生成一段详细的客户筛选标准（ICP），包括：
+1. 目标客户的具体特征
+2. 在他们官网上应该寻找什么信号
+3. 明确的排除标准
+用中文回答，200字以内。`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 600,
+    system: "You are an ICP (Ideal Customer Profile) expert. Generate a detailed customer filtering criteria in Chinese based on the user's inputs. Be specific and actionable. Include: target industries, company characteristics, signals to look for on their website, and explicit exclusion criteria.",
+    messages: [{ role: 'user', content: userPrompt }],
+  });
+
+  const text = (response.content || [])
+    .filter(b => b && b.type === 'text')
+    .map(b => b.text)
+    .join('\n')
+    .trim();
+
+  return {
+    icp: text,
+    usage: {
+      input_tokens:  response.usage?.input_tokens  || 0,
+      output_tokens: response.usage?.output_tokens || 0,
+    },
+  };
+}
+
+module.exports = { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp };

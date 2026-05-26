@@ -6,6 +6,7 @@
   <title>建材拓客系统</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🏗️</text></svg>">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -1813,6 +1814,164 @@
       color: #64748b;
     }
 
+    /* ── ICP Builder (/app new users) ── */
+    #icpBuilder {
+      margin-bottom: 16px;
+      padding: 18px 18px 16px;
+      background: rgba(15,19,24,0.5);
+      border: 1px solid #1e2d4a;
+      border-radius: 12px;
+    }
+    .icpb-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f7fafc;
+      margin-bottom: 4px;
+    }
+    .icpb-sub {
+      font-size: 12.5px;
+      color: #94a3b8;
+      margin-bottom: 14px;
+    }
+    .icpb-q { margin-bottom: 14px; }
+    .icpb-q-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e0;
+      margin-bottom: 8px;
+    }
+    .icpb-q-label .ti { color: #63b3ed; font-size: 15px; }
+    .icpb-q-hint {
+      font-size: 11.5px;
+      color: #64748b;
+      margin-top: -4px;
+      margin-bottom: 8px;
+    }
+    .icpb-pill-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .icpb-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #1e2d4a;
+      background: #111827;
+      color: #cbd5e0;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .icpb-pill:hover { border-color: #4299e1; }
+    .icpb-pill.on {
+      border-color: #4299e1;
+      background: #0a1628;
+      color: #63b3ed;
+    }
+    .icpb-text {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0f1318;
+      border: 1px solid #252d3d;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .icpb-text:focus {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 2px rgba(66,153,225,0.15);
+    }
+    .icpb-text::placeholder { color: #475569; }
+    .icpb-result-text {
+      width: 100%;
+      padding: 12px 14px;
+      background: #0f1318;
+      border: 1px solid #4299e1;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 13.5px;
+      font-family: inherit;
+      line-height: 1.6;
+      outline: none;
+      resize: vertical;
+      transition: box-shadow 0.15s;
+    }
+    .icpb-result-text:focus {
+      box-shadow: 0 0 0 2px rgba(66,153,225,0.18);
+    }
+    .icpb-result-text::placeholder { color: #475569; }
+    .icpb-generate-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px;
+      background: #1e3a5f;
+      color: #63b3ed;
+      border: 1px solid #2a4a6a;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 4px;
+    }
+    .icpb-generate-btn:hover {
+      background: #25446e;
+      border-color: #4299e1;
+    }
+    .icpb-generate-btn:disabled {
+      opacity: 0.6; cursor: not-allowed;
+    }
+    .icpb-generate-btn .ti { font-size: 16px; }
+    .icpb-confirm-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px;
+      background: #0d2010;
+      color: #5DCAA5;
+      border: 1px solid #1f4d2a;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .icpb-confirm-btn:hover {
+      background: #133318;
+      border-color: #2d7a3e;
+    }
+    .icpb-confirm-btn .ti { font-size: 16px; }
+    .icpb-regen-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 14px;
+      background: transparent;
+      color: #94a3b8;
+      border: 1px solid #1e2d4a;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .icpb-regen-btn:hover { border-color: #4299e1; color: #e2e8f0; }
+    .icpb-regen-btn .ti { font-size: 15px; }
+    .icpb-divider {
+      display: flex; align-items: center;
+      margin: 20px 0;
+      color: #64748b;
+      font-size: 12px;
+    }
+    .icpb-divider::before,
+    .icpb-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #1e2d4a;
+    }
+    .icpb-divider span { padding: 0 12px; }
+
     /* ── Step back buttons (top + bottom) — shared style ── */
     .step-back-btn {
       display: inline-flex; align-items: center; gap: 6px;
@@ -2141,23 +2300,95 @@
       <div id="sellerValidHint" style="display:none;margin-top:8px;font-size:0.78rem;color:#fca5a5">⚠️ 请填写以上三项信息，AI 写邮件需要这些内容</div>
     </div>
 
-    <!-- ICP - optional, collapsible -->
-    <div class="advanced-toggle" onclick="toggleIcp()" style="margin-top:0;margin-bottom:0">
-      <span id="icpToggleIcon">▸</span> 让 AI 筛选更精准（可选）
-    </div>
-    <div class="advanced-body" id="icpBody" style="margin-bottom:16px">
-      <div style="margin-top:10px">
-        <label style="text-transform:none;letter-spacing:0;font-size:0.84rem;color:var(--text)">
-          理想客户画像（ICP）
-          <span style="font-weight:400;color:var(--sub);font-size:0.76rem;margin-left:6px">越具体，AI 筛选越精准</span>
-        </label>
-        <textarea id="icpInput" rows="3" oninput="onIcpInput()"
-          placeholder="例：中型装修承包商，员工10人以上，年承接项目超过500万澳元，主要做住宅改建，有稳定的材料采购需求，决策人是老板或采购经理。"></textarea>
-        <div id="icpWarning" style="display:none;margin-top:6px;padding:8px 12px;background:rgba(185,28,28,0.1);border:1px solid rgba(239,68,68,0.22);border-radius:6px;font-size:0.8rem;color:#fca5a5">
-          描述太模糊，请补充：<strong>客户规模、项目类型、采购预算、决策人职位</strong>
+    <!-- ICP Builder for /app (new users) — writes its result into #icpInput below -->
+    <div id="icpBuilder" style="display:none">
+      <div class="icpb-title">描述你的理想客户</div>
+      <div class="icpb-sub">越详细，AI 筛选越准。不知道怎么写？回答下面几个问题，AI 帮你生成。</div>
+
+      <div class="icpb-q">
+        <div class="icpb-q-label"><i class="ti ti-building"></i>你的客户一般在什么行业？</div>
+        <div class="icpb-pill-row" id="icpb-industry">
+          <button type="button" class="icpb-pill" data-val="建筑/施工"   onclick="_icpbTogglePill(this)">建筑/施工</button>
+          <button type="button" class="icpb-pill" data-val="室内设计"     onclick="_icpbTogglePill(this)">室内设计</button>
+          <button type="button" class="icpb-pill" data-val="房地产开发"   onclick="_icpbTogglePill(this)">房地产开发</button>
+          <button type="button" class="icpb-pill" data-val="批发/经销"   onclick="_icpbTogglePill(this)">批发/经销</button>
+          <button type="button" class="icpb-pill" data-val="零售"         onclick="_icpbTogglePill(this)">零售</button>
+          <button type="button" class="icpb-pill" data-val="酒店/餐饮"   onclick="_icpbTogglePill(this)">酒店/餐饮</button>
+          <button type="button" class="icpb-pill" data-val="制造业"       onclick="_icpbTogglePill(this)">制造业</button>
         </div>
-        <div id="icpGood" style="display:none;margin-top:6px;padding:8px 12px;background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:6px;font-size:0.8rem;color:#93c5fd">
-          ICP 描述清晰，AI 将据此评估每条线索的匹配度
+      </div>
+
+      <div class="icpb-q">
+        <div class="icpb-q-label"><i class="ti ti-users"></i>公司规模</div>
+        <div class="icpb-pill-row" id="icpb-size" data-single="1">
+          <button type="button" class="icpb-pill" data-val="1-10人"     onclick="_icpbTogglePill(this)">1-10人</button>
+          <button type="button" class="icpb-pill" data-val="10-50人"    onclick="_icpbTogglePill(this)">10-50人</button>
+          <button type="button" class="icpb-pill" data-val="50-200人"   onclick="_icpbTogglePill(this)">50-200人</button>
+          <button type="button" class="icpb-pill" data-val="200人以上"  onclick="_icpbTogglePill(this)">200人以上</button>
+          <button type="button" class="icpb-pill" data-val="不限"       onclick="_icpbTogglePill(this)">不限</button>
+        </div>
+      </div>
+
+      <div class="icpb-q">
+        <div class="icpb-q-label"><i class="ti ti-target"></i>你的产品帮客户解决什么问题？</div>
+        <input type="text" id="icpb-pain" class="icpb-text" placeholder="例：降低采购成本、提升产品质量" autocomplete="off">
+      </div>
+
+      <div class="icpb-q">
+        <div class="icpb-q-label"><i class="ti ti-x"></i>哪些客户你不要？</div>
+        <div class="icpb-q-hint">排除不适合的客户类型</div>
+        <input type="text" id="icpb-excl" class="icpb-text" placeholder="例：太小的公司、只做维修不做新建的" autocomplete="off">
+      </div>
+
+      <button type="button" class="icpb-generate-btn" id="icpbGenBtn" onclick="generateIcpFromBuilder()">
+        <i class="ti ti-sparkles"></i>AI 帮我生成筛选标准
+      </button>
+      <div id="icpbLoading" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(66,153,225,0.08);border:1px solid rgba(66,153,225,0.25);border-radius:8px;font-size:13px;color:#93c5fd">
+        AI 正在分析你的信息，生成筛选标准...
+      </div>
+      <div id="icpbResult" style="display:none;margin-top:12px">
+        <div class="icpb-q-label" style="margin-bottom:6px"><i class="ti ti-wand"></i>AI 生成的筛选标准（可编辑）</div>
+        <textarea id="icpbResultText" rows="6" class="icpb-result-text" placeholder=""></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button type="button" class="icpb-confirm-btn" onclick="confirmIcpFromBuilder()">
+            <i class="ti ti-check"></i>确认，进入下一步
+          </button>
+          <button type="button" class="icpb-regen-btn" onclick="generateIcpFromBuilder()">
+            <i class="ti ti-refresh"></i>重新生成
+          </button>
+        </div>
+      </div>
+
+      <div class="icpb-divider"><span>或者</span></div>
+
+      <div class="icpb-q">
+        <div class="icpb-q-label"><i class="ti ti-edit"></i>自己写筛选标准</div>
+        <textarea id="icpbManual" rows="3" class="icpb-result-text" placeholder="直接描述你的理想客户..."></textarea>
+        <button type="button" class="icpb-confirm-btn" style="margin-top:10px" onclick="confirmIcpManual()">
+          <i class="ti ti-check"></i>使用这段描述，进入下一步
+        </button>
+      </div>
+    </div>
+
+    <!-- ICP - legacy collapsible (shown on /lens, hidden on /app) -->
+    <div id="icpLegacy">
+      <div class="advanced-toggle" onclick="toggleIcp()" style="margin-top:0;margin-bottom:0">
+        <span id="icpToggleIcon">▸</span> 让 AI 筛选更精准（可选）
+      </div>
+      <div class="advanced-body" id="icpBody" style="margin-bottom:16px">
+        <div style="margin-top:10px">
+          <label style="text-transform:none;letter-spacing:0;font-size:0.84rem;color:var(--text)">
+            理想客户画像（ICP）
+            <span style="font-weight:400;color:var(--sub);font-size:0.76rem;margin-left:6px">越具体，AI 筛选越精准</span>
+          </label>
+          <textarea id="icpInput" rows="3" oninput="onIcpInput()"
+            placeholder="例：中型装修承包商，员工10人以上，年承接项目超过500万澳元，主要做住宅改建，有稳定的材料采购需求，决策人是老板或采购经理。"></textarea>
+          <div id="icpWarning" style="display:none;margin-top:6px;padding:8px 12px;background:rgba(185,28,28,0.1);border:1px solid rgba(239,68,68,0.22);border-radius:6px;font-size:0.8rem;color:#fca5a5">
+            描述太模糊，请补充：<strong>客户规模、项目类型、采购预算、决策人职位</strong>
+          </div>
+          <div id="icpGood" style="display:none;margin-top:6px;padding:8px 12px;background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:6px;font-size:0.8rem;color:#93c5fd">
+            ICP 描述清晰，AI 将据此评估每条线索的匹配度
+          </div>
         </div>
       </div>
     </div>
@@ -2985,6 +3216,86 @@ function filterCountryPills() {
   });
   const empty = document.getElementById('countryPillEmpty');
   if (empty) empty.style.display = anyVisibleOverall ? 'none' : 'block';
+}
+
+// ── /app AI-guided ICP builder ────────────────────────────────────────────────
+// Pill toggle: respects data-single="1" container attr for single-select rows.
+function _icpbTogglePill(btn) {
+  const container = btn.parentElement;
+  const single = container?.dataset.single === '1';
+  if (single) {
+    container.querySelectorAll('.icpb-pill').forEach(p => p.classList.remove('on'));
+    btn.classList.add('on');
+  } else {
+    btn.classList.toggle('on');
+  }
+}
+
+async function generateIcpFromBuilder() {
+  const industries  = [...document.querySelectorAll('#icpb-industry .icpb-pill.on')].map(p => p.dataset.val);
+  const companySize = document.querySelector('#icpb-size .icpb-pill.on')?.dataset.val || '';
+  const painPoints  = document.getElementById('icpb-pain')?.value.trim() || '';
+  const exclusions  = document.getElementById('icpb-excl')?.value.trim() || '';
+
+  const sellerName  = document.getElementById('sellerName')?.value.trim() || '';
+  const products    = document.getElementById('products')?.value.trim()   || '';
+  const advantage   = document.getElementById('advantage')?.value.trim()  || '';
+  const keyword     = document.getElementById('kwInput')?.value.trim()    || '';
+
+  // First selected country → Chinese name for the prompt (fallback to empty)
+  const countryIdx = [...selectedCountries][0];
+  const country = (countryIdx != null) ? (COUNTRY_NAMES[COUNTRY_CODES[countryIdx]] || '') : '';
+
+  const btn     = document.getElementById('icpbGenBtn');
+  const loading = document.getElementById('icpbLoading');
+  const result  = document.getElementById('icpbResult');
+
+  if (btn)     btn.style.display = 'none';
+  if (loading) loading.style.display = 'block';
+  if (result)  result.style.display = 'none';
+
+  try {
+    const token = getStoredToken();
+    if (!token) throw new Error('请先登录');
+    const res = await fetch('/api/generate-icp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ industries, companySize, painPoints, exclusions, sellerName, products, advantage, country, keyword }),
+    });
+    const data = await res.json();
+    if (!data.success || !data.icp) throw new Error(data.error || 'generate failed');
+
+    if (loading) loading.style.display = 'none';
+    if (result)  result.style.display = 'block';
+    const ta = document.getElementById('icpbResultText');
+    if (ta) ta.value = data.icp;
+  } catch (err) {
+    console.error('[generate-icp] failed:', err);
+    if (loading) loading.style.display = 'none';
+    if (btn)     btn.style.display = 'inline-flex';
+    _showToast('生成失败：' + (err.message || err));
+  }
+}
+
+function _writeIcpAndAdvance(text) {
+  const icpInput = document.getElementById('icpInput');
+  if (icpInput) {
+    icpInput.value = text;
+    if (typeof onIcpInput === 'function') onIcpInput();
+  }
+  if (typeof step2Next === 'function') step2Next();
+}
+
+function confirmIcpFromBuilder() {
+  const text = (document.getElementById('icpbResultText')?.value || '').trim();
+  if (!text) { _showToast('ICP 不能为空'); return; }
+  _writeIcpAndAdvance(text);
+}
+
+function confirmIcpManual() {
+  const text = (document.getElementById('icpbManual')?.value || '').trim();
+  if (!text) { _showToast('请先填写筛选标准'); return; }
+  _writeIcpAndAdvance(text);
 }
 
 // ── /app free-text customer type ──────────────────────────────────────────────
@@ -6058,10 +6369,15 @@ setTimeout(onSellerInput, 0);    // set initial disabled state for step2 next bt
   const pillSelector = document.getElementById('countryPillSelector');
   const typeInputWrap = document.getElementById('customerTypeInput');
 
+  const icpBuilder = document.getElementById('icpBuilder');
+  const icpLegacy  = document.getElementById('icpLegacy');
+
   if (isLens) {
     if (pillSelector)  pillSelector.style.display  = 'none';
     if (typeInputWrap) typeInputWrap.style.display = 'none';
-    // legacy elements keep their default display
+    if (icpBuilder)    icpBuilder.style.display    = 'none';
+    if (icpLegacy)     icpLegacy.style.display     = '';
+    // legacy country/type elements keep their default display
   } else {
     if (legacyCountry)     legacyCountry.style.display     = 'none';
     if (legacyCountryHint) legacyCountryHint.style.display = 'none';
@@ -6069,6 +6385,8 @@ setTimeout(onSellerInput, 0);    // set initial disabled state for step2 next bt
     if (legacyTypeHint)    legacyTypeHint.style.display    = 'none';
     if (pillSelector)      pillSelector.style.display      = '';
     if (typeInputWrap)     typeInputWrap.style.display     = '';
+    if (icpBuilder)        icpBuilder.style.display        = '';
+    if (icpLegacy)         icpLegacy.style.display         = 'none';
   }
 })();
 

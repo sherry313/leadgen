@@ -9,7 +9,7 @@ const requireAuth = require('./middleware/auth');
 const { scrapeAustralianCompanies } = require('./services/apify');
 const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
-const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery } = require('./services/aiEnrich');
+const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
 const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun } = require('./services/supabase');
 
@@ -42,6 +42,21 @@ function withTimeout(promise, ms, label) {
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/status', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ── ICP generator (new-user wizard → editable ICP text) ──────────────────────
+// Body: { industries, companySize, painPoints, exclusions, sellerName, products, advantage, country, keyword }
+app.post('/api/generate-icp', requireAuth, async (req, res) => {
+  try {
+    const result = await withTimeout(generateIcp(req.body || {}), 60000, '/api/generate-icp');
+    if (!result || !result.icp) {
+      return res.status(502).json({ success: false, error: 'AI returned empty response' });
+    }
+    res.json({ success: true, icp: result.icp, usage: result.usage });
+  } catch (err) {
+    console.error('[generate-icp] failed:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ── Main pipeline ─────────────────────────────────────────────────────────────
