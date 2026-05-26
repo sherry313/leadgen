@@ -692,7 +692,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
         { includeWebsite: true, includeEmail: true },   // auto-mode forces emails on
         countryCode,
       ),
-      360000,
+      750000,
       'Apify scrape',
     );
 
