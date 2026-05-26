@@ -1015,6 +1015,63 @@ app.post('/api/diag/log', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── SMTP test connection ─────────────────────────────────────────────────────
+// POST /api/smtp/test  body: { smtpConfig: { host, port, user, pass, ... } }
+app.post('/api/smtp/test', requireAuth, async (req, res) => {
+  const { smtpConfig } = req.body || {};
+  if (!smtpConfig?.user || !smtpConfig?.pass) {
+    return res.status(400).json({ ok: false, error: '请填写邮箱和密码' });
+  }
+  const { testConnection } = require('./services/smtp');
+  try {
+    await testConnection(smtpConfig);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// ── SMTP send batch (SSE stream) ─────────────────────────────────────────────
+// POST /api/smtp/send-batch  body: { leads: [...], smtpConfig: {...} }
+app.post('/api/smtp/send-batch', requireAuth, async (req, res) => {
+  const { leads, smtpConfig } = req.body || {};
+  if (!leads?.length) {
+    return res.status(400).json({ ok: false, error: '没有leads' });
+  }
+  if (!smtpConfig?.user || !smtpConfig?.pass) {
+    return res.status(400).json({ ok: false, error: 'SMTP配置不完整' });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const sse = d => res.write('data: ' + JSON.stringify(d) + '\n\n');
+  const abortRef = { aborted: false };
+  res.on('close', () => { abortRef.aborted = true; });
+
+  sse({ type: 'start', total: leads.length });
+
+  try {
+    const { sendBatch } = require('./services/smtp');
+    const results = await sendBatch(
+      smtpConfig,
+      leads,
+      (done, total, companyName, status, waitSec) => {
+        sse({ type: 'progress', done, total, company: companyName, status, waitSec });
+      },
+      abortRef,
+    );
+    const sent   = results.filter(r => r.status === 'sent').length;
+    const failed = results.filter(r => r.status === 'failed').length;
+    sse({ type: 'done', sent, failed });
+  } catch (err) {
+    sse({ type: 'error', message: err.message });
+  }
+  res.end();
+});
+
 // ── Add lead (full 5-email sequence) to Instantly campaign ───────────────────
 // POST /api/instantly/add-lead
 // Body: { lead: { email, companyName, website?, phone?, emails?: [{subject,body}] }, campaignId? }

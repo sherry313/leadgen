@@ -3184,7 +3184,81 @@
             onmouseover="this.style.opacity=0.82" onmouseout="this.style.opacity=1">
             📤 批量推送到 Instantly Campaign
           </button>
+          <button id="btnSmtpSend"
+            onclick="openSmtpPanel()"
+            style="display:none;padding:8px 20px;background:linear-gradient(135deg,#059669,#0891b2);color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;white-space:nowrap"
+            onmouseover="this.style.opacity=0.82" onmouseout="this.style.opacity=1">
+            📧 用自己邮箱发送
+          </button>
         </div>
+      </div>
+
+      <div id="smtpPanel" style="display:none;margin-top:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:18px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
+            <label style="font-size:12px;opacity:0.5">邮箱地址</label>
+            <input id="smtpUser" type="email" placeholder="you@gmail.com" oninput="smtpAutoFill(this.value)"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
+            <label style="font-size:12px;opacity:0.5">密码 / 应用密码</label>
+            <input id="smtpPass" type="password" placeholder="Gmail请用App Password"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;opacity:0.5">SMTP服务器</label>
+            <input id="smtpHost" placeholder="smtp.gmail.com"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;opacity:0.5">端口</label>
+            <input id="smtpPort" type="number" value="587"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;opacity:0.5">发件人名字</label>
+            <input id="smtpFromName" placeholder="Leo Li"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;opacity:0.5">签名</label>
+            <input id="smtpSignature" placeholder="Leo Li | Company"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
+            <label style="font-size:12px;opacity:0.5">发送间隔（秒）· 随机延迟模拟人工</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input id="smtpDelayMin" type="number" value="60"
+                style="width:70px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+              <span style="opacity:0.4">—</span>
+              <input id="smtpDelayMax" type="number" value="180"
+                style="width:70px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+              <span style="font-size:12px;opacity:0.4">秒</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <button onclick="smtpTest()" id="smtpTestBtn"
+            style="padding:7px 16px;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">
+            🔌 测试连接
+          </button>
+          <span id="smtpTestMsg" style="font-size:12px;flex:1"></span>
+          <button onclick="smtpSendAll()" id="smtpSendBtn" disabled
+            style="padding:7px 20px;background:linear-gradient(135deg,#059669,#0891b2);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;opacity:0.4">
+            🚀 开始发送 <span id="smtpSendCount"></span>
+          </button>
+        </div>
+      </div>
+
+      <div id="smtpProgress" style="display:none;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;opacity:0.6;margin-bottom:6px">
+          <span id="smtpProgressLabel">发送中...</span>
+          <span id="smtpProgressCount"></span>
+        </div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:99px;height:6px;overflow:hidden;margin-bottom:10px">
+          <div id="smtpProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#059669,#0891b2);border-radius:99px;transition:width 0.4s"></div>
+        </div>
+        <div id="smtpProgressLog" style="max-height:120px;overflow-y:auto;font-size:12px;display:flex;flex-direction:column;gap:3px"></div>
       </div>
     </div>
 
@@ -7740,6 +7814,182 @@ window.addEventListener('pipelineDone', () => {
     if (n > 0) _showToast('✅ 成功找到 ' + n + ' 条线索！');
   }, 700);
 });
+
+// ── SMTP send panel ───────────────────────────────────────────────────────────
+const _SMTP_PRESETS = {
+  'gmail.com':    { host: 'smtp.gmail.com',       port: 587 },
+  'outlook.com':  { host: 'smtp.office365.com',   port: 587 },
+  'hotmail.com':  { host: 'smtp.office365.com',   port: 587 },
+  'yahoo.com':    { host: 'smtp.mail.yahoo.com',  port: 587 },
+  'yahoo.com.au': { host: 'smtp.mail.yahoo.com',  port: 587 },
+  'icloud.com':   { host: 'smtp.mail.me.com',     port: 587 },
+};
+
+function smtpAutoFill(email) {
+  const domain = email.split('@')[1]?.toLowerCase();
+  const p = _SMTP_PRESETS[domain];
+  if (p) {
+    document.getElementById('smtpHost').value = p.host;
+    document.getElementById('smtpPort').value = p.port;
+  }
+}
+
+function _smtpGetCfg() {
+  return {
+    user:      document.getElementById('smtpUser').value.trim(),
+    pass:      document.getElementById('smtpPass').value,
+    host:      document.getElementById('smtpHost').value.trim(),
+    port:      parseInt(document.getElementById('smtpPort').value) || 587,
+    fromName:  document.getElementById('smtpFromName').value.trim(),
+    signature: document.getElementById('smtpSignature').value.trim(),
+    delayMin:  parseInt(document.getElementById('smtpDelayMin').value) || 60,
+    delayMax:  parseInt(document.getElementById('smtpDelayMax').value) || 180,
+  };
+}
+
+function _smtpSaveCfg(cfg) {
+  // never persist the password
+  localStorage.setItem(LEAD_PREFIX + 'smtpConfig', JSON.stringify({ ...cfg, pass: '' }));
+}
+
+function _smtpRestoreCfg() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LEAD_PREFIX + 'smtpConfig') || 'null');
+    if (!s) return;
+    if (s.user)      document.getElementById('smtpUser').value      = s.user;
+    if (s.host)      document.getElementById('smtpHost').value      = s.host;
+    if (s.port)      document.getElementById('smtpPort').value      = s.port;
+    if (s.fromName)  document.getElementById('smtpFromName').value  = s.fromName;
+    if (s.signature) document.getElementById('smtpSignature').value = s.signature;
+    if (s.delayMin)  document.getElementById('smtpDelayMin').value  = s.delayMin;
+    if (s.delayMax)  document.getElementById('smtpDelayMax').value  = s.delayMax;
+  } catch (_) {}
+}
+
+function openSmtpPanel() {
+  const panel = document.getElementById('smtpPanel');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    _smtpRestoreCfg();
+    // update send count
+    const leads = _allLeads.filter(l => _isLeadQualified(l) && _leadHasEmailContent(l) && l.email?.trim());
+    const countEl = document.getElementById('smtpSendCount');
+    if (countEl) countEl.textContent = `(${leads.length} 封)`;
+  }
+}
+
+async function smtpTest() {
+  const cfg = _smtpGetCfg();
+  const msg = document.getElementById('smtpTestMsg');
+  const btn = document.getElementById('smtpTestBtn');
+  const sendBtn = document.getElementById('smtpSendBtn');
+  if (!cfg.user || !cfg.pass) {
+    msg.style.color = '#f87171'; msg.textContent = '请填写邮箱和密码'; return;
+  }
+  btn.disabled = true; btn.textContent = '连接中...'; msg.textContent = '';
+  try {
+    const r = await fetch('/api/smtp/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('access_token') || '') },
+      body: JSON.stringify({ smtpConfig: cfg }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      msg.style.color = '#4ade80'; msg.textContent = '✅ 连接成功';
+      _smtpSaveCfg(cfg);
+      sendBtn.disabled = false; sendBtn.style.opacity = '1';
+    } else {
+      msg.style.color = '#f87171'; msg.textContent = '❌ ' + d.error;
+    }
+  } catch (e) {
+    msg.style.color = '#f87171'; msg.textContent = '❌ 网络错误';
+  }
+  btn.disabled = false; btn.textContent = '🔌 测试连接';
+}
+
+async function smtpSendAll() {
+  const cfg = _smtpGetCfg();
+  if (!cfg.pass) {
+    document.getElementById('smtpTestMsg').style.color = '#f87171';
+    document.getElementById('smtpTestMsg').textContent = '请填写密码';
+    return;
+  }
+  const leads = _allLeads.filter(l => _isLeadQualified(l) && _leadHasEmailContent(l) && l.email?.trim());
+  if (!leads.length) { alert('没有可发送的邮件，请先完成AI筛选'); return; }
+
+  const progress  = document.getElementById('smtpProgress');
+  const log       = document.getElementById('smtpProgressLog');
+  const bar       = document.getElementById('smtpProgressBar');
+  const label     = document.getElementById('smtpProgressLabel');
+  const countEl   = document.getElementById('smtpProgressCount');
+  const sendBtn   = document.getElementById('smtpSendBtn');
+
+  progress.style.display = 'block';
+  log.innerHTML = '';
+  sendBtn.disabled = true;
+
+  function addLog(text, color) {
+    const el = document.createElement('div');
+    el.style.color = color || 'rgba(255,255,255,0.5)';
+    el.style.padding = '2px 0';
+    el.textContent = text;
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  const token = localStorage.getItem('access_token') || '';
+  try {
+    const res = await fetch('/api/smtp/send-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ leads, smtpConfig: cfg }),
+    });
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const parts = buf.split('\n\n');
+      buf = parts.pop();
+      for (const part of parts) {
+        if (!part.startsWith('data:')) continue;
+        try {
+          const evt = JSON.parse(part.slice(5).trim());
+          if (evt.type === 'start') {
+            label.textContent = '发送中...';
+            countEl.textContent = `0 / ${evt.total}`;
+          } else if (evt.type === 'progress') {
+            countEl.textContent = `${evt.done} / ${evt.total}`;
+            bar.style.width = `${(evt.done / evt.total * 100).toFixed(1)}%`;
+            if (evt.status === 'sent')    addLog(`✅ ${evt.company}`, '#4ade80');
+            if (evt.status === 'failed')  addLog(`❌ ${evt.company}`, '#f87171');
+            if (evt.status === 'waiting') addLog(`⏳ 等待 ${evt.waitSec}s...`, 'rgba(255,255,255,0.3)');
+          } else if (evt.type === 'done') {
+            label.textContent = `✅ 完成：成功 ${evt.sent} / 失败 ${evt.failed}`;
+            bar.style.width = '100%';
+            _smtpSaveCfg(cfg);
+          } else if (evt.type === 'error') {
+            addLog('❌ 错误：' + evt.message, '#f87171');
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (e) {
+    addLog('❌ 中断：' + e.message, '#f87171');
+  }
+  sendBtn.disabled = false;
+}
+
+// show #btnSmtpSend only for /app users (LEAD_PREFIX is global, set at line 3475)
+(function initSmtpBtn() {
+  if (LEAD_PREFIX === 'leadgen_') {
+    const btn = document.getElementById('btnSmtpSend');
+    if (btn) btn.style.display = 'inline-block';
+  }
+})();
 </script>
 
 <style>
