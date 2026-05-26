@@ -1714,6 +1714,105 @@
       position: absolute; top: 8px; right: 8px;
     }
 
+    /* ── Country pill selector (/app) ── */
+    #countryPillSelector { margin-top: 8px; }
+    .pill-search-wrap {
+      position: relative;
+      margin-bottom: 14px;
+    }
+    .pill-search-wrap input {
+      width: 100%;
+      padding: 9px 12px 9px 34px;
+      background: #0f1318;
+      border: 1px solid #252d3d;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .pill-search-wrap input:focus {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 2px rgba(66,153,225,0.15);
+    }
+    .pill-search-wrap input::placeholder { color: #475569; }
+    .pill-search-wrap::before {
+      content: "🔍";
+      position: absolute;
+      left: 10px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .pill-region { margin-bottom: 12px; }
+    .pill-region-label {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .pill-region-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pill-country {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #1e2d4a;
+      background: #111827;
+      color: #cbd5e0;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .pill-country img {
+      width: 18px; height: 12px;
+      object-fit: cover;
+      border-radius: 2px;
+      display: block;
+    }
+    .pill-country:hover { border-color: #4299e1; }
+    .pill-country.on {
+      border-color: #4299e1;
+      background: #0a1628;
+      color: #63b3ed;
+    }
+
+    /* ── Customer type free-text input (/app) ── */
+    #customerTypeInput { margin-top: 6px; }
+    #customerTypeInput input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0f1318;
+      border: 1px solid #252d3d;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    #customerTypeInput input[type="text"]:focus {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 2px rgba(66,153,225,0.15);
+    }
+    #customerTypeInput input[type="text"]::placeholder { color: #475569; }
+    #customerTypeInput small {
+      display: block;
+      margin-top: 6px;
+      font-size: 11.5px;
+      color: #64748b;
+    }
+
     /* ── Step back buttons (top + bottom) — shared style ── */
     .step-back-btn {
       display: inline-flex; align-items: center; gap: 6px;
@@ -1854,10 +1953,93 @@
     </div>
     <span class="sel-hint" id="countrySelHint" style="display:block;margin-top:6px">请选择一个国家</span>
 
+    <!-- Pill country selector (shown on /app — covers ~30 countries with search) -->
+    <div id="countryPillSelector" style="display:none">
+      <div class="pill-search-wrap">
+        <input type="text" id="countryPillSearch" placeholder="搜索国家..." oninput="filterCountryPills()" autocomplete="off">
+      </div>
+
+      <div class="pill-region">
+        <div class="pill-region-label">热门</div>
+        <div class="pill-region-list">
+          <button type="button" class="pill-country" data-code="AU" data-name="澳大利亚" onclick="selectPillCountry('AU')"><img src="https://flagcdn.com/w20/au.png" alt="">澳大利亚</button>
+          <button type="button" class="pill-country" data-code="US" data-name="美国"     onclick="selectPillCountry('US')"><img src="https://flagcdn.com/w20/us.png" alt="">美国</button>
+          <button type="button" class="pill-country" data-code="UK" data-name="英国"     onclick="selectPillCountry('UK')"><img src="https://flagcdn.com/w20/gb.png" alt="">英国</button>
+          <button type="button" class="pill-country" data-code="CA" data-name="加拿大"   onclick="selectPillCountry('CA')"><img src="https://flagcdn.com/w20/ca.png" alt="">加拿大</button>
+          <button type="button" class="pill-country" data-code="DE" data-name="德国"     onclick="selectPillCountry('DE')"><img src="https://flagcdn.com/w20/de.png" alt="">德国</button>
+          <button type="button" class="pill-country" data-code="AE" data-name="阿联酋"   onclick="selectPillCountry('AE')"><img src="https://flagcdn.com/w20/ae.png" alt="">阿联酋</button>
+        </div>
+      </div>
+
+      <div class="pill-region">
+        <div class="pill-region-label">亚洲</div>
+        <div class="pill-region-list">
+          <button type="button" class="pill-country" data-code="JP" data-name="日本"       onclick="selectPillCountry('JP')"><img src="https://flagcdn.com/w20/jp.png" alt="">日本</button>
+          <button type="button" class="pill-country" data-code="SG" data-name="新加坡"     onclick="selectPillCountry('SG')"><img src="https://flagcdn.com/w20/sg.png" alt="">新加坡</button>
+          <button type="button" class="pill-country" data-code="KR" data-name="韩国"       onclick="selectPillCountry('KR')"><img src="https://flagcdn.com/w20/kr.png" alt="">韩国</button>
+          <button type="button" class="pill-country" data-code="MY" data-name="马来西亚"   onclick="selectPillCountry('MY')"><img src="https://flagcdn.com/w20/my.png" alt="">马来西亚</button>
+          <button type="button" class="pill-country" data-code="TH" data-name="泰国"       onclick="selectPillCountry('TH')"><img src="https://flagcdn.com/w20/th.png" alt="">泰国</button>
+          <button type="button" class="pill-country" data-code="ID" data-name="印尼"       onclick="selectPillCountry('ID')"><img src="https://flagcdn.com/w20/id.png" alt="">印尼</button>
+          <button type="button" class="pill-country" data-code="IN" data-name="印度"       onclick="selectPillCountry('IN')"><img src="https://flagcdn.com/w20/in.png" alt="">印度</button>
+          <button type="button" class="pill-country" data-code="PH" data-name="菲律宾"     onclick="selectPillCountry('PH')"><img src="https://flagcdn.com/w20/ph.png" alt="">菲律宾</button>
+          <button type="button" class="pill-country" data-code="VN" data-name="越南"       onclick="selectPillCountry('VN')"><img src="https://flagcdn.com/w20/vn.png" alt="">越南</button>
+        </div>
+      </div>
+
+      <div class="pill-region">
+        <div class="pill-region-label">欧洲</div>
+        <div class="pill-region-list">
+          <button type="button" class="pill-country" data-code="FR" data-name="法国"   onclick="selectPillCountry('FR')"><img src="https://flagcdn.com/w20/fr.png" alt="">法国</button>
+          <button type="button" class="pill-country" data-code="NL" data-name="荷兰"   onclick="selectPillCountry('NL')"><img src="https://flagcdn.com/w20/nl.png" alt="">荷兰</button>
+          <button type="button" class="pill-country" data-code="IT" data-name="意大利" onclick="selectPillCountry('IT')"><img src="https://flagcdn.com/w20/it.png" alt="">意大利</button>
+          <button type="button" class="pill-country" data-code="ES" data-name="西班牙" onclick="selectPillCountry('ES')"><img src="https://flagcdn.com/w20/es.png" alt="">西班牙</button>
+          <button type="button" class="pill-country" data-code="SE" data-name="瑞典"   onclick="selectPillCountry('SE')"><img src="https://flagcdn.com/w20/se.png" alt="">瑞典</button>
+          <button type="button" class="pill-country" data-code="NO" data-name="挪威"   onclick="selectPillCountry('NO')"><img src="https://flagcdn.com/w20/no.png" alt="">挪威</button>
+          <button type="button" class="pill-country" data-code="PL" data-name="波兰"   onclick="selectPillCountry('PL')"><img src="https://flagcdn.com/w20/pl.png" alt="">波兰</button>
+        </div>
+      </div>
+
+      <div class="pill-region">
+        <div class="pill-region-label">中东 / 非洲</div>
+        <div class="pill-region-list">
+          <button type="button" class="pill-country" data-code="SA" data-name="沙特"     onclick="selectPillCountry('SA')"><img src="https://flagcdn.com/w20/sa.png" alt="">沙特</button>
+          <button type="button" class="pill-country" data-code="QA" data-name="卡塔尔"   onclick="selectPillCountry('QA')"><img src="https://flagcdn.com/w20/qa.png" alt="">卡塔尔</button>
+          <button type="button" class="pill-country" data-code="ZA" data-name="南非"     onclick="selectPillCountry('ZA')"><img src="https://flagcdn.com/w20/za.png" alt="">南非</button>
+          <button type="button" class="pill-country" data-code="NG" data-name="尼日利亚" onclick="selectPillCountry('NG')"><img src="https://flagcdn.com/w20/ng.png" alt="">尼日利亚</button>
+        </div>
+      </div>
+
+      <div class="pill-region">
+        <div class="pill-region-label">美洲</div>
+        <div class="pill-region-list">
+          <button type="button" class="pill-country" data-code="BR" data-name="巴西"     onclick="selectPillCountry('BR')"><img src="https://flagcdn.com/w20/br.png" alt="">巴西</button>
+          <button type="button" class="pill-country" data-code="MX" data-name="墨西哥"   onclick="selectPillCountry('MX')"><img src="https://flagcdn.com/w20/mx.png" alt="">墨西哥</button>
+          <button type="button" class="pill-country" data-code="AR" data-name="阿根廷"   onclick="selectPillCountry('AR')"><img src="https://flagcdn.com/w20/ar.png" alt="">阿根廷</button>
+          <button type="button" class="pill-country" data-code="CL" data-name="智利"     onclick="selectPillCountry('CL')"><img src="https://flagcdn.com/w20/cl.png" alt="">智利</button>
+          <button type="button" class="pill-country" data-code="CO" data-name="哥伦比亚" onclick="selectPillCountry('CO')"><img src="https://flagcdn.com/w20/co.png" alt="">哥伦比亚</button>
+        </div>
+      </div>
+
+      <div class="pill-region">
+        <div class="pill-region-label">大洋洲</div>
+        <div class="pill-region-list">
+          <button type="button" class="pill-country" data-code="NZ" data-name="新西兰" onclick="selectPillCountry('NZ')"><img src="https://flagcdn.com/w20/nz.png" alt="">新西兰</button>
+        </div>
+      </div>
+
+      <div id="countryPillEmpty" style="display:none;padding:14px;text-align:center;color:#64748b;font-size:13px">未找到匹配的国家</div>
+    </div>
+
     <!-- Customer type (moved from old Step 1) -->
     <div class="step1-section-title" style="margin-top:18px">目标客户类型（可多选）</div>
     <div class="type-grid" id="typeGrid"></div>
     <span class="sel-hint" id="typeSelHint" style="display:block;margin-top:6px">请至少选择一个类型</span>
+
+    <!-- Free-text type input (shown on /app — feeds into selectedTypes via synthetic slot) -->
+    <div id="customerTypeInput" style="display:none">
+      <input type="text" id="appCustomerType" placeholder="例：custom home builder, renovation contractor" oninput="onAppCustomerTypeInput()" autocomplete="off">
+      <small>用英文输入，逗号分隔多个类型</small>
+    </div>
 
     <!-- Data source (8 sources) -->
     <div style="margin-top:20px;margin-bottom:20px">
@@ -2691,9 +2873,37 @@ const CUSTOMER_TYPES = [
 ];
 
 // ── City presets ──────────────────────────────────────────────────────────────
-const COUNTRY_CODES = ['AU','US','UK','CA','DE','AE','SG','JP'];
-const COUNTRY_NAMES = { AU:'澳大利亚', US:'美国', UK:'英国', CA:'加拿大', DE:'德国', AE:'阿联酋', SG:'新加坡', JP:'日本' };
-const APIFY_COUNTRY_ISO = { AU:'au', US:'us', UK:'gb', CA:'ca', DE:'de', AE:'ae', SG:'sg', JP:'jp' };
+// First 8 entries (AU..JP) must keep their indices — /lens flag cards reference
+// them by hardcoded index (cc-0..cc-7). New countries are appended after.
+const COUNTRY_CODES = [
+  'AU','US','UK','CA','DE','AE','SG','JP',
+  // Asia
+  'KR','MY','TH','ID','IN','PH','VN',
+  // Europe
+  'FR','NL','IT','ES','SE','NO','PL',
+  // Middle East / Africa
+  'SA','QA','ZA','NG',
+  // Americas
+  'BR','MX','AR','CL','CO',
+  // Oceania
+  'NZ',
+];
+const COUNTRY_NAMES = {
+  AU:'澳大利亚', US:'美国', UK:'英国', CA:'加拿大', DE:'德国', AE:'阿联酋', SG:'新加坡', JP:'日本',
+  KR:'韩国', MY:'马来西亚', TH:'泰国', ID:'印尼', IN:'印度', PH:'菲律宾', VN:'越南',
+  FR:'法国', NL:'荷兰', IT:'意大利', ES:'西班牙', SE:'瑞典', NO:'挪威', PL:'波兰',
+  SA:'沙特', QA:'卡塔尔', ZA:'南非', NG:'尼日利亚',
+  BR:'巴西', MX:'墨西哥', AR:'阿根廷', CL:'智利', CO:'哥伦比亚',
+  NZ:'新西兰',
+};
+const APIFY_COUNTRY_ISO = {
+  AU:'au', US:'us', UK:'gb', CA:'ca', DE:'de', AE:'ae', SG:'sg', JP:'jp',
+  KR:'kr', MY:'my', TH:'th', ID:'id', IN:'in', PH:'ph', VN:'vn',
+  FR:'fr', NL:'nl', IT:'it', ES:'es', SE:'se', NO:'no', PL:'pl',
+  SA:'sa', QA:'qa', ZA:'za', NG:'ng',
+  BR:'br', MX:'mx', AR:'ar', CL:'cl', CO:'co',
+  NZ:'nz',
+};
 const CITY_PRESETS = {
   AU: ['Melbourne','Sydney','Brisbane','Perth','Adelaide','Canberra','Gold Coast','Hobart','Darwin','Newcastle','Wollongong','Geelong','Townsville','Cairns','Toowoomba','Ballarat','Bendigo','Launceston','Mackay','Rockhampton'],
   CA: ['Toronto','Vancouver','Montreal','Calgary','Ottawa','Edmonton','Quebec City','Winnipeg','Hamilton','Kitchener','London (ON)','Victoria','Halifax','Oshawa','Windsor','Saskatoon','Regina',"St. John's",'Kelowna','Sherbrooke'],
@@ -2761,6 +2971,66 @@ function updateStep1Nav() {
   const ok = selectedCountries.size > 0 && selectedTypes.size > 0;
   const btn = document.getElementById('step1NextBtn');
   if (btn) btn.disabled = !ok;
+}
+
+// ── /app pill country selector ────────────────────────────────────────────────
+// Maps a clicked pill code to its index in the extended COUNTRY_CODES, then
+// delegates to toggleCountry(i) so downstream state (selectedCountries Set of
+// indices, city dropdown, updateSelectedCombo) all keep working unchanged.
+function selectPillCountry(code) {
+  const idx = COUNTRY_CODES.indexOf(code);
+  if (idx < 0) { console.warn('[pill] unknown country code:', code); return; }
+  toggleCountry(idx);
+  document.querySelectorAll('#countryPillSelector .pill-country').forEach(p => p.classList.remove('on'));
+  if (selectedCountries.has(idx)) {
+    const el = document.querySelector(`#countryPillSelector .pill-country[data-code="${code}"]`);
+    if (el) el.classList.add('on');
+  }
+}
+
+function filterCountryPills() {
+  const q = (document.getElementById('countryPillSearch')?.value || '').trim().toLowerCase();
+  let anyVisibleOverall = false;
+  document.querySelectorAll('#countryPillSelector .pill-region').forEach(region => {
+    let anyVisible = false;
+    region.querySelectorAll('.pill-country').forEach(pill => {
+      const code = (pill.dataset.code || '').toLowerCase();
+      const name = (pill.dataset.name || '').toLowerCase();
+      const match = !q || code.includes(q) || name.includes(q);
+      pill.style.display = match ? '' : 'none';
+      if (match) anyVisible = true;
+    });
+    region.style.display = anyVisible ? '' : 'none';
+    if (anyVisible) anyVisibleOverall = true;
+  });
+  const empty = document.getElementById('countryPillEmpty');
+  if (empty) empty.style.display = anyVisibleOverall ? 'none' : 'block';
+}
+
+// ── /app free-text customer type ──────────────────────────────────────────────
+// Reserves a synthetic slot in CUSTOMER_TYPES whose .zh is the user's typed
+// text; selectedTypes holds that slot's index so downstream template_key /
+// display-label code reads back the typed text from CUSTOMER_TYPES[idx].zh.
+const APP_CUSTOM_TYPE_IDX = CUSTOMER_TYPES.length; // captured at script load = 8
+function onAppCustomerTypeInput() {
+  const el = document.getElementById('appCustomerType');
+  const text = (el?.value || '').trim();
+  if (!text) {
+    selectedTypes.clear();
+    const hint = document.getElementById('typeSelHint');
+    if (hint) hint.textContent = '请输入客户类型';
+    updateStep1Nav();
+    return;
+  }
+  if (!CUSTOMER_TYPES[APP_CUSTOM_TYPE_IDX]) {
+    CUSTOMER_TYPES[APP_CUSTOM_TYPE_IDX] = { icon:'', zh: text, en: text, lucide: 'briefcase' };
+  } else {
+    CUSTOMER_TYPES[APP_CUSTOM_TYPE_IDX].zh = text;
+    CUSTOMER_TYPES[APP_CUSTOM_TYPE_IDX].en = text;
+  }
+  selectedTypes.clear();
+  selectedTypes.add(APP_CUSTOM_TYPE_IDX);
+  updateStep1Nav();
 }
 
 // ── City dropdown ─────────────────────────────────────────────────────────────
@@ -5795,6 +6065,31 @@ setTimeout(onSellerInput, 0);    // set initial disabled state for step2 next bt
 
   // Re-run validation so the step2-next button reflects the now-filled inputs
   if (typeof onSellerInput === 'function') onSellerInput();
+})();
+
+// ── Step 2 selector visibility (/lens shows flag grid + type cards; /app shows
+// the pill country selector + free-text customer type input) ──────────────────
+(function applyStep2SelectorVisibility() {
+  const isLens = location.pathname === '/lens';
+  const legacyCountry = document.getElementById('countryGrid');
+  const legacyCountryHint = document.getElementById('countrySelHint');
+  const legacyType = document.getElementById('typeGrid');
+  const legacyTypeHint = document.getElementById('typeSelHint');
+  const pillSelector = document.getElementById('countryPillSelector');
+  const typeInputWrap = document.getElementById('customerTypeInput');
+
+  if (isLens) {
+    if (pillSelector)  pillSelector.style.display  = 'none';
+    if (typeInputWrap) typeInputWrap.style.display = 'none';
+    // legacy elements keep their default display
+  } else {
+    if (legacyCountry)     legacyCountry.style.display     = 'none';
+    if (legacyCountryHint) legacyCountryHint.style.display = 'none';
+    if (legacyType)        legacyType.style.display        = 'none';
+    if (legacyTypeHint)    legacyTypeHint.style.display    = 'none';
+    if (pillSelector)      pillSelector.style.display      = '';
+    if (typeInputWrap)     typeInputWrap.style.display     = '';
+  }
 })();
 
 // Deep-link: index.html?search=<id> loads that search's leads directly
