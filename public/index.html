@@ -1814,6 +1814,120 @@
       color: #64748b;
     }
 
+    /* ── Step 2 Wizard (/app new users) — one card visible at a time ── */
+    #step2Wizard { margin-top: 8px; }
+    .ws-card {
+      background: #111827;
+      border: 1px solid #1e2d4a;
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .ws-hint {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #4299e1;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .ws-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f7fafc;
+      margin: 0 0 4px;
+      letter-spacing: -0.01em;
+    }
+    .ws-sub {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 18px;
+    }
+    .ws-body { margin-bottom: 18px; }
+    .ws-nav {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .ws-back {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid #252d3d;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 12.5px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+      margin-bottom: 12px;
+    }
+    .ws-back:hover { color: #e2e8f0; border-color: #4299e1; }
+    .ws-next {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 22px;
+      background: #1e3a5f;
+      color: #63b3ed;
+      border: 1px solid #2a4a6a;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .ws-next:hover { background: #25446e; border-color: #4299e1; }
+    .ws-start {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 12px 26px;
+      background: #0d2010;
+      color: #5DCAA5;
+      border: 1px solid #1f4d2a;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .ws-start:hover {
+      background: #133318;
+      border-color: #2d7a3e;
+      box-shadow: 0 4px 18px rgba(93,202,165,0.18);
+    }
+    .ws-start .ti { font-size: 17px; }
+
+    /* When sections are moved into wizard body slots, strip their original
+       top/bottom margins so they fit the card padding cleanly. */
+    .ws-body > #dataSourceSection,
+    .ws-body > #searchInputsRow,
+    .ws-body > #depthSelectorSection,
+    .ws-body > #sellerInfoSection,
+    .ws-body > #icpBuilder,
+    .ws-body > #countryPillSelector {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    /* When seller info section is in the wizard, drop its outer card chrome
+       so it doesn't double-frame the parent ws-card. */
+    .ws-body > #sellerInfoSection {
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+    /* When icpBuilder is in the wizard, same — drop its outer frame. */
+    .ws-body > #icpBuilder {
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+    /* Sibling spacing inside wizard body slots (ws3 has search+depth; ws4 has
+       seller+icp). Higher specificity than the margin-reset above. */
+    .ws-body > #depthSelectorSection,
+    .ws-body > #icpBuilder { margin-top: 18px; }
+
     /* ── ICP Builder (/app new users) ── */
     #icpBuilder {
       margin-bottom: 16px;
@@ -2074,6 +2188,61 @@
     <div class="panel-title">第二步：配置搜索参数</div>
     <div class="panel-sub">填写关键词和目标城市即可开始</div>
 
+    <!-- ── Step 2 Wizard (/app new users) — hidden by default; reshape IIFE
+         on /app moves the live DOM nodes for country pills, data source, search
+         inputs, depth selector, seller info, and #icpBuilder from #step2Legacy
+         into the .ws-body slots below. /lens leaves everything in #step2Legacy. -->
+    <div id="step2Wizard" style="display:none">
+
+      <div class="ws-card" id="ws1">
+        <div class="ws-hint">第 1 步 / 共 4 步</div>
+        <h3 class="ws-title">选择目标国家</h3>
+        <div class="ws-sub">点击一个国家自动进入下一步</div>
+        <div class="ws-body" id="ws1Body"></div>
+      </div>
+
+      <div class="ws-card" id="ws2" style="display:none">
+        <button type="button" class="ws-back" onclick="wizardGo(1)">← 返回</button>
+        <div class="ws-hint">第 2 步 / 共 4 步</div>
+        <h3 class="ws-title">选择数据源</h3>
+        <div class="ws-sub">从哪个平台抓取客户</div>
+        <div class="ws-body" id="ws2Body"></div>
+        <div class="ws-nav">
+          <button type="button" class="ws-next" onclick="wizardGo(3)">下一步 →</button>
+        </div>
+      </div>
+
+      <div class="ws-card" id="ws3" style="display:none">
+        <button type="button" class="ws-back" onclick="wizardGo(2)">← 返回</button>
+        <div class="ws-hint">第 3 步 / 共 4 步</div>
+        <h3 class="ws-title">搜索配置</h3>
+        <div class="ws-sub">关键词、目标城市、抓取数量</div>
+        <div class="ws-body" id="ws3Body"></div>
+        <div class="ws-nav">
+          <button type="button" class="ws-next" onclick="wizardGo(4)">下一步 →</button>
+        </div>
+      </div>
+
+      <div class="ws-card" id="ws4" style="display:none">
+        <button type="button" class="ws-back" onclick="wizardGo(3)">← 返回</button>
+        <div class="ws-hint">第 4 步 / 共 4 步</div>
+        <h3 class="ws-title">公司信息 + 筛选标准</h3>
+        <div class="ws-sub">告诉 AI 你的产品和理想客户</div>
+        <div class="ws-body" id="ws4Body"></div>
+        <div class="ws-nav">
+          <button type="button" class="ws-start" onclick="wizardStart()">
+            <i class="ti ti-rocket"></i>一键开始
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Legacy /lens layout (also holds the live elements on /app until the
+         reshape IIFE moves them; remains the canonical container for token,
+         agreeTerms, and data-fields which are NOT shown in the wizard). -->
+    <div id="step2Legacy">
+
     <!-- Country selection (moved from old Step 1) -->
     <div class="step1-section-title">目标国家/地区（单选）</div>
     <div class="cards-grid" id="countryGrid">
@@ -2181,7 +2350,7 @@
     <span class="sel-hint" id="typeSelHint" style="display:block;margin-top:6px">请至少选择一个类型</span>
 
     <!-- Data source (8 sources) -->
-    <div style="margin-top:20px;margin-bottom:20px">
+    <div id="dataSourceSection" style="margin-top:20px;margin-bottom:20px">
       <label>数据源</label>
       <div class="ds-grid" id="dsGrid">
         <button type="button" class="ds-card selected" id="ds-google_maps" onclick="selectSource('google_maps')">
@@ -2218,7 +2387,7 @@
     </div>
 
     <!-- Keyword + City side by side -->
-    <div class="form-row" style="margin-bottom:20px">
+    <div class="form-row" id="searchInputsRow" style="margin-bottom:20px">
       <div>
         <label>搜索关键词</label>
         <input type="text" id="kwInput" placeholder="如：renovation contractor">
@@ -2242,7 +2411,7 @@
     </div>
 
     <!-- Depth (segmented control) -->
-    <div style="margin-bottom:20px">
+    <div id="depthSelectorSection" style="margin-bottom:20px">
       <label>每次最多抓取</label>
       <input type="hidden" id="maxResults" value="20">
       <div class="depth-seg">
@@ -2281,7 +2450,7 @@
     </div>
 
     <!-- Seller info - required, promoted above ICP -->
-    <div style="margin-bottom:20px;padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:var(--card)">
+    <div id="sellerInfoSection" style="margin-bottom:20px;padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:var(--card)">
       <div style="font-size:0.83rem;font-weight:700;color:var(--text);margin-bottom:12px;letter-spacing:0.01em">✉️ 卖家信息（必填，AI 写邮件用）</div>
       <div class="form-row triple" style="margin-bottom:0">
         <div>
@@ -2412,6 +2581,8 @@
       <button type="button" class="step-back-btn" onclick="goToStep(1)">← 返回方式选择</button>
       <button class="btn-primary" id="step2NextBtn" onclick="step2Next()">下一步 →</button>
     </div>
+
+    </div><!-- /#step2Legacy -->
   </div>
 
   <!-- Step 3: Scrape -->
@@ -3197,6 +3368,41 @@ function selectPillCountry(code) {
     const el = document.querySelector(`#countryPillSelector .pill-country[data-code="${code}"]`);
     if (el) el.classList.add('on');
   }
+  // /app wizard: auto-advance from ws1 to ws2 after a brief beat
+  if (location.pathname !== '/lens' && selectedCountries.has(idx)) {
+    const ws1 = document.getElementById('ws1');
+    if (ws1 && ws1.style.display !== 'none') {
+      setTimeout(() => { if (typeof wizardGo === 'function') wizardGo(2); }, 300);
+    }
+  }
+}
+
+// ── Step 2 wizard navigation (/app new users) ─────────────────────────────────
+function wizardGo(n) {
+  for (let i = 1; i <= 4; i++) {
+    const card = document.getElementById('ws' + i);
+    if (card) card.style.display = (i === n) ? '' : 'none';
+  }
+  // Scroll the visible card into view smoothly
+  const target = document.getElementById('ws' + n);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function wizardStart() {
+  // The customer-type UI was removed for /app, so selectedTypes is empty here.
+  // Seed it with the synthetic slot used by the (now-removed) free-text input,
+  // labelled with the keyword so downstream template_key / display use it.
+  if (selectedTypes.size === 0 && typeof APP_CUSTOM_TYPE_IDX === 'number') {
+    const kw = (document.getElementById('kwInput')?.value || '').trim() || 'target customer';
+    if (!CUSTOMER_TYPES[APP_CUSTOM_TYPE_IDX]) {
+      CUSTOMER_TYPES[APP_CUSTOM_TYPE_IDX] = { icon:'', zh: kw, en: kw, lucide: 'briefcase' };
+    } else {
+      CUSTOMER_TYPES[APP_CUSTOM_TYPE_IDX].zh = kw;
+      CUSTOMER_TYPES[APP_CUSTOM_TYPE_IDX].en = kw;
+    }
+    selectedTypes.add(APP_CUSTOM_TYPE_IDX);
+  }
+  if (typeof step2Next === 'function') step2Next();
 }
 
 function filterCountryPills() {
@@ -6371,12 +6577,16 @@ setTimeout(onSellerInput, 0);    // set initial disabled state for step2 next bt
 
   const icpBuilder = document.getElementById('icpBuilder');
   const icpLegacy  = document.getElementById('icpLegacy');
+  const step2Legacy = document.getElementById('step2Legacy');
+  const step2Wizard = document.getElementById('step2Wizard');
 
   if (isLens) {
     if (pillSelector)  pillSelector.style.display  = 'none';
     if (typeInputWrap) typeInputWrap.style.display = 'none';
     if (icpBuilder)    icpBuilder.style.display    = 'none';
     if (icpLegacy)     icpLegacy.style.display     = '';
+    if (step2Legacy)   step2Legacy.style.display   = '';
+    if (step2Wizard)   step2Wizard.style.display   = 'none';
     // legacy country/type elements keep their default display
   } else {
     if (legacyCountry)     legacyCountry.style.display     = 'none';
@@ -6387,6 +6597,29 @@ setTimeout(onSellerInput, 0);    // set initial disabled state for step2 next bt
     if (typeInputWrap)     typeInputWrap.style.display     = '';
     if (icpBuilder)        icpBuilder.style.display        = '';
     if (icpLegacy)         icpLegacy.style.display         = 'none';
+
+    // /app wizard mode: move the live DOM nodes into the wizard body slots.
+    // Existing IDs and event handlers are preserved — appendChild relocates
+    // nodes without re-creating them.
+    if (step2Wizard && step2Legacy) {
+      const reshapeMoves = [
+        ['ws1Body', 'countryPillSelector'],
+        ['ws2Body', 'dataSourceSection'],
+        ['ws3Body', 'searchInputsRow'],
+        ['ws3Body', 'depthSelectorSection'],
+        ['ws4Body', 'sellerInfoSection'],
+        ['ws4Body', 'icpBuilder'],
+      ];
+      reshapeMoves.forEach(([slotId, nodeId]) => {
+        const slot = document.getElementById(slotId);
+        const node = document.getElementById(nodeId);
+        if (slot && node && node.parentElement !== slot) slot.appendChild(node);
+      });
+      step2Legacy.style.display = 'none';
+      step2Wizard.style.display = '';
+      // Default to ws1 on first show
+      if (typeof wizardGo === 'function') wizardGo(1);
+    }
   }
 })();
 
