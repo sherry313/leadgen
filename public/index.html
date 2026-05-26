@@ -2702,6 +2702,12 @@ const CITY_PRESETS = {
   JP: ['Tokyo','Osaka','Yokohama','Nagoya','Sapporo','Fukuoka','Kobe','Kyoto','Kawasaki','Saitama'],
 };
 
+// ── Preset namespace ──────────────────────────────────────────────────────────
+// /lens stores seller config under leadgen_lens_* keys; /app (and any other path)
+// uses leadgen_* — keeps the two presets from cross-contaminating localStorage.
+// accessToken stays on the literal 'leadgen_accessToken' key (shared with login.html).
+const LEAD_PREFIX = location.pathname === '/lens' ? 'leadgen_lens_' : 'leadgen_';
+
 // ── State ─────────────────────────────────────────────────────────────────────
 const selectedCountries = new Set();
 const selectedTypes     = new Set();
@@ -3081,7 +3087,7 @@ function setStatus(msg, type = 'info') {
 // ── ICP input & vagueness check ───────────────────────────────────────────────
 function onIcpInput() {
   const text = document.getElementById('icpInput').value.trim();
-  localStorage.setItem('leadgen_icp', text);
+  localStorage.setItem(LEAD_PREFIX + 'icp', text);
   const warn = document.getElementById('icpWarning');
   const good = document.getElementById('icpGood');
   warn.style.display = 'none';
@@ -4443,7 +4449,7 @@ async function checkAdminAndShow() {
 }
 
 function restoreIcp() {
-  const saved = localStorage.getItem('leadgen_icp');
+  const saved = localStorage.getItem(LEAD_PREFIX + 'icp');
   if (saved) { document.getElementById('icpInput').value = saved; onIcpInput(); }
 }
 
@@ -5612,12 +5618,23 @@ setInterval(() => {
 }, 60000);
 
 // ── Persist localStorage ──────────────────────────────────────────────────────
-['sellerName','products','advantage','accessToken'].forEach(id => {
+// Seller-info inputs use LEAD_PREFIX so /lens and /app don't share values.
+['sellerName','products','advantage'].forEach(id => {
   const el = document.getElementById(id); if (!el) return;
-  const v = localStorage.getItem('leadgen_' + id);
+  const v = localStorage.getItem(LEAD_PREFIX + id);
   if (v !== null) el.value = v;
-  el.addEventListener('input', () => localStorage.setItem('leadgen_' + id, el.value));
+  el.addEventListener('input', () => localStorage.setItem(LEAD_PREFIX + id, el.value));
 });
+// accessToken is the user's auth token — must stay on the literal 'leadgen_accessToken'
+// key so login.html and any path share the same session.
+{
+  const el = document.getElementById('accessToken');
+  if (el) {
+    const v = localStorage.getItem('leadgen_accessToken');
+    if (v !== null) el.value = v;
+    el.addEventListener('input', () => localStorage.setItem('leadgen_accessToken', el.value));
+  }
+}
 ['optSocial','optHours','optOwner'].forEach(id => {
   const el = document.getElementById(id); if (!el) return;
   const v = localStorage.getItem('leadgen_' + id);
@@ -5743,6 +5760,39 @@ updateLoginStatus();
 checkAdminAndShow();
 setTimeout(_restoreStep, 0);     // deferred: restores in-progress session after init
 setTimeout(onSellerInput, 0);    // set initial disabled state for step2 next btn
+
+// ── Preset application (/lens pre-fills Lens config; /app stays clean) ────────
+// Runs after the persist loop has already restored any saved values, so the
+// hardcoded preset only fills inputs that are still empty for first-time visitors.
+(function applyPreset() {
+  const isLens = location.pathname === '/lens';
+  if (!isLens) return;  // /app stays clean — no pre-fill
+
+  const presets = {
+    sellerName: 'Lens 朗斯家居',
+    products:   'Aluminium windows and doors, curtain walls',
+    advantage:  '300,000m² factory in Foshan, 20 years experience, AS2047 certified',
+    icp:        'Custom home builders, renovation contractors, interior designers, property developers in Australia who need premium aluminium windows and doors',
+  };
+
+  const sellerInput    = document.getElementById('sellerName');
+  const productsInput  = document.getElementById('products');
+  const advantageInput = document.getElementById('advantage');
+  const icpInput       = document.getElementById('icpInput');
+
+  if (sellerInput    && !sellerInput.value)    sellerInput.value    = localStorage.getItem(LEAD_PREFIX + 'sellerName') || presets.sellerName;
+  if (productsInput  && !productsInput.value)  productsInput.value  = localStorage.getItem(LEAD_PREFIX + 'products')   || presets.products;
+  if (advantageInput && !advantageInput.value) advantageInput.value = localStorage.getItem(LEAD_PREFIX + 'advantage')  || presets.advantage;
+  if (icpInput       && !icpInput.value)       icpInput.value       = localStorage.getItem(LEAD_PREFIX + 'icp')        || presets.icp;
+
+  document.title = 'Lens 朗斯家居 — 智拓客';
+
+  const brandLink = document.querySelector('a[href="index.html"]');
+  if (brandLink) brandLink.href = '/lens';
+
+  // Re-run validation so the step2-next button reflects the now-filled inputs
+  if (typeof onSellerInput === 'function') onSellerInput();
+})();
 
 // Deep-link: index.html?search=<id> loads that search's leads directly
 // Deep-link: index.html?query=X&location=Y re-runs a scrape directly

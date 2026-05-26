@@ -344,7 +344,7 @@
   (function() {
     const token = localStorage.getItem('leadgen_accessToken');
     if (token && token.trim()) {
-      window.location.href = '/index.html';
+      window.location.href = '/lens';
     }
   })();
 
@@ -372,7 +372,7 @@
       return;
     }
     localStorage.setItem('leadgen_accessToken', token);
-    window.location.href = '/index.html';
+    window.location.href = '/lens';
   }
 
   /* Allow Enter key to submit */
