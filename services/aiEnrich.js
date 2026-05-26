@@ -317,7 +317,7 @@ BODY IRON RULES:
 2. Write like a real person who researched the company, not a marketing template
 3. Reference specific details from the prospect's website
 4. Reference specific Australian cities, company names, or numbers
-5. Sign every email with "— ${name}"
+5. End every email with exactly {{accountSignature}} on its own line. Do NOT add any sign-off like Best regards, Warmly, Cheers, etc. before {{accountSignature}}. Do NOT add the seller's name (e.g. "— ${name}", "${name}", "Lili", "Ella", etc.) before or after {{accountSignature}}. The literal placeholder {{accountSignature}} is the entire sign-off — Instantly replaces it with the sender's saved signature at send time.
 6. Use {first_name} as salutation placeholder; {company} and {website} where natural
 7. BANNED PHRASES — these trigger spam filters, NEVER use them in any email under any framework:
 'no sales', 'no commitment', 'no obligation', 'no contract', 'no risk', 'no strings', 'no catch', 'no pitch', 'completely free', '100% free', 'risk free', 'guarantee', 'act now', 'limited time', 'don't miss', 'exclusive offer', 'winner', 'congratulations'.

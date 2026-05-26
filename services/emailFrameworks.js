@@ -28,13 +28,13 @@ Lens is a 300,000m² aluminium factory in Foshan, 20 years. Currently working wi
 
 Worth a half-day next time you're in China? Just a chance to see if it makes sense — one more option in your back pocket.
 
-Lili
+{{accountSignature}}
 
 ---
-~60 words. Lowercase-first subject with proper-noun caps. Customer-angle pain question, low-friction CTA, "Lili" sign-off only — no "— Lens".`,
+~60 words. Lowercase-first subject with proper-noun caps. Customer-angle pain question, low-friction CTA, {{accountSignature}} as the only sign-off (Instantly renders it at send time).`,
     sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
 - Body length: 45-70 words per email (NOT "under 100")
-- Sign-off: the single word "Lili" on its own line. Do NOT append "— [seller name]". Do NOT write "— Lili" or "Lili, Lens". Just "Lili".
+- Sign-off: exactly {{accountSignature}} on its own line. Do NOT write "Lili", "— Lili", "Lili, Lens", "— [seller name]", "Best regards", "Warmly", "Cheers" or any other sign-off. The literal placeholder {{accountSignature}} is the entire sign-off — Instantly substitutes the sender's signature at send time.
 - Subject length: 5-8 words
 - Subject case: first letter LOWERCASE, common words lowercase. ONLY capitalise proper nouns (China, Foshan, Sydney, Guangdong, country/city/brand names). Numbers as-is.
 - Never Title Case. Never ALL CAPS. Never capitalise the first letter of the subject as a default.
@@ -59,7 +59,7 @@ Body structure (45-70 words total):
   2. Pain question: "if your aluminium supplier ghosts mid-[project type], how many days does your client wait?" — adapt [project type] to their work (mid-build, mid-fit-out, mid-install, mid-renovation).
   3. Credentials line, verbatim: "Lens is a 300,000m² aluminium factory in Foshan, 20 years. Currently working with a Sydney designer on a residential project."
   4. CTA, verbatim: "Worth a half-day next time you're in China? Just a chance to see if it makes sense — one more option in your back pocket."
-Sign-off: Lili
+Sign-off: {{accountSignature}}
 Subject: curiosity-gap, lowercase-first, 5-8 words. Examples: "quick thought on your supplier risk", "before your next custom build", "when your supplier ghosts".
 
 === EMAIL 2 (Day 3) — audit-supplier insight ===
@@ -70,7 +70,7 @@ Hi [Name],
 Quick follow-up.
 Most builders we talk to only audit their China supplier once — at the start. Then they hope for the best.
 One thing that helps: a factory video before any order. If you want, I can send ours — just for your reference.
-Lili
+{{accountSignature}}
 
 === EMAIL 3 (Day 5) — value ===
 FIXED TEMPLATE. Output the subject and body BELOW VERBATIM. ONLY swap [Name]. Do not rephrase.
@@ -83,7 +83,7 @@ If you ever evaluate a new China supplier (us or anyone else), 3 questions that 
 3. "Who's the actual factory owner — and can I email them directly?"
 Most won't answer #3.
 If you want, I can send our answers to all 3 — just for your reference.
-Lili
+{{accountSignature}}
 
 === EMAIL 4 (Day 7) — factory visit invite ===
 FIXED TEMPLATE. Output the subject and body BELOW VERBATIM. ONLY swap [Name]. Do not rephrase.
@@ -94,7 +94,7 @@ If you ever come to China for sourcing (most builders we work with do 1-2 trips 
 You cover flight + hotel.
 Flexible, straightforward. Most builders stay 1-2 nights, see 4-5 factories, ours included.
 If your trip is on the horizon, reply with the month and we'll figure it out.
-Lili
+{{accountSignature}}
 
 === EMAIL 5 (Day 10) — breakup ===
 FIXED TEMPLATE. Output the subject and body BELOW VERBATIM. ONLY swap [Name] and [Company]. Do not rephrase.
@@ -104,7 +104,7 @@ Hi [Name],
 I've emailed 4 times — no reply. All good.
 Closing your file today. If your current supplier ever falls over, my email stays open.
 One last thing — is there someone else at [Company] who handles aluminium/cabinetry sourcing I should know about?
-Lili
+{{accountSignature}}
 
 CRITICAL — EMAILS 2-5 ARE FIXED TEMPLATES:
 Do NOT rephrase the body. Do NOT add extra sentences. Do NOT change the subject. ONLY swap [Name] (and [Company] in Email 5). Their word counts will be tighter than the 45-70 range — that is correct, the templates are authoritative as written.
@@ -148,7 +148,7 @@ BAD:
 Email 1 (Day 1) — Hook
 3-5 lines. Reference something specific from prospect's website. End with an open question.
 Subject: "Bulk window timeline?"
-Body: "Hi {first_name}, Saw your latest project — impressive scale. Quick question: how do you handle window & door supply for tight construction timelines? We've helped AU developers cut lead time to 4 weeks on bulk orders, factory-direct. Worth a quick chat? — Lens"
+Body: "Hi {first_name}, Saw your latest project — impressive scale. Quick question: how do you handle window & door supply for tight construction timelines? We've helped AU developers cut lead time to 4 weeks on bulk orders, factory-direct. Worth a quick chat? {{accountSignature}}"
 
 Email 2 (Day 4) — Value Drop
 4-6 lines. One specific value point with a concrete number. Address ONE pain point for this customer type.
@@ -197,8 +197,7 @@ We're on the lookout for another plumbing company we can help do the same with.
 
 Is this something you would be interested in?
 
-Cheers,
-Josh
+{{accountSignature}}
 
 ---
 A = Attention (opening question grabs attention)
@@ -281,7 +280,7 @@ We consolidate supply into a single factory-direct channel: 4-week lead times, c
 
 Worth 10 minutes to see if this fits your pipeline?
 
-— Lens
+{{accountSignature}}
 
 ---
 P = Problem (3+ suppliers = spec mismatches + delayed handovers)
