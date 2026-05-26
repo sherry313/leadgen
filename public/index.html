@@ -1764,16 +1764,16 @@
     .pill-country {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 6px 14px;
-      border-radius: 20px;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 12px;
       border: 1px solid #1e2d4a;
-      background: #111827;
+      background: #1a2332;
       color: #cbd5e0;
       font-size: 13px;
       font-family: inherit;
       cursor: pointer;
-      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      transition: 0.2s;
     }
     .pill-country img {
       width: 18px; height: 12px;
@@ -1781,11 +1781,16 @@
       border-radius: 2px;
       display: block;
     }
-    .pill-country:hover { border-color: #4299e1; }
-    .pill-country.on {
+    .pill-country:hover {
       border-color: #4299e1;
+      transform: translateY(-1px);
+    }
+    .pill-country.on {
+      border: 2px solid #4299e1;
       background: #0a1628;
       color: #63b3ed;
+      /* Compensate for 2px border so the pill doesn't visually grow/shift */
+      padding: 9px 17px;
     }
 
     /* ── Customer type free-text input (/app) ── */
@@ -1816,88 +1821,140 @@
 
     /* ── Step 2 Wizard (/app new users) — one card visible at a time ── */
     #step2Wizard { margin-top: 8px; }
+    .ws-progress {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .ws-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #1a2332;
+      transition: 0.3s;
+    }
+    .ws-dot.active {
+      width: 24px;
+      border-radius: 12px;
+      background: #1e3a5f;
+    }
+    .ws-dot.done { background: #0d2010; }
+
     .ws-card {
       background: #111827;
       border: 1px solid #1e2d4a;
-      border-radius: 12px;
-      padding: 1.5rem;
-      max-width: 600px;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 520px;
       margin: 0 auto;
       position: relative;
+      overflow: hidden;
     }
-    .ws-hint {
-      font-size: 11.5px;
-      font-weight: 600;
-      color: #4299e1;
+    .ws-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #378ADD, #534AB7);
+    }
+    .ws-step-label {
+      font-size: 11px;
+      color: #63b3ed;
+      font-weight: 500;
       letter-spacing: 0.05em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+    .ws-step-label i { font-size: 14px; }
     .ws-title {
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 20px;
+      font-weight: 500;
       color: #f7fafc;
       margin: 0 0 4px;
-      letter-spacing: -0.01em;
     }
     .ws-sub {
       font-size: 13px;
       color: #94a3b8;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
+      line-height: 1.5;
     }
     .ws-body { margin-bottom: 18px; }
-    .ws-nav {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 8px;
-    }
+    .ws-nav { margin-top: 0; }
     .ws-back {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 6px 12px;
-      background: transparent;
-      border: 1px solid #252d3d;
-      border-radius: 8px;
-      color: #94a3b8;
-      font-size: 12.5px;
-      font-family: inherit;
+      display: flex; align-items: center; gap: 4px;
+      font-size: 12px;
+      color: #4a5568;
       cursor: pointer;
-      transition: color 0.12s, border-color 0.12s;
-      margin-bottom: 12px;
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin-bottom: 16px;
+      font-family: inherit;
+      transition: color 0.12s;
     }
-    .ws-back:hover { color: #e2e8f0; border-color: #4299e1; }
+    .ws-back:hover { color: #94a3b8; }
     .ws-next {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 10px 22px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.15s;
       background: #1e3a5f;
       color: #63b3ed;
       border: 1px solid #2a4a6a;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
       font-family: inherit;
-      cursor: pointer;
-      transition: all 0.15s;
     }
-    .ws-next:hover { background: #25446e; border-color: #4299e1; }
+    .ws-next:hover { transform: translateY(-1px); }
     .ws-start {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 12px 26px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.15s;
       background: #0d2010;
       color: #5DCAA5;
       border: 1px solid #1f4d2a;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
       font-family: inherit;
-      cursor: pointer;
-      transition: all 0.15s;
     }
-    .ws-start:hover {
-      background: #133318;
-      border-color: #2d7a3e;
-      box-shadow: 0 4px 18px rgba(93,202,165,0.18);
-    }
+    .ws-start:hover { transform: translateY(-1px); }
     .ws-start .ti { font-size: 17px; }
+
+    /* Data source grid inside wizard: 2 columns + tidier card padding */
+    .ws-body #dsGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+    .ws-body .ds-card {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: 0.15s;
+    }
+    .ws-body .ds-card:hover { transform: translateY(-1px); }
 
     /* When sections are moved into wizard body slots, strip their original
        top/bottom margins so they fit the card padding cleanly. */
@@ -2194,18 +2251,25 @@
          into the .ws-body slots below. /lens leaves everything in #step2Legacy. -->
     <div id="step2Wizard" style="display:none">
 
+      <div class="ws-progress" id="wsProgress">
+        <div class="ws-dot active" id="wsd1"></div>
+        <div class="ws-dot" id="wsd2"></div>
+        <div class="ws-dot" id="wsd3"></div>
+        <div class="ws-dot" id="wsd4"></div>
+      </div>
+
       <div class="ws-card" id="ws1">
-        <div class="ws-hint">第 1 步 / 共 4 步</div>
-        <h3 class="ws-title">选择目标国家</h3>
-        <div class="ws-sub">点击一个国家自动进入下一步</div>
+        <div class="ws-step-label"><i class="ti ti-map-pin"></i> STEP 1</div>
+        <h3 class="ws-title">你要开发哪个市场？</h3>
+        <div class="ws-sub">选择一个目标国家</div>
         <div class="ws-body" id="ws1Body"></div>
       </div>
 
       <div class="ws-card" id="ws2" style="display:none">
         <button type="button" class="ws-back" onclick="wizardGo(1)">← 返回</button>
-        <div class="ws-hint">第 2 步 / 共 4 步</div>
-        <h3 class="ws-title">选择数据源</h3>
-        <div class="ws-sub">从哪个平台抓取客户</div>
+        <div class="ws-step-label"><i class="ti ti-database"></i> STEP 2</div>
+        <h3 class="ws-title">从哪里搜索？</h3>
+        <div class="ws-sub">选择数据来源</div>
         <div class="ws-body" id="ws2Body"></div>
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(3)">下一步 →</button>
@@ -2214,9 +2278,9 @@
 
       <div class="ws-card" id="ws3" style="display:none">
         <button type="button" class="ws-back" onclick="wizardGo(2)">← 返回</button>
-        <div class="ws-hint">第 3 步 / 共 4 步</div>
-        <h3 class="ws-title">搜索配置</h3>
-        <div class="ws-sub">关键词、目标城市、抓取数量</div>
+        <div class="ws-step-label"><i class="ti ti-search"></i> STEP 3</div>
+        <h3 class="ws-title">你要找什么客户？</h3>
+        <div class="ws-sub">输入关键词描述你要找的客户类型</div>
         <div class="ws-body" id="ws3Body"></div>
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(4)">下一步 →</button>
@@ -2225,9 +2289,9 @@
 
       <div class="ws-card" id="ws4" style="display:none">
         <button type="button" class="ws-back" onclick="wizardGo(3)">← 返回</button>
-        <div class="ws-hint">第 4 步 / 共 4 步</div>
-        <h3 class="ws-title">公司信息 + 筛选标准</h3>
-        <div class="ws-sub">告诉 AI 你的产品和理想客户</div>
+        <div class="ws-step-label"><i class="ti ti-building"></i> STEP 4</div>
+        <h3 class="ws-title">最后，告诉我你是谁</h3>
+        <div class="ws-sub">AI 根据你的信息写个性化邮件</div>
         <div class="ws-body" id="ws4Body"></div>
         <div class="ws-nav">
           <button type="button" class="ws-start" onclick="wizardStart()">
@@ -3382,6 +3446,15 @@ function wizardGo(n) {
   for (let i = 1; i <= 4; i++) {
     const card = document.getElementById('ws' + i);
     if (card) card.style.display = (i === n) ? '' : 'none';
+
+    // Paint the progress dot: past = done (green), current = active (wide blue),
+    // future = default (gray). Classes are mutually exclusive.
+    const dot = document.getElementById('wsd' + i);
+    if (dot) {
+      dot.classList.remove('active', 'done');
+      if (i < n)      dot.classList.add('done');
+      else if (i === n) dot.classList.add('active');
+    }
   }
   // Scroll the visible card into view smoothly
   const target = document.getElementById('ws' + n);
