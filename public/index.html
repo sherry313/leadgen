@@ -6865,25 +6865,8 @@ function _restoreStep() {
         // /lens: auto-restore as before
         loadSearchById(savedSearchId);
       } else {
-        // /app: show a restore banner instead of auto-loading
-        const banner = document.createElement('div');
-        banner.id = 'restoreBanner';
-        banner.style.cssText = 'margin:16px 0;padding:12px 18px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap';
-        banner.innerHTML = `
-          <span style="font-size:13px;color:rgba(255,255,255,0.7)">📋 发现上次的搜索结果，是否恢复？</span>
-          <div style="display:flex;gap:8px">
-            <button onclick="loadSearchById('${savedSearchId}');document.getElementById('restoreBanner').remove()"
-              style="padding:6px 14px;background:rgba(99,102,241,0.3);border:1px solid rgba(99,102,241,0.5);border-radius:7px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">
-              恢复
-            </button>
-            <button onclick="localStorage.removeItem(LEAD_PREFIX+'searchId');localStorage.removeItem(LEAD_PREFIX+'current_step');document.getElementById('restoreBanner').remove()"
-              style="padding:6px 14px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:7px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:inherit">
-              不用了
-            </button>
-          </div>
-        `;
-        const step5 = document.getElementById('wizard-step-5') || document.getElementById('wizard-step-3');
-        if (step5) step5.insertAdjacentElement('afterend', banner);
+        // /app: auto-run completed before refresh — restore results directly
+        loadSearchById(savedSearchId);
       }
     }
     return;
