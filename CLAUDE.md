@@ -27,6 +27,7 @@
 - ALL external API calls must be wrapped in withTimeout()
 - ALL SSE endpoints must have res.on('close') for client disconnect handling
 - Use res.on('close'), NOT req.on('close') — req.on('close') fires immediately after body parsing
+- Frontend fetch calls: always use `getStoredToken()` for the Authorization header. Never hardcode localStorage key strings for the token.
 
 ### 5. Database rules
 - Do not modify Supabase table schema without explicit approval
@@ -66,3 +67,9 @@
 - HTML-only changes: just git pull + docker compose restart (no rebuild needed)
 - server.js changes: must rebuild (docker compose down && docker compose up -d --build)
 - .env is not tracked by git — must be maintained separately on VPS
+
+## 已知Schema问题
+
+1. `email_sent_at` 列不存在于 leads 表 — services/supabase.js:304 的 getEmailsSentCount() 查询这个列但 Supabase 静默失败，dashboard 的"已发送"统计永远是0。待修复：加这个列或找到真实的发送追踪方式。
+
+2. Supabase 分页+filter mutation 问题：用 .range() 分页时如果同一批次更新了行导致行从filter结果中消失，后续页会静默跳过行。正确做法：每次从offset 0开始，或用 gt('id', lastId) 按稳定key分页。
