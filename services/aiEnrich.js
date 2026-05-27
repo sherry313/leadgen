@@ -299,7 +299,10 @@ JSON RULES (apply to every string value):
 
 function _buildEmailSystemPrompt(frameworkInstructions, sellerProfile = {}) {
   const name = sellerProfile.sellerName || 'your company';
-  return `You are an expert B2B cold email copywriter for ${name}, a Chinese building materials manufacturer targeting Australian businesses.
+  const sellerDesc = sellerProfile.products
+    ? `${name}, selling ${sellerProfile.products}`
+    : `${name}`;
+  return `You are an expert B2B cold email copywriter helping ${sellerDesc} reach Australian business prospects.
 
 Write a 5-email cold outreach sequence following this framework:
 
@@ -348,6 +351,17 @@ Generate 5 emails on Days 1, 4, 7, 10, 14 following the structure above.`;
     const fw = frameworks[resolvedKey] || frameworks['cold_5_step'];
     frameworkInstructions = `SEQUENCE STRUCTURE — ${fw.en_name} (${fw.description}):
 ${fw.sequence_prompt || ''}`;
+  }
+
+  // /app sellers (non-Lens) should not get the Lens-branded factory-visit
+  // credentials line baked into the peter_kang_3part framework. Substitute
+  // the seller's own positioning instead.
+  const isLens = (sellerProfile.sellerName || '').includes('Lens');
+  if (!isLens && resolvedKey === 'peter_kang_3part') {
+    frameworkInstructions = frameworkInstructions.replace(
+      /Lens is a 300,000m² aluminium factory in Zhongshan[^".]*/g,
+      `${sellerProfile.sellerName || 'We'} — ${sellerProfile.advantage || sellerProfile.products || 'your supplier'}.`
+    );
   }
 
   console.log(`[AI] Generating emails for ${lead.companyName} | angle="${templateKey}" | framework="${resolvedKey}"`);
