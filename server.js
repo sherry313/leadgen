@@ -795,6 +795,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
         searchQuery, location, maxResults,
         { includeWebsite: true, includeEmail: true },   // auto-mode forces emails on
         countryCode,
+        (runId) => { send({ type: 'apify_run_id', runId }); },
       ),
       750000,
       'Apify scrape',
@@ -1076,6 +1077,36 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
     clearInterval(heartbeat);
     res.end();
   }
+});
+
+// ── Resume from a prior Apify run by runId (SSE) ─────────────────────────────
+// POST /api/apify/resume  — input: { runId, companyProfile?, icp?, campaignId?, framework_key? }
+// Re-fetches the dataset items from Apify by runId and streams them to the
+// client so the pipeline can be resumed (or the raw scrape recovered) after
+// a client disconnect / page refresh.
+app.post('/api/apify/resume', requireAuth, async (req, res) => {
+  const { runId } = req.body;
+  if (!runId) return res.status(400).json({ ok: false, error: 'runId required' });
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const send = obj => res.write('data: ' + JSON.stringify(obj) + '\n\n');
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+
+  try {
+    const { fetchDatasetByRunId } = require('./services/apify');
+    send({ type: 'phase', phase: 'apify', status: 'start' });
+    const companies = await withTimeout(fetchDatasetByRunId(runId), 60000, 'Apify dataset fetch');
+    send({ type: 'phase', phase: 'apify', status: 'done', scraped: companies.length });
+    send({ type: 'resume_ready', companies });
+  } catch (err) {
+    send({ type: 'error', phase: 'apify', message: err.message });
+  }
+  res.end();
 });
 
 // ── Search history ────────────────────────────────────────────────────────────

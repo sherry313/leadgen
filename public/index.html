@@ -2891,6 +2891,13 @@
           <span id="autoCampaignHint" style="font-size:0.78rem;color:#94a3b8"></span>
         </div>
         <button class="btn-start" id="btnAutoRun" onclick="startAutoRun()" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">🚀 一键自动运行</button>
+        <div id="resumeApifyBar" style="display:none;margin-top:10px">
+          <button id="btnResumeApify" onclick="resumeFromApify()"
+            style="padding:7px 16px;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit">
+            恢复上次抓取
+          </button>
+          <span id="resumeApifyHint" style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:8px"></span>
+        </div>
         <div id="autoProgress" style="display:none;margin-top:16px;padding:14px;background:rgba(15,23,42,0.5);border-radius:8px;font-size:0.85rem;line-height:1.7">
           <div id="autoPhases" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
           <div id="autoCurrent" style="color:#cbd5e1"></div>
@@ -4990,6 +4997,9 @@ async function startAutoRun() {
             } else if (evt.phase === 'push') {
               currentEl.textContent = `推送至 Instantly ${evt.done}/${evt.total}${evt.companyName ? ` · ${evt.companyName}` : ''}`;
             }
+          } else if (evt.type === 'apify_run_id') {
+            localStorage.setItem(LEAD_PREFIX + 'apifyRunId', evt.runId);
+            localStorage.setItem(LEAD_PREFIX + 'apifyRunTime', Date.now().toString());
           } else if (evt.type === 'error') {
             fatalError = evt.error;
             // Surface preflight errors prominently
@@ -5051,6 +5061,55 @@ async function startAutoRun() {
   document.getElementById('resultsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   window.dispatchEvent(new Event('pipelineDone'));
   document.getElementById('analysisCompletePanel').style.display = 'none';
+}
+
+async function resumeFromApify() {
+  const runId = localStorage.getItem(LEAD_PREFIX + 'apifyRunId');
+  if (!runId) { alert('没有找到上次的抓取记录'); return; }
+
+  const btn = document.getElementById('btnResumeApify');
+  if (btn) { btn.disabled = true; btn.textContent = '恢复中...'; }
+
+  const companyProfile = {
+    sellerName: localStorage.getItem(LEAD_PREFIX + 'sellerName') || '',
+    products:   localStorage.getItem(LEAD_PREFIX + 'products') || '',
+    advantage:  localStorage.getItem(LEAD_PREFIX + 'advantage') || '',
+  };
+  const icp = localStorage.getItem(LEAD_PREFIX + 'icp') || '';
+
+  try {
+    const res = await fetch('/api/apify/resume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+      body: JSON.stringify({ runId, companyProfile, icp }),
+    });
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const parts = buf.split('\n\n'); buf = parts.pop();
+      for (const part of parts) {
+        if (!part.startsWith('data:')) continue;
+        try {
+          const evt = JSON.parse(part.slice(5).trim());
+          if (evt.type === 'resume_ready') {
+            alert(`已恢复 ${evt.companies?.length || 0} 条数据，请继续手动筛选流程`);
+            _rawResults = (evt.companies || []).map(_normalizeLeadRow);
+            renderRawResults(_rawResults);
+            document.getElementById('rawSection').style.display = 'block';
+          } else if (evt.type === 'error') {
+            alert('恢复失败：' + evt.message);
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (e) {
+    alert('网络错误：' + e.message);
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '恢复上次抓取'; }
 }
 
 function _updateAIFilterRow() {
@@ -8103,6 +8162,21 @@ async function smtpSendAll() {
   if (autoModeDesc) autoModeDesc.textContent = LEAD_PREFIX === 'leadgen_'
     ? '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 用自己邮箱发送'
     : '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 推送至 Instantly';
+})();
+
+(function checkResumeBar() {
+  const runId = localStorage.getItem(LEAD_PREFIX + 'apifyRunId');
+  const runTime = parseInt(localStorage.getItem(LEAD_PREFIX + 'apifyRunTime') || '0');
+  const bar = document.getElementById('resumeApifyBar');
+  if (!bar) return;
+  if (runId && (Date.now() - runTime) < 24 * 60 * 60 * 1000) {
+    bar.style.display = 'block';
+    const hint = document.getElementById('resumeApifyHint');
+    if (hint) {
+      const mins = Math.round((Date.now() - runTime) / 60000);
+      hint.textContent = `${mins}分钟前的抓取 · Run ID: ${runId.slice(0,8)}...`;
+    }
+  }
 })();
 
 // ── Website list upload & enrich ──────────────────────────────────────────────
