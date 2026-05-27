@@ -7950,7 +7950,7 @@ async function smtpTest() {
   try {
     const r = await fetch('/api/smtp/test', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('access_token') || '') },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
       body: JSON.stringify({ smtpConfig: cfg }),
     });
     const d = await r.json();
@@ -7997,7 +7997,7 @@ async function smtpSendAll() {
     log.scrollTop = log.scrollHeight;
   }
 
-  const token = localStorage.getItem('access_token') || '';
+  const token = getStoredToken();
   try {
     const res = await fetch('/api/smtp/send-batch', {
       method: 'POST',
