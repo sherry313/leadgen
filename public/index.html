@@ -2285,6 +2285,23 @@
     .step-back-btn:hover { color: #e2e8f0; border-color: #4299e1; background: rgba(66,153,225,0.06); }
     .step-back-btn.top { margin-bottom: 14px; }
 
+    .smtp-prov-btn {
+      padding: 6px 14px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .smtp-prov-active {
+      background: rgba(5,150,105,0.2);
+      border-color: rgba(5,150,105,0.6);
+      color: #fff;
+    }
+
   </style>
 </head>
 <body>
@@ -2807,10 +2824,10 @@
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
           <div>
             <div style="font-size:1.05rem;font-weight:600;color:#c4b5fd">🚀 一键自动模式</div>
-            <div style="font-size:0.82rem;color:#a78bfa;margin-top:2px">抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 推送至 Instantly</div>
+            <div style="font-size:0.82rem;color:#a78bfa;margin-top:2px"><span id="autoModeDesc"></span></div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div id="campaignSelectorRow" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
           <label style="font-size:0.85rem;color:#cbd5e1">Instantly Campaign：</label>
           <select id="autoCampaignSelect" class="auto-campaign-select" style="padding:6px 10px;background:rgba(15,23,42,0.6);border:1px solid rgba(148,163,184,0.3);border-radius:6px;color:#e2e8f0;font-size:0.85rem;min-width:240px">
             <option value="">（不推送 — 仅生成线索与邮件）</option>
@@ -3195,9 +3212,20 @@
 
       <div id="smtpPanel" style="display:none;margin-top:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:18px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <!-- Provider selector - full width -->
+          <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
+            <label style="font-size:12px;opacity:0.5">邮件服务商</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" onclick="smtpSelectProvider('gmail')"    id="smtpProv_gmail"    class="smtp-prov-btn smtp-prov-active">Gmail</button>
+              <button type="button" onclick="smtpSelectProvider('outlook')"  id="smtpProv_outlook"  class="smtp-prov-btn">Outlook</button>
+              <button type="button" onclick="smtpSelectProvider('yahoo')"    id="smtpProv_yahoo"    class="smtp-prov-btn">Yahoo</button>
+              <button type="button" onclick="smtpSelectProvider('icloud')"   id="smtpProv_icloud"   class="smtp-prov-btn">iCloud</button>
+              <button type="button" onclick="smtpSelectProvider('custom')"   id="smtpProv_custom"   class="smtp-prov-btn">自定义</button>
+            </div>
+          </div>
           <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
             <label style="font-size:12px;opacity:0.5">邮箱地址</label>
-            <input id="smtpUser" type="email" placeholder="you@gmail.com" oninput="smtpAutoFill(this.value)"
+            <input id="smtpUser" type="email" placeholder="you@gmail.com"
               style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
@@ -3205,15 +3233,17 @@
             <input id="smtpPass" type="password" placeholder="Gmail请用App Password"
               style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
           </div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <label style="font-size:12px;opacity:0.5">SMTP服务器</label>
-            <input id="smtpHost" placeholder="smtp.gmail.com"
-              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <label style="font-size:12px;opacity:0.5">端口</label>
-            <input id="smtpPort" type="number" value="587"
-              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+          <div id="smtpCustomFields" style="display:none;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <label style="font-size:12px;opacity:0.5">SMTP服务器</label>
+              <input id="smtpHost" placeholder="smtp.gmail.com"
+                style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <label style="font-size:12px;opacity:0.5">端口</label>
+              <input id="smtpPort" type="number" value="587"
+                style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px">
             <label style="font-size:12px;opacity:0.5">发件人名字</label>
@@ -4887,7 +4917,6 @@ async function startAutoRun() {
               currentEl.textContent = `Sonnet 评分 ${evt.done}/${evt.total}${evt.lead?.companyName ? ` · ${evt.lead.companyName}` : ''}`;
               if (evt.lead) {
                 _allLeads.push(evt.lead);
-                renderResults(_allLeads);
               }
             } else if (evt.phase === 'emails') {
               currentEl.textContent = `生成开发信 ${evt.done}/${evt.total}${evt.lead?.companyName ? ` · ${evt.lead.companyName}` : ''}`;
@@ -7816,30 +7845,37 @@ window.addEventListener('pipelineDone', () => {
 });
 
 // ── SMTP send panel ───────────────────────────────────────────────────────────
-const _SMTP_PRESETS = {
-  'gmail.com':    { host: 'smtp.gmail.com',       port: 587 },
-  'outlook.com':  { host: 'smtp.office365.com',   port: 587 },
-  'hotmail.com':  { host: 'smtp.office365.com',   port: 587 },
-  'yahoo.com':    { host: 'smtp.mail.yahoo.com',  port: 587 },
-  'yahoo.com.au': { host: 'smtp.mail.yahoo.com',  port: 587 },
-  'icloud.com':   { host: 'smtp.mail.me.com',     port: 587 },
+const _SMTP_PROVIDER_PRESETS = {
+  gmail:   { host: 'smtp.gmail.com',      port: 587 },
+  outlook: { host: 'smtp.office365.com',  port: 587 },
+  yahoo:   { host: 'smtp.mail.yahoo.com', port: 587 },
+  icloud:  { host: 'smtp.mail.me.com',    port: 587 },
 };
+let _smtpCurrentProvider = 'gmail';
 
-function smtpAutoFill(email) {
-  const domain = email.split('@')[1]?.toLowerCase();
-  const p = _SMTP_PRESETS[domain];
-  if (p) {
-    document.getElementById('smtpHost').value = p.host;
-    document.getElementById('smtpPort').value = p.port;
+function smtpSelectProvider(key) {
+  _smtpCurrentProvider = key;
+  ['gmail','outlook','yahoo','icloud','custom'].forEach(k => {
+    const btn = document.getElementById('smtpProv_' + k);
+    if (btn) btn.className = 'smtp-prov-btn' + (k === key ? ' smtp-prov-active' : '');
+  });
+  const customFields = document.getElementById('smtpCustomFields');
+  if (customFields) customFields.style.display = key === 'custom' ? 'grid' : 'none';
+  const preset = _SMTP_PROVIDER_PRESETS[key];
+  if (preset) {
+    document.getElementById('smtpHost').value = preset.host;
+    document.getElementById('smtpPort').value = preset.port;
   }
 }
 
 function _smtpGetCfg() {
+  const preset = _SMTP_PROVIDER_PRESETS[_smtpCurrentProvider];
   return {
     user:      document.getElementById('smtpUser').value.trim(),
     pass:      document.getElementById('smtpPass').value,
-    host:      document.getElementById('smtpHost').value.trim(),
-    port:      parseInt(document.getElementById('smtpPort').value) || 587,
+    host:      (preset ? preset.host : document.getElementById('smtpHost').value.trim()),
+    port:      (preset ? preset.port : parseInt(document.getElementById('smtpPort').value) || 587),
+    provider:  _smtpCurrentProvider,
     fromName:  document.getElementById('smtpFromName').value.trim(),
     signature: document.getElementById('smtpSignature').value.trim(),
     delayMin:  parseInt(document.getElementById('smtpDelayMin').value) || 60,
@@ -7856,6 +7892,7 @@ function _smtpRestoreCfg() {
   try {
     const s = JSON.parse(localStorage.getItem(LEAD_PREFIX + 'smtpConfig') || 'null');
     if (!s) return;
+    if (s.provider)  smtpSelectProvider(s.provider);
     if (s.user)      document.getElementById('smtpUser').value      = s.user;
     if (s.host)      document.getElementById('smtpHost').value      = s.host;
     if (s.port)      document.getElementById('smtpPort').value      = s.port;
@@ -7989,6 +8026,15 @@ async function smtpSendAll() {
     const btn = document.getElementById('btnSmtpSend');
     if (btn) btn.style.display = 'inline-block';
   }
+
+  // Hide Instantly campaign row for /app users
+  const campaignRow = document.getElementById('campaignSelectorRow');
+  if (campaignRow) campaignRow.style.display = LEAD_PREFIX === 'leadgen_' ? 'none' : 'flex';
+
+  const autoModeDesc = document.getElementById('autoModeDesc');
+  if (autoModeDesc) autoModeDesc.textContent = LEAD_PREFIX === 'leadgen_'
+    ? '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 用自己邮箱发送'
+    : '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 推送至 Instantly';
 })();
 </script>
 
