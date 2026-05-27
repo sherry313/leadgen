@@ -109,7 +109,6 @@
       border: 1.5px solid rgba(255,255,255,0.12);
       backdrop-filter: blur(2px);
       opacity: 0;
-      animation: shapeIn 2.4s cubic-bezier(0.23,0.86,0.39,0.96) forwards, shapeFloat 12s ease-in-out infinite;
     }
 
     .hero-shape::after {
@@ -125,50 +124,46 @@
       left: -5%; top: 20%;
       background: linear-gradient(90deg, rgba(99,102,241,0.15), transparent);
       transform: rotate(12deg) translateY(-150px);
-      animation-delay: 0.3s, 2.7s;
+      animation: shapeIn1 2.4s cubic-bezier(0.23,0.86,0.39,0.96) 0.3s forwards, shapeFloat 12s ease-in-out 2.7s infinite;
     }
     .hero-shape-2 {
       width: 500px; height: 120px;
       right: 0%; top: 75%;
       background: linear-gradient(90deg, rgba(244,63,94,0.15), transparent);
       transform: rotate(-15deg) translateY(-150px);
-      animation-delay: 0.5s, 2.9s;
+      animation: shapeIn2 2.4s cubic-bezier(0.23,0.86,0.39,0.96) 0.5s forwards, shapeFloat 12s ease-in-out 2.9s infinite;
     }
     .hero-shape-3 {
       width: 300px; height: 80px;
       left: 10%; bottom: 10%;
       background: linear-gradient(90deg, rgba(139,92,246,0.15), transparent);
       transform: rotate(-8deg) translateY(-150px);
-      animation-delay: 0.4s, 2.8s;
+      animation: shapeIn3 2.4s cubic-bezier(0.23,0.86,0.39,0.96) 0.4s forwards, shapeFloat 12s ease-in-out 2.8s infinite;
     }
     .hero-shape-4 {
       width: 200px; height: 60px;
       right: 20%; top: 15%;
       background: linear-gradient(90deg, rgba(245,158,11,0.15), transparent);
       transform: rotate(20deg) translateY(-150px);
-      animation-delay: 0.6s, 3.0s;
+      animation: shapeIn4 2.4s cubic-bezier(0.23,0.86,0.39,0.96) 0.6s forwards, shapeFloat 12s ease-in-out 3.0s infinite;
     }
     .hero-shape-5 {
       width: 150px; height: 40px;
       left: 25%; top: 10%;
       background: linear-gradient(90deg, rgba(6,182,212,0.15), transparent);
       transform: rotate(-25deg) translateY(-150px);
-      animation-delay: 0.7s, 3.1s;
+      animation: shapeIn5 2.4s cubic-bezier(0.23,0.86,0.39,0.96) 0.7s forwards, shapeFloat 12s ease-in-out 3.1s infinite;
     }
 
-    @keyframes shapeIn {
-      to { opacity: 1; transform: rotate(var(--r, 0deg)) translateY(0); }
-    }
+    @keyframes shapeIn1 { to { opacity: 1; transform: rotate(12deg) translateY(0); } }
+    @keyframes shapeIn2 { to { opacity: 1; transform: rotate(-15deg) translateY(0); } }
+    @keyframes shapeIn3 { to { opacity: 1; transform: rotate(-8deg) translateY(0); } }
+    @keyframes shapeIn4 { to { opacity: 1; transform: rotate(20deg) translateY(0); } }
+    @keyframes shapeIn5 { to { opacity: 1; transform: rotate(-25deg) translateY(0); } }
     @keyframes shapeFloat {
       0%, 100% { margin-top: 0; }
       50% { margin-top: 15px; }
     }
-
-    .hero-shape-1 { --r: 12deg; }
-    .hero-shape-2 { --r: -15deg; }
-    .hero-shape-3 { --r: -8deg; }
-    .hero-shape-4 { --r: 20deg; }
-    .hero-shape-5 { --r: -25deg; }
 
     .hero-overlay-top {
       position: absolute;
