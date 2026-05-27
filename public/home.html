@@ -24,8 +24,9 @@
     /* ── Nav ─────────────────────────────────────────────────────────── */
     .nav {
       position: sticky; top: 0; z-index: 50;
-      background: #030303;
-      border-bottom: 1px solid #1e2d4a;
+      background: rgba(3,3,3,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .nav-inner {
       max-width: 1180px; margin: 0 auto;
@@ -33,25 +34,29 @@
       padding: 14px 24px;
     }
     .nav-logo {
-      font-size: 17px; font-weight: 700; color: #e2e8f0;
+      font-size: 17px; font-weight: 700; color: #fff;
       display: inline-flex; align-items: center; gap: 8px;
     }
-    .nav-logo .ti { color: #4299e1; font-size: 20px; }
+    .nav-logo .ti { color: #a5b4fc; font-size: 20px; }
     .nav-links {
-      display: flex; align-items: center; gap: 22px;
+      display: flex; align-items: center; gap: 24px;
       font-size: 14px;
     }
-    .nav-links a { color: #94a3b8; transition: color 0.15s; }
-    .nav-links a:hover { color: #e2e8f0; }
+    .nav-links a { color: rgba(255,255,255,0.6); transition: color 0.2s ease; }
+    .nav-links a:hover { color: #fff; }
     .nav-cta {
       padding: 7px 16px;
-      border: 1px solid #4299e1;
-      border-radius: 8px;
-      color: #4299e1 !important;
+      border: 1px solid rgba(99,102,241,0.45);
+      border-radius: 9px;
+      color: #c7d2fe !important;
       font-weight: 600;
-      transition: all 0.15s;
+      transition: all 0.25s ease;
     }
-    .nav-cta:hover { background: #4299e1; color: #fff !important; }
+    .nav-cta:hover {
+      background: rgba(99,102,241,0.18);
+      border-color: rgba(99,102,241,0.6);
+      color: #fff !important;
+    }
     @media (max-width: 560px) {
       .nav-inner { padding: 12px 16px; }
       .nav-links { gap: 12px; font-size: 13px; }
@@ -59,22 +64,45 @@
 
     /* ── Layout ──────────────────────────────────────────────────────── */
     .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
-    .section { padding: 64px 0; }
+    .section { padding: 96px 0; background: #030303; }
     .section-title {
-      font-size: 18px; font-weight: 700;
-      color: #f7fafc; margin: 0 0 6px;
-      letter-spacing: -0.01em;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
       text-align: center;
+      margin: 0 auto 10px;
+      background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .section-sub {
-      font-size: 13px; color: #94a3b8;
+      font-size: 14px;
+      color: rgba(255,255,255,0.45);
       text-align: center;
-      margin: 0 auto 32px;
+      margin: 0 auto 56px;
       max-width: 560px;
+      font-weight: 300;
+      letter-spacing: 0.01em;
     }
     @media (max-width: 640px) {
-      .section { padding: 48px 0; }
+      .section { padding: 72px 0; }
+      .section-sub { margin-bottom: 40px; }
     }
+
+    /* ── Scroll-triggered fade-up ───────────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s cubic-bezier(0.23,0.86,0.39,0.96), transform 0.7s cubic-bezier(0.23,0.86,0.39,0.96);
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .fade-up.delay-1 { transition-delay: 0.08s; }
+    .fade-up.delay-2 { transition-delay: 0.16s; }
+    .fade-up.delay-3 { transition-delay: 0.24s; }
 
     /* ── Hero ────────────────────────────────────────────────────────── */
     .hero {
@@ -268,101 +296,132 @@
 
     /* ── Buttons ─────────────────────────────────────────────────────── */
     .btn-primary {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: #1e3a5f;
-      color: #63b3ed;
-      border: 1px solid #2a4a6a;
-      border-radius: 8px;
-      padding: 10px 20px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(99,102,241,0.18);
+      color: #c7d2fe;
+      border: 1px solid rgba(99,102,241,0.4);
+      border-radius: 10px;
+      padding: 11px 22px;
       font-size: 14px; font-weight: 600;
-      transition: all 0.15s;
+      transition: all 0.25s ease;
       cursor: pointer; font-family: inherit;
     }
-    .btn-primary:hover { background: #25446e; border-color: #4299e1; }
+    .btn-primary:hover {
+      background: rgba(99,102,241,0.3);
+      border-color: rgba(99,102,241,0.6);
+      color: #fff;
+      transform: translateY(-1px);
+    }
     .btn-ghost {
-      display: inline-flex; align-items: center; gap: 6px;
+      display: inline-flex; align-items: center; gap: 8px;
       background: transparent;
-      color: #94a3b8;
-      border: 1px solid #1e2d4a;
-      border-radius: 8px;
-      padding: 10px 20px;
+      color: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 11px 22px;
       font-size: 14px; font-weight: 600;
-      transition: all 0.15s;
+      transition: all 0.25s ease;
       cursor: pointer; font-family: inherit;
     }
-    .btn-ghost:hover { border-color: #4299e1; color: #e2e8f0; }
+    .btn-ghost:hover {
+      border-color: rgba(255,255,255,0.3);
+      color: #fff;
+      background: rgba(255,255,255,0.04);
+    }
 
     /* ── Services ────────────────────────────────────────────────────── */
     .service-card {
-      background: #111827;
-      border: 1px solid #1e2d4a;
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 12px;
-      display: flex; gap: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 16px;
+      display: flex; gap: 20px;
       align-items: flex-start;
-      transition: border-color 0.18s;
+      transition: all 0.3s ease;
     }
-    .service-card:hover { border-color: #4299e1; }
+    .service-card:hover {
+      border-color: rgba(99,102,241,0.4);
+      background: rgba(99,102,241,0.04);
+      transform: translateY(-2px);
+    }
     .service-icon-lg {
       width: 48px; height: 48px;
-      border-radius: 10px;
+      border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    .service-icon-lg .ti { font-size: 24px; }
-    .service-icon-lg.blue { background: #1e3a5f; }
-    .service-icon-lg.blue .ti { color: #63b3ed; }
-    .service-icon-lg.amber { background: #3d2500; }
-    .service-icon-lg.amber .ti { color: #fbbf24; }
-    .service-content {
-      flex: 1;
-      min-width: 0;
+    .service-icon-lg .ti { font-size: 22px; }
+    .service-icon-lg.blue {
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.25);
     }
+    .service-icon-lg.blue .ti { color: #a5b4fc; }
+    .service-icon-lg.amber {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.22);
+    }
+    .service-icon-lg.amber .ti { color: #fbbf24; }
+    .service-content { flex: 1; min-width: 0; }
     .service-content-head {
       display: flex; align-items: center; gap: 10px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       flex-wrap: wrap;
     }
     .service-title {
-      font-size: 16px; font-weight: 700;
-      color: #f7fafc;
+      font-size: 17px; font-weight: 700;
+      color: #fff;
       margin: 0;
+      letter-spacing: -0.01em;
     }
     .service-tag {
       padding: 3px 10px;
-      border-radius: 10px;
-      font-size: 11px; font-weight: 700;
+      border-radius: 999px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.02em;
     }
-    .service-tag.live { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
-    .service-tag.soon { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .service-tag.live {
+      background: rgba(74,222,128,0.1);
+      color: #86efac;
+      border: 1px solid rgba(74,222,128,0.25);
+    }
+    .service-tag.soon {
+      background: rgba(245,158,11,0.1);
+      color: #fbbf24;
+      border: 1px solid rgba(245,158,11,0.25);
+    }
     .service-desc {
-      font-size: 13px;
-      color: #94a3b8;
-      margin: 0 0 14px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.55);
+      margin: 0 0 18px;
+      line-height: 1.6;
     }
     .service-stats-inline {
       display: flex; flex-wrap: wrap;
-      gap: 4px 10px;
+      gap: 8px;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 20px;
       font-size: 12px;
     }
     .ss-item {
       display: inline-flex; align-items: baseline; gap: 4px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 999px;
       white-space: nowrap;
     }
-    .ss-num { color: #4299e1; font-weight: 700; }
-    .ss-lbl { color: #94a3b8; }
-    .ss-sep { color: #1e2d4a; }
-    .service-btn-row { margin-bottom: 16px; }
+    .ss-num { color: #c7d2fe; font-weight: 700; }
+    .ss-lbl { color: rgba(255,255,255,0.5); }
+    .ss-sep { display: none; }
+    .service-btn-row { margin-bottom: 4px; }
     .service-coming {
-      color: #64748b;
+      color: rgba(255,255,255,0.35);
       font-size: 12px;
       font-style: italic;
     }
     @media (max-width: 640px) {
-      .service-card { flex-direction: column; gap: 12px; }
+      .service-card { flex-direction: column; gap: 14px; padding: 22px; }
     }
 
     /* ── Embedded product preview (inside Card 1) ────────────────────── */
@@ -508,57 +567,82 @@
     .how-grid {
       display: grid;
       grid-template-columns: 1fr auto 1fr auto 1fr;
-      gap: 14px;
+      gap: 20px;
       align-items: start;
     }
     .how-step {
       text-align: center;
-      padding: 20px 14px;
+      padding: 24px 18px;
     }
     .how-icon {
-      width: 52px; height: 52px;
+      width: 60px; height: 60px;
       border-radius: 50%;
-      background: #111827;
-      border: 1px solid #1e2d4a;
+      background: rgba(99,102,241,0.08);
+      border: 1px solid rgba(99,102,241,0.25);
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 10px;
+      margin: 0 auto 16px;
+      transition: all 0.3s ease;
+    }
+    .how-step:hover .how-icon {
+      background: rgba(99,102,241,0.15);
+      border-color: rgba(99,102,241,0.45);
+      transform: scale(1.05);
     }
     .how-icon .ti {
-      color: #63b3ed;
+      color: #a5b4fc;
       font-size: 24px;
     }
     .how-num {
       display: inline-block;
       font-size: 11px; font-weight: 700;
-      color: #4299e1;
-      letter-spacing: 0.1em;
-      margin-bottom: 8px;
+      color: rgba(165,180,252,0.7);
+      letter-spacing: 0.15em;
+      margin-bottom: 10px;
     }
     .how-title {
-      font-size: 14.5px; font-weight: 700;
-      color: #f7fafc;
-      margin: 0 0 6px;
+      font-size: 16px; font-weight: 700;
+      color: #fff;
+      margin: 0 0 8px;
+      letter-spacing: -0.01em;
     }
     .how-desc {
-      font-size: 12.5px;
-      color: #94a3b8;
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
       margin: 0;
-      line-height: 1.55;
+      line-height: 1.6;
     }
     .how-arrow {
-      color: #475569;
       align-self: center;
-      font-size: 20px;
-      padding-top: 60px;
+      padding-top: 50px;
+      width: 60px;
+      border-top: 1px dashed rgba(255,255,255,0.18);
+      position: relative;
+    }
+    .how-arrow .ti {
+      position: absolute;
+      right: -2px; top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.3);
+      font-size: 16px;
+      background: #030303;
+      padding: 0 4px;
     }
     @media (max-width: 760px) {
       .how-grid {
         grid-template-columns: 1fr;
-        gap: 8px;
+        gap: 10px;
       }
       .how-arrow {
         padding-top: 0;
-        transform: rotate(90deg);
+        width: 1px;
+        height: 30px;
+        border-top: none;
+        border-left: 1px dashed rgba(255,255,255,0.18);
+        margin: 0 auto;
+      }
+      .how-arrow .ti {
+        right: 50%; top: auto; bottom: -10px;
+        transform: translateX(50%) rotate(90deg);
       }
     }
 
@@ -566,96 +650,134 @@
     .tools-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      gap: 18px;
     }
     .tool-card {
       display: block;
-      background: #111827;
-      border: 1px solid #1e2d4a;
-      border-radius: 12px;
-      padding: 22px 20px;
-      transition: border-color 0.18s, transform 0.18s;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 26px 22px;
+      transition: all 0.3s ease;
       cursor: pointer;
     }
     .tool-card:hover {
-      border-color: #4299e1;
-      transform: translateY(-2px);
+      border-color: rgba(99,102,241,0.4);
+      background: rgba(99,102,241,0.04);
+      transform: translateY(-3px);
     }
     .tool-icon {
-      width: 32px; height: 32px;
-      border-radius: 8px;
+      width: 40px; height: 40px;
+      border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
-    .tool-icon .ti { font-size: 18px; }
-    .tool-icon.green { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); }
-    .tool-icon.green .ti { color: #4ade80; }
-    .tool-icon.blue { background: #1e3a5f; }
-    .tool-icon.blue .ti { color: #63b3ed; }
-    .tool-icon.amber { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
+    .tool-icon .ti { font-size: 19px; }
+    .tool-icon.green {
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.22);
+    }
+    .tool-icon.green .ti { color: #86efac; }
+    .tool-icon.blue {
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.25);
+    }
+    .tool-icon.blue .ti { color: #a5b4fc; }
+    .tool-icon.amber {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.22);
+    }
     .tool-icon.amber .ti { color: #fbbf24; }
     .tool-title {
       font-size: 15px; font-weight: 700;
-      color: #f7fafc;
-      margin: 0 0 6px;
+      color: #fff;
+      margin: 0 0 8px;
+      letter-spacing: -0.01em;
     }
     .tool-desc {
       font-size: 13px;
-      color: #94a3b8;
-      margin: 0 0 12px;
-      line-height: 1.55;
+      color: rgba(255,255,255,0.5);
+      margin: 0 0 16px;
+      line-height: 1.6;
     }
     .tool-tag {
       display: inline-block;
-      padding: 2px 9px;
-      background: rgba(34,197,94,0.12);
-      color: #4ade80;
-      border: 1px solid rgba(34,197,94,0.3);
-      border-radius: 10px;
-      font-size: 11px; font-weight: 700;
+      padding: 3px 10px;
+      background: rgba(74,222,128,0.08);
+      color: #86efac;
+      border: 1px solid rgba(74,222,128,0.22);
+      border-radius: 999px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.02em;
     }
     @media (max-width: 860px) {
       .tools-grid { grid-template-columns: 1fr; }
     }
 
     /* ── CTA ─────────────────────────────────────────────────────────── */
-    .cta-wrap { padding: 56px 0 80px; }
+    .cta-wrap { padding: 72px 0 112px; background: #030303; }
     .cta-box {
-      background: #111827;
-      border: 1px solid #1e2d4a;
-      border-radius: 16px;
-      padding: 2rem;
+      position: relative;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 3rem 2rem;
       text-align: center;
       max-width: 720px;
       margin: 0 auto;
+      overflow: hidden;
+    }
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(99,102,241,0.08), transparent 60%);
+      pointer-events: none;
     }
     .cta-title {
-      font-size: 20px; font-weight: 700;
-      color: #f7fafc;
-      margin: 0 0 8px;
-      letter-spacing: -0.01em;
+      position: relative;
+      font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+      font-weight: 700;
+      margin: 0 0 12px;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #fff, #c7d2fe, #fda4af);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .cta-sub {
+      position: relative;
       font-size: 14px;
-      color: #94a3b8;
-      margin: 0 0 22px;
+      color: rgba(255,255,255,0.5);
+      margin: 0 0 28px;
+      font-weight: 300;
     }
     .cta-btns {
+      position: relative;
       display: flex; justify-content: center;
       gap: 10px; flex-wrap: wrap;
     }
 
     /* ── Footer ──────────────────────────────────────────────────────── */
     .footer {
-      padding: 28px 24px;
+      padding: 36px 24px;
       text-align: center;
-      color: #4a5568;
+      color: rgba(255,255,255,0.3);
       font-size: 13px;
-      border-top: 1px solid #1e2d4a;
+      background: #030303;
+      border-top: 1px solid rgba(255,255,255,0.06);
     }
-    .footer a { color: #94a3b8; margin: 0 8px; transition: color 0.15s; }
-    .footer a:hover { color: #e2e8f0; }
-    .footer-copy { margin-top: 8px; }
+    .footer a {
+      color: rgba(255,255,255,0.5);
+      margin: 0 10px;
+      transition: color 0.2s ease;
+    }
+    .footer a:hover { color: rgba(255,255,255,0.85); }
+    .footer-copy {
+      margin-top: 12px;
+      color: rgba(255,255,255,0.25);
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
@@ -709,11 +831,11 @@
 <!-- ── Section 2: Services ─────────────────────────────────────────── -->
 <section class="section" id="services">
   <div class="container">
-    <h2 class="section-title">我们的服务</h2>
-    <p class="section-sub">每一个服务都是为你定制的自动化方案</p>
+    <h2 class="section-title fade-up">我们的服务</h2>
+    <p class="section-sub fade-up delay-1">每一个服务都是为你定制的自动化方案</p>
 
     <!-- Card 1: Cold email -->
-    <div class="service-card">
+    <div class="service-card fade-up delay-2">
       <div class="service-icon-lg blue"><i class="ti ti-mail-forward"></i></div>
       <div class="service-content">
         <div class="service-content-head">
@@ -736,13 +858,13 @@
           <a href="/app" class="btn-primary">
             <i class="ti ti-arrow-right"></i>查看详情
           </a>
-          <a href="/app" style="font-size:12px;color:#4a5568;margin-left:12px;text-decoration:none;">查看产品演示 →</a>
+          <a href="/app" style="font-size:12px;color:rgba(255,255,255,0.35);margin-left:14px;text-decoration:none;">查看产品演示 →</a>
         </div>
       </div>
     </div>
 
     <!-- Card 2: Quote automation (coming soon) -->
-    <div class="service-card">
+    <div class="service-card fade-up delay-3">
       <div class="service-icon-lg amber"><i class="ti ti-file-invoice"></i></div>
       <div class="service-content">
         <div class="service-content-head">
@@ -758,27 +880,27 @@
 </section>
 
 <!-- ── Section 3: How it works ─────────────────────────────────────── -->
-<section class="section" style="background: rgba(17,24,39,0.4);">
+<section class="section">
   <div class="container">
-    <h2 class="section-title">怎么运作</h2>
-    <p class="section-sub">3步完成自动化</p>
+    <h2 class="section-title fade-up">怎么运作</h2>
+    <p class="section-sub fade-up delay-1">3步完成自动化</p>
 
     <div class="how-grid">
-      <div class="how-step">
+      <div class="how-step fade-up delay-1">
         <div class="how-icon"><i class="ti ti-message-dots"></i></div>
         <div class="how-num">STEP 01</div>
         <h3 class="how-title">告诉我你的需求</h3>
         <p class="how-desc">你想自动化什么流程？我们来聊一聊</p>
       </div>
       <div class="how-arrow"><i class="ti ti-arrow-right"></i></div>
-      <div class="how-step">
+      <div class="how-step fade-up delay-2">
         <div class="how-icon"><i class="ti ti-code"></i></div>
         <div class="how-num">STEP 02</div>
         <h3 class="how-title">我来搭建系统</h3>
         <p class="how-desc">用AI帮你定制自动化方案，不需要你写代码</p>
       </div>
       <div class="how-arrow"><i class="ti ti-arrow-right"></i></div>
-      <div class="how-step">
+      <div class="how-step fade-up delay-3">
         <div class="how-icon"><i class="ti ti-rocket"></i></div>
         <div class="how-num">STEP 03</div>
         <h3 class="how-title">系统自动运行</h3>
@@ -791,23 +913,23 @@
 <!-- ── Section 4: Free tools ───────────────────────────────────────── -->
 <section class="section">
   <div class="container">
-    <h2 class="section-title">免费工具</h2>
-    <p class="section-sub">先用免费工具解决你的问题</p>
+    <h2 class="section-title fade-up">免费工具</h2>
+    <p class="section-sub fade-up delay-1">先用免费工具解决你的问题</p>
 
     <div class="tools-grid">
-      <a href="/tools/dns-generator.html" class="tool-card">
+      <a href="/tools/dns-generator.html" class="tool-card fade-up delay-1">
         <div class="tool-icon green"><i class="ti ti-shield-check"></i></div>
         <h3 class="tool-title">DNS验证记录生成器</h3>
         <p class="tool-desc">一键生成SPF、DKIM、DMARC</p>
         <span class="tool-tag">免费</span>
       </a>
-      <a href="/tools/spam-word-checker.html" class="tool-card">
+      <a href="/tools/spam-word-checker.html" class="tool-card fade-up delay-2">
         <div class="tool-icon blue"><i class="ti ti-scan"></i></div>
         <h3 class="tool-title">邮件垃圾词检测器</h3>
         <p class="tool-desc">检查邮件有没有触发垃圾箱的词</p>
         <span class="tool-tag">免费</span>
       </a>
-      <a href="/quote.html" class="tool-card">
+      <a href="/quote.html" class="tool-card fade-up delay-3">
         <div class="tool-icon amber"><i class="ti ti-file-invoice"></i></div>
         <h3 class="tool-title">AI报价工具</h3>
         <p class="tool-desc">30秒生成专业报价单PDF</p>
@@ -820,7 +942,7 @@
 <!-- ── Section 5: CTA ──────────────────────────────────────────────── -->
 <section class="cta-wrap">
   <div class="container">
-    <div class="cta-box">
+    <div class="cta-box fade-up">
       <h2 class="cta-title">想让AI帮你自动化？</h2>
       <p class="cta-sub">告诉我你的业务痛点，我帮你设计方案</p>
       <div class="cta-btns">
@@ -842,6 +964,19 @@
   <a href="/terms.html">用户协议</a>
   <div class="footer-copy">© 2026 智拓客</div>
 </footer>
+
+<script>
+  // Scroll-triggered fade-up — sections below the hero come in as they enter view.
+  const _fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        _fadeObserver.unobserve(e.target);  // one-shot
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.fade-up').forEach(el => _fadeObserver.observe(el));
+</script>
 
 </body>
 </html>
