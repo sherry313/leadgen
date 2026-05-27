@@ -2303,6 +2303,8 @@
     }
 
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -2377,6 +2379,60 @@
         <div class="method-desc">上传公司名称，Google Search找官网再分析</div>
         <span class="method-tag new">new</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Website-list upload (chosen via selectMethod('website')) -->
+  <div class="wizard-panel hidden" id="wizard-step-website" style="display:none">
+    <div style="margin-bottom:20px">
+      <button onclick="document.getElementById('wizard-step-website').style.display='none';document.getElementById('wizard-step-1').style.display='block'"
+        style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:13px;padding:0;font-family:inherit">
+        ← 返回
+      </button>
+    </div>
+    <div style="font-size:1.1rem;font-weight:600;margin-bottom:6px">Website list</div>
+    <div style="font-size:0.85rem;color:rgba(255,255,255,0.5);margin-bottom:20px">上传包含网址的CSV或Excel文件，AI自动分析筛选</div>
+
+    <!-- File upload -->
+    <div id="wlUploadArea" onclick="document.getElementById('wlFileInput').click()"
+      style="border:2px dashed rgba(255,255,255,0.15);border-radius:12px;padding:32px;text-align:center;cursor:pointer;margin-bottom:16px;transition:border-color 0.2s"
+      onmouseover="this.style.borderColor='rgba(99,102,241,0.5)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
+      <div style="font-size:2rem;margin-bottom:8px">📂</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.6)">点击上传 CSV 或 Excel 文件</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:4px">支持 .csv / .xlsx / .xls</div>
+    </div>
+    <input type="file" id="wlFileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="wlHandleFile(this)">
+
+    <!-- Column selector (shown after upload) -->
+    <div id="wlColumnSection" style="display:none;margin-bottom:16px">
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:6px">选择包含网址的列</div>
+      <select id="wlUrlColumn" onchange="wlOnColumnChange()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 12px;color:#fff;font-size:13px;outline:none">
+      </select>
+      <div id="wlPreview" style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.4)"></div>
+    </div>
+
+    <!-- ICP input -->
+    <div id="wlIcpSection" style="display:none;margin-bottom:16px">
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:6px">筛选标准（ICP）</div>
+      <textarea id="wlIcp" rows="4" placeholder="描述你的理想客户，例如：澳洲住宅建筑商，年营业额500万以上，主要做新建项目..."
+        style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;outline:none;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+    </div>
+
+    <!-- Start button -->
+    <button id="wlStartBtn" onclick="wlStartEnrich()" style="display:none;width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
+      🚀 开始分析
+    </button>
+
+    <!-- Progress -->
+    <div id="wlProgress" style="display:none;margin-top:16px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;opacity:0.6;margin-bottom:6px">
+        <span id="wlProgressLabel">分析中...</span>
+        <span id="wlProgressCount"></span>
+      </div>
+      <div style="background:rgba(255,255,255,0.08);border-radius:99px;height:6px;overflow:hidden;margin-bottom:10px">
+        <div id="wlProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:99px;transition:width 0.4s"></div>
+      </div>
+      <div id="wlProgressLog" style="max-height:140px;overflow-y:auto;font-size:12px;display:flex;flex-direction:column;gap:3px"></div>
     </div>
   </div>
 
@@ -4028,6 +4084,11 @@ function selectMethod(methodId) {
     document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
     document.getElementById('method-card-keyword')?.classList.add('selected');
     goToStep(2);
+    return;
+  }
+  if (methodId === 'website') {
+    document.getElementById('wizard-step-1').style.display = 'none';
+    document.getElementById('wizard-step-website').style.display = 'block';
     return;
   }
   _showToast('即将上线');
@@ -8043,6 +8104,126 @@ async function smtpSendAll() {
     ? '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 用自己邮箱发送'
     : '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 推送至 Instantly';
 })();
+
+// ── Website list upload & enrich ──────────────────────────────────────────────
+let _wlRows = [];
+let _wlUrls = [];
+
+function wlHandleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    Papa.parse(file, {
+      header: true, skipEmptyLines: true,
+      complete: (r) => wlOnParsed(r.data, r.meta.fields),
+    });
+  } else {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      const fields = data.length ? Object.keys(data[0]) : [];
+      wlOnParsed(data, fields);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function wlOnParsed(rows, fields) {
+  _wlRows = rows;
+  const sel = document.getElementById('wlUrlColumn');
+  sel.innerHTML = fields.map(f => `<option value="${f}">${f}</option>`).join('');
+  const urlCol = fields.find(f => /url|website|site|网址|网站/i.test(f)) || fields[0];
+  sel.value = urlCol;
+  wlOnColumnChange();
+  document.getElementById('wlColumnSection').style.display = 'block';
+  document.getElementById('wlIcpSection').style.display = 'block';
+  document.getElementById('wlStartBtn').style.display = 'block';
+  document.getElementById('wlUploadArea').style.borderColor = 'rgba(99,102,241,0.5)';
+}
+
+function wlOnColumnChange() {
+  const col = document.getElementById('wlUrlColumn').value;
+  _wlUrls = _wlRows.map(r => (r[col] || '').toString().trim()).filter(u => u.length > 0);
+  const preview = _wlUrls.slice(0, 3).join(', ') + (_wlUrls.length > 3 ? ` ... 共 ${_wlUrls.length} 条` : ` 共 ${_wlUrls.length} 条`);
+  document.getElementById('wlPreview').textContent = preview;
+}
+
+async function wlStartEnrich() {
+  if (!_wlUrls.length) { alert('没有可用的网址'); return; }
+  const icp = document.getElementById('wlIcp').value.trim();
+  if (!icp) { alert('请填写筛选标准'); return; }
+
+  const companyProfile = {
+    sellerName: localStorage.getItem(LEAD_PREFIX + 'sellerName') || '',
+    products:   localStorage.getItem(LEAD_PREFIX + 'products') || '',
+    advantage:  localStorage.getItem(LEAD_PREFIX + 'advantage') || '',
+  };
+
+  document.getElementById('wlStartBtn').disabled = true;
+  document.getElementById('wlProgress').style.display = 'block';
+  document.getElementById('wlProgressLog').innerHTML = '';
+
+  const bar   = document.getElementById('wlProgressBar');
+  const label = document.getElementById('wlProgressLabel');
+  const count = document.getElementById('wlProgressCount');
+  const log   = document.getElementById('wlProgressLog');
+
+  function addLog(text, color) {
+    const el = document.createElement('div');
+    el.style.cssText = `color:${color || 'rgba(255,255,255,0.5)'};padding:2px 0`;
+    el.textContent = text;
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  try {
+    const res = await fetch('/api/enrich-urls', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+      body: JSON.stringify({ urls: _wlUrls, companyProfile, icp }),
+    });
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const parts = buf.split('\n\n'); buf = parts.pop();
+      for (const part of parts) {
+        if (!part.startsWith('data:')) continue;
+        try {
+          const evt = JSON.parse(part.slice(5).trim());
+          if (evt.type === 'progress') {
+            count.textContent = `${evt.done} / ${evt.total}`;
+            bar.style.width = `${(evt.done / evt.total * 100).toFixed(1)}%`;
+            const lead = evt.lead;
+            if (lead?.status?.startsWith('filtered')) {
+              addLog(`⏭ ${lead.companyName || lead.website} — 跳过`, 'rgba(255,255,255,0.3)');
+            } else if (lead?.status === 'error') {
+              addLog(`❌ ${lead.website} — 错误`, '#f87171');
+            } else {
+              addLog(`✅ ${lead.companyName || lead.website} — ICP ${lead.icpScore}/10`, '#4ade80');
+            }
+          } else if (evt.type === 'done') {
+            label.textContent = `✅ 完成：${evt.qualified} 条合格`;
+            bar.style.width = '100%';
+            _allLeads = evt.results || [];
+            renderResults(_allLeads);
+            document.getElementById('resultsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (e) {
+    addLog('❌ 错误：' + e.message, '#f87171');
+  }
+  document.getElementById('wlStartBtn').disabled = false;
+}
 </script>
 
 <style>
