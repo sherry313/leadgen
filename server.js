@@ -497,6 +497,110 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
   res.end();
 });
 
+// ── Website-list enrich (SSE) ─────────────────────────────────────────────────
+// POST /api/enrich-urls  — input: { urls, companyProfile, icp, searchId }
+// Same Firecrawl → filter → Sonnet flow as /api/enrich, but starts from a list
+// of raw URLs (e.g. uploaded CSV) instead of pre-shaped company rows.
+app.post('/api/enrich-urls', requireAuth, async (req, res) => {
+  const { urls, companyProfile = {}, icp = '', searchId } = req.body;
+  if (!Array.isArray(urls) || !urls.length) {
+    return res.status(400).json({ success: false, error: 'urls array required' });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Shape each URL into a minimal company object — companyName filled in
+  // after Firecrawl returns a page title.
+  const companies = urls.map(u => ({
+    companyName: '',
+    website:     (u || '').trim(),
+    source:      'website_list',
+    email:       '',
+    phone:       '',
+    city:        '',
+    country:     companyProfile?.countryCode || '',
+  }));
+
+  const results = new Array(companies.length);
+  let sonnetIn = 0, sonnetOut = 0;
+  let completed = 0;
+  let idx = 0;
+
+  const processOne = async (company) => {
+    try {
+      const crawled = await withTimeout(crawlWebsite(company.website), 60000, 'Firecrawl');
+      const websiteContent = crawled.content;
+      if (crawled.title) company.companyName = crawled.title;
+      const pageMetadata = {
+        title:         crawled.title,
+        description:   crawled.description,
+        ogTitle:       crawled.ogTitle,
+        ogDescription: crawled.ogDescription,
+      };
+      const { shouldSkip, reason, keepSignals, lowSignal, claimsLocalManufacturing } = filterCompany(websiteContent);
+      if (shouldSkip) {
+        return { ...company, websiteContent, pageMetadata, status: `filtered: ${reason}`, dateAdded: today };
+      }
+      const enrichment = await withTimeout(
+        analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing, pageMetadata),
+        120000,
+        'Sonnet ICP',
+      );
+      sonnetIn  += enrichment.usage?.input_tokens  || 0;
+      sonnetOut += enrichment.usage?.output_tokens || 0;
+      return { ...company, websiteContent, pageMetadata, keepSignals, lowSignal, claimsLocalManufacturing, ...enrichment, dateAdded: today, status: 'enriched' };
+    } catch (err) {
+      console.error(`[EnrichUrls] ${company.website}:`, err.message);
+      return { ...company, status: 'error', dateAdded: today };
+    }
+  };
+
+  const worker = async () => {
+    while (idx < companies.length && !aborted) {
+      const i = idx++;
+      const lead = await processOne(companies[i]);
+      results[i] = lead;
+      if (!lead.status?.startsWith('filtered') && !lead.status?.startsWith('error')) queueLead(lead);
+      completed++;
+      send({ type: 'progress', lead, done: completed, total: companies.length });
+    }
+  };
+
+  const CONCURRENCY = 3;
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, companies.length) }, () => worker()));
+
+  const sonnetCost    = (sonnetIn / 1_000_000 * 3) + (sonnetOut / 1_000_000 * 15);
+  const firecrawlCost = companies.length * 0.003;
+  console.log(`[EnrichUrls] ${companies.length} urls | Sonnet=$${sonnetCost.toFixed(4)} | Firecrawl=$${firecrawlCost.toFixed(4)}`);
+
+  if (searchId) {
+    await appendSearchRunCosts(searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: firecrawlCost });
+    const savedLeads = await saveLeads(searchId, results);
+    if (savedLeads?.length) {
+      const idMap = new Map(savedLeads.map(l => [l.company_name, l.id]));
+      results.forEach(r => { if (r.companyName) r.dbId = idMap.get(r.companyName) || null; });
+    }
+  }
+
+  const qualified = results.filter(r =>
+    !r.status?.startsWith('filtered') && !r.status?.startsWith('error') &&
+    Number(r.icpScore || 0) >= 5 && Number(r.intentScore || 0) >= 5
+  ).length;
+
+  send({ type: 'done', results, qualified });
+  res.end();
+});
+
 // ── Templates metadata ────────────────────────────────────────────────────────
 // GET /api/frameworks  →  { success, frameworks: [...] }
 app.get('/api/frameworks', requireAuth, (req, res) => {
