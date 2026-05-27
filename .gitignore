@@ -32,7 +32,8 @@ build/
 audit_output/
 
 # Claude Code
-.claude/
+.claude/*
+!.claude/settings.json
 
 # Test/setup scripts
 check-instantly.js

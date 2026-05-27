@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(node services/test.js)",
+      "Bash(node server.js)",
+      "Bash(curl -s -X POST http://localhost:3000/api/scrape -H 'Content-Type: application/json' -H 'Authorization: Bearer mysecrettoken123' -d '{ *)",
+      "Read(//tmp/**)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(curl -s -X POST http://localhost:3000/api/scrape -H 'Content-Type: application/json' -H 'Authorization: Bearer mysecrettoken123' -d '{\"searchQuery\":\"construction company\",\"location\":\"Sydney Australia\",\"maxResults\":1,\"companyProfile\":{},\"dataOptions\":{\"includeEmail\":true,\"includeSocial\":false,\"includeBusinessHours\":false,\"includeOwnerName\":false}}')",
+      "Bash(Start-Sleep -Seconds 2)",
+      "Bash(Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing)",
+      "Bash(Select-Object -ExpandProperty StatusCode)",
+      "PowerShell(Start-Sleep -Seconds 2; \\(Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing\\).StatusCode)",
+      "PowerShell(\\(Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing\\).StatusCode)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Administrator\\.claude\\projects\\c--Users-Administrator-Documents-au-lead-gen\\memory"
+    ]
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Allow `git push origin main`: this repository is single-developer (owner: sherry313) and direct-to-main is the established workflow. Force-push (`--force` / `--force-with-lease`) and pushes that delete branches remain gated."
+    ]
+  }
+}
