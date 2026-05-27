@@ -155,30 +155,34 @@ async function scrapeAustralianCompanies(searchQuery, location, maxResults = 25,
 }
 
 async function fetchDatasetByRunId(runId) {
-  const url = `${BASE_URL}/actor-runs/${runId}/dataset/items?token=${APIFY_TOKEN}&limit=1000&fields=title,website,phone,email,address,city,state,country,categoryName,totalScore,reviewsCount,url,ownerName,facebook,instagram,linkedin,businessHours,description`;
+  const url = `${BASE_URL}/actor-runs/${runId}/dataset/items?token=${APIFY_TOKEN}&limit=1000`;
   const res = await axios.get(url, { timeout: 60000 });
   const items = res.data || [];
-  return items.map(item => ({
-    companyName: item.title || '',
-    website: item.website || '',
-    phone: item.phone || '',
-    email: item.email || '',
-    address: item.address || '',
-    city: item.city || '',
-    state: item.state || '',
-    country: item.country || '',
-    industry: item.categoryName || '',
-    googleRating: item.totalScore || '',
-    reviewCount: item.reviewsCount || 0,
-    googleMapsUrl: item.url || '',
-    ownerName: item.ownerName || '',
-    facebook: item.facebook || '',
-    instagram: item.instagram || '',
-    linkedin: item.linkedin || '',
-    businessHours: item.businessHours || '',
-    websiteContent: item.description || '',
-    source: 'google_maps',
-  }));
+  return {
+    companies: items.map(item => ({
+      companyName: item.title || '',
+      website: item.website || '',
+      phone: item.phone || '',
+      email: item.email || '',
+      address: item.address || '',
+      city: item.city || '',
+      state: item.state || '',
+      country: item.country || '',
+      industry: item.categoryName || '',
+      googleRating: item.totalScore || '',
+      reviewCount: item.reviewsCount || 0,
+      googleMapsUrl: item.url || '',
+      placeId: item.placeId || '',
+      ownerName: item.ownerName || '',
+      facebook: item.facebook || '',
+      instagram: item.instagram || '',
+      linkedin: item.linkedin || '',
+      businessHours: item.businessHours || '',
+      websiteContent: item.description || '',
+      source: 'google_maps',
+    })),
+    apifyCostUsd: 0,
+  };
 }
 
 module.exports = { scrapeAustralianCompanies, fetchDatasetByRunId };

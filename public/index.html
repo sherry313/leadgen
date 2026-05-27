@@ -2898,6 +2898,17 @@
           </button>
           <span id="resumeApifyHint" style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:8px"></span>
         </div>
+        <div id="datasetResumeBar" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)">
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px">或者从 Apify Dataset 继续</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="datasetRunId" placeholder="Apify Run ID (e.g. abc123xyz)"
+              style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:7px 11px;color:#fff;font-size:13px;outline:none;font-family:inherit">
+            <button onclick="startFromDataset()"
+              style="padding:7px 16px;background:rgba(99,102,241,0.3);border:1px solid rgba(99,102,241,0.5);border-radius:8px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">
+              接着跑
+            </button>
+          </div>
+        </div>
         <div id="autoProgress" style="display:none;margin-top:16px;padding:14px;background:rgba(15,23,42,0.5);border-radius:8px;font-size:0.85rem;line-height:1.7">
           <div id="autoPhases" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
           <div id="autoCurrent" style="color:#cbd5e1"></div>
@@ -5110,6 +5121,102 @@ async function resumeFromApify() {
     alert('网络错误：' + e.message);
   }
   if (btn) { btn.disabled = false; btn.textContent = '恢复上次抓取'; }
+}
+
+async function startFromDataset() {
+  const runId = document.getElementById('datasetRunId').value.trim();
+  if (!runId) { alert('请填入 Apify Run ID'); return; }
+
+  const token = getStoredToken();
+  if (!token) { goToStep(2); return; }
+
+  const selectedCombos = (typeof getSelectedCombos === 'function')
+    ? getSelectedCombos()
+    : (Array.isArray(generatedKeywords) ? generatedKeywords.filter(k => k.selected) : []);
+  const maxResults = parseInt(document.getElementById('maxResults')?.value || '100');
+  const companyProfile = {
+    sellerName: document.getElementById('sellerName')?.value?.trim() || '',
+    products:   document.getElementById('products')?.value?.trim() || '',
+    advantage:  document.getElementById('advantage')?.value?.trim() || '',
+  };
+  const icp = document.getElementById('icpInput')?.value?.trim() || '';
+  const campaignId = typeof getSelectedCampaignId === 'function' ? getSelectedCampaignId() : '';
+
+  const btn = document.querySelector('#datasetResumeBar button');
+  if (btn) { btn.disabled = true; btn.textContent = '运行中...'; }
+
+  document.getElementById('autoProgress').style.display = 'block';
+  const progressLog = document.getElementById('autoCurrent');
+  if (progressLog) progressLog.textContent = '正在从 Apify dataset 加载…';
+  if (Array.isArray(_allLeads)) _allLeads.length = 0;
+
+  try {
+    const res = await fetch('/api/auto/run-from-dataset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        runId,
+        searchQuery: selectedCombos[0]?.query || 'dataset',
+        location: selectedCombos[0]?.location || '',
+        countryCode: selectedCombos[0]?.countryCode || 'au',
+        maxResults,
+        companyProfile,
+        icp,
+        campaignId,
+        framework_key: _selectedFrameworkKey || null,
+      }),
+    });
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const parts = buf.split('\n\n'); buf = parts.pop();
+      for (const part of parts) {
+        if (!part.startsWith('data:')) continue;
+        try {
+          const evt = JSON.parse(part.slice(5).trim());
+          if (typeof _handleAutoRunEvent === 'function') {
+            _handleAutoRunEvent(evt);
+          } else {
+            // Minimal fallback: startAutoRun's SSE handler is closure-scoped
+            // and not extractable without a refactor. Keep the user informed
+            // and capture the final result set so renderResults() can populate
+            // the table when the stream ends.
+            if (evt.type === 'phase' && progressLog) {
+              progressLog.textContent = `${evt.phase} · ${evt.status || ''}`;
+            } else if (evt.type === 'progress' && evt.lead) {
+              _allLeads.push(evt.lead);
+              if (progressLog) progressLog.textContent = `${evt.phase} ${evt.done}/${evt.total}`;
+            } else if (evt.type === 'error') {
+              alert('❌ ' + (evt.error || ''));
+            } else if (evt.type === 'done') {
+              _allLeads = evt.results || _allLeads;
+              if (evt.searchId) {
+                _currentSearchId = evt.searchId;
+                localStorage.setItem('leadgen_searchId', evt.searchId);
+                localStorage.setItem('leadgen_current_step', '4');
+              }
+              renderResults(_allLeads);
+              const s = evt.summary || {};
+              const c = s.costs || {};
+              const summaryEl = document.getElementById('autoSummary');
+              if (summaryEl) summaryEl.innerHTML = `✅ 完成 · 数据集 ${s.scraped} · Haiku 推荐 ${s.haikuRecommend} · 有邮箱 ${s.withEmail} · 合格 ${s.qualified} · 已生成 ${s.emailsGenerated} 封 · Instantly 推送 ${s.pushed}/${s.pushed + s.pushFailed} · 总费用 ≈ $${(c.total || 0).toFixed(3)}`;
+              document.getElementById('resultsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              window.dispatchEvent(new Event('pipelineDone'));
+            }
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (e) {
+    alert('网络错误：' + e.message);
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '接着跑'; }
 }
 
 function _updateAIFilterRow() {

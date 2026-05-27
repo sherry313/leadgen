@@ -1079,6 +1079,333 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
   }
 });
 
+// ── Auto-run starting from an existing Apify dataset (SSE) ────────────────────
+// POST /api/auto/run-from-dataset
+// Body: { runId, searchQuery, location, countryCode?, maxResults?, campaignId?,
+//         companyProfile?, icp?, framework_key? }
+// Same Haiku → Sonnet → email → push pipeline as /api/auto/run, but Phase 1
+// re-uses items from a prior Apify run by runId instead of re-scraping. Dedup
+// is skipped — the user is explicitly asking to process the dataset as-is.
+app.post('/api/auto/run-from-dataset', requireAuth, async (req, res) => {
+  function withTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error(label + ' timeout after ' + (ms/1000) + 's')), ms))
+    ]);
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+  const send = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
+
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+
+  const heartbeat = setInterval(() => { if (!aborted) res.write('data: {"type":"heartbeat"}\n\n'); }, 5000);
+
+  try {
+    const {
+      runId,
+      searchQuery = 'dataset',
+      location = '',
+      countryCode = 'au',
+      maxResults: mr = 100,
+      campaignId = '',
+      companyProfile = {},
+      icp = '',
+      framework_key: clientFrameworkKey = null,
+    } = req.body;
+
+    if (!runId) {
+      send({ type: 'error', phase: 'preflight', error: '缺少 runId' });
+      return;
+    }
+    const maxResults = Math.min(1000, Math.max(1, parseInt(mr) || 100));
+
+    console.log(`\n[AutoDataset] ===== Auto-run-from-dataset start =====`);
+    console.log(`[AutoDataset] runId=${runId} | campaign=${campaignId || '(none)'}`);
+
+    // ── Phase 0: Active-campaign safeguard (same as /api/auto/run) ─────────
+    if (campaignId) {
+      const { getCampaignStatus } = require('./services/instantly');
+      const { status, name } = await withTimeout(getCampaignStatus(campaignId), 30000, 'Instantly campaign check');
+      const isActive = status === 1 || status === 'active';
+      if (isActive) {
+        send({
+          type: 'error', phase: 'preflight',
+          error: `Campaign "${name}" 当前处于 Active 状态，推送会立刻发邮件。请先在 Instantly 中暂停 Campaign 后重试。`,
+        });
+        return;
+      }
+    }
+
+    // ── Phase 1: fetch from existing Apify dataset (no re-scrape) ──────────
+    const { fetchDatasetByRunId } = require('./services/apify');
+    send({ type: 'phase', phase: 'apify', status: 'start' });
+    const { companies: rawCompanies, apifyCostUsd } = await withTimeout(
+      fetchDatasetByRunId(runId),
+      60000,
+      'Apify dataset fetch',
+    );
+    const apifyCost = apifyCostUsd ?? 0;
+
+    // Skip dedup — user is explicitly replaying a dataset.
+    const newCompanies = rawCompanies;
+    const dedupSkipped = 0;
+
+    const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length });
+    send({
+      type: 'phase', phase: 'apify', status: 'done',
+      scraped: rawCompanies.length, newLeads: rawCompanies.length, dedupSkipped: 0,
+      searchId, apifyCostUsd: 0,
+    });
+
+    if (!newCompanies.length) {
+      await updateSearchRunCosts(searchId, { apifyCostUsd: 0, anthropicCostUsd: 0, totalCostUsd: 0, totalQualified: 0 });
+      send({
+        type: 'done', searchId,
+        summary: { scraped: 0, dedupSkipped: 0, haikuRecommend: 0, withEmail: 0, qualified: 0, emailsGenerated: 0, pushed: 0, pushFailed: 0, costs: { apify: 0, haiku: 0, sonnet: 0, firecrawl: 0, total: 0 } },
+        results: [],
+        note: 'Dataset 为空',
+      });
+      return;
+    }
+
+    // ── Phase 2: Haiku name-only pre-filter ────────────────────────────────
+    const profileForHaiku = {
+      companyName: companyProfile.sellerName || companyProfile.companyName || '',
+      products: companyProfile.products || '',
+      advantages: companyProfile.advantage || companyProfile.advantages || '',
+      icp: icp || companyProfile.icp || ''
+    };
+    send({ type: 'phase', phase: 'haiku', status: 'start', total: newCompanies.length });
+    let haikuIn = 0, haikuOut = 0;
+    const haikuResults = new Array(newCompanies.length);
+    {
+      let idx = 0, completed = 0;
+      const worker = async () => {
+        while (idx < newCompanies.length) {
+          if (aborted) break;
+          const i = idx++;
+          const { level, reason, usage } = await withTimeout(preFilterLead(newCompanies[i], profileForHaiku), 60000, 'Haiku pre-filter');
+          haikuIn  += usage.input_tokens;
+          haikuOut += usage.output_tokens;
+          haikuResults[i] = { ...newCompanies[i], level, reason };
+          completed++;
+          send({ type: 'progress', phase: 'haiku', done: completed, total: newCompanies.length });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(5, newCompanies.length) }, () => worker()));
+    }
+    const recommended = haikuResults.filter(c => c.level !== 'skip');
+    const haikuSkipped = haikuResults.filter(c => c.level === 'skip');
+    send({ type: 'phase', phase: 'haiku', status: 'done', recommend: recommended.length, skip: haikuSkipped.length });
+    send({ type: 'phase', phase: 'haiku_done', recommended: recommended.length, skipped: haikuSkipped.length });
+
+    // ── Phase 2.5: Email-presence filter ───────────────────────────────────
+    const forSonnet  = recommended.filter(c => c.email?.trim());
+    const noEmail    = recommended.filter(c => !c.email?.trim());
+    send({
+      type: 'phase', phase: 'email-filter', status: 'done',
+      withEmail: forSonnet.length, withoutEmail: noEmail.length,
+    });
+
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!forSonnet.length) {
+      const persistRows = [
+        ...haikuSkipped.map(c => ({ ...c, status: 'filtered: haiku', dateAdded: today })),
+        ...noEmail.map(c     => ({ ...c, status: 'filtered: no_email', dateAdded: today })),
+      ];
+      await saveLeads(searchId, persistRows);
+      const haikuCost = (haikuIn / 1_000_000 * 0.80) + (haikuOut / 1_000_000 * 4.00);
+      await updateSearchRunCosts(searchId, { apifyCostUsd: 0, anthropicCostUsd: haikuCost, totalCostUsd: haikuCost, totalQualified: 0 });
+      send({
+        type: 'done', searchId,
+        summary: { scraped: rawCompanies.length, dedupSkipped: 0, haikuRecommend: recommended.length, haikuSkip: haikuSkipped.length, withEmail: 0, withoutEmail: noEmail.length, qualified: 0, emailsGenerated: 0, pushed: 0, pushFailed: 0, costs: { apify: 0, haiku: haikuCost, sonnet: 0, firecrawl: 0, total: haikuCost } },
+        results: persistRows,
+        note: '没有可深度分析的线索（Haiku 推荐的公司都缺少邮箱）',
+      });
+      return;
+    }
+
+    // ── Phase 3: Firecrawl + Sonnet ICP analysis ───────────────────────────
+    send({ type: 'phase', phase: 'icp', status: 'start', total: forSonnet.length });
+    let sonnetIn = 0, sonnetOut = 0;
+    const icpResults = new Array(forSonnet.length);
+    {
+      let idx = 0, completed = 0;
+      const worker = async () => {
+        while (idx < forSonnet.length) {
+          if (aborted) break;
+          const i = idx++;
+          const company = forSonnet[i];
+          try {
+            const crawled = await withTimeout(crawlWebsite(company.website), 60000, 'Firecrawl');
+            const websiteContent = crawled.content;
+            const pageMetadata = {
+              title:         crawled.title,
+              description:   crawled.description,
+              ogTitle:       crawled.ogTitle,
+              ogDescription: crawled.ogDescription,
+            };
+            const { shouldSkip, reason, keepSignals, lowSignal, claimsLocalManufacturing } = filterCompany(websiteContent);
+            if (shouldSkip) {
+              icpResults[i] = { ...company, websiteContent, pageMetadata, status: `filtered: ${reason}`, dateAdded: today };
+            } else {
+              const enrichment = await withTimeout(analyzeICP(company, websiteContent, companyProfile, icp, keepSignals, lowSignal, claimsLocalManufacturing, pageMetadata), 120000, 'Sonnet ICP');
+              sonnetIn  += enrichment.usage?.input_tokens  || 0;
+              sonnetOut += enrichment.usage?.output_tokens || 0;
+              icpResults[i] = { ...company, websiteContent, pageMetadata, keepSignals, lowSignal, claimsLocalManufacturing, ...enrichment, dateAdded: today, status: 'enriched' };
+            }
+          } catch (err) {
+            console.error(`[AutoDataset/ICP] ${company.companyName}:`, err.message);
+            icpResults[i] = { ...company, status: 'error', dateAdded: today };
+          }
+          completed++;
+          send({ type: 'progress', phase: 'icp', done: completed, total: forSonnet.length, lead: icpResults[i] });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(3, forSonnet.length) }, () => worker()));
+    }
+    send({ type: 'phase', phase: 'icp', status: 'done' });
+
+    // ── Qualification gate ─────────────────────────────────────────────────
+    const qualified = icpResults.filter(r =>
+      !r.status?.startsWith('filtered') && !r.status?.startsWith('error') &&
+      Number(r.icpScore || 0) >= 5 && Number(r.intentScore || 0) >= 5
+    );
+    send({ type: 'phase', phase: 'qualify', status: 'done', qualified: qualified.length });
+
+    // ── Phase 4: email generation ──────────────────────────────────────────
+    const ALLOWED_FW_KEYS = new Set(['peter_kang_3part','cold_5_step','aida','bab','pas','byaf','sch','three_ps']);
+    const templateKey  = templateKeyFromQuery(searchQuery);
+    const frameworkKey = (clientFrameworkKey && ALLOWED_FW_KEYS.has(clientFrameworkKey))
+      ? clientFrameworkKey
+      : 'peter_kang_3part';
+    let emailsGenerated = 0;
+    if (qualified.length) {
+      send({ type: 'phase', phase: 'emails', status: 'start', total: qualified.length, templateKey, frameworkKey });
+      let idx = 0, completed = 0;
+      const worker = async () => {
+        while (idx < qualified.length) {
+          if (aborted) break;
+          const i = idx++;
+          const company = qualified[i];
+          try {
+            const emails = await withTimeout(generateEmails(company, templateKey, company.websiteContent || '', frameworkKey, null, companyProfile), 120000, 'Sonnet emails');
+            sonnetIn  += emails.usage?.input_tokens  || 0;
+            sonnetOut += emails.usage?.output_tokens || 0;
+            Object.assign(company, emails, { emailTemplateKey: frameworkKey });
+            if (company.EMAIL_1_SUBJECT || company.EMAIL_1_BODY) emailsGenerated++;
+            updateLeadEmails(searchId, company.companyName, emails, frameworkKey, templateKey)
+              .catch(e => console.warn(`[AutoDataset/Emails] DB persist failed for "${company.companyName}":`, e.message));
+          } catch (err) {
+            console.error(`[AutoDataset/Emails] ${company.companyName}:`, err.message);
+          }
+          completed++;
+          send({ type: 'progress', phase: 'emails', done: completed, total: qualified.length, lead: company });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(2, qualified.length) }, () => worker()));
+      send({ type: 'phase', phase: 'emails', status: 'done', generated: emailsGenerated });
+    } else {
+      send({ type: 'phase', phase: 'emails', status: 'skipped', reason: 'No qualified leads' });
+    }
+
+    // ── Persist all leads to Supabase ──────────────────────────────────────
+    const allLeads = [
+      ...icpResults,
+      ...haikuSkipped.map(c => ({ ...c, status: 'filtered: haiku', dateAdded: today })),
+      ...noEmail.map(c     => ({ ...c, status: 'filtered: no_email', dateAdded: today })),
+    ];
+    try {
+      const saved = await saveLeads(searchId, allLeads);
+      if (saved?.length) {
+        const idMap = new Map(saved.map(l => [l.company_name, l.id]));
+        allLeads.forEach(r => { if (r.companyName) r.dbId = idMap.get(r.companyName) || null; });
+      }
+    } catch (e) {
+      console.warn(`[AutoDataset] saveLeads failed: ${e.message}`);
+    }
+
+    // ── Phase 5: Push qualified-with-emails leads to Instantly ─────────────
+    let pushed = 0, pushFailed = 0;
+    const pushable = qualified.filter(q => (q.EMAIL_1_SUBJECT || q.EMAIL_1_BODY) && q.email?.trim());
+    if (campaignId && pushable.length) {
+      const { addLeadToCampaign } = require('./services/instantly');
+      send({ type: 'phase', phase: 'push', status: 'start', total: pushable.length });
+      for (let i = 0; i < pushable.length; i++) {
+        if (aborted) break;
+        const lead = pushable[i];
+        try {
+          const result = await withTimeout(addLeadToCampaign(lead, campaignId), 30000, 'Instantly push');
+          if (result.success) pushed++;
+          else { pushFailed++; console.warn(`[AutoDataset/Push] ${lead.companyName}: ${result.reason}`); }
+        } catch (err) {
+          pushFailed++;
+          console.error(`[AutoDataset/Push] ${lead.companyName}:`, err.message);
+        }
+        send({ type: 'progress', phase: 'push', done: i + 1, total: pushable.length, companyName: lead.companyName });
+        await new Promise(r => setTimeout(r, 350));
+      }
+      send({ type: 'phase', phase: 'push', status: 'done', pushed, pushFailed });
+    } else if (!campaignId) {
+      send({ type: 'phase', phase: 'push', status: 'skipped', reason: '未选择 Campaign，推送步骤已跳过' });
+    } else {
+      send({ type: 'phase', phase: 'push', status: 'skipped', reason: '没有合格且有邮件内容的线索' });
+    }
+
+    // ── Final cost roll-up ─────────────────────────────────────────────────
+    const sonnetCost    = (sonnetIn / 1_000_000 * 3) + (sonnetOut / 1_000_000 * 15);
+    const haikuCost     = (haikuIn  / 1_000_000 * 0.80) + (haikuOut / 1_000_000 * 4.00);
+    const firecrawlCost = forSonnet.length * 0.003;
+    const anthropicCost = sonnetCost + haikuCost;
+    const totalCost     = apifyCost + anthropicCost + firecrawlCost;
+
+    await updateSearchRunCosts(searchId, {
+      apifyCostUsd:     apifyCost,
+      anthropicCostUsd: anthropicCost,
+      totalCostUsd:     totalCost,
+      totalQualified:   qualified.length,
+    });
+
+    console.log(`[AutoDataset] ===== Done =====`);
+    console.log(`[AutoDataset] dataset=${rawCompanies.length} haikuRec=${recommended.length} withEmail=${forSonnet.length} qualified=${qualified.length} emails=${emailsGenerated} pushed=${pushed}/${pushable.length}`);
+
+    send({
+      type: 'done',
+      searchId,
+      summary: {
+        scraped:         rawCompanies.length,
+        dedupSkipped:    0,
+        haikuRecommend:  recommended.length,
+        haikuSkip:       haikuSkipped.length,
+        withEmail:       forSonnet.length,
+        withoutEmail:    noEmail.length,
+        icpAnalyzed:     forSonnet.length,
+        qualified:       qualified.length,
+        emailsGenerated,
+        pushed,
+        pushFailed,
+        pushSkipped:     !campaignId,
+        templateKey,
+        frameworkKey,
+        costs: { apify: 0, haiku: haikuCost, sonnet: sonnetCost, firecrawl: firecrawlCost, total: totalCost },
+      },
+      results: allLeads,
+    });
+  } catch (err) {
+    console.error('[AutoDataset] FATAL:', err.message, err.stack);
+    send({ type: 'error', phase: 'fatal', error: err.message });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
+
 // ── Resume from a prior Apify run by runId (SSE) ─────────────────────────────
 // POST /api/apify/resume  — input: { runId, companyProfile?, icp?, campaignId?, framework_key? }
 // Re-fetches the dataset items from Apify by runId and streams them to the
@@ -1100,7 +1427,7 @@ app.post('/api/apify/resume', requireAuth, async (req, res) => {
   try {
     const { fetchDatasetByRunId } = require('./services/apify');
     send({ type: 'phase', phase: 'apify', status: 'start' });
-    const companies = await withTimeout(fetchDatasetByRunId(runId), 60000, 'Apify dataset fetch');
+    const { companies } = await withTimeout(fetchDatasetByRunId(runId), 60000, 'Apify dataset fetch');
     send({ type: 'phase', phase: 'apify', status: 'done', scraped: companies.length });
     send({ type: 'resume_ready', companies });
   } catch (err) {
