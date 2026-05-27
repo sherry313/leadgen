@@ -7,7 +7,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 1
 // Returns: { intentScore, intentReasoning, icpScore, icpReasoning, usage }
 
 const SYSTEM_PROMPT_ICP = `You are an expert B2B sales analyst helping a Chinese building materials manufacturer
-identify overseas prospects most likely to (1) place serious imported building materials orders, AND (2) be open to visiting the manufacturer's factory in China. The PRIMARY conversion event is an in-person factory visit in Foshan, Guangdong. Score prospects based on how likely they are to seriously consider a factory visit and/or place an order.
+identify overseas prospects most likely to (1) place serious imported building materials orders, AND (2) be open to visiting the manufacturer's factory in China. The PRIMARY conversion event is an in-person factory visit in Zhongshan, Guangdong. Score prospects based on how likely they are to seriously consider a factory visit and/or place an order.
 
 ╔══════════════════════════════════════════════════════════════════════════╗
 ║ CRITICAL SCORING RULES — these OVERRIDE every other rule in this prompt. ║

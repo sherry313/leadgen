@@ -24,7 +24,7 @@ Saw [Company]'s recent Hawthorn custom home — the curved aluminium facade caug
 
 if your aluminium supplier ghosts mid-build, how many days does your client wait?
 
-Lens is a 300,000m² aluminium factory in Foshan, 20 years. Currently working with a Sydney designer on a residential project.
+Lens is a 300,000m² aluminium factory in Zhongshan, 20 years. Currently working with a Sydney designer on a residential project.
 
 Worth a half-day next time you're in China? Just a chance to see if it makes sense — one more option in your back pocket.
 
@@ -42,7 +42,7 @@ Worth a half-day next time you're in China? Just a chance to see if it makes sen
 STYLE: short, customer-angle "for you" — not "buy from us".
 
 FACTS YOU MAY USE (do not invent others):
-- Lens: 300,000m² aluminium factory in Foshan, 20 years experience
+- Lens: 300,000m² aluminium factory in Zhongshan, 20 years experience
 - Currently working with a Sydney designer on a residential project (no name given, no specifics beyond "residential")
 - Do NOT say "Canadian distributor" / "$1-2M USD" / "23 builders" / cost-savings % / AU warehouse / any delay-related promises
 
@@ -57,7 +57,7 @@ Greeting: "Hi [first_name]," — derive first_name from the prospect's email (e.
 Body structure (45-70 words total):
   1. One sentence hook referencing something SPECIFIC from their website (a project, suburb, style detail). If website scrape is empty: "Saw [Company] — quick thought."
   2. Pain question: "if your aluminium supplier ghosts mid-[project type], how many days does your client wait?" — adapt [project type] to their work (mid-build, mid-fit-out, mid-install, mid-renovation).
-  3. Credentials line, verbatim: "Lens is a 300,000m² aluminium factory in Foshan, 20 years. Currently working with a Sydney designer on a residential project."
+  3. Credentials line, verbatim: "Lens is a 300,000m² aluminium factory in Zhongshan, 20 years. Currently working with a Sydney designer on a residential project."
   4. CTA, verbatim: "Worth a half-day next time you're in China? Just a chance to see if it makes sense — one more option in your back pocket."
 Sign-off: {{accountSignature}}
 Subject: curiosity-gap, lowercase-first, 5-8 words. Examples: "quick thought on your supplier risk", "before your next custom build", "when your supplier ghosts".
