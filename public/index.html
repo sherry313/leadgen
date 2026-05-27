@@ -4976,6 +4976,8 @@ async function startAutoRun() {
   if (lastSearchId) {
     _currentSearchId = lastSearchId;
     localStorage.setItem('leadgen_searchId', lastSearchId);
+    localStorage.setItem('leadgen_current_step', '4');
+    currentStep = 4;
   }
   renderResults(_allLeads);
 
