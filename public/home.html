@@ -331,6 +331,10 @@
 
     /* ── Services ────────────────────────────────────────────────────── */
     .service-card {
+      --mx: 50%;
+      --my: 50%;
+      position: relative;
+      overflow: hidden;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 16px;
@@ -340,6 +344,18 @@
       align-items: flex-start;
       transition: all 0.3s ease;
     }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(400px circle at var(--mx) var(--my), rgba(99,102,241,0.12), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .service-card:hover::before { opacity: 1; }
+    .service-card > * { position: relative; z-index: 1; }
     .service-card:hover {
       border-color: rgba(99,102,241,0.4);
       background: rgba(99,102,241,0.04);
@@ -976,6 +992,16 @@
     });
   }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
   document.querySelectorAll('.fade-up').forEach(el => _fadeObserver.observe(el));
+
+  // Spotlight glow: track pointer position inside each .service-card and feed
+  // it to the ::before radial-gradient via custom properties.
+  document.querySelectorAll('.service-card').forEach(card => {
+    card.addEventListener('pointermove', (e) => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+    });
+  });
 </script>
 
 </body>
