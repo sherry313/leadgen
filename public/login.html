@@ -11,7 +11,7 @@
     :root {
       --blue-primary: #2563eb;
       --blue-dark: #1d4ed8;
-      --bg-dark: #0f172a;
+      --bg-dark: #030303;
       --bg-mid: #1e3a5f;
       --text-white: #f8fafc;
       --text-muted: #94a3b8;
@@ -39,7 +39,10 @@
       justify-content: space-between;
       padding: 0 6%;
       height: 64px;
-      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(3,3,3,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .nav-links {
       display: flex;
@@ -83,7 +86,7 @@
       align-items: center;
       justify-content: center;
       padding: 40px 12px;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37,99,235,0.12) 0%, transparent 70%);
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.1) 0%, transparent 70%);
     }
 
     /* ── CARD ── */
@@ -265,7 +268,7 @@
 
 <!-- NAV -->
 <nav id="navbar">
-  <a href="landing.html" style="text-decoration:none;display:flex;align-items:center">
+  <a href="/" style="text-decoration:none;display:flex;align-items:center">
     <div style="position:relative;display:flex;align-items:center;gap:14px;padding:14px 18px">
       <div style="position:absolute;inset:-4px;background:radial-gradient(ellipse 60% 80% at 18% 50%,rgba(91,141,239,0.32) 0%,transparent 70%);filter:blur(10px);z-index:0;pointer-events:none"></div>
       <div style="display:flex;flex-direction:column;gap:2px;position:relative;z-index:1">
@@ -277,10 +280,8 @@
     </div>
   </a>
   <ul class="nav-links" id="navLinks">
-    <li><a href="landing.html">首页</a></li>
-    <li><a href="pricing.html">定价</a></li>
-    <li><a href="tutorial.html">教程</a></li>
-    <li><a href="about.html">关于我们</a></li>
+    <li><a href="/">首页</a></li>
+    <li><a href="/pricing.html">定价</a></li>
   </ul>
   <div class="hamburger" id="hamburger" aria-label="菜单">
     <span></span><span></span><span></span>
