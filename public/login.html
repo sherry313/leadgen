@@ -340,11 +340,17 @@
 </footer>
 
 <script>
+  /* Pick redirect target: honor ?redirect= when it's a same-origin absolute path. */
+  function _redirectTarget() {
+    const p = new URLSearchParams(location.search).get('redirect') || '';
+    return /^\/[^/]/.test(p) ? p : '/lens';
+  }
+
   /* Auto-redirect if already logged in */
   (function() {
     const token = localStorage.getItem('leadgen_accessToken');
     if (token && token.trim()) {
-      window.location.href = '/lens';
+      window.location.href = _redirectTarget();
     }
   })();
 
@@ -372,7 +378,7 @@
       return;
     }
     localStorage.setItem('leadgen_accessToken', token);
-    window.location.href = '/lens';
+    window.location.href = _redirectTarget();
   }
 
   /* Allow Enter key to submit */

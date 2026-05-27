@@ -6927,7 +6927,7 @@ function _showRefreshWarning(panel) {
 (function() {
   const token = localStorage.getItem('leadgen_accessToken');
   if (!token || !token.trim()) {
-    window.location.href = '/login.html';
+    window.location.href = location.pathname === '/app' ? '/login.html?redirect=/app' : '/login.html';
   }
 })();
 
