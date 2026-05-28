@@ -8259,6 +8259,14 @@ async function smtpSendAll() {
     switchSendTab(LEAD_PREFIX === 'leadgen_' ? 'smtp' : 'instantly');
   }
 
+  // /app users have no Instantly access — hide the tab button and panel entirely.
+  if (LEAD_PREFIX === 'leadgen_') {
+    const instantlyTab = document.getElementById('tabInstantlyBtn');
+    if (instantlyTab) instantlyTab.style.display = 'none';
+    const instantlyPanel = document.getElementById('instantlyPanel');
+    if (instantlyPanel) instantlyPanel.style.display = 'none';
+  }
+
   // Hide Instantly campaign row for /app users
   const campaignRow = document.getElementById('campaignSelectorRow');
   if (campaignRow) campaignRow.style.display = LEAD_PREFIX === 'leadgen_' ? 'none' : 'flex';
