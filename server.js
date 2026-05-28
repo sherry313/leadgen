@@ -20,15 +20,36 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Page routes — explicit handlers before static so '/' isn't captured by index.html default
-app.get('/',            (req, res) => res.sendFile(path.join(__dirname, 'public', 'home.html')));
-app.get('/app',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/lens',        (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/landing',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
-app.get('/landing.html',(req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
-app.get(['/tools', '/tools/'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'tools', 'index.html')));
+// Page routes — explicit handlers before static so '/' isn't captured by index.html default.
+// Helper: send an HTML page with no-cache headers so the browser / CDN always
+// fetches the latest version (visitors won't see stale UI after a deploy).
+const sendHtml = (res, ...parts) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.sendFile(path.join(__dirname, 'public', ...parts));
+};
 
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+app.get('/',            (req, res) => sendHtml(res, 'home.html'));
+app.get('/app',         (req, res) => sendHtml(res, 'index.html'));
+app.get('/lens',        (req, res) => sendHtml(res, 'index.html'));
+app.get('/landing',     (req, res) => sendHtml(res, 'landing.html'));
+app.get('/landing.html',(req, res) => sendHtml(res, 'landing.html'));
+app.get(['/tools', '/tools/'], (req, res) => sendHtml(res, 'tools', 'index.html'));
+
+// Static middleware — apply no-cache to HTML files (login.html, pricing.html,
+// dashboard.html, quote.html, /tools/*.html, etc.) so the same anti-stale
+// guarantee covers everything served from public/.
+app.use(express.static(path.join(__dirname, 'public'), {
+  index: false,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+    }
+  },
+}));
 
 // Race a promise against a timeout. Used by manual-mode endpoints to bound
 // long-running external calls (Apify, Anthropic, Firecrawl, Instantly).
