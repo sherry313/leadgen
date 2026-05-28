@@ -94,28 +94,55 @@
     /* ── Layout ── */
     .container { max-width: 1060px; margin: 0 auto; padding: 88px 18px 56px; }
 
-    /* ── Step progress ── */
-    .step-progress {
-      display: flex; align-items: center; background: rgba(30,41,59,0.7);
-      border-radius: 10px; padding: 14px 24px; margin-bottom: 20px;
-      border: 1px solid var(--border);
+    /* ── Stepper (capsule bar) ── */
+    .stepper {
+      display: flex;
+      gap: 3px;
+      height: 36px;
+      align-items: stretch;
+      margin-bottom: 20px;
     }
-    .step-item { display: flex; align-items: center; flex: 1; cursor: pointer; }
-    .step-item:last-child { flex: 0; }
-    .step-num {
-      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-      background: rgba(148,163,184,0.1); color: var(--sub);
-      border: 1px solid rgba(148,163,184,0.18);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; font-weight: 700; transition: all 0.2s;
+    .stepper-seg {
+      flex: 1;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
     }
-    .step-num.active { background: var(--blue); color: #fff; border-color: var(--blue); }
-    .step-num.done   { background: rgba(37,99,235,0.18); color: #93c5fd; border-color: rgba(37,99,235,0.35); }
-    .step-label { margin-left: 8px; font-size: 0.8rem; color: var(--sub); white-space: nowrap; }
-    .step-label.active { color: var(--blue); font-weight: 600; }
-    .step-connector { flex: 1; height: 1.5px; background: var(--border); margin: 0 10px; transition: background 0.2s; }
-    .step-connector.done { background: var(--blue-light); }
-    @media(max-width:560px){ .step-label { display:none; } }
+    .stepper-seg::after {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 6px 0 0 6px;
+    }
+    .stepper-seg.seg-done {
+      background: rgba(253,164,175,0.08);
+      border: 1px solid rgba(253,164,175,0.2);
+      color: rgba(253,164,175,0.6);
+    }
+    .stepper-seg.seg-done::after { background: #fda4af; }
+    .stepper-seg.seg-active {
+      background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(244,63,94,0.12));
+      border: 1px solid rgba(165,180,252,0.35);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(99,102,241,0.12);
+    }
+    .stepper-seg.seg-active::after {
+      background: linear-gradient(180deg, #6366f1, #f43f5e);
+    }
+    .stepper-seg.seg-idle {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.18);
+    }
 
     /* ── Wizard panels ── */
     .wizard-panel {
@@ -1243,14 +1270,6 @@
 
     /* ═══ DARK THEME OVERRIDES ═══ */
     /* Step progress */
-    .step-progress { background: rgba(30,41,59,0.7) !important; box-shadow: none !important; }
-    .step-num { background: rgba(148,163,184,0.1) !important; color: var(--sub) !important; border: 1px solid rgba(148,163,184,0.18); }
-    .step-num.active { background: var(--blue) !important; color: #fff !important; border-color: var(--blue) !important; }
-    .step-num.done { background: rgba(37,99,235,0.18) !important; color: #93c5fd !important; border-color: rgba(37,99,235,0.35) !important; }
-    .step-label { color: var(--sub) !important; }
-    .step-label.active { color: #93c5fd !important; }
-    .step-connector { background: rgba(148,163,184,0.12) !important; }
-    .step-connector.done { background: rgba(37,99,235,0.35) !important; }
 
     /* Wizard panels & cards */
     .wizard-panel { background: rgba(10,10,20,0.6) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.3) !important; }
@@ -1394,9 +1413,6 @@
 
 
     /* ── Adaptive step progress ─────────────────────────────────── */
-    .step-label.done { display: none; }
-    .step-item.step-done { flex: 0; cursor: pointer; }
-    .step-item.step-done .step-num { width: 22px; height: 22px; font-size: 0.72rem; }
 
     /* ── History view banner ────────────────────────────────── */
     #histViewBanner {
@@ -2079,9 +2095,8 @@
       .panel-sub    { font-size: 0.78rem; margin-bottom: 16px; }
 
       /* Step 1/2/3/4 progress strip — tighter padding, smaller dots */
-      .step-progress { padding: 10px 12px; margin-bottom: 14px; }
-      .step-num      { width: 24px; height: 24px; font-size: 0.72rem; }
-      .step-connector { margin: 0 6px; }
+      .stepper { height: 32px; margin-bottom: 14px; }
+      .stepper-seg { font-size: 10px; }
 
       /* Step 3 mode chooser: stack the two cards vertically, full width */
       .mode-chooser    { grid-template-columns: 1fr !important; gap: 10px !important; }
@@ -2342,27 +2357,12 @@
 
 <div class="container">
 
-  <!-- Step progress bar -->
-  <div class="step-progress" id="stepProgressBar">
-    <div class="step-item" onclick="goToStep(1)">
-      <div class="step-num active" id="snum-1">1</div>
-      <span class="step-label active" id="slbl-1">选择方式</span>
-    </div>
-    <div class="step-connector" id="scon-1"></div>
-    <div class="step-item" onclick="goToStep(2)">
-      <div class="step-num" id="snum-2">2</div>
-      <span class="step-label" id="slbl-2">搜索配置</span>
-    </div>
-    <div class="step-connector" id="scon-2"></div>
-    <div class="step-item" onclick="goToStep(3)">
-      <div class="step-num" id="snum-3">3</div>
-      <span class="step-label" id="slbl-3">抓取分析</span>
-    </div>
-    <div class="step-connector" id="scon-3"></div>
-    <div class="step-item" onclick="goToStep(4)">
-      <div class="step-num" id="snum-4">4</div>
-      <span class="step-label" id="slbl-4">邮件发送</span>
-    </div>
+  <!-- Stepper (capsule bar) -->
+  <div class="stepper" id="mainStepper">
+    <div class="stepper-seg seg-done" id="seg1">选择方式</div>
+    <div class="stepper-seg seg-active" id="seg2">搜索配置</div>
+    <div class="stepper-seg seg-idle" id="seg3">抓取分析</div>
+    <div class="stepper-seg seg-idle" id="seg4">邮件发送</div>
   </div>
 
   <!-- Step 1: Method selection -->
@@ -4060,32 +4060,16 @@ function nextStep(n) { goToStep(n); }
 
 function updateStepProgress() {
   localStorage.setItem('leadgen_current_step', currentStep);
-  for (let i = 1; i <= 4; i++) {
-    const numEl = document.getElementById(`snum-${i}`);
-    const lblEl = document.getElementById(`slbl-${i}`);
-    if (!numEl || !lblEl) continue;
-    const item = numEl.parentElement;
-    if (i < currentStep) {
-      numEl.className   = 'step-num done';
-      numEl.textContent = '✓';
-      lblEl.className   = 'step-label done';
-      item.classList.add('step-done');
-    } else if (i === currentStep) {
-      numEl.className   = 'step-num active';
-      numEl.textContent = String(i);
-      lblEl.className   = 'step-label active';
-      item.classList.remove('step-done');
-    } else {
-      numEl.className   = 'step-num';
-      numEl.textContent = String(i);
-      lblEl.className   = 'step-label';
-      item.classList.remove('step-done');
-    }
-    if (i < 4) {
-      const con = document.getElementById(`scon-${i}`);
-      if (con) con.className = 'step-connector' + (i < currentStep ? ' done' : '');
-    }
-  }
+  _updateStepper(currentStep);
+}
+
+function _updateStepper(n) {
+  const segs = ['seg1','seg2','seg3','seg4'];
+  segs.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'stepper-seg ' + (i + 1 < n ? 'seg-done' : i + 1 === n ? 'seg-active' : 'seg-idle');
+  });
 }
 
 // ── Keyword / location tag cards ─────────────────────────────────────────────
