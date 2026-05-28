@@ -29,16 +29,15 @@ async function sendBatch(cfg, leads, onProgress, abortRef) {
     if (abortRef && abortRef.aborted) break;
 
     const lead = leads[i];
-    const firstName = lead.ownerName?.split(' ')[0] || lead.companyName?.split(' ')[0] || 'there';
-    const company   = lead.companyName || '';
-    const website   = lead.website || '';
-    const fillPlaceholders = (s) => String(s || '')
-      .split('{{accountSignature}}').join(signature)
-      .split('{first_name}').join(firstName)
-      .split('{company}').join(company)
-      .split('{website}').join(website);
-    const subject = fillPlaceholders(lead.EMAIL_1_SUBJECT);
-    const body    = fillPlaceholders(lead.EMAIL_1_BODY);
+    const firstName = (lead.ownerName || lead.companyName || '').split(' ')[0] || 'there';
+    const replacePlaceholders = (str) => (str || '')
+      .replace(/\{first_name\}/gi, firstName)
+      .replace(/\{company\}/gi, lead.companyName || '')
+      .replace(/\{website\}/gi, lead.website || '')
+      .replace(/\{\{accountSignature\}\}/g, cfg.signature || cfg.user || '');
+
+    const subject = replacePlaceholders(lead.EMAIL_1_SUBJECT || lead.email1_subject || '');
+    const body    = replacePlaceholders(lead.EMAIL_1_BODY    || lead.email1_body    || '');
 
     let status = 'sent';
     let error;
