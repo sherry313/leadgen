@@ -2913,17 +2913,6 @@
           </button>
           <span id="resumeApifyHint" style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:8px"></span>
         </div>
-        <div id="datasetResumeBar" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)">
-          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px">或者从 Apify Dataset 继续</div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input id="datasetRunId" placeholder="Apify Run ID (e.g. abc123xyz)"
-              style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:7px 11px;color:#fff;font-size:13px;outline:none;font-family:inherit">
-            <button onclick="startFromDataset()"
-              style="padding:7px 16px;background:rgba(99,102,241,0.3);border:1px solid rgba(99,102,241,0.5);border-radius:8px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">
-              接着跑
-            </button>
-          </div>
-        </div>
         <div id="autoProgress" style="display:none;margin-top:16px;padding:14px;background:rgba(15,23,42,0.5);border-radius:8px;font-size:0.85rem;line-height:1.7">
           <div id="autoPhases" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
           <div id="autoCurrent" style="color:#cbd5e1"></div>
@@ -2931,6 +2920,18 @@
         </div>
       </div>
 
+    </div>
+
+    <div id="datasetResumeBar" style="margin-top:16px;padding:14px 16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px">
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px">或者从 Apify Dataset 继续</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="datasetRunId" placeholder="Apify Run ID (e.g. abc123xyz)"
+          style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:7px 11px;color:#fff;font-size:13px;outline:none;font-family:inherit">
+        <button onclick="startFromDataset()"
+          style="padding:7px 16px;background:rgba(99,102,241,0.3);border:1px solid rgba(99,102,241,0.5);border-radius:8px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">
+          接着跑
+        </button>
+      </div>
     </div>
 
     <div class="panel-nav" style="margin-top:14px">
