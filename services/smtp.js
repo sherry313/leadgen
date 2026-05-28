@@ -29,8 +29,16 @@ async function sendBatch(cfg, leads, onProgress, abortRef) {
     if (abortRef && abortRef.aborted) break;
 
     const lead = leads[i];
-    const subject = String(lead.EMAIL_1_SUBJECT || '').split('{{accountSignature}}').join(signature);
-    const body = String(lead.EMAIL_1_BODY || '').split('{{accountSignature}}').join(signature);
+    const firstName = lead.ownerName?.split(' ')[0] || lead.companyName?.split(' ')[0] || 'there';
+    const company   = lead.companyName || '';
+    const website   = lead.website || '';
+    const fillPlaceholders = (s) => String(s || '')
+      .split('{{accountSignature}}').join(signature)
+      .split('{first_name}').join(firstName)
+      .split('{company}').join(company)
+      .split('{website}').join(website);
+    const subject = fillPlaceholders(lead.EMAIL_1_SUBJECT);
+    const body    = fillPlaceholders(lead.EMAIL_1_BODY);
 
     let status = 'sent';
     let error;
