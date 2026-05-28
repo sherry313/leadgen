@@ -114,7 +114,7 @@
       transition: all 0.3s;
       position: relative;
       overflow: hidden;
-      cursor: default;
+      cursor: pointer;
       white-space: nowrap;
       text-overflow: ellipsis;
     }
@@ -2362,10 +2362,10 @@
 
   <!-- Stepper (capsule bar) -->
   <div class="stepper" id="mainStepper">
-    <div class="stepper-seg seg-done" id="seg1">选择方式</div>
-    <div class="stepper-seg seg-active" id="seg2">搜索配置</div>
-    <div class="stepper-seg seg-idle" id="seg3">抓取分析</div>
-    <div class="stepper-seg seg-idle" id="seg4">邮件发送</div>
+    <div class="stepper-seg seg-done"   id="seg1" onclick="goToStep(1)">选择方式</div>
+    <div class="stepper-seg seg-active" id="seg2" onclick="goToStep(2)">搜索配置</div>
+    <div class="stepper-seg seg-idle"   id="seg3" onclick="goToStep(3)">抓取分析</div>
+    <div class="stepper-seg seg-idle"   id="seg4" onclick="goToStep(4)">邮件发送</div>
   </div>
 
   <!-- Step 1: Method selection -->
