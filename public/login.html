@@ -58,6 +58,24 @@
       white-space: nowrap;
     }
     .nav-links a:hover { color: var(--text-white); }
+    .btn-nav {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.5rem 1.2rem;
+      background: rgba(99,102,241,0.18);
+      color: #c7d2fe !important;
+      border: 1px solid rgba(99,102,241,0.45);
+      border-radius: 9px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      transition: all 0.25s ease;
+    }
+    .btn-nav:hover {
+      background: rgba(99,102,241,0.3);
+      border-color: rgba(99,102,241,0.6);
+      color: #fff !important;
+      transform: translateY(-1px);
+    }
 
     /* hamburger */
     .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
@@ -93,7 +111,7 @@
     .login-card {
       width: 100%;
       max-width: 440px;
-      background: rgba(30,41,59,0.6);
+      background: #030303;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(148,163,184,0.12);
@@ -282,6 +300,7 @@
   <ul class="nav-links" id="navLinks">
     <li><a href="/">首页</a></li>
     <li><a href="/pricing.html">定价</a></li>
+    <li><a href="/" class="btn-nav">申请试用</a></li>
   </ul>
   <div class="hamburger" id="hamburger" aria-label="菜单">
     <span></span><span></span><span></span>
