@@ -3281,103 +3281,110 @@
         生成邮件后，推送线索到 Instantly Campaign
       </div>
       <div id="emailPreview"></div>
-      <div id="bulkPushBar" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(37,99,235,0.07);border:1px solid rgba(37,99,235,0.22);border-radius:10px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <span id="bulkPushCount" style="font-size:0.85rem;color:var(--sub)"></span>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span id="bulkPushDoneIndicator" style="display:none;color:#34d399;font-size:0.82rem;font-weight:600">✓ 已推送</span>
+      <div id="sendMethodSection" style="display:none;margin-top:20px">
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <button id="tabInstantlyBtn" onclick="switchSendTab('instantly')"
+            style="flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:rgba(255,255,255,0.35);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s">
+            推送 Instantly
+          </button>
+          <button id="tabSmtpBtn" onclick="switchSendTab('smtp')"
+            style="flex:1;padding:9px;border-radius:8px;border:1px solid rgba(99,102,241,0.4);background:rgba(99,102,241,0.12);color:#a5b4fc;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s">
+            用自己邮箱
+          </button>
+        </div>
+
+        <div id="instantlyPanel" style="display:none">
           <button id="btnBulkPush" onclick="startBulkPush()"
-            style="padding:8px 20px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;white-space:nowrap"
-            onmouseover="this.style.opacity=0.82" onmouseout="this.style.opacity=1">
-            📤 批量推送到 Instantly Campaign
-          </button>
-          <button id="btnSmtpSend"
-            onclick="openSmtpPanel()"
-            style="display:none;padding:8px 20px;background:linear-gradient(135deg,#059669,#0891b2);color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;white-space:nowrap"
-            onmouseover="this.style.opacity=0.82" onmouseout="this.style.opacity=1">
-            📧 用自己邮箱发送
+            style="width:100%;padding:11px;background:linear-gradient(135deg,#6366f1,#f43f5e);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+            推送到 Instantly Campaign
           </button>
         </div>
-      </div>
 
-      <div id="smtpPanel" style="display:none;margin-top:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:18px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-          <!-- Provider selector - full width -->
-          <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
-            <label style="font-size:12px;opacity:0.5">邮件服务商</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="smtpSelectProvider('gmail')"    id="smtpProv_gmail"    class="smtp-prov-btn smtp-prov-active">Gmail</button>
-              <button type="button" onclick="smtpSelectProvider('outlook')"  id="smtpProv_outlook"  class="smtp-prov-btn">Outlook</button>
-              <button type="button" onclick="smtpSelectProvider('yahoo')"    id="smtpProv_yahoo"    class="smtp-prov-btn">Yahoo</button>
-              <button type="button" onclick="smtpSelectProvider('icloud')"   id="smtpProv_icloud"   class="smtp-prov-btn">iCloud</button>
-              <button type="button" onclick="smtpSelectProvider('custom')"   id="smtpProv_custom"   class="smtp-prov-btn">自定义</button>
+        <div id="smtpPanel" style="display:block">
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:10px">
+            <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">邮件服务商</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px">
+              <button type="button" onclick="smtpSelectProvider('gmail')"   id="smtpProv_gmail"   class="smtp-prov-btn smtp-prov-active">Gmail</button>
+              <button type="button" onclick="smtpSelectProvider('outlook')" id="smtpProv_outlook" class="smtp-prov-btn">Outlook</button>
+              <button type="button" onclick="smtpSelectProvider('yahoo')"   id="smtpProv_yahoo"   class="smtp-prov-btn">Yahoo</button>
+              <button type="button" onclick="smtpSelectProvider('icloud')"  id="smtpProv_icloud"  class="smtp-prov-btn">iCloud</button>
+              <button type="button" onclick="smtpSelectProvider('custom')"  id="smtpProv_custom"  class="smtp-prov-btn">自定义</button>
             </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
-            <label style="font-size:12px;opacity:0.5">邮箱地址</label>
-            <input id="smtpUser" type="email" placeholder="you@gmail.com"
-              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
-            <label style="font-size:12px;opacity:0.5">密码 / 应用密码</label>
-            <input id="smtpPass" type="password" placeholder="Gmail请用App Password"
-              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
-          </div>
-          <div id="smtpCustomFields" style="display:none;grid-column:1/-1;grid-template-columns:1fr 1fr;gap:10px">
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:12px;opacity:0.5">SMTP服务器</label>
-              <input id="smtpHost" placeholder="smtp.gmail.com"
-                style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:12px;opacity:0.5">端口</label>
-              <input id="smtpPort" type="number" value="587"
-                style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <label style="font-size:12px;opacity:0.5">发件人名字</label>
-            <input id="smtpFromName" placeholder="Leo Li"
-              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <label style="font-size:12px;opacity:0.5">签名</label>
-            <input id="smtpSignature" placeholder="Leo Li | Company"
-              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
-            <label style="font-size:12px;opacity:0.5">发送间隔（秒）· 随机延迟模拟人工</label>
-            <div style="display:flex;align-items:center;gap:8px">
-              <input id="smtpDelayMin" type="number" value="60"
-                style="width:70px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
-              <span style="opacity:0.4">—</span>
-              <input id="smtpDelayMax" type="number" value="180"
-                style="width:70px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none">
-              <span style="font-size:12px;opacity:0.4">秒</span>
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <button onclick="smtpTest()" id="smtpTestBtn"
-            style="padding:7px 16px;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">
-            🔌 测试连接
-          </button>
-          <span id="smtpTestMsg" style="font-size:12px;flex:1"></span>
-          <button onclick="smtpSendAll()" id="smtpSendBtn" disabled
-            style="padding:7px 20px;background:linear-gradient(135deg,#059669,#0891b2);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;opacity:0.4">
-            🚀 开始发送 <span id="smtpSendCount"></span>
-          </button>
-        </div>
-      </div>
 
-      <div id="smtpProgress" style="display:none;margin-top:12px">
-        <div style="display:flex;justify-content:space-between;font-size:13px;opacity:0.6;margin-bottom:6px">
-          <span id="smtpProgressLabel">发送中...</span>
-          <span id="smtpProgressCount"></span>
+            <div style="margin-bottom:10px">
+              <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px">邮箱地址</label>
+              <input id="smtpUser" type="email" placeholder="you@gmail.com"
+                style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+            </div>
+
+            <div style="margin-bottom:10px">
+              <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px">密码 / 应用密码</label>
+              <input id="smtpPass" type="password" placeholder="Gmail请用App Password"
+                style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+            </div>
+
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <div style="flex:1">
+                <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px">发件人名字</label>
+                <input id="smtpFromName" placeholder="Leo Li"
+                  style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+              </div>
+              <div style="flex:1">
+                <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px">签名</label>
+                <input id="smtpSignature" placeholder="Leo | Company"
+                  style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+              </div>
+            </div>
+
+            <div id="smtpCustomFields" style="display:none;gap:8px;margin-bottom:10px">
+              <div style="flex:1">
+                <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px">SMTP服务器</label>
+                <input id="smtpHost" placeholder="smtp.gmail.com"
+                  style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+              </div>
+              <div style="width:80px">
+                <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px">端口</label>
+                <input id="smtpPort" type="number" value="587"
+                  style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+              </div>
+            </div>
+
+            <div style="margin-bottom:14px">
+              <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">发送间隔（秒）<span style="opacity:.5">· 随机延迟模拟人工</span></label>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input id="smtpDelayMin" type="number" value="60"
+                  style="width:64px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px;color:#fff;font-size:13px;outline:none;text-align:center">
+                <span style="color:rgba(255,255,255,0.3);font-size:12px">—</span>
+                <input id="smtpDelayMax" type="number" value="180"
+                  style="width:64px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px;color:#fff;font-size:13px;outline:none;text-align:center">
+                <span style="font-size:11px;color:rgba(255,255,255,0.3)">秒</span>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap">
+              <button onclick="smtpTest()" id="smtpTestBtn"
+                style="padding:9px 16px;background:transparent;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:rgba(255,255,255,0.6);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap">
+                测试连接
+              </button>
+              <span id="smtpTestMsg" style="font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+              <button onclick="smtpSendAll()" id="smtpSendBtn" disabled
+                style="padding:9px 16px;background:linear-gradient(135deg,#6366f1,#f43f5e);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;opacity:0.4">
+                发送 <span id="smtpSendCount"></span>
+              </button>
+            </div>
+          </div>
+
+          <div id="smtpProgress" style="display:none;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px">
+              <span id="smtpProgressLabel">发送中...</span>
+              <span id="smtpProgressCount"></span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;margin-bottom:10px">
+              <div id="smtpProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#f43f5e);border-radius:99px;transition:width .4s"></div>
+            </div>
+            <div id="smtpProgressLog" style="max-height:100px;overflow-y:auto;font-size:12px;display:flex;flex-direction:column;gap:3px"></div>
+          </div>
         </div>
-        <div style="background:rgba(255,255,255,0.08);border-radius:99px;height:6px;overflow:hidden;margin-bottom:10px">
-          <div id="smtpProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#059669,#0891b2);border-radius:99px;transition:width 0.4s"></div>
-        </div>
-        <div id="smtpProgressLog" style="max-height:120px;overflow-y:auto;font-size:12px;display:flex;flex-direction:column;gap:3px"></div>
       </div>
     </div>
 
@@ -6406,27 +6413,23 @@ function _revealInstantlySection() {
 }
 
 function _updateBulkPushBar() {
-  const bar = document.getElementById('bulkPushBar');
-  if (!bar) return;
-  // Count what `startBulkPush` will actually push. _isSentLS is intentionally
-  // NOT applied — bulk push is re-pushable so the count must match.
+  // Renamed in spirit: now controls #sendMethodSection (tabs + Instantly + SMTP).
+  const section = document.getElementById('sendMethodSection');
+  if (!section) return;
   const eligible = (_allLeads || []).filter(l =>
     _isLeadQualified(l) && _leadHasEmailContent(l)
   );
   const n = eligible.length;
-  // Data update always runs — keeps count/text current regardless of wizard step,
-  // so the bar is correct the moment wizStep3 becomes active.
-  const countEl = document.getElementById('bulkPushCount');
-  const btn     = document.getElementById('btnBulkPush');
-  if (countEl) countEl.textContent = n > 0 ? `${n} 条线索已生成开发信，可推送` : '';
-  if (n > 0 && btn && !btn.disabled) btn.textContent = `📤 推送 ${n} 条线索到 Instantly Campaign`;
-  // Display toggle is gated on wizStep3 being the active wizard step.
-  // bulkPushBar lives inside wizStep3 (.wiz-step { display:none } by CSS default),
-  // so toggling display while step3 is hidden is invisible and leaves stale state
-  // if n changes before the user navigates to step 3.
+  // Keep the Instantly push button label live with the count.
+  const btn = document.getElementById('btnBulkPush');
+  if (n > 0 && btn && !btn.disabled) btn.textContent = `推送 ${n} 条线索到 Instantly Campaign`;
+  // Mirror the count into the SMTP send button too — it already has a count span.
+  const smtpCount = document.getElementById('smtpSendCount');
+  if (smtpCount) smtpCount.textContent = n > 0 ? `(${n})` : '';
+  // Visibility gated on wizStep3 being active (the section lives inside it).
   const step3 = document.getElementById('wizStep3');
   if (!step3?.classList.contains('active')) return;
-  bar.style.display = n === 0 ? 'none' : 'flex';
+  section.style.display = n === 0 ? 'none' : 'block';
 }
 
 async function startBulkPush() {
@@ -8036,6 +8039,23 @@ window.addEventListener('pipelineDone', () => {
 });
 
 // ── SMTP send panel ───────────────────────────────────────────────────────────
+function switchSendTab(tab) {
+  const tI = document.getElementById('tabInstantlyBtn');
+  const tS = document.getElementById('tabSmtpBtn');
+  if (tI) {
+    tI.style.background = tab === 'instantly' ? 'rgba(99,102,241,0.12)' : 'transparent';
+    tI.style.borderColor = tab === 'instantly' ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.08)';
+    tI.style.color = tab === 'instantly' ? '#a5b4fc' : 'rgba(255,255,255,0.35)';
+  }
+  if (tS) {
+    tS.style.background = tab === 'smtp' ? 'rgba(99,102,241,0.12)' : 'transparent';
+    tS.style.borderColor = tab === 'smtp' ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.08)';
+    tS.style.color = tab === 'smtp' ? '#a5b4fc' : 'rgba(255,255,255,0.35)';
+  }
+  document.getElementById('instantlyPanel').style.display = tab === 'instantly' ? 'block' : 'none';
+  document.getElementById('smtpPanel').style.display      = tab === 'smtp'      ? 'block' : 'none';
+}
+
 const _SMTP_PROVIDER_PRESETS = {
   gmail:   { host: 'smtp.gmail.com',      port: 587 },
   outlook: { host: 'smtp.office365.com',  port: 587 },
@@ -8211,11 +8231,10 @@ async function smtpSendAll() {
   sendBtn.disabled = false;
 }
 
-// show #btnSmtpSend only for /app users (LEAD_PREFIX is global, set at line 3475)
+// Default the send-method tab: /app → SMTP (their primary), /lens → Instantly.
 (function initSmtpBtn() {
-  if (LEAD_PREFIX === 'leadgen_') {
-    const btn = document.getElementById('btnSmtpSend');
-    if (btn) btn.style.display = 'inline-block';
+  if (typeof switchSendTab === 'function') {
+    switchSendTab(LEAD_PREFIX === 'leadgen_' ? 'smtp' : 'instantly');
   }
 
   // Hide Instantly campaign row for /app users
