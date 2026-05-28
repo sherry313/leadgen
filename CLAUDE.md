@@ -16,7 +16,7 @@
 - When in doubt, ask the user
 
 ### 3. Frontend rules
-- Dark theme only (background #0a0f1a, cards #111827, borders #1e2d4a, accent #4299e1)
+- Dark theme only (background #030303, cards rgba(255,255,255,0.03), borders rgba(255,255,255,0.08), accent #6366f1 indigo)
 - Do not break existing JavaScript logic when modifying HTML
 - Check CSS changes don't affect other pages
 - Use Tabler Icons (already loaded), never emoji in UI
