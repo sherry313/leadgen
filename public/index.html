@@ -99,7 +99,8 @@
 
     /* ── Stepper (capsule bar) ── */
     .stepper {
-      display: flex;
+      display: flex !important;
+      flex-direction: row !important;
       gap: 3px;
       height: 36px;
       align-items: stretch;
@@ -124,9 +125,13 @@
     .stepper-seg::after {
       content: '';
       position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      border-radius: 6px 0 0 6px;
+      left: 0 !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      right: auto !important;
+      width: 3px !important;
+      height: auto !important;
+      border-radius: 6px 0 0 6px !important;
     }
     .stepper-seg.seg-done {
       background: rgba(253,164,175,0.08);
@@ -2028,9 +2033,10 @@
       line-height: 1.4;
     }
     .ws-start:disabled {
-      opacity: 0.45;
+      opacity: 0.6;
       cursor: not-allowed;
       transform: none;
+      border: 1px solid rgba(255,255,255,0.2);
     }
     .ws-start:disabled:hover {
       transform: none;
@@ -2118,6 +2124,7 @@
       .ws-sub   { font-size: 13px; margin-bottom: 1.5rem; }
       .ws-next, .ws-start { padding: 14px; font-size: 15px; margin-top: 1.5rem; }
       .ws-pip   { max-width: 48px; }
+      #wizFrameworkGrid { grid-template-columns: 1fr !important; }
 
       /* Country pills inside wizard — slightly tighter on mobile */
       .pill-country { padding: 10px 16px; font-size: 13px; }
@@ -2523,7 +2530,7 @@
         <h3 class="ws-title">选择邮件写作风格</h3>
         <div class="ws-sub">AI 根据你选的风格写开发信</div>
         <div class="ws-body" id="ws5Body">
-          <div id="wizFrameworkGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;text-align:left;"></div>
+          <div id="wizFrameworkGrid" style="display:grid;grid-template-columns:1fr;gap:8px;width:100%;text-align:left;"></div>
           <div id="wizFrameworkLoading" style="color:#64748b;font-size:12px;padding:14px 0;text-align:center">加载框架中…</div>
         </div>
         <div class="ws-nav">
