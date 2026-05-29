@@ -163,7 +163,7 @@ async function fetchDatasetByRunId(datasetId) {
       companyName: item.title || '',
       website: item.website || '',
       phone: item.phone || '',
-      email: item.email || '',
+      email: (Array.isArray(item.emails) ? item.emails[0] : item.email) || '',
       address: item.address || '',
       city: item.city || '',
       state: item.state || '',
