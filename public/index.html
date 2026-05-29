@@ -2937,16 +2937,25 @@
 
     </div>
 
-    <div id="datasetResumeBar" style="margin-top:16px;padding:14px 16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px">
-      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px">或者从 Apify Dataset 继续</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="datasetRunId" placeholder="Apify Run ID (e.g. abc123xyz)"
-          style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:7px 11px;color:#fff;font-size:13px;outline:none;font-family:inherit">
-        <button onclick="startFromDataset()"
-          style="padding:7px 16px;background:rgba(99,102,241,0.3);border:1px solid rgba(99,102,241,0.5);border-radius:8px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">
-          接着跑
-        </button>
+    <div id="datasetResumeBar" style="display:none;margin-top:14px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px">
+      <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:12px">从 Apify Dataset 继续</div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">Dataset ID</label>
+        <input id="datasetRunId" placeholder="粘贴 Apify Dataset ID"
+          style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
       </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">推送到 Campaign（必选）</label>
+        <select id="datasetCampaignSelect"
+          style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+          <option value="">加载中...</option>
+        </select>
+      </div>
+      <button onclick="startFromDataset()"
+        style="width:100%;padding:10px;background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+        接着跑
+      </button>
+      <div id="datasetResumeHint" style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:6px"></div>
     </div>
 
     <div class="panel-nav" style="margin-top:14px">
@@ -5124,7 +5133,8 @@ async function startFromDataset() {
     advantage:  document.getElementById('advantage')?.value?.trim() || '',
   };
   const icp = document.getElementById('icpInput')?.value?.trim() || '';
-  const campaignId = typeof getSelectedCampaignId === 'function' ? getSelectedCampaignId() : '';
+  const campaignId = document.getElementById('datasetCampaignSelect')?.value || '';
+  if (!campaignId) { alert('请先选择 Campaign'); return; }
 
   const btn = document.querySelector('#datasetResumeBar button');
   if (btn) { btn.disabled = true; btn.textContent = '运行中...'; }
@@ -8288,6 +8298,32 @@ async function smtpSendAll() {
       const mins = Math.round((Date.now() - runTime) / 60000);
       hint.textContent = `${mins}分钟前的抓取 · Run ID: ${runId.slice(0,8)}...`;
     }
+  }
+})();
+
+(async function initDatasetResumeBar() {
+  const bar = document.getElementById('datasetResumeBar');
+  const sel = document.getElementById('datasetCampaignSelect');
+  if (!bar || !sel) return;
+  const token = getStoredToken();
+  if (!token) return;
+  try {
+    const r = await fetch('/api/instantly/campaigns', { headers: { Authorization: `Bearer ${token}` } });
+    const data = await r.json().catch(() => ({}));
+    const campaigns = (data?.campaigns || []).filter(c => c?.id);
+    sel.innerHTML = '<option value="">— 选择 Campaign —</option>';
+    campaigns.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      const isActive = c.status === 1 || c.status === 'active';
+      opt.textContent = `${c.name}${isActive ? ' 🟢 Active' : ''}`;
+      sel.appendChild(opt);
+    });
+    const fromLs = localStorage.getItem('selected_campaign_id') || '';
+    if (fromLs && [...sel.options].some(o => o.value === fromLs)) sel.value = fromLs;
+    bar.style.display = 'block';
+  } catch (e) {
+    console.warn('[DatasetResume] populate campaigns failed:', e.message);
   }
 })();
 
