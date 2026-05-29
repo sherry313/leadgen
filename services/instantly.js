@@ -172,4 +172,30 @@ async function getCampaignStatus(campaignId) {
   }
 }
 
-module.exports = { addLeadToCampaign, createCampaign, queueEmail, ensureSequenceInstalled, getCampaignStatus };
+// Update an existing lead's fields (e.g. custom_variables) without re-adding it.
+// PATCH /api/v2/leads/{email} — merges fields into the lead's payload. Pass
+// `campaignId` to also (re)associate the lead with a campaign; omit to leave
+// the lead's current campaign membership unchanged.
+async function patchInstantlyLead(email, campaignId, fields) {
+  if (!email?.trim()) return { success: false, reason: 'No email address' };
+  if (!fields || typeof fields !== 'object') return { success: false, reason: 'fields object required' };
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const body = campaignId ? { campaign: campaignId, ...fields } : { ...fields };
+
+  try {
+    const res = await axios.patch(
+      `${BASE}/leads/${encodeURIComponent(normalizedEmail)}`,
+      body,
+      { headers: authHeaders() }
+    );
+    console.log(`[Instantly] Lead patched: ${normalizedEmail}`);
+    return { success: true, data: res.data };
+  } catch (err) {
+    const detail = err.response?.data || err.message;
+    console.warn(`[Instantly] patchInstantlyLead failed for ${normalizedEmail}: ${JSON.stringify(detail)}`);
+    return { success: false, reason: JSON.stringify(detail) };
+  }
+}
+
+module.exports = { addLeadToCampaign, createCampaign, queueEmail, ensureSequenceInstalled, getCampaignStatus, patchInstantlyLead };

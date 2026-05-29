@@ -1659,6 +1659,25 @@ app.post('/api/send-email', requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+// ── Instantly: patch an existing lead's fields (e.g. custom_variables) ────────
+// POST /api/instantly/patch-lead
+// Body: { email, campaignId?, fields }
+// Calls PATCH /api/v2/leads/{email} on Instantly to merge `fields` into the
+// lead's payload. Used to update generated email content (subject/body) without
+// re-adding the lead.
+app.post('/api/instantly/patch-lead', requireAuth, async (req, res) => {
+  const { email, campaignId, fields } = req.body;
+  if (!email?.trim()) {
+    return res.status(400).json({ success: false, error_code: 'BAD_INPUT', error: 'email is required' });
+  }
+  if (!fields || typeof fields !== 'object') {
+    return res.status(400).json({ success: false, error_code: 'BAD_INPUT', error: 'fields object is required' });
+  }
+  const { patchInstantlyLead } = require('./services/instantly');
+  const result = await withTimeout(patchInstantlyLead(email, campaignId, fields), 30000, 'Instantly patch-lead');
+  return res.status(result.success ? 200 : 500).json(result);
+});
+
 // ── Instantly: get & update sequence delays ───────────────────────────────────
 // GET  /api/instantly/sequence  → returns current 5-step delays
 // POST /api/instantly/sequence  → body: { delays: [0,d1,d2,d3,d4] }
