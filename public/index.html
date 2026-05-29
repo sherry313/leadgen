@@ -2510,6 +2510,9 @@
       style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
       🚀 一键开始
     </button>
+    <div id="wizDatasetStatus" style="display:none;margin-top:14px;padding:12px 14px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:8px;font-size:13px;color:#a5b4fc;line-height:1.5">
+      <span class="spinner"></span><span id="wizDatasetStatusText">正在连接服务器…</span>
+    </div>
   </div>
 
   <!-- Step 2: Config -->
@@ -4242,14 +4245,18 @@ async function startFromDatasetWizard() {
   if (!token) { alert('请先登录'); return; }
 
   const btn = document.getElementById('wizStartBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '运行中...'; }
+  const statusBox = document.getElementById('wizDatasetStatus');
+  const statusText = document.getElementById('wizDatasetStatusText');
+  const setStatus = (msg) => { if (statusText) statusText.textContent = msg; };
 
-  document.getElementById('autoProgress').style.display = 'block';
-  const progressLog = document.getElementById('autoCurrent');
-  if (progressLog) progressLog.textContent = '正在从 Apify dataset 加载…';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 运行中...'; }
+  if (statusBox) statusBox.style.display = 'block';
+  setStatus('正在连接服务器…');
+
   if (Array.isArray(_allLeads)) _allLeads.length = 0;
-
   _selectedFrameworkKey = frameworkKey;
+
+  const PHASE_LABELS = { apify: 'Apify 数据', haiku: 'Haiku 筛选', sonnet: 'Sonnet 分析', email: '生成开发信', push: '推送 Campaign' };
 
   try {
     const res = await fetch('/api/auto/run-from-dataset', {
@@ -4272,6 +4279,8 @@ async function startFromDatasetWizard() {
       }),
     });
     if (!res.ok) { throw new Error('Request failed with status code ' + res.status); }
+    setStatus('已连接，正在处理数据…');
+
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buf = '';
@@ -4285,11 +4294,22 @@ async function startFromDatasetWizard() {
         if (!part.startsWith('data:')) continue;
         try {
           const evt = JSON.parse(part.slice(5));
+          if (evt.type === 'phase' && evt.phase) {
+            const label = PHASE_LABELS[evt.phase] || evt.phase;
+            setStatus(`阶段：${label}${evt.status ? ' · ' + evt.status : ''}`);
+          } else if (evt.type === 'progress' && evt.done != null) {
+            setStatus(`处理中：${evt.done}/${evt.total || '?'}${evt.phase ? ' · ' + (PHASE_LABELS[evt.phase] || evt.phase) : ''}`);
+          } else if (evt.type === 'done') {
+            setStatus('✓ 完成');
+          } else if (evt.type === 'error') {
+            setStatus('✗ 错误：' + (evt.error || ''));
+          }
           if (typeof _handleAutoRunEvent === 'function') _handleAutoRunEvent(evt);
         } catch {}
       }
     }
   } catch (err) {
+    setStatus('✗ 运行失败：' + err.message);
     alert('运行失败：' + err.message);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🚀 一键开始'; }
