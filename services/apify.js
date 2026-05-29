@@ -154,8 +154,8 @@ async function scrapeAustralianCompanies(searchQuery, location, maxResults = 25,
   return { companies, apifyCostUsd };
 }
 
-async function fetchDatasetByRunId(runId) {
-  const url = `${BASE_URL}/actor-runs/${runId}/dataset/items?token=${APIFY_TOKEN}&limit=1000`;
+async function fetchDatasetByRunId(datasetId) {
+  const url = `${BASE_URL}/datasets/${datasetId}/items?token=${APIFY_TOKEN}&limit=1000`;
   const res = await axios.get(url, { timeout: 60000 });
   const items = res.data || [];
   return {
