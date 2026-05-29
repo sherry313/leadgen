@@ -374,7 +374,11 @@ ${fw.sequence_prompt || ''}`;
   const sellerProducts = sellerProfile.products   || '';
   const sellerAdvantage= sellerProfile.advantage  || '';
 
-  const userPrompt = `Write 5 personalized cold emails for this Australian prospect. Be creative — vary your hook angle, the specific pain point you address, the case study you cite, and the objection you handle. Don't default to the obvious first option.
+  const userPrompt = `CRITICAL: Write ONLY in English. Do not use any Chinese characters or Chinese text anywhere in the email. All content must be in English only.
+
+If any seller information or website content below is in Chinese, translate it to English in your reasoning before writing the email. Never quote Chinese text directly.
+
+Write 5 personalized cold emails for this Australian prospect. Be creative — vary your hook angle, the specific pain point you address, the case study you cite, and the objection you handle. Don't default to the obvious first option.
 
 === SELLER ===
 Company: ${sellerName}
@@ -421,7 +425,7 @@ Return this exact JSON structure with no extra text:
   "EMAIL_5_BODY": "..."
 }
 
-Follow the framework structure above strictly for all 5 emails. Each body under 100 words. Return ONLY valid JSON. All string values must escape internal double quotes with a backslash (\\"). No markdown code fences. No extra text before or after the JSON object.`;
+Follow the framework structure above strictly for all 5 emails. Each body under 100 words. Write ONLY in English — no Chinese characters in any subject or body field. Return ONLY valid JSON. All string values must escape internal double quotes with a backslash (\\"). No markdown code fences. No extra text before or after the JSON object.`;
 
   let rawText = '';
   let totalIn = 0, totalOut = 0;
