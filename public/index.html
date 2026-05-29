@@ -2409,6 +2409,13 @@
         <div class="method-desc">上传公司名称，Google Search找官网再分析</div>
         <span class="method-tag new">new</span>
       </div>
+
+      <div class="method-card" id="method-card-dataset" onclick="selectMethod('dataset')">
+        <div class="method-icon">📂</div>
+        <div class="method-title">从 Dataset 继续</div>
+        <div class="method-desc">已有 Apify 数据，跳过抓取直接分析发送</div>
+        <span class="method-tag new">resume</span>
+      </div>
     </div>
   </div>
 
@@ -2464,6 +2471,45 @@
       </div>
       <div id="wlProgressLog" style="max-height:140px;overflow-y:auto;font-size:12px;display:flex;flex-direction:column;gap:3px"></div>
     </div>
+  </div>
+
+  <!-- Dataset resume (chosen via selectMethod('dataset')) -->
+  <div class="wizard-panel hidden" id="wizard-step-dataset" style="display:none">
+    <div style="margin-bottom:20px">
+      <button onclick="document.getElementById('wizard-step-dataset').style.display='none';document.getElementById('wizard-step-1').style.display='block'"
+        style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:13px;padding:0;font-family:inherit">
+        ← 返回
+      </button>
+    </div>
+    <div style="font-size:1.1rem;font-weight:600;margin-bottom:6px">从 Dataset 继续</div>
+    <div style="font-size:0.85rem;color:rgba(255,255,255,0.5);margin-bottom:20px">已有 Apify 数据，跳过抓取直接进入分析与推送</div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px">Apify Dataset ID</label>
+      <input id="wizDatasetId" placeholder="粘贴 Apify Dataset ID"
+        style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px">推送到 Campaign（必选）</label>
+      <select id="wizDatasetCampaign"
+        style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+        <option value="">加载中...</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <label style="font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px">邮件写作框架（可选）</label>
+      <select id="wizDatasetFramework"
+        style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+        <option value="">— 使用默认框架 —</option>
+      </select>
+    </div>
+
+    <button onclick="startFromDatasetWizard()"
+      style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
+      🚀 一键开始
+    </button>
   </div>
 
   <!-- Step 2: Config -->
@@ -4140,7 +4186,70 @@ function selectMethod(methodId) {
     document.getElementById('wizard-step-website').style.display = 'block';
     return;
   }
+  if (methodId === 'dataset') {
+    document.getElementById('wizard-step-1').style.display = 'none';
+    document.getElementById('wizard-step-dataset').style.display = 'block';
+    populateWizDatasetSelects();
+    return;
+  }
   _showToast('即将上线');
+}
+
+async function populateWizDatasetSelects() {
+  const token = getStoredToken();
+  if (!token) return;
+  const cSel = document.getElementById('wizDatasetCampaign');
+  const fSel = document.getElementById('wizDatasetFramework');
+  try {
+    const r = await fetch('/api/instantly/campaigns', { headers: { Authorization: `Bearer ${token}` } });
+    const data = await r.json().catch(() => ({}));
+    const campaigns = (data?.campaigns || []).filter(c => c?.id);
+    if (cSel) {
+      cSel.innerHTML = '<option value="">— 选择 Campaign —</option>';
+      campaigns.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        const isActive = c.status === 1 || c.status === 'active';
+        opt.textContent = `${c.name}${isActive ? ' 🟢 Active' : ''}`;
+        cSel.appendChild(opt);
+      });
+      const fromLs = localStorage.getItem('selected_campaign_id') || '';
+      if (fromLs && [...cSel.options].some(o => o.value === fromLs)) cSel.value = fromLs;
+    }
+  } catch (e) { console.warn('[WizDataset] campaigns load failed:', e.message); }
+  try {
+    if (!_frameworksLoaded) await loadFrameworks();
+    if (fSel) {
+      fSel.innerHTML = '<option value="">— 使用默认框架 —</option>';
+      (_frameworks || []).filter(fw => !fw.is_custom).forEach(fw => {
+        const opt = document.createElement('option');
+        opt.value = fw.key;
+        opt.textContent = fw.name || fw.key;
+        fSel.appendChild(opt);
+      });
+    }
+  } catch (e) { console.warn('[WizDataset] frameworks load failed:', e.message); }
+}
+
+function startFromDatasetWizard() {
+  const runId = (document.getElementById('wizDatasetId')?.value || '').trim();
+  if (!runId) { alert('请填写 Dataset ID'); return; }
+  const campaignId = document.getElementById('wizDatasetCampaign')?.value || '';
+  if (!campaignId) { alert('请先选择 Campaign'); return; }
+  const fwKey = document.getElementById('wizDatasetFramework')?.value || '';
+  const oldRunInput = document.getElementById('datasetRunId');
+  const oldCampSel  = document.getElementById('datasetCampaignSelect');
+  if (oldRunInput) oldRunInput.value = runId;
+  if (oldCampSel) {
+    if (![...oldCampSel.options].some(o => o.value === campaignId)) {
+      const opt = document.createElement('option');
+      opt.value = campaignId; opt.textContent = campaignId;
+      oldCampSel.appendChild(opt);
+    }
+    oldCampSel.value = campaignId;
+  }
+  if (fwKey) _selectedFrameworkKey = fwKey;
+  startFromDataset();
 }
 
 function selectSource(src) {
