@@ -4251,7 +4251,10 @@ function logout() {
   location.href = 'landing.html';
 }
 function getStoredToken() {
-  return localStorage.getItem('leadgen_accessToken') || document.getElementById('accessToken').value.trim();
+  const stored = localStorage.getItem('leadgen_accessToken');
+  if (stored && stored.trim()) return stored.trim();
+  const el = document.getElementById('accessToken');
+  return el ? el.value.trim() : '';
 }
 
 // ── ICP collapsible toggle ────────────────────────────────────────────────────
