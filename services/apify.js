@@ -159,28 +159,37 @@ async function fetchDatasetByRunId(datasetId) {
   const res = await axios.get(url, { timeout: 60000 });
   const items = res.data || [];
   return {
-    companies: items.map(item => ({
-      companyName: item.title || '',
-      website: item.website || '',
-      phone: item.phone || '',
-      email: (Array.isArray(item.emails) ? item.emails[0] : item.email) || '',
-      address: item.address || '',
-      city: item.city || '',
-      state: item.state || '',
-      country: item.country || '',
-      industry: item.categoryName || '',
-      googleRating: item.totalScore || '',
-      reviewCount: item.reviewsCount || 0,
-      googleMapsUrl: item.url || '',
-      placeId: item.placeId || '',
-      ownerName: item.ownerName || '',
-      facebook: item.facebook || '',
-      instagram: item.instagram || '',
-      linkedin: item.linkedin || '',
-      businessHours: item.businessHours || '',
-      websiteContent: item.description || '',
-      source: 'google_maps',
-    })),
+    companies: items.map(item => {
+      const extractSocial = (profiles, type) => {
+        if (!Array.isArray(profiles)) return '';
+        const p = profiles.find(x => x.url && x.url.toLowerCase().includes(type));
+        return p ? p.url : '';
+      };
+      const emails = Array.isArray(item.emails) ? item.emails : (item.email ? [item.email] : []);
+      const bizEmail = emails.find(e => !/(gmail|hotmail|yahoo|outlook)\./i.test(e)) || emails[0] || '';
+      return {
+        companyName: item.title || '',
+        website: item.website || '',
+        phone: item.phone || item.phoneUnformatted || '',
+        email: bizEmail,
+        address: item.address || '',
+        city: item.city || '',
+        state: item.state || '',
+        country: item.countryCode || '',
+        industry: item.categoryName || '',
+        googleRating: item.totalScore || '',
+        reviewCount: item.reviewsCount || 0,
+        googleMapsUrl: item.url || '',
+        placeId: item.placeId || '',
+        ownerName: item.ownerName || '',
+        facebook: extractSocial(item.socialProfiles, 'facebook'),
+        instagram: extractSocial(item.socialProfiles, 'instagram'),
+        linkedin: extractSocial(item.socialProfiles, 'linkedin'),
+        businessHours: item.openingHours || item.businessHours || '',
+        websiteContent: item.description || '',
+        source: 'google_maps',
+      };
+    }),
     apifyCostUsd: 0,
   };
 }
