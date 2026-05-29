@@ -302,7 +302,9 @@ function _buildEmailSystemPrompt(frameworkInstructions, sellerProfile = {}) {
   const sellerDesc = sellerProfile.products
     ? `${name}, selling ${sellerProfile.products}`
     : `${name}`;
-  return `You are an expert B2B cold email copywriter helping ${sellerDesc} reach Australian business prospects.
+  return `CRITICAL: Write ONLY in English. Do not use any Chinese characters or Chinese text anywhere in the email. All content must be in English only.
+
+You are an expert B2B cold email copywriter helping ${sellerDesc} reach Australian business prospects.
 
 Write a 5-email cold outreach sequence following this framework:
 
