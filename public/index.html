@@ -4231,25 +4231,69 @@ async function populateWizDatasetSelects() {
   } catch (e) { console.warn('[WizDataset] frameworks load failed:', e.message); }
 }
 
-function startFromDatasetWizard() {
-  const runId = (document.getElementById('wizDatasetId')?.value || '').trim();
+async function startFromDatasetWizard() {
+  const runId = document.getElementById('wizDatasetId')?.value.trim();
   if (!runId) { alert('请填写 Dataset ID'); return; }
   const campaignId = document.getElementById('wizDatasetCampaign')?.value || '';
   if (!campaignId) { alert('请先选择 Campaign'); return; }
-  const fwKey = document.getElementById('wizDatasetFramework')?.value || '';
-  const oldRunInput = document.getElementById('datasetRunId');
-  const oldCampSel  = document.getElementById('datasetCampaignSelect');
-  if (oldRunInput) oldRunInput.value = runId;
-  if (oldCampSel) {
-    if (![...oldCampSel.options].some(o => o.value === campaignId)) {
-      const opt = document.createElement('option');
-      opt.value = campaignId; opt.textContent = campaignId;
-      oldCampSel.appendChild(opt);
+  const frameworkKey = document.getElementById('wizDatasetFramework')?.value || _selectedFrameworkKey || null;
+
+  const token = getStoredToken();
+  if (!token) { alert('请先登录'); return; }
+
+  const btn = document.querySelector('#wizard-step-dataset button');
+  if (btn) { btn.disabled = true; btn.textContent = '运行中...'; }
+
+  document.getElementById('autoProgress').style.display = 'block';
+  const progressLog = document.getElementById('autoCurrent');
+  if (progressLog) progressLog.textContent = '正在从 Apify dataset 加载…';
+  if (Array.isArray(_allLeads)) _allLeads.length = 0;
+
+  _selectedFrameworkKey = frameworkKey;
+
+  try {
+    const res = await fetch('/api/auto/run-from-dataset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        runId,
+        campaignId,
+        framework_key: frameworkKey,
+        searchQuery: 'dataset',
+        location: '',
+        countryCode: 'au',
+        maxResults: 1000,
+        companyProfile: {
+          sellerName: document.getElementById('sellerName')?.value?.trim() || '',
+          products: document.getElementById('products')?.value?.trim() || '',
+          advantage: document.getElementById('advantage')?.value?.trim() || '',
+        },
+        icp: document.getElementById('icpInput')?.value?.trim() || '',
+      }),
+    });
+    if (!res.ok) { throw new Error('Request failed with status code ' + res.status); }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const parts = buf.split('\n\n');
+      buf = parts.pop();
+      for (const part of parts) {
+        if (!part.startsWith('data:')) continue;
+        try {
+          const evt = JSON.parse(part.slice(5));
+          if (typeof _handleAutoRunEvent === 'function') _handleAutoRunEvent(evt);
+        } catch {}
+      }
     }
-    oldCampSel.value = campaignId;
+  } catch (err) {
+    alert('运行失败：' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🚀 一键开始'; }
   }
-  if (fwKey) _selectedFrameworkKey = fwKey;
-  startFromDataset();
 }
 
 function selectSource(src) {
