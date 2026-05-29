@@ -2506,7 +2506,7 @@
       </select>
     </div>
 
-    <button onclick="startFromDatasetWizard()"
+    <button id="wizStartBtn" onclick="startFromDatasetWizard()"
       style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
       🚀 一键开始
     </button>
@@ -4241,7 +4241,7 @@ async function startFromDatasetWizard() {
   const token = getStoredToken();
   if (!token) { alert('请先登录'); return; }
 
-  const btn = document.querySelector('#wizard-step-dataset button');
+  const btn = document.getElementById('wizStartBtn');
   if (btn) { btn.disabled = true; btn.textContent = '运行中...'; }
 
   document.getElementById('autoProgress').style.display = 'block';
