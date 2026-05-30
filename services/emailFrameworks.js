@@ -161,11 +161,59 @@ Email 4 (Day 10) — Differentiator
 
 Email 5 (Day 14) — Breakup
 Brief farewell + offer a specific low-commitment resource (catalog/case study/spec sheet).`,
-    sequence_prompt: `Email 1 (Day 1) — Hook: 3-5 lines, reference something specific from the prospect's website, end with an open question. Psychology: Pattern Interruption + Reciprocity.
-Email 2 (Day 4) — Value Drop: address ONE specific pain point for this prospect's customer type with a concrete insight, number, or solution framing. Psychology: Authority + Loss Aversion.
-Email 3 (Day 7) — Social Proof: name a specific AU client/project with concrete numbers (e.g. "$180k saved", "18 months zero delays"). Psychology: Social Proof.
-Email 4 (Day 10) — Differentiator: use "A fair pushback I get…" or similar tone — honestly address ONE common objection. Psychology: Curiosity Gap + Authority.
-Email 5 (Day 14) — Breakup: brief farewell, offer a specific low-commitment resource (catalog/case study/spec sheet). Psychology: Loss Aversion + Reciprocity.`,
+    sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
+- Body length: 50-80 words per email
+- Sign-off: exactly {{accountSignature}} on its own line. No other sign-off.
+- Subject: 4-7 words, first letter lowercase, only capitalise proper nouns (China, Zhongshan, Guangdong, Sydney). Never Title Case.
+- Every sentence separated by a blank line.
+
+GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
+
+FACTS YOU MAY USE (do not invent others):
+- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
+- Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
+
+NEVER:
+- Mention product pricing
+- Fabricate client names, percentages, revenue figures, number of projects, AU warehouse, delivery promises
+- Use banned phrases: no commitment, no risk, guarantee, act now, limited time, exclusive offer
+- Fabricate website details — if scrape is empty, Email 1 hook becomes: "Saw [Company] — quick thought."
+
+=== EMAIL 1 (Day 1) — Hook (PERSONALISED) ===
+1. One sentence referencing something specific from their website. If empty: "Saw [Company] — quick thought."
+2. One pain question about supplier reliability or sourcing friction, relevant to their work.
+3. Credentials line: "Lens — 300,000m² aluminium factory in Zhongshan, 20 years. Currently supplying a Sydney designer on a residential project."
+4. CTA: "Worth a half-day next time you're in China? Just a chance to see if it makes sense."
+Sign-off: {{accountSignature}}
+
+=== EMAIL 2 (Day 3) — Value Drop ===
+Angle: most buyers never see the factory before ordering — a visit removes the biggest sourcing risk.
+- One specific insight about why seeing a production line in person matters
+- Offer to send a factory walkthrough video as a first step
+- Under 60 words
+Sign-off: {{accountSignature}}
+
+=== EMAIL 3 (Day 5) — Social Proof ===
+Use ONLY these facts, do not invent others:
+- 300,000m² factory floor in Zhongshan
+- 20 years on the same production line
+- Currently supplying a Sydney designer on a residential project
+- Tie back to factory visit invitation
+Sign-off: {{accountSignature}}
+
+=== EMAIL 4 (Day 7) — Differentiator ===
+Angle: address the most common concern about China sourcing — specs getting lost, quality inconsistency.
+- Acknowledge the concern honestly
+- Explain how a factory visit solves it better than any document or promise
+- CTA ties back to visiting in person
+Sign-off: {{accountSignature}}
+
+=== EMAIL 5 (Day 10) — Breakup ===
+- Short and warm, no hard feelings
+- Factory visit invitation stays open
+- Ask if there is someone else at the company who handles sourcing
+Sign-off: {{accountSignature}}`,
   },
 
   'aida': {
