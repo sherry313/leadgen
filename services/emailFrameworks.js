@@ -252,12 +252,60 @@ A = Attention (opening question grabs attention)
 I = Interest (partnered with a plumbing company — personalised)
 D = Desire (24 calls in 3 days — concrete result)
 A = Action (simple yes/no question)`,
-    sequence_prompt: `Each email follows AIDA (Attention → Interest → Desire → Action):
-Email 1 (Day 1): Attention via a prospect-specific detail or bold question; Interest by personalising to their business type; Desire via one concrete result/number; Action = a simple yes/no question.
-Email 2 (Day 4): Different Attention angle (a different pain point); Interest = a new insight; Desire = a different benefit framed as a number; Action = gentle check-in.
-Email 3 (Day 7): Attention via a surprising stat or result; Interest = named AU client story; Desire = specific numbers from that case; Action = "would a similar result interest you?"
-Email 4 (Day 10): Attention via acknowledging a common concern; Interest = honest, non-pushy framing; Desire = reassurance with evidence; Action = low-pressure check-in.
-Email 5 (Day 14): Attention = breakup framing; Interest = one final relevant point; Desire = low-commitment resource offer; Action = "reply if ever relevant."`,
+    sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
+- Body length: 50-80 words per email
+- Sign-off: exactly {{accountSignature}} on its own line. No other sign-off.
+- Subject: 4-7 words, first letter lowercase, only capitalise proper nouns (China, Zhongshan, Guangdong, Guangzhou, Sydney). Never Title Case.
+- Every sentence separated by a blank line.
+
+GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
+
+FACTS YOU MAY USE (do not invent others):
+- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
+- Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
+
+NEVER:
+- Mention product pricing
+- Fabricate client names, percentages, revenue figures, number of projects, AU warehouse, delivery promises
+- Use banned phrases: no commitment, no risk, guarantee, act now, limited time, exclusive offer
+
+Each email follows AIDA (Attention → Interest → Desire → Action). The Action is always a factory-visit invitation — never a purchase ask.
+
+Email 1 (Day 1):
+- Attention: open with a specific detail from their website or work
+- Interest: connect that work to sourcing they likely already think about
+- Desire: paint what walking a 300,000m² factory in Zhongshan would show them
+- Action: "worth a half-day in Zhongshan next time you're in China?"
+Sign-off: {{accountSignature}}
+
+Email 2 (Day 4):
+- Attention: a different angle — the gap between what suppliers promise and what shows up
+- Interest: most buyers never see the factory before ordering
+- Desire: position a factory walkthrough video as a lowest-friction first step
+- Action: "happy to send the video — just for your reference"
+Sign-off: {{accountSignature}}
+
+Email 3 (Day 7):
+- Attention: lead with the facts — 300,000m² in Zhongshan, 20 years, currently supplying a Sydney designer on a residential project
+- Interest: explain what those numbers look like on the actual floor
+- Desire: frame the visit as one more option in their back pocket
+- Action: "if a China trip is ever on the horizon, reply with the month"
+Sign-off: {{accountSignature}}
+
+Email 4 (Day 10):
+- Attention: acknowledge the common concern about visiting a Chinese supplier — time, cost, risk of wasted trip
+- Interest: lay out the logistics honestly (airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough; they cover flights and hotel)
+- Desire: frame as a half-day inside a longer sourcing trip
+- Action: "if it ever fits your trip schedule, reply with the month"
+Sign-off: {{accountSignature}}
+
+Email 5 (Day 14):
+- Attention: breakup framing, warm
+- Interest: one final reminder that the invitation to visit stays open
+- Desire: keep the relationship open for the next sourcing trip
+- Action: "is there someone else at [Company] who handles supplier sourcing I should know about?"
+Sign-off: {{accountSignature}}`,
   },
 
   'bab': {
@@ -292,12 +340,55 @@ Are you free tomorrow to explain how it works?
 B = Before (time wasted = current frustration for most business owners)
 A = After (12 hours freed per week = the improved world)
 B = Bridge (10-min call to show how → how to get there)`,
-    sequence_prompt: `Each email follows BAB (Before → After → Bridge):
-Email 1 (Day 1): Before = their current frustration specific to their business type; After = the improved state with a concrete result (time/money saved); Bridge = your specific offer/CTA.
-Email 2 (Day 4): Before = a different pain angle (e.g. cost rather than time); After = measurable improvement with a number; Bridge = a specific invitation.
-Email 3 (Day 7): Before = named AU client's past situation; After = results they achieved (specific numbers); Bridge = "could the same apply to {company}?"
-Email 4 (Day 10): Before = the objection scenario ("I know suppliers like us often seem…"); After = what it looks like when the concern is resolved; Bridge = show how you address it.
-Email 5 (Day 14): Before = the unresolved situation if they never try; After = what's possible; Bridge = leave a resource, just for your reference, no hard feelings.`,
+    sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
+- Body length: 50-80 words per email
+- Sign-off: exactly {{accountSignature}} on its own line. No other sign-off.
+- Subject: 4-7 words, first letter lowercase, only capitalise proper nouns (China, Zhongshan, Guangdong, Guangzhou, Sydney). Never Title Case.
+- Every sentence separated by a blank line.
+
+GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
+
+FACTS YOU MAY USE (do not invent others):
+- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
+- Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
+
+NEVER:
+- Mention product pricing
+- Fabricate client names, percentages, revenue figures, number of projects, AU warehouse, delivery promises
+- Use banned phrases: no commitment, no risk, guarantee, act now, limited time, exclusive offer
+
+Each email follows BAB (Before → After → Bridge). Bridge is always the factory-visit invitation.
+
+Email 1 (Day 1):
+- Before: their current sourcing friction — picking suppliers off documents, photos, references
+- After: the clarity of having walked the actual production floor in person
+- Bridge: "worth a half-day in Zhongshan next time you're in China?"
+Sign-off: {{accountSignature}}
+
+Email 2 (Day 4):
+- Before: another sourcing pain — surprises that surface only after orders ship
+- After: what changes once you've stood on the line and met the team
+- Bridge: offer the factory walkthrough video as a low-friction warm-up to a real visit
+Sign-off: {{accountSignature}}
+
+Email 3 (Day 7):
+- Before: the limitations of supplier credentials on paper
+- After: what 300,000m² of factory floor and 20 years on the same Zhongshan line actually look like; currently supplying a Sydney designer on a residential project
+- Bridge: "if a China sourcing trip is on the horizon, the factory is worth half a day"
+Sign-off: {{accountSignature}}
+
+Email 4 (Day 10):
+- Before: the common reason buyers skip the visit — sounds expensive, sounds risky
+- After: what the visit actually involves — airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough; you cover flights and hotel
+- Bridge: "if a sourcing trip is in your plans, reply with the month"
+Sign-off: {{accountSignature}}
+
+Email 5 (Day 14):
+- Before: the unresolved sourcing decision they'll still face later
+- After: a future trip where the visit slots in naturally
+- Bridge: invitation stays open; ask if there's another sourcing contact at the company
+Sign-off: {{accountSignature}}`,
   },
 
   'pas': {
@@ -334,12 +425,55 @@ Worth 10 minutes to see if this fits your pipeline?
 P = Problem (3+ suppliers = spec mismatches + delayed handovers)
 A = Agitate ($180k/year bleeding out quietly)
 S = Solve (single factory-direct channel: 4-week lead times)`,
-    sequence_prompt: `Each email follows PAS (Problem → Agitate → Solve):
-Email 1 (Day 1): Problem = one specific, concrete pain for their business type; Agitate = make the consequence vivid with a number or cost; Solve = your solution in 1-2 crisp sentences + CTA.
-Email 2 (Day 4): Problem = a different angle (e.g. profit margin erosion rather than delays); Agitate = quantify the financial loss; Solve = your specific differentiator.
-Email 3 (Day 7): Problem = named AU client's original struggle; Agitate = their situation before you; Solve = specific outcome achieved (numbers and results).
-Email 4 (Day 10): Problem = the objection itself (e.g. "switching suppliers is risky"); Agitate = what happens if that fear keeps them stuck; Solve = how you remove that risk specifically.
-Email 5 (Day 14): Problem = the persistent unresolved issue; Agitate = "one last thought — every month without a solution means…"; Solve = leave a specific resource (catalog/case study), whenever it makes sense.`,
+    sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
+- Body length: 50-80 words per email
+- Sign-off: exactly {{accountSignature}} on its own line. No other sign-off.
+- Subject: 4-7 words, first letter lowercase, only capitalise proper nouns (China, Zhongshan, Guangdong, Guangzhou, Sydney). Never Title Case.
+- Every sentence separated by a blank line.
+
+GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
+
+FACTS YOU MAY USE (do not invent others):
+- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
+- Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
+
+NEVER:
+- Mention product pricing
+- Fabricate client names, percentages, revenue figures, number of projects, AU warehouse, delivery promises
+- Use banned phrases: no commitment, no risk, guarantee, act now, limited time, exclusive offer
+
+Each email follows PAS (Problem → Agitate → Solve). Solve is always a factory-visit invitation.
+
+Email 1 (Day 1):
+- Problem: sourcing blind — choosing a supplier without ever seeing the production line
+- Agitate: this is where most "spec didn't match" stories begin
+- Solve: walking the factory in person solves it more cleanly than any document — "worth a half-day in Zhongshan next time you're in China?"
+Sign-off: {{accountSignature}}
+
+Email 2 (Day 4):
+- Problem: trusting photos and showroom samples to represent the real factory
+- Agitate: showrooms and production lines can look like two different companies
+- Solve: offer the factory walkthrough video as a starting point; the full visit as the real fix
+Sign-off: {{accountSignature}}
+
+Email 3 (Day 7):
+- Problem: hard to evaluate scale and consistency without a ground-level view
+- Agitate: 300,000m² sounds abstract on paper — feels very different on the floor
+- Solve: 20 years on the same line, currently supplying a Sydney designer on a residential project; come see it
+Sign-off: {{accountSignature}}
+
+Email 4 (Day 10):
+- Problem: many buyers think the trip is too expensive or too disruptive
+- Agitate: not visiting often costs more — one bad order can dwarf a flight
+- Solve: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough; you cover flights and hotel
+Sign-off: {{accountSignature}}
+
+Email 5 (Day 14):
+- Problem: the visit decision keeps getting pushed
+- Agitate: the underlying sourcing uncertainty doesn't go away
+- Solve: invitation stays open; ask if someone else at the company handles sourcing
+Sign-off: {{accountSignature}}`,
   },
 
   'byaf': {
@@ -376,13 +510,52 @@ Main ask: share the blog post on social media
 Freedom phrase: "If not, totally understand, I appreciate you reading this far."
 
 Psychology: explicitly giving permission to decline actually increases response rate (psychology-validated technique).`,
-    sequence_prompt: `Each email follows BYAF — make your ask, then explicitly give the recipient permission to decline:
-Email 1 (Day 1): Normal value-focused ask specific to their business type; end with a natural freedom phrase like "If not, totally understand — I appreciate you reading this."
-Email 2 (Day 4): Different angle on the value; end with "Completely up to you, of course."
-Email 3 (Day 7): Social proof email; end with "Either way, hope this is useful regardless."
-Email 4 (Day 10): Handle a common objection; end with "Totally understand if the timing isn't right."
-Email 5 (Day 14): Breakup email; explicitly release the prospect with warmth, offer a resource just for your reference.
-CRITICAL RULE: EVERY single email MUST include a clear, natural-sounding sentence that explicitly gives the reader permission to ignore or decline — this is the defining characteristic of BYAF and cannot be omitted from any email in the sequence.`,
+    sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
+- Body length: 50-80 words per email
+- Sign-off: exactly {{accountSignature}} on its own line. No other sign-off.
+- Subject: 4-7 words, first letter lowercase, only capitalise proper nouns (China, Zhongshan, Guangdong, Guangzhou, Sydney). Never Title Case.
+- Every sentence separated by a blank line.
+
+GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
+
+FACTS YOU MAY USE (do not invent others):
+- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
+- Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
+
+NEVER:
+- Mention product pricing
+- Fabricate client names, percentages, revenue figures, number of projects, AU warehouse, delivery promises
+- Use banned phrases: no commitment, no risk, guarantee, act now, limited time, exclusive offer
+
+Each email follows BYAF — make the factory-visit invitation, then explicitly give the recipient permission to decline. Every email must end with a natural-sounding freedom phrase that reads like a real person wrote it (never a script).
+
+Email 1 (Day 1):
+- Body: reference something specific from their website, then frame the visit as worth half a day if a China sourcing trip is ever in their schedule
+- Freedom phrase: "if not, totally understand — appreciate you reading this far"
+Sign-off: {{accountSignature}}
+
+Email 2 (Day 4):
+- Body: short note on why most buyers benefit from seeing the factory before ordering; offer the factory walkthrough video as a softer first step
+- Freedom phrase: "completely up to you, of course"
+Sign-off: {{accountSignature}}
+
+Email 3 (Day 7):
+- Body: 300,000m² in Zhongshan, 20 years, currently supplying a Sydney designer on a residential project — extend the visit invitation again
+- Freedom phrase: "either way, hope this is useful to know about"
+Sign-off: {{accountSignature}}
+
+Email 4 (Day 10):
+- Body: address the most common reason buyers hesitate (time, cost, risk of wasted trip); be honest about the logistics — we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough; they cover flights and hotel
+- Freedom phrase: "totally understand if a trip isn't on the cards"
+Sign-off: {{accountSignature}}
+
+Email 5 (Day 14):
+- Body: warm breakup; factory visit invitation stays open; ask if there's someone else at the company who handles sourcing
+- Freedom phrase: explicit release with warmth — "no expectation, just leaving the door open"
+Sign-off: {{accountSignature}}
+
+CRITICAL RULE: EVERY email must contain a clear, natural-sounding sentence that explicitly gives the reader permission to ignore or decline. This is BYAF's defining mechanic and cannot be omitted from any email in the sequence.`,
   },
 
   'sch': {
@@ -417,12 +590,55 @@ Are you interested in hearing how we can help you monitor your reviews?
 S = Star (I help local businesses track online reviews — the big idea)
 C = Chain (80% trust stat + 18% sales increase — facts and benefits that support the idea)
 H = Hook (interested in hearing how we can help? — action CTA)`,
-    sequence_prompt: `Each email follows SCH (Star → Chain → Hook):
-Email 1 (Day 1): Star = a big, bold idea relevant to this prospect's business type; Chain = 2-3 supporting facts/stats/benefits specific to their industry or situation; Hook = one clear CTA question.
-Email 2 (Day 4): Star = a different big idea (different angle on value); Chain = fresh data or industry insights; Hook = check-in question.
-Email 3 (Day 7): Star = a client success story headline; Chain = specific numbers (cost saved, time reduced, growth achieved); Hook = "could we replicate this for {company}?"
-Email 4 (Day 10): Star = the key concern/objection; Chain = facts and evidence that address and resolve it; Hook = reassurance + next step.
-Email 5 (Day 14): Star = a final compelling thought; Chain = one last reason to act; Hook = offer a low-commitment resource, open invitation to reconnect.`,
+    sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
+- Body length: 50-80 words per email
+- Sign-off: exactly {{accountSignature}} on its own line. No other sign-off.
+- Subject: 4-7 words, first letter lowercase, only capitalise proper nouns (China, Zhongshan, Guangdong, Guangzhou, Sydney). Never Title Case.
+- Every sentence separated by a blank line.
+
+GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
+
+FACTS YOU MAY USE (do not invent others):
+- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
+- Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
+
+NEVER:
+- Mention product pricing
+- Fabricate client names, percentages, revenue figures, number of projects, AU warehouse, delivery promises
+- Use banned phrases: no commitment, no risk, guarantee, act now, limited time, exclusive offer
+
+Each email follows SCH (Star → Chain → Hook). Star is always the factory visit framed as a big idea. Chain stays inside the allowed facts. Hook is the visit CTA.
+
+Email 1 (Day 1):
+- Star: the visit itself — seeing the factory floor solves what no document can
+- Chain: 1-2 supporting facts (300,000m² in Zhongshan, 20 years on the same line)
+- Hook: "worth a half-day next time you're in China?"
+Sign-off: {{accountSignature}}
+
+Email 2 (Day 4):
+- Star: a different framing — the gap between showroom and production floor
+- Chain: factory walkthrough video as a lowest-friction starting point
+- Hook: "happy to send the video — just for your reference"
+Sign-off: {{accountSignature}}
+
+Email 3 (Day 7):
+- Star: scale and continuity as the big idea
+- Chain: 300,000m² factory floor; 20 years on the same line; currently supplying a Sydney designer on a residential project
+- Hook: "if a China sourcing trip is on the horizon, come see it"
+Sign-off: {{accountSignature}}
+
+Email 4 (Day 10):
+- Star: addressing the visit-logistics question head-on
+- Chain: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough; they cover flights and hotel
+- Hook: "if a trip is in your calendar, reply with the month"
+Sign-off: {{accountSignature}}
+
+Email 5 (Day 14):
+- Star: one final reason the visit matters — the sourcing decision they'll keep making
+- Chain: invitation stays open; the factory is here whenever
+- Hook: "is there someone else at [Company] who handles supplier sourcing I should know about?"
+Sign-off: {{accountSignature}}`,
   },
 
   'three_ps': {
@@ -455,13 +671,57 @@ Are you free tomorrow to discuss how we can help you improve your audio quality 
 P = Praise (specific, genuine — "Section 3 was my favourite, well laid out" — NOT generic)
 P = Picture (audio concern + "make your course even better" — cause-and-effect scenario)
 P = Push (specific ask: "free tomorrow?" — a concrete commitment request)`,
-    sequence_prompt: `Each email follows 3 P's (Praise → Picture → Push):
-Email 1 (Day 1): Praise = GENUINE, SPECIFIC praise of something you noticed on their website (reference a real project name, service, style, or detail — NOT generic flattery like "Great company!"); Picture = paint a scenario using cause-and-effect reasoning that connects their work to an improvement or opportunity; Push = a specific, gentle ask with a concrete next step.
-Email 2 (Day 4): Praise a different aspect of their work; Picture = a different opportunity scenario; Push = a check-in.
-Email 3 (Day 7): Praise leads into a named AU client story; Picture = "a similar business achieved X"; Push = "would the same interest you?"
-Email 4 (Day 10): Praise their valid concern or careful approach; Picture = what resolution looks like specifically; Push = a light-touch next step.
-Email 5 (Day 14): Praise their time and patience; Picture = "imagine if…" final thought; Push = leave a resource, open invitation to reconnect.
-CRITICAL RULE: Email 1's FIRST paragraph MUST be genuine, specific praise — reference something concrete from their website (project name, service detail, design style). Vague compliments are not acceptable.`,
+    sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
+- Body length: 50-80 words per email
+- Sign-off: exactly {{accountSignature}} on its own line. No other sign-off.
+- Subject: 4-7 words, first letter lowercase, only capitalise proper nouns (China, Zhongshan, Guangdong, Guangzhou, Sydney). Never Title Case.
+- Every sentence separated by a blank line.
+
+GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
+
+FACTS YOU MAY USE (do not invent others):
+- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
+- Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
+
+NEVER:
+- Mention product pricing
+- Fabricate client names, percentages, revenue figures, number of projects, AU warehouse, delivery promises
+- Use banned phrases: no commitment, no risk, guarantee, act now, limited time, exclusive offer
+
+Each email follows 3 P's (Praise → Picture → Push). Praise must be specific and genuine, derived from their actual website (project name, design style, service detail). Picture is the factory visit experience for THEM. Push is a concrete next step that ties to coming to Zhongshan.
+
+Email 1 (Day 1):
+- Praise: specific praise of something concrete from their website (project name, suburb, style, service); NEVER generic flattery like "great company"
+- Picture: connect what they care about to what they'd see on the factory floor in Zhongshan
+- Push: "reply with the month if a sourcing trip is on your radar"
+Sign-off: {{accountSignature}}
+
+Email 2 (Day 4):
+- Praise: a different angle on their work — a different project, a different signal
+- Picture: paint the factory walkthrough as the simplest first step
+- Push: offer to send the factory video first
+Sign-off: {{accountSignature}}
+
+Email 3 (Day 7):
+- Praise: their reputation, longevity, or portfolio quality
+- Picture: connect their standards to what 300,000m² and 20 years on the same Zhongshan line looks like in practice; currently supplying a Sydney designer on a residential project
+- Push: "worth half a day inside a longer sourcing trip"
+Sign-off: {{accountSignature}}
+
+Email 4 (Day 10):
+- Praise: their caution about supplier decisions — frame it as a strength
+- Picture: walk through the logistics honestly — airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough; they cover flights and hotel
+- Push: "if a trip is in your plans, reply with the month"
+Sign-off: {{accountSignature}}
+
+Email 5 (Day 14):
+- Praise: their time and patience in reading this far
+- Picture: a future trip where this slots in naturally
+- Push: factory visit invitation stays open; ask if there's another sourcing contact at the company
+Sign-off: {{accountSignature}}
+
+CRITICAL RULE: Email 1's Praise MUST be specific and tied to something concrete from their website. "Great company!" / "Impressive work!" / "Beautiful designs!" are vague and unacceptable. Reference a real project, suburb, service detail, or design choice.`,
   },
 
   'custom': {
