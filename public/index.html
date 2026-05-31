@@ -4234,7 +4234,14 @@ async function populateWizDatasetSelects() {
   } catch (e) { console.warn('[WizDataset] frameworks load failed:', e.message); }
 }
 
+// Module-level re-entry lock for the dataset-resume run. Prevents a second
+// async invocation if a click somehow fires while a run is already in flight
+// (e.g. mobile double-tap before DOM `disabled` propagates).
+let _wizDatasetRunning = false;
+
 async function startFromDatasetWizard() {
+  if (_wizDatasetRunning) return;
+
   const runId = document.getElementById('wizDatasetId')?.value.trim();
   if (!runId) { alert('请填写 Dataset ID'); return; }
   const campaignId = document.getElementById('wizDatasetCampaign')?.value || '';
@@ -4248,6 +4255,9 @@ async function startFromDatasetWizard() {
   const statusBox = document.getElementById('wizDatasetStatus');
   const statusText = document.getElementById('wizDatasetStatusText');
   const setStatus = (msg) => { if (statusText) statusText.textContent = msg; };
+
+  _wizDatasetRunning = true;
+  let completedSuccessfully = false;
 
   if (btn) { btn.disabled = true; btn.textContent = '⏳ 运行中...'; }
   if (statusBox) statusBox.style.display = 'block';
@@ -4301,6 +4311,7 @@ async function startFromDatasetWizard() {
             setStatus(`处理中：${evt.done}/${evt.total || '?'}${evt.phase ? ' · ' + (PHASE_LABELS[evt.phase] || evt.phase) : ''}`);
           } else if (evt.type === 'done') {
             setStatus('✓ 完成');
+            completedSuccessfully = true;
           } else if (evt.type === 'error') {
             setStatus('✗ 错误：' + (evt.error || ''));
           }
@@ -4312,7 +4323,19 @@ async function startFromDatasetWizard() {
     setStatus('✗ 运行失败：' + err.message);
     alert('运行失败：' + err.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🚀 一键开始'; }
+    _wizDatasetRunning = false;
+    if (btn) {
+      if (completedSuccessfully) {
+        // Keep button disabled after success so the user can't accidentally
+        // re-trigger an expensive run. To run a different dataset, refresh.
+        btn.disabled = true;
+        btn.textContent = '✓ 已完成';
+      } else {
+        // Errored or stream ended without `done` event — allow retry.
+        btn.disabled = false;
+        btn.textContent = '🚀 一键开始';
+      }
+    }
   }
 }
 
