@@ -290,11 +290,19 @@
     }
 
     @media (max-width: 768px) {
-      .hero-shape-1 { width: 340px; height: 80px; }
-      .hero-shape-2 { width: 280px; height: 70px; }
-      .hero-shape-3 { width: 180px; height: 50px; }
-      .hero-shape-4 { width: 130px; height: 40px; }
-      .hero-shape-5 { width: 100px; height: 30px; }
+      .hero {
+        min-height: auto;
+        align-items: flex-start;
+        padding: 56px 0 48px;
+      }
+      .hero-badge { margin-bottom: 20px; }
+      .hero-title { margin-bottom: 18px; }
+      .hero-sub { margin: 0 auto 28px; }
+      .hero-shape-1 { width: 280px; height: 64px; top: 26%; }
+      .hero-shape-2 { width: 240px; height: 60px; }
+      .hero-shape-3 { width: 160px; height: 44px; }
+      .hero-shape-4 { width: 110px; height: 32px; top: 4%; right: 10%; }
+      .hero-shape-5 { width: 80px; height: 24px; top: 2%; left: 18%; }
     }
 
     /* ── Buttons ─────────────────────────────────────────────────────── */
