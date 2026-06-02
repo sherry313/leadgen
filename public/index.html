@@ -2970,13 +2970,6 @@
           <span id="autoCampaignHint" style="font-size:0.78rem;color:#94a3b8"></span>
         </div>
         <button class="btn-start" id="btnAutoRun" onclick="startAutoRun()" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">🚀 一键自动运行</button>
-        <div id="resumeApifyBar" style="display:none;margin-top:10px">
-          <button id="btnResumeApify" onclick="resumeFromApify()"
-            style="padding:7px 16px;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit">
-            恢复上次抓取
-          </button>
-          <span id="resumeApifyHint" style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:8px"></span>
-        </div>
         <div id="autoProgress" style="display:none;margin-top:16px;padding:14px;background:rgba(15,23,42,0.5);border-radius:8px;font-size:0.85rem;line-height:1.7">
           <div id="autoPhases" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
           <div id="autoCurrent" style="color:#cbd5e1"></div>
@@ -2984,27 +2977,6 @@
         </div>
       </div>
 
-    </div>
-
-    <div id="datasetResumeBar" style="display:none;margin-top:14px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px">
-      <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:12px">从 Apify Dataset 继续</div>
-      <div style="margin-bottom:10px">
-        <label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">Dataset ID</label>
-        <input id="datasetRunId" placeholder="粘贴 Apify Dataset ID"
-          style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
-      </div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">推送到 Campaign（必选）</label>
-        <select id="datasetCampaignSelect"
-          style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 11px;color:#fff;font-size:13px;outline:none;box-sizing:border-box">
-          <option value="">加载中...</option>
-        </select>
-      </div>
-      <button onclick="startFromDataset()"
-        style="width:100%;padding:10px;background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
-        接着跑
-      </button>
-      <div id="datasetResumeHint" style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:6px"></div>
     </div>
 
     <div class="panel-nav" style="margin-top:14px">
@@ -5303,110 +5275,6 @@ async function startAutoRun() {
   document.getElementById('resultsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   window.dispatchEvent(new Event('pipelineDone'));
   document.getElementById('analysisCompletePanel').style.display = 'none';
-}
-
-async function resumeFromApify() {
-  const runId = localStorage.getItem(LEAD_PREFIX + 'apifyRunId');
-  if (!runId) { alert('没有找到上次的抓取记录'); return; }
-  document.getElementById('datasetRunId').value = runId;
-  startFromDataset();
-}
-
-async function startFromDataset() {
-  const runId = document.getElementById('datasetRunId').value.trim();
-  if (!runId) { alert('请填入 Apify Run ID'); return; }
-
-  const token = getStoredToken();
-  if (!token) { goToStep(2); return; }
-
-  const selectedCombos = (typeof getSelectedCombos === 'function')
-    ? getSelectedCombos()
-    : (Array.isArray(generatedKeywords) ? generatedKeywords.filter(k => k.selected) : []);
-  const maxResults = parseInt(document.getElementById('maxResults')?.value || '100');
-  const companyProfile = {
-    sellerName: document.getElementById('sellerName')?.value?.trim() || '',
-    products:   document.getElementById('products')?.value?.trim() || '',
-    advantage:  document.getElementById('advantage')?.value?.trim() || '',
-  };
-  const icp = document.getElementById('icpInput')?.value?.trim() || '';
-  const campaignId = document.getElementById('datasetCampaignSelect')?.value || '';
-  if (!campaignId) { alert('请先选择 Campaign'); return; }
-
-  const btn = document.querySelector('#datasetResumeBar button');
-  if (btn) { btn.disabled = true; btn.textContent = '运行中...'; }
-
-  document.getElementById('autoProgress').style.display = 'block';
-  const progressLog = document.getElementById('autoCurrent');
-  if (progressLog) progressLog.textContent = '正在从 Apify dataset 加载…';
-  if (Array.isArray(_allLeads)) _allLeads.length = 0;
-
-  try {
-    const res = await fetch('/api/auto/run-from-dataset', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({
-        runId,
-        searchQuery: selectedCombos[0]?.query || 'dataset',
-        location: selectedCombos[0]?.location || '',
-        countryCode: selectedCombos[0]?.countryCode || 'au',
-        maxResults,
-        companyProfile,
-        icp,
-        campaignId,
-        framework_key: _selectedFrameworkKey || null,
-      }),
-    });
-
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const parts = buf.split('\n\n'); buf = parts.pop();
-      for (const part of parts) {
-        if (!part.startsWith('data:')) continue;
-        try {
-          const evt = JSON.parse(part.slice(5).trim());
-          if (typeof _handleAutoRunEvent === 'function') {
-            _handleAutoRunEvent(evt);
-          } else {
-            // Minimal fallback: startAutoRun's SSE handler is closure-scoped
-            // and not extractable without a refactor. Keep the user informed
-            // and capture the final result set so renderResults() can populate
-            // the table when the stream ends.
-            if (evt.type === 'phase' && progressLog) {
-              progressLog.textContent = `${evt.phase} · ${evt.status || ''}`;
-            } else if (evt.type === 'progress' && evt.lead) {
-              _allLeads.push(evt.lead);
-              if (progressLog) progressLog.textContent = `${evt.phase} ${evt.done}/${evt.total}`;
-            } else if (evt.type === 'error') {
-              alert('❌ ' + (evt.error || ''));
-            } else if (evt.type === 'done') {
-              _allLeads = evt.results || _allLeads;
-              if (evt.searchId) {
-                _currentSearchId = evt.searchId;
-                localStorage.setItem('leadgen_searchId', evt.searchId);
-                localStorage.setItem('leadgen_current_step', '4');
-              }
-              renderResults(_allLeads);
-              const s = evt.summary || {};
-              const c = s.costs || {};
-              const summaryEl = document.getElementById('autoSummary');
-              if (summaryEl) summaryEl.innerHTML = `✅ 完成 · 数据集 ${s.scraped} · Haiku 推荐 ${s.haikuRecommend} · 有邮箱 ${s.withEmail} · 合格 ${s.qualified} · 已生成 ${s.emailsGenerated} 封 · Instantly 推送 ${s.pushed}/${s.pushed + s.pushFailed} · 总费用 ≈ $${(c.total || 0).toFixed(3)}`;
-              document.getElementById('resultsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              window.dispatchEvent(new Event('pipelineDone'));
-            }
-          }
-        } catch (_) {}
-      }
-    }
-  } catch (e) {
-    alert('网络错误：' + e.message);
-  }
-
-  if (btn) { btn.disabled = false; btn.textContent = '接着跑'; }
 }
 
 function _updateAIFilterRow() {
@@ -8480,47 +8348,6 @@ async function smtpSendAll() {
   if (autoModeDesc) autoModeDesc.textContent = LEAD_PREFIX === 'leadgen_'
     ? '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 用自己邮箱发送'
     : '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 推送至 Instantly';
-})();
-
-(function checkResumeBar() {
-  const runId = localStorage.getItem(LEAD_PREFIX + 'apifyRunId');
-  const runTime = parseInt(localStorage.getItem(LEAD_PREFIX + 'apifyRunTime') || '0');
-  const bar = document.getElementById('resumeApifyBar');
-  if (!bar) return;
-  if (runId && (Date.now() - runTime) < 24 * 60 * 60 * 1000) {
-    bar.style.display = 'block';
-    const hint = document.getElementById('resumeApifyHint');
-    if (hint) {
-      const mins = Math.round((Date.now() - runTime) / 60000);
-      hint.textContent = `${mins}分钟前的抓取 · Run ID: ${runId.slice(0,8)}...`;
-    }
-  }
-})();
-
-(async function initDatasetResumeBar() {
-  const bar = document.getElementById('datasetResumeBar');
-  const sel = document.getElementById('datasetCampaignSelect');
-  if (!bar || !sel) return;
-  const token = getStoredToken();
-  if (!token) return;
-  try {
-    const r = await fetch('/api/instantly/campaigns', { headers: { Authorization: `Bearer ${token}` } });
-    const data = await r.json().catch(() => ({}));
-    const campaigns = (data?.campaigns || []).filter(c => c?.id);
-    sel.innerHTML = '<option value="">— 选择 Campaign —</option>';
-    campaigns.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.id;
-      const isActive = c.status === 1 || c.status === 'active';
-      opt.textContent = `${c.name}${isActive ? ' 🟢 Active' : ''}`;
-      sel.appendChild(opt);
-    });
-    const fromLs = localStorage.getItem('selected_campaign_id') || '';
-    if (fromLs && [...sel.options].some(o => o.value === fromLs)) sel.value = fromLs;
-    bar.style.display = 'block';
-  } catch (e) {
-    console.warn('[DatasetResume] populate campaigns failed:', e.message);
-  }
 })();
 
 // ── Website list upload & enrich ──────────────────────────────────────────────
