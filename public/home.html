@@ -990,6 +990,17 @@
 </footer>
 
 <script>
+  // Mobile: drop hero-shape-1 and hero-shape-3 entirely so they don't animate
+  // behind the centered title. CSS already hides shape-3; this also removes
+  // shape-1 and disables their animations before paint.
+  (function gateHeroShapesOnMobile() {
+    if (window.innerWidth > 768) return;
+    const s1 = document.querySelector('.hero-shape-1');
+    const s3 = document.querySelector('.hero-shape-3');
+    if (s3) { s3.style.display = 'none'; s3.style.animation = 'none'; s3.remove(); }
+    if (s1) { s1.style.animation = 'none'; s1.remove(); }
+  })();
+
   // Scroll-triggered fade-up — sections below the hero come in as they enter view.
   const _fadeObserver = new IntersectionObserver((entries) => {
     entries.forEach(e => {
