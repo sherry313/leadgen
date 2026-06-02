@@ -290,17 +290,8 @@
     }
 
     @media (max-width: 768px) {
-      .hero {
-        min-height: 100svh;
-        align-items: flex-start;
-        padding: 80px 0 48px;
-      }
-      .hero-content { margin-top: 30px; }
-      .hero-shape-1 { width: 260px; height: 60px; top: 5%; left: -5%; }
-      .hero-shape-2 { width: 220px; height: 55px; top: 85%; right: 0%; }
-      .hero-shape-3 { display: none; }
-      .hero-shape-4 { width: 100px; height: 28px; top: 8%; right: 8%; }
-      .hero-shape-5 { width: 70px; height: 20px; top: 3%; left: 15%; }
+      .hero { min-height: 100svh; position: relative; }
+      .hero-content { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); width: 90%; }
     }
 
     /* ── Buttons ─────────────────────────────────────────────────────── */
