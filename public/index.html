@@ -2714,11 +2714,9 @@
         </button>
         <button type="button" class="ds-card" id="ds-instagram" onclick="selectSource('instagram')">
           <span class="ds-icon">📷</span><span class="ds-name">Instagram</span>
-          <span class="ds-coming">即将上线</span>
         </button>
         <button type="button" class="ds-card" id="ds-tiktok" onclick="selectSource('tiktok')">
           <span class="ds-icon">🎵</span><span class="ds-name">TikTok</span>
-          <span class="ds-coming">即将上线</span>
         </button>
         <button type="button" class="ds-card" id="ds-facebook" onclick="selectSource('facebook')">
           <span class="ds-icon">👍</span><span class="ds-name">Facebook</span>
@@ -2736,6 +2734,140 @@
           <span class="ds-icon">▶️</span><span class="ds-name">YouTube</span>
           <span class="ds-coming">即将上线</span>
         </button>
+      </div>
+
+      <!-- ── Google Search panel (shown when ds-google_search is clicked) ── -->
+      <div id="gsPanel" class="ds-tool-panel" style="display:none;margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;color:#e5e7eb">
+          <i class="ti ti-search"></i>Google Search 抓取
+        </div>
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">搜索关键词</label>
+        <input type="text" id="gsKeyword" placeholder="例：interior designer Sydney" autocomplete="off"
+               style="width:100%;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">提取内容</label>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="email"    checked> 邮箱</label>
+          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="phone"    checked> 电话</label>
+          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="website"  checked> 官网</label>
+          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="linkedin" checked> LinkedIn</label>
+        </div>
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">最多结果数</label>
+        <input type="number" id="gsMaxResults" value="50" min="1" max="500"
+               style="width:120px;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button type="button" id="gsRunBtn" onclick="startGoogleSearch()"
+                  style="padding:9px 16px;background:#6366f1;border:0;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            <i class="ti ti-player-play"></i>开始搜索
+          </button>
+          <span id="gsStatus" style="color:#94a3b8;font-size:0.85rem"></span>
+        </div>
+
+        <div id="gsResultsWrap" style="display:none;margin-top:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span id="gsResultsCount" style="color:#cbd5e1;font-size:0.85rem"></span>
+            <button type="button" onclick="_exportToolCsv('gs')"
+                    style="padding:6px 12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e5e7eb;cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;gap:4px">
+              <i class="ti ti-download"></i>导出CSV
+            </button>
+          </div>
+          <div id="gsResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
+        </div>
+      </div>
+
+      <!-- ── Instagram panel (shown when ds-instagram is clicked) ── -->
+      <div id="igPanel" class="ds-tool-panel" style="display:none;margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;color:#e5e7eb">
+          <i class="ti ti-brand-instagram"></i>Instagram 抓取
+        </div>
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:6px">输入方式</label>
+        <div id="igModeTabs" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+          <button type="button" class="ig-mode on" data-mode="username" onclick="_igPickMode('username')"
+                  style="padding:6px 12px;border-radius:6px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.18);color:#e0e7ff;cursor:pointer;font-size:0.82rem">用户名</button>
+          <button type="button" class="ig-mode"    data-mode="profile"  onclick="_igPickMode('profile')"
+                  style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#cbd5e1;cursor:pointer;font-size:0.82rem">主页链接</button>
+          <button type="button" class="ig-mode"    data-mode="post"     onclick="_igPickMode('post')"
+                  style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#cbd5e1;cursor:pointer;font-size:0.82rem">帖子链接</button>
+        </div>
+
+        <input type="text" id="igInput" placeholder="例：@natgeo" autocomplete="off"
+               style="width:100%;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">每个账号最多抓取帖数</label>
+        <input type="number" id="igMaxPosts" value="24" min="1" max="500"
+               style="width:120px;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">只抓取此日期之后的帖子（可选）</label>
+        <input type="date" id="igNewerThan" placeholder="YYYY-MM-DD"
+               style="width:160px;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button type="button" id="igRunBtn" onclick="startInstagramScrape()"
+                  style="padding:9px 16px;background:#6366f1;border:0;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            <i class="ti ti-player-play"></i>开始抓取
+          </button>
+          <span id="igStatus" style="color:#94a3b8;font-size:0.85rem"></span>
+        </div>
+
+        <div id="igResultsWrap" style="display:none;margin-top:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span id="igResultsCount" style="color:#cbd5e1;font-size:0.85rem"></span>
+            <button type="button" onclick="_exportToolCsv('ig')"
+                    style="padding:6px 12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e5e7eb;cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;gap:4px">
+              <i class="ti ti-download"></i>导出CSV
+            </button>
+          </div>
+          <div id="igResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
+        </div>
+      </div>
+
+      <!-- ── TikTok panel (shown when ds-tiktok is clicked) ── -->
+      <div id="ttPanel" class="ds-tool-panel" style="display:none;margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;color:#e5e7eb">
+          <i class="ti ti-brand-tiktok"></i>TikTok 抓取
+        </div>
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:6px">输入方式</label>
+        <div id="ttModeTabs" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+          <button type="button" class="tt-mode on" data-mode="hashtag" onclick="_ttPickMode('hashtag')"
+                  style="padding:6px 12px;border-radius:6px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.18);color:#e0e7ff;cursor:pointer;font-size:0.82rem">话题标签</button>
+          <button type="button" class="tt-mode"    data-mode="search"  onclick="_ttPickMode('search')"
+                  style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#cbd5e1;cursor:pointer;font-size:0.82rem">搜索关键词</button>
+          <button type="button" class="tt-mode"    data-mode="profile" onclick="_ttPickMode('profile')"
+                  style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#cbd5e1;cursor:pointer;font-size:0.82rem">账号主页</button>
+          <button type="button" class="tt-mode"    data-mode="video"   onclick="_ttPickMode('video')"
+                  style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#cbd5e1;cursor:pointer;font-size:0.82rem">视频链接</button>
+        </div>
+
+        <input type="text" id="ttInput" placeholder="例：#fyp" autocomplete="off"
+               style="width:100%;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">每个话题/账号/搜索最多抓取视频数</label>
+        <input type="number" id="ttMaxVideos" value="100" min="1" max="1000"
+               style="width:120px;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button type="button" id="ttRunBtn" onclick="startTikTokScrape()"
+                  style="padding:9px 16px;background:#6366f1;border:0;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            <i class="ti ti-player-play"></i>开始抓取
+          </button>
+          <span id="ttStatus" style="color:#94a3b8;font-size:0.85rem"></span>
+        </div>
+
+        <div id="ttResultsWrap" style="display:none;margin-top:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span id="ttResultsCount" style="color:#cbd5e1;font-size:0.85rem"></span>
+            <button type="button" onclick="_exportToolCsv('tt')"
+                    style="padding:6px 12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e5e7eb;cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;gap:4px">
+              <i class="ti ti-download"></i>导出CSV
+            </button>
+          </div>
+          <div id="ttResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
+        </div>
       </div>
     </div>
 
@@ -4155,7 +4287,7 @@ const PRIORITY_KEYWORDS = new Set([
 
 function buildKeywords() { /* no-op: inputs are static HTML */ }
 
-const WORKING_SOURCES = new Set(['google_maps', 'google_search']);
+const WORKING_SOURCES = new Set(['google_maps', 'google_search', 'instagram', 'tiktok']);
 function selectMethod(methodId) {
   if (methodId === 'keyword') {
     document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
@@ -4329,6 +4461,233 @@ function selectSource(src) {
   // Legacy compatibility: old src-* buttons no longer in DOM but harmless if present
   document.querySelectorAll('.src-btn').forEach(c => c.classList.remove('selected'));
   document.getElementById(`src-${src}`)?.classList.add('selected');
+
+  // Reveal inline tool panel for sources that bypass the wizard
+  const gsPanel = document.getElementById('gsPanel');
+  const igPanel = document.getElementById('igPanel');
+  const ttPanel = document.getElementById('ttPanel');
+  if (gsPanel) gsPanel.style.display = (src === 'google_search') ? 'block' : 'none';
+  if (igPanel) igPanel.style.display = (src === 'instagram')     ? 'block' : 'none';
+  if (ttPanel) ttPanel.style.display = (src === 'tiktok')        ? 'block' : 'none';
+}
+
+// ── Google Search / Instagram inline tools ───────────────────────────────────
+// Both write their parsed rows into _toolResults[kind] so _exportToolCsv can
+// re-serialise the exact set the user sees in the table.
+const _toolResults = { gs: [], ig: [], tt: [] };
+const _IG_PLACEHOLDERS = {
+  username: '例：@natgeo',
+  profile:  '例：https://www.instagram.com/natgeo/',
+  post:     '例：https://www.instagram.com/p/ABC123/',
+};
+let _igMode = 'username';
+
+function _igPickMode(mode) {
+  _igMode = mode;
+  document.querySelectorAll('#igModeTabs .ig-mode').forEach(b => {
+    const on = b.dataset.mode === mode;
+    b.classList.toggle('on', on);
+    b.style.background = on ? 'rgba(99,102,241,0.18)' : 'transparent';
+    b.style.borderColor = on ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.12)';
+    b.style.color = on ? '#e0e7ff' : '#cbd5e1';
+  });
+  const inp = document.getElementById('igInput');
+  if (inp) inp.placeholder = _IG_PLACEHOLDERS[mode] || '';
+}
+
+const _TT_PLACEHOLDERS = {
+  hashtag: '例：#fyp',
+  search:  '例：interior design',
+  profile: '例：https://www.tiktok.com/@natgeo',
+  video:   'https://www.tiktok.com/@user/video/123456',
+};
+let _ttMode = 'hashtag';
+
+function _ttPickMode(mode) {
+  _ttMode = mode;
+  document.querySelectorAll('#ttModeTabs .tt-mode').forEach(b => {
+    const on = b.dataset.mode === mode;
+    b.classList.toggle('on', on);
+    b.style.background = on ? 'rgba(99,102,241,0.18)' : 'transparent';
+    b.style.borderColor = on ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.12)';
+    b.style.color = on ? '#e0e7ff' : '#cbd5e1';
+  });
+  const inp = document.getElementById('ttInput');
+  if (inp) inp.placeholder = _TT_PLACEHOLDERS[mode] || '';
+}
+
+async function startGoogleSearch() {
+  const keyword = document.getElementById('gsKeyword')?.value.trim() || '';
+  if (!keyword) { _showToast('请输入搜索关键词'); return; }
+  const maxResults = Math.max(1, parseInt(document.getElementById('gsMaxResults')?.value, 10) || 50);
+  const fields = [...document.querySelectorAll('#gsPanel .gs-field-chk input:checked')].map(c => c.dataset.field);
+  if (!fields.length) { _showToast('请至少选择一项提取内容'); return; }
+
+  const token = getStoredToken();
+  if (!token) { _showToast('请先登录'); return; }
+
+  const btn = document.getElementById('gsRunBtn');
+  const status = document.getElementById('gsStatus');
+  const wrap = document.getElementById('gsResultsWrap');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (status) status.textContent = '正在抓取…';
+  if (wrap) wrap.style.display = 'none';
+  _toolResults.gs = [];
+
+  try {
+    const res = await fetch('/api/google-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ keyword, maxResults, fields }),
+    });
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    await _consumeToolSse(res, 'gs', status);
+  } catch (err) {
+    if (status) status.textContent = '失败：' + err.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+async function startInstagramScrape() {
+  const raw = document.getElementById('igInput')?.value.trim() || '';
+  if (!raw) { _showToast('请输入用户名或链接'); return; }
+
+  // Normalise the user's input into a full instagram URL the actor accepts.
+  let input = raw;
+  if (_igMode === 'username') {
+    const u = raw.replace(/^@/, '').replace(/\/$/, '');
+    input = `https://www.instagram.com/${u}/`;
+  }
+
+  const maxPosts = Math.max(1, parseInt(document.getElementById('igMaxPosts')?.value, 10) || 24);
+  const newerThan = document.getElementById('igNewerThan')?.value.trim() || '';
+
+  const token = getStoredToken();
+  if (!token) { _showToast('请先登录'); return; }
+
+  const btn = document.getElementById('igRunBtn');
+  const status = document.getElementById('igStatus');
+  const wrap = document.getElementById('igResultsWrap');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (status) status.textContent = '正在抓取…';
+  if (wrap) wrap.style.display = 'none';
+  _toolResults.ig = [];
+
+  try {
+    const res = await fetch('/api/instagram-scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ input, maxPosts, newerThan }),
+    });
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    await _consumeToolSse(res, 'ig', status);
+  } catch (err) {
+    if (status) status.textContent = '失败：' + err.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+async function startTikTokScrape() {
+  const raw = document.getElementById('ttInput')?.value.trim() || '';
+  if (!raw) { _showToast('请输入话题/关键词/链接'); return; }
+  const maxVideos = Math.max(1, parseInt(document.getElementById('ttMaxVideos')?.value, 10) || 100);
+
+  const token = getStoredToken();
+  if (!token) { _showToast('请先登录'); return; }
+
+  const btn = document.getElementById('ttRunBtn');
+  const status = document.getElementById('ttStatus');
+  const wrap = document.getElementById('ttResultsWrap');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (status) status.textContent = '正在抓取…';
+  if (wrap) wrap.style.display = 'none';
+  _toolResults.tt = [];
+
+  // Strip leading # for hashtag mode — the actor expects the bare tag name.
+  const input = (_ttMode === 'hashtag') ? raw.replace(/^#/, '') : raw;
+
+  try {
+    const res = await fetch('/api/tiktok-scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ mode: _ttMode, input, maxVideos }),
+    });
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    await _consumeToolSse(res, 'tt', status);
+  } catch (err) {
+    if (status) status.textContent = '失败：' + err.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+// Shared SSE reader: collects {type:'row'} into _toolResults[kind] and renders
+// the table at done. Status text reflects running count / final state.
+async function _consumeToolSse(res, kind, statusEl) {
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n\n')) !== -1) {
+      const chunk = buf.slice(0, idx);
+      buf = buf.slice(idx + 2);
+      const line = chunk.split('\n').find(l => l.startsWith('data:'));
+      if (!line) continue;
+      let evt;
+      try { evt = JSON.parse(line.slice(5).trim()); } catch { continue; }
+      if (evt.type === 'row') {
+        _toolResults[kind].push(evt.row);
+        if (statusEl) statusEl.textContent = `已抓取 ${_toolResults[kind].length} 条…`;
+      } else if (evt.type === 'done') {
+        if (statusEl) statusEl.textContent = `完成：共 ${_toolResults[kind].length} 条`;
+        _renderToolResults(kind);
+      } else if (evt.type === 'error') {
+        if (statusEl) statusEl.textContent = '失败：' + (evt.error || '未知错误');
+      }
+    }
+  }
+}
+
+function _renderToolResults(kind) {
+  const rows = _toolResults[kind];
+  const wrap = document.getElementById(`${kind}ResultsWrap`);
+  const tbl  = document.getElementById(`${kind}ResultsTable`);
+  const cnt  = document.getElementById(`${kind}ResultsCount`);
+  if (!wrap || !tbl) return;
+  wrap.style.display = 'block';
+  if (cnt) cnt.textContent = `共 ${rows.length} 条结果`;
+  if (!rows.length) { tbl.innerHTML = '<div style="padding:16px;color:#94a3b8;font-size:0.85rem;text-align:center">没有结果</div>'; return; }
+
+  const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
+  const esc  = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  const head = cols.map(c => `<th style="padding:8px 10px;text-align:left;font-weight:600;color:#cbd5e1;border-bottom:1px solid rgba(255,255,255,0.08);position:sticky;top:0;background:#0b0b0c;font-size:0.78rem">${esc(c)}</th>`).join('');
+  const body = rows.map(r => `<tr>${cols.map(c => `<td style="padding:8px 10px;color:#e5e7eb;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r[c])}</td>`).join('')}</tr>`).join('');
+  tbl.innerHTML = `<table style="width:100%;border-collapse:collapse"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function _exportToolCsv(kind) {
+  const rows = _toolResults[kind] || [];
+  if (!rows.length) { _showToast('没有可导出的数据'); return; }
+  const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
+  const escCsv = v => {
+    const s = String(v ?? '');
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [cols.join(','), ...rows.map(r => cols.map(c => escCsv(r[c])).join(','))];
+  // Prepend UTF-8 BOM so Excel opens Chinese characters correctly
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${kind}-results-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function updateSelectedCombo() {

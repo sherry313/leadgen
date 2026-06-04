@@ -2171,6 +2171,202 @@ app.post('/api/send-quote', async (req, res) => {
   }
 });
 
+// ── Google Search inline tool (SSE) ──────────────────────────────────────────
+// Runs Apify actor nFJndFXA5zjCTuudP and streams one row per result.
+// Body: { keyword, maxResults, fields:['email','phone','website','linkedin'] }
+const axios = require('axios');
+const APIFY_TOKEN = process.env.APIFY_API_TOKEN;
+const APIFY_BASE  = 'https://api.apify.com/v2';
+
+async function _runApifyActor(actorId, input) {
+  const start = await axios.post(
+    `${APIFY_BASE}/acts/${actorId}/runs`,
+    input,
+    { params: { token: APIFY_TOKEN }, headers: { 'Content-Type': 'application/json' } }
+  );
+  const runId = start.data.data.id;
+  let status = 'RUNNING';
+  const deadline = Date.now() + 10 * 60 * 1000;
+  while (status === 'RUNNING' || status === 'READY') {
+    if (Date.now() > deadline) throw new Error('Apify run timeout after 10 min');
+    await new Promise(r => setTimeout(r, 4000));
+    const s = await axios.get(`${APIFY_BASE}/actor-runs/${runId}`, { params: { token: APIFY_TOKEN } });
+    status = s.data.data.status;
+  }
+  if (status !== 'SUCCEEDED') throw new Error(`Apify run failed: ${status}`);
+  const items = await axios.get(
+    `${APIFY_BASE}/actor-runs/${runId}/dataset/items`,
+    { params: { token: APIFY_TOKEN, format: 'json' } }
+  );
+  return items.data || [];
+}
+
+app.post('/api/google-search', requireAuth, async (req, res) => {
+  const keyword     = (req.body?.keyword || '').trim();
+  const maxResults  = Math.min(500, Math.max(1, parseInt(req.body?.maxResults, 10) || 50));
+  const fields      = Array.isArray(req.body?.fields) ? req.body.fields : ['email','phone','website','linkedin'];
+
+  if (!keyword) return res.status(400).json({ success: false, error: 'keyword required' });
+
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+  res.flushHeaders();
+  const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+  const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  try {
+    console.log(`[GoogleSearchTool] "${keyword}" max=${maxResults} fields=${fields.join(',')}`);
+    const items = await withTimeout(
+      _runApifyActor('nFJndFXA5zjCTuudP', { query: keyword, maxResults, extractFields: fields }),
+      10 * 60 * 1000,
+      '/api/google-search Apify'
+    );
+
+    // Apify actors vary in output shape — handle both flat result lists and
+    // pages-with-organicResults shape. Project only the requested fields.
+    const flat = items.flatMap(it => Array.isArray(it.organicResults) ? it.organicResults : [it]);
+    let emitted = 0;
+    for (const it of flat) {
+      if (aborted) break;
+      if (emitted >= maxResults) break;
+      const row = { title: it.title || it.name || '', url: it.url || it.website || it.link || '' };
+      if (fields.includes('email'))    row.email    = (Array.isArray(it.emails) ? it.emails[0] : it.email) || '';
+      if (fields.includes('phone'))    row.phone    = (Array.isArray(it.phones) ? it.phones[0] : it.phone) || '';
+      if (fields.includes('website'))  row.website  = it.website || it.url || '';
+      if (fields.includes('linkedin')) row.linkedin = it.linkedin || (Array.isArray(it.socialProfiles) ? (it.socialProfiles.find(p => /linkedin/i.test(p.url || p.platform || ''))?.url || '') : '');
+      send({ type: 'row', row });
+      emitted++;
+    }
+    send({ type: 'done', success: true, total: emitted });
+  } catch (err) {
+    console.error('[GoogleSearchTool] error:', err.message);
+    send({ type: 'error', error: err.message || 'Google Search 抓取失败' });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
+
+// ── Instagram inline tool (SSE) ──────────────────────────────────────────────
+// Runs Apify actor nH2AHrwxeTRJoN5hX and streams one row per post.
+// Body: { input, maxPosts, newerThan }
+app.post('/api/instagram-scrape', requireAuth, async (req, res) => {
+  const input      = (req.body?.input || '').trim();
+  const maxPosts   = Math.min(500, Math.max(1, parseInt(req.body?.maxPosts, 10) || 24));
+  const newerThan  = (req.body?.newerThan || '').trim();
+
+  if (!input) return res.status(400).json({ success: false, error: 'input required' });
+
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+  res.flushHeaders();
+  const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+  const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  try {
+    console.log(`[InstagramTool] input="${input}" maxPosts=${maxPosts} newerThan="${newerThan}"`);
+    const actorInput = { directUrls: [input], maxPostsPerProfile: maxPosts };
+    if (newerThan) actorInput.onlyPostsNewerThan = newerThan;
+
+    const items = await withTimeout(
+      _runApifyActor('nH2AHrwxeTRJoN5hX', actorInput),
+      10 * 60 * 1000,
+      '/api/instagram-scrape Apify'
+    );
+
+    let emitted = 0;
+    for (const it of items) {
+      if (aborted) break;
+      if (emitted >= maxPosts) break;
+      send({
+        type: 'row',
+        row: {
+          username:    it.ownerUsername || it.username || '',
+          postUrl:     it.url || it.postUrl || '',
+          type:        it.type || '',
+          caption:     (it.caption || '').replace(/\s+/g, ' ').slice(0, 200),
+          likes:       it.likesCount ?? '',
+          comments:    it.commentsCount ?? '',
+          timestamp:   it.timestamp || it.takenAtTimestamp || '',
+          displayUrl:  it.displayUrl || '',
+        },
+      });
+      emitted++;
+    }
+    send({ type: 'done', success: true, total: emitted });
+  } catch (err) {
+    console.error('[InstagramTool] error:', err.message);
+    send({ type: 'error', error: err.message || 'Instagram 抓取失败' });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
+
+// ── TikTok inline tool (SSE) ─────────────────────────────────────────────────
+// Runs Apify actor GdWCkxBtKWOsKjdch and streams one row per video.
+// Body: { mode: 'hashtag'|'search'|'profile'|'video', input, maxVideos }
+app.post('/api/tiktok-scrape', requireAuth, async (req, res) => {
+  const mode      = (req.body?.mode || 'hashtag').trim();
+  const input     = (req.body?.input || '').trim();
+  const maxVideos = Math.min(1000, Math.max(1, parseInt(req.body?.maxVideos, 10) || 100));
+
+  if (!input) return res.status(400).json({ success: false, error: 'input required' });
+
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+  res.flushHeaders();
+  const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+  const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  try {
+    console.log(`[TikTokTool] mode=${mode} input="${input}" maxVideos=${maxVideos}`);
+    const actorInput = { resultsPerPage: maxVideos };
+    if      (mode === 'hashtag') actorInput.hashtags      = [input];
+    else if (mode === 'search')  actorInput.searchQueries = [input];
+    else if (mode === 'profile') actorInput.profiles      = [input];
+    else if (mode === 'video')   actorInput.postURLs      = [input];
+    else throw new Error(`unknown mode: ${mode}`);
+
+    const items = await withTimeout(
+      _runApifyActor('GdWCkxBtKWOsKjdch', actorInput),
+      10 * 60 * 1000,
+      '/api/tiktok-scrape Apify'
+    );
+
+    let emitted = 0;
+    for (const it of items) {
+      if (aborted) break;
+      if (emitted >= maxVideos) break;
+      // Different actors return slightly different field names — try the most
+      // common ones for username/url/counts/timestamp.
+      const ts = it.createTimeISO || it.createTime || it.timestamp || '';
+      send({
+        type: 'row',
+        row: {
+          username:  it.authorMeta?.name || it.author?.uniqueId || it.username || '',
+          videoUrl:  it.webVideoUrl || it.shareUrl || it.url || (it.id ? `https://www.tiktok.com/@${it.authorMeta?.name || ''}/video/${it.id}` : ''),
+          likes:     it.diggCount    ?? it.likes    ?? it.stats?.diggCount    ?? '',
+          comments:  it.commentCount ?? it.comments ?? it.stats?.commentCount ?? '',
+          shares:    it.shareCount   ?? it.shares   ?? it.stats?.shareCount   ?? '',
+          createdAt: ts,
+        },
+      });
+      emitted++;
+    }
+    send({ type: 'done', success: true, total: emitted });
+  } catch (err) {
+    console.error('[TikTokTool] error:', err.message);
+    send({ type: 'error', error: err.message || 'TikTok 抓取失败' });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
+
 // ── Global error handler (Express 5 forwards async rejections here) ───────────
 app.use((err, req, res, next) => {
   console.error('[Server] Unhandled error:', err.message);
