@@ -2348,6 +2348,13 @@
       color: #fff;
     }
 
+    /* Progressive disclosure for /app seller-info → ICP builder steps */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .progressive-step { animation: fadeIn 0.3s ease forwards; }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -2817,39 +2824,32 @@
 
     <!-- ICP Builder for /app (new users) — writes its result into #icpInput below -->
     <div id="icpBuilder" style="display:none">
-      <div class="icpb-title">描述你的理想客户</div>
-      <div class="icpb-sub">越详细，AI 筛选越准。不知道怎么写？回答下面几个问题，AI 帮你生成。</div>
+      <div class="progressive-step" style="display:none">
+        <div class="icpb-title">描述你的理想客户</div>
+        <div class="icpb-sub">越详细，AI 筛选越准。不知道怎么写？回答下面几个问题，AI 帮你生成。</div>
 
-      <div class="icpb-q">
-        <div class="icpb-q-label"><i class="ti ti-building"></i>你的客户一般在什么行业？</div>
-        <div class="icpb-pill-row" id="icpb-industry">
-          <button type="button" class="icpb-pill" data-val="建筑/施工"   onclick="_icpbTogglePill(this)">建筑/施工</button>
-          <button type="button" class="icpb-pill" data-val="室内设计"     onclick="_icpbTogglePill(this)">室内设计</button>
-          <button type="button" class="icpb-pill" data-val="房地产开发"   onclick="_icpbTogglePill(this)">房地产开发</button>
-          <button type="button" class="icpb-pill" data-val="批发/经销"   onclick="_icpbTogglePill(this)">批发/经销</button>
-          <button type="button" class="icpb-pill" data-val="零售"         onclick="_icpbTogglePill(this)">零售</button>
-          <button type="button" class="icpb-pill" data-val="酒店/餐饮"   onclick="_icpbTogglePill(this)">酒店/餐饮</button>
-          <button type="button" class="icpb-pill" data-val="制造业"       onclick="_icpbTogglePill(this)">制造业</button>
+        <div class="icpb-q">
+          <div class="icpb-q-label"><i class="ti ti-building"></i>你的客户一般在什么行业？</div>
+          <div class="icpb-pill-row" id="icpb-industry">
+            <button type="button" class="icpb-pill" data-val="制造业"        onclick="_icpbTogglePill(this)">制造业</button>
+            <button type="button" class="icpb-pill" data-val="贸易/进出口"   onclick="_icpbTogglePill(this)">贸易/进出口</button>
+            <button type="button" class="icpb-pill" data-val="零售/电商"     onclick="_icpbTogglePill(this)">零售/电商</button>
+            <button type="button" class="icpb-pill" data-val="服务业"        onclick="_icpbTogglePill(this)">服务业</button>
+            <button type="button" class="icpb-pill" data-val="科技/互联网"   onclick="_icpbTogglePill(this)">科技/互联网</button>
+            <button type="button" class="icpb-pill" data-val="医疗/健康"     onclick="_icpbTogglePill(this)">医疗/健康</button>
+            <button type="button" class="icpb-pill" data-val="教育"          onclick="_icpbTogglePill(this)">教育</button>
+            <button type="button" class="icpb-pill" data-val="其他"          onclick="_icpbTogglePill(this)">其他</button>
+          </div>
+          <input type="text" id="icpb-industry-custom" class="icpb-text" placeholder="或输入自定义行业..." autocomplete="off" style="margin-top:8px">
         </div>
       </div>
 
-      <div class="icpb-q">
-        <div class="icpb-q-label"><i class="ti ti-users"></i>公司规模</div>
-        <div class="icpb-pill-row" id="icpb-size" data-single="1">
-          <button type="button" class="icpb-pill" data-val="1-10人"     onclick="_icpbTogglePill(this)">1-10人</button>
-          <button type="button" class="icpb-pill" data-val="10-50人"    onclick="_icpbTogglePill(this)">10-50人</button>
-          <button type="button" class="icpb-pill" data-val="50-200人"   onclick="_icpbTogglePill(this)">50-200人</button>
-          <button type="button" class="icpb-pill" data-val="200人以上"  onclick="_icpbTogglePill(this)">200人以上</button>
-          <button type="button" class="icpb-pill" data-val="不限"       onclick="_icpbTogglePill(this)">不限</button>
-        </div>
-      </div>
-
-      <div class="icpb-q">
+      <div class="icpb-q progressive-step" style="display:none">
         <div class="icpb-q-label"><i class="ti ti-target"></i>你的产品帮客户解决什么问题？</div>
         <input type="text" id="icpb-pain" class="icpb-text" placeholder="例：降低采购成本、提升产品质量" autocomplete="off">
       </div>
 
-      <div class="icpb-q">
+      <div class="icpb-q progressive-step" style="display:none">
         <div class="icpb-q-label"><i class="ti ti-x"></i>哪些客户你不要？</div>
         <div class="icpb-q-hint">排除不适合的客户类型</div>
         <input type="text" id="icpb-excl" class="icpb-text" placeholder="例：太小的公司、只做维修不做新建的" autocomplete="off">
@@ -3295,7 +3295,7 @@
           <div style="color:var(--sub);font-size:0.8rem">加载中…</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="hub-btn primary" onclick="syncAccountsToCampaign()" style="padding:5px 12px;font-size:0.77rem">同步到 Campaign</button>
+          <button class="hub-btn primary" id="hubSyncToCampaignBtn" onclick="syncAccountsToCampaign()" style="padding:5px 12px;font-size:0.77rem">同步到 Campaign</button>
           <span id="syncDoneIndicator" style="display:none;color:#34d399;font-size:0.75rem;font-weight:600">✓ 已同步</span>
           <a href="https://app.instantly.ai/app/accounts" target="_blank" style="font-size:0.74rem;color:#93c5fd;text-decoration:none" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">在 Instantly 添加邮箱 →</a>
         </div>
@@ -3799,6 +3799,7 @@ function selectPillCountry(code) {
 const WIZ_STEP_COUNT = 5;
 
 function wizardGo(n) {
+  localStorage.setItem(LEAD_PREFIX + 'wizardStep', n);
   for (let i = 1; i <= WIZ_STEP_COUNT; i++) {
     const card = document.getElementById('ws' + i);
     if (card) card.style.display = (i === n) ? '' : 'none';
@@ -3938,6 +3939,8 @@ function _icpbTogglePill(btn) {
 
 async function generateIcpFromBuilder() {
   const industries  = [...document.querySelectorAll('#icpb-industry .icpb-pill.on')].map(p => p.dataset.val);
+  const customIndustry = document.getElementById('icpb-industry-custom')?.value.trim();
+  if (customIndustry && !industries.includes(customIndustry)) industries.push(customIndustry);
   const companySize = document.querySelector('#icpb-size .icpb-pill.on')?.dataset.val || '';
   const painPoints  = document.getElementById('icpb-pain')?.value.trim() || '';
   const exclusions  = document.getElementById('icpb-excl')?.value.trim() || '';
@@ -3958,6 +3961,8 @@ async function generateIcpFromBuilder() {
   if (btn)     btn.style.display = 'none';
   if (loading) loading.style.display = 'block';
   if (result)  result.style.display = 'none';
+  document.querySelector('.icpb-divider')?.style.setProperty('display', 'none');
+  document.getElementById('icpbManual')?.closest('.icpb-q')?.style.setProperty('display', 'none');
 
   try {
     const token = getStoredToken();
@@ -3974,6 +3979,8 @@ async function generateIcpFromBuilder() {
     if (result)  result.style.display = 'block';
     const ta = document.getElementById('icpbResultText');
     if (ta) ta.value = data.icp;
+    document.querySelector('.icpb-divider')?.style.setProperty('display', 'none');
+    document.getElementById('icpbManual')?.closest('.icpb-q')?.style.setProperty('display', 'none');
   } catch (err) {
     console.error('[generate-icp] failed:', err);
     if (loading) loading.style.display = 'none';
@@ -7080,6 +7087,54 @@ setInterval(() => {
   if (v !== null) el.value = v;
   el.addEventListener('input', () => localStorage.setItem(LEAD_PREFIX + id, el.value));
 });
+
+// Progressive disclosure: seller info → ICP builder steps reveal one at a time.
+(function setupProgressiveDisclosure() {
+  const sellerSec = document.getElementById('sellerInfoSection');
+  if (!sellerSec) return;
+  const sellerIds = ['sellerName','products','advantage'];
+
+  function revealNextStep() {
+    const steps = document.querySelectorAll('.progressive-step');
+    for (const s of steps) {
+      if (s.style.display === 'none' || getComputedStyle(s).display === 'none') {
+        s.style.display = 'block';
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Returning user with restored seller values → reveal step 2 immediately.
+  const hasSellerValue = () => sellerIds.some(id =>
+    (document.getElementById(id)?.value || '').trim().length > 0
+  );
+  if (hasSellerValue()) revealNextStep();
+
+  // Step 1 trigger: any of the 3 seller inputs having a value reveals step 2 (once).
+  const sellerHandler = () => {
+    if (hasSellerValue()) {
+      revealNextStep();
+      sellerIds.forEach(id =>
+        document.getElementById(id)?.removeEventListener('input', sellerHandler)
+      );
+    }
+  };
+  sellerIds.forEach(id =>
+    document.getElementById(id)?.addEventListener('input', sellerHandler)
+  );
+
+  // Steps 2-4: each step's first input or button click reveals the next step (once).
+  document.querySelectorAll('.progressive-step').forEach(step => {
+    const stepHandler = () => {
+      revealNextStep();
+      step.removeEventListener('input', stepHandler);
+      step.removeEventListener('click', stepHandler);
+    };
+    step.addEventListener('input', stepHandler);
+    step.addEventListener('click', stepHandler);
+  });
+})();
 // accessToken is the user's auth token — must stay on the literal 'leadgen_accessToken'
 // key so login.html and any path share the same session.
 {
@@ -7189,6 +7244,11 @@ function _restoreStep() {
   }
 
   if (saved >= 3 && _allLeads.length === 0) _showRefreshWarning(panel);
+
+  const savedWizardStep = parseInt(localStorage.getItem(LEAD_PREFIX + 'wizardStep') || '0', 10);
+  if (savedWizardStep >= 1 && savedWizardStep <= WIZ_STEP_COUNT && typeof wizardGo === 'function') {
+    wizardGo(savedWizardStep);
+  }
 }
 
 function _showRefreshWarning(panel) {
@@ -8348,6 +8408,28 @@ async function smtpSendAll() {
   if (autoModeDesc) autoModeDesc.textContent = LEAD_PREFIX === 'leadgen_'
     ? '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 用自己邮箱发送'
     : '抓取 → Haiku 筛选 → 邮箱过滤 → Sonnet 深度评分 → 生成开发信 → 推送至 Instantly';
+})();
+
+// /app users don't use Instantly — hide all Instantly setup-wizard chrome, accounts card,
+// and validation hints; ensure SMTP panel is shown instead.
+(function applyStep4HubVisibility() {
+  const isLens = location.pathname === '/lens';
+  if (isLens) return;
+
+  const hide = (el) => { if (el) el.style.display = 'none'; };
+
+  hide(document.getElementById('hubCardCampaign'));
+  hide(document.getElementById('hubSyncToCampaignBtn'));
+
+  for (let i = 1; i <= 4; i++) hide(document.getElementById('wizDot' + i));
+  for (let i = 1; i <= 3; i++) hide(document.getElementById('wizConn' + i));
+
+  hide(document.querySelector('a[href*="instantly.ai/app/accounts"]'));
+  hide(document.getElementById('wizHint'));
+  hide(document.getElementById('hubCardAccounts'));
+
+  const smtpPanel = document.getElementById('smtpPanel');
+  if (smtpPanel) smtpPanel.style.display = 'block';
 })();
 
 // ── Website list upload & enrich ──────────────────────────────────────────────
