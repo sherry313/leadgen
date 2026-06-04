@@ -1704,6 +1704,33 @@
     .method-tag.live { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
     .method-tag.new  { background: rgba(99,102,241,0.12); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
 
+    /* Floating icon animations (data-source method cards) */
+    @keyframes dsFloat1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes dsFloat2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes dsFloat3 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes dsFloat4 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+    .method-icon.ic-f1 { animation: dsFloat1 3s   ease-in-out infinite; }
+    .method-icon.ic-f2 { animation: dsFloat2 3.5s ease-in-out infinite; }
+    .method-icon.ic-f3 { animation: dsFloat3 4s   ease-in-out infinite; }
+    .method-icon.ic-f4 { animation: dsFloat4 3.2s ease-in-out infinite; }
+
+    /* Hover + active for method (data-source) cards.
+       Overrides the earlier .method-card:hover indigo treatment. */
+    .method-card {
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    }
+    .method-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(99,179,237,0.7);
+      background: rgba(99,179,237,0.04);
+      box-shadow: 0 0 18px rgba(99,179,237,0.25), 0 0 6px rgba(99,179,237,0.15);
+    }
+    .method-card:active {
+      transform: translateY(-2px);
+      border-color: rgba(99,179,237,0.9);
+      box-shadow: 0 0 10px rgba(99,179,237,0.3);
+    }
+
     .method-screen-title {
       font-size: 24px; font-weight: 700; color: #f7fafc;
       margin-bottom: 6px; letter-spacing: -0.01em;
@@ -2397,28 +2424,28 @@
 
     <div class="method-grid">
       <div class="method-card" id="method-card-keyword" onclick="selectMethod('keyword')">
-        <div class="method-icon">🔍</div>
-        <div class="method-title">Keyword search</div>
+        <div class="method-icon ic-f1"><i class="ti ti-target-arrow"></i></div>
+        <div class="method-title">关键词搜索</div>
         <div class="method-desc">输入关键词，从多个数据源搜索目标客户</div>
         <span class="method-tag live">已上线</span>
       </div>
 
       <div class="method-card" id="method-card-website" onclick="selectMethod('website')">
-        <div class="method-icon">🌐</div>
-        <div class="method-title">Website list</div>
+        <div class="method-icon ic-f2"><i class="ti ti-browser"></i></div>
+        <div class="method-title">官网列表</div>
         <div class="method-desc">上传官网URL列表，直接分析筛选</div>
         <span class="method-tag new">new</span>
       </div>
 
       <div class="method-card" id="method-card-company" onclick="selectMethod('company')">
-        <div class="method-icon">🏢</div>
-        <div class="method-title">Company list</div>
+        <div class="method-icon ic-f3"><i class="ti ti-building-skyscraper"></i></div>
+        <div class="method-title">公司名称</div>
         <div class="method-desc">上传公司名称，Google Search找官网再分析</div>
         <span class="method-tag new">new</span>
       </div>
 
       <div class="method-card" id="method-card-dataset" onclick="selectMethod('dataset')">
-        <div class="method-icon">📂</div>
+        <div class="method-icon ic-f4"><i class="ti ti-database"></i></div>
         <div class="method-title">从 Dataset 继续</div>
         <div class="method-desc">已有 Apify 数据，跳过抓取直接分析发送</div>
         <span class="method-tag new">resume</span>
