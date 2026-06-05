@@ -9318,6 +9318,10 @@ async function smtpSendAll() {
   panel.id = 'appAiPanel';
   panel.style.cssText = 'margin-top:18px';
   panel.innerHTML = `
+    <button type="button" id="appBackBtn" onclick="goToStep(2)" style="background:transparent;border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));border-radius:8px;padding:6px 12px;font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.5));cursor:pointer;margin-bottom:12px;font-family:inherit">
+      ← 返回搜索结果
+    </button>
+
     <div style="margin-bottom:18px">
       <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">筛选</label>
       <div id="appFilterPills" style="display:flex;flex-wrap:wrap;gap:7px"></div>
@@ -9341,7 +9345,19 @@ async function smtpSendAll() {
     <button type="button" id="appGenerateBtn" onclick="startAppEmailGeneration()" style="width:100%;padding:11px;background:#6366f1;border:0;border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer">
       生成 0 封邮件
     </button>
+
+    <div id="appGenerateStatus" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:13px;text-align:center"></div>
+    <div id="appGenerateResults" style="display:none;margin-top:14px"></div>
   `;
+
+  // Clean up the legacy /lens chrome around the panel — the existing top + bottom
+  // 修改配置 back buttons are replaced by #appBackBtn above, and the empty
+  // runSummary/statusBar slots would otherwise leave dead vertical space.
+  document.querySelector('#wizard-step-3 .step-back-btn.top')?.style.setProperty('display','none');
+  document.querySelector('#wizard-step-3 .panel-nav')?.style.setProperty('display','none');
+  document.getElementById('runSummary')?.style.setProperty('display','none');
+  document.getElementById('statusBar')?.style.setProperty('display','none');
+
   step3.appendChild(panel);
 
   // Mount filter pills (separately because we attach listeners + need refs).
@@ -9455,12 +9471,70 @@ async function smtpSendAll() {
     renderLeadList();
   };
 
-  window.startAppEmailGeneration = function () {
+  window.startAppEmailGeneration = async function () {
     const leads = window._appLeads || [];
     const picked = [...selected].sort((a, b) => a - b).map(i => leads[i]).filter(Boolean);
+    if (!picked.length) return;
     const framework = panel.querySelector('#appFrameworkSelect')?.value || '';
-    console.log('[startAppEmailGeneration] framework=', framework, 'leads=', picked);
-    // TODO: wire to the real generation endpoint once the /app flow is finalised.
+
+    const btn        = panel.querySelector('#appGenerateBtn');
+    const statusEl   = panel.querySelector('#appGenerateStatus');
+    const resultsEl  = panel.querySelector('#appGenerateResults');
+    const origText   = btn.textContent;
+
+    // Loading state: lock the button, surface progress underneath.
+    btn.disabled = true;
+    btn.textContent = '生成中...';
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'not-allowed';
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(99,102,241,0.08)';
+    statusEl.style.color = '#a5b4fc';
+    statusEl.textContent = '正在生成邮件，请稍候...';
+    resultsEl.style.display = 'none';
+    resultsEl.innerHTML = '';
+
+    try {
+      const token = (typeof getStoredToken === 'function') ? getStoredToken() : '';
+      const res = await fetch('/api/generate-emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
+        },
+        body: JSON.stringify({ leads: picked, framework }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+
+      // Success: collapse the status banner into a green confirmation, render
+      // the returned emails (if any) in the preview slot below the button.
+      statusEl.style.background = 'rgba(34,197,94,0.08)';
+      statusEl.style.color = '#86efac';
+      statusEl.textContent = `已生成 ${(data.emails || []).length || picked.length} 封邮件`;
+
+      const emails = Array.isArray(data.emails) ? data.emails : [];
+      if (emails.length) {
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+        resultsEl.innerHTML = emails.map((e, i) => `
+          <div style="padding:12px;margin-bottom:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">${i + 1} · ${esc(e.to || e.lead?.name || '')}</div>
+            <div style="font-size:13px;color:#e5e7eb;font-weight:600;margin-bottom:6px">${esc(e.subject || '')}</div>
+            <div style="font-size:12px;color:#cbd5e1;white-space:pre-wrap;line-height:1.55">${esc(e.body || '')}</div>
+          </div>
+        `).join('');
+        resultsEl.style.display = 'block';
+      }
+    } catch (err) {
+      statusEl.style.background = 'rgba(239,68,68,0.08)';
+      statusEl.style.color = '#fca5a5';
+      statusEl.textContent = '生成失败：' + (err.message || '未知错误');
+    } finally {
+      btn.disabled = selected.size === 0;
+      btn.textContent = origText;
+      btn.style.opacity = selected.size === 0 ? '0.6' : '1';
+      btn.style.cursor  = selected.size === 0 ? 'not-allowed' : 'pointer';
+    }
   };
 
   // Master select-all toggle.
