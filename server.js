@@ -2243,35 +2243,26 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
       // Failures are non-fatal — fall through with whatever Apify already gave us.
       if (url) {
         try {
-          const fcResp = await withTimeout(
-            axios.post(
-              'https://api.firecrawl.dev/v1/scrape',
-              { url, formats: ['markdown'] },
-              {
-                headers: {
-                  'Authorization': `Bearer ${process.env.FIRECRAWL_API_KEY}`,
-                  'Content-Type': 'application/json',
-                },
-              }
-            ),
-            60000,
-            'Firecrawl enrich'
-          );
-          const markdown = fcResp.data?.data?.markdown || '';
+          const htmlResp = await axios.get(url, {
+            timeout: 10000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+            maxRedirects: 3,
+          });
+          const html = htmlResp.data || '';
 
-          const emailMatch    = markdown.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-          const email         = emailMatch ? emailMatch[0] : '';
-          const phoneMatch    = markdown.match(/(\+61|0)[0-9\s\-]{8,12}/);
+          const emailMatch    = html.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+          const email         = emailMatch ? emailMatch.filter(e => !e.includes('example') && !e.includes('test'))[0] || '' : '';
+          const phoneMatch    = html.match(/(\+61|0)[0-9\s\-\(\)]{8,14}/);
           const phone         = phoneMatch ? phoneMatch[0].trim() : '';
-          const linkedinMatch = markdown.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-]+/);
+          const linkedinMatch = html.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-_%]+/);
           const linkedin      = linkedinMatch ? 'https://www.' + linkedinMatch[0] : '';
 
-          console.log('[Firecrawl enrich]', url, { email, phone, linkedin });
+          console.log('[DirectScrape]', url, { email, phone, linkedin });
           it.email    = email    || it.email    || '';
           it.phone    = phone    || it.phone    || '';
           it.linkedin = linkedin || it.linkedin || '';
         } catch (err) {
-          console.log('[Firecrawl enrich]', url, { error: err.message });
+          console.log('[DirectScrape]', url, { error: err.message });
         }
       }
 
