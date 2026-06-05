@@ -2236,13 +2236,54 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
     for (const it of flat) {
       if (aborted) break;
       if (emitted >= maxResults) break;
-      const row = { title: it.title || it.name || '', url: it.url || it.website || it.link || '' };
+
+      const url = it.url || it.website || it.link || '';
+
+      // Enrich the page with Firecrawl's structured extract before projection.
+      // Failures are non-fatal — fall through with whatever Apify already gave us.
+      if (url) {
+        try {
+          const fcResp = await withTimeout(
+            axios.post(
+              'https://api.firecrawl.dev/v1/scrape',
+              {
+                url,
+                formats: ['extract'],
+                extract: { schema: { email: 'string', phone: 'string', linkedin: 'string' } },
+              },
+              {
+                headers: {
+                  'Authorization': `Bearer ${process.env.FIRECRAWL_API_KEY}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            ),
+            60000,
+            'Firecrawl enrich'
+          );
+          const firecrawlResult = fcResp.data;
+          const extract = firecrawlResult?.data?.extract || {};
+          console.log('[Firecrawl enrich]', url, extract);
+          it.email    = firecrawlResult?.data?.extract?.email    || it.email    || '';
+          it.phone    = firecrawlResult?.data?.extract?.phone    || it.phone    || '';
+          it.linkedin = firecrawlResult?.data?.extract?.linkedin || it.linkedin || '';
+        } catch (err) {
+          console.log('[Firecrawl enrich]', url, { error: err.message });
+        }
+      }
+
+      const row = { title: it.title || it.name || '', url };
       if (fields.includes('email'))    row.email    = (Array.isArray(it.emails) ? it.emails[0] : it.email) || '';
       if (fields.includes('phone'))    row.phone    = (Array.isArray(it.phones) ? it.phones[0] : it.phone) || '';
-      if (fields.includes('website'))  row.website  = it.website || it.url || '';
+      if (fields.includes('website'))  row.website  = it.website || url || '';
       if (fields.includes('linkedin')) row.linkedin = it.linkedin || (Array.isArray(it.socialProfiles) ? (it.socialProfiles.find(p => /linkedin/i.test(p.url || p.platform || ''))?.url || '') : '');
       send({ type: 'row', row });
       emitted++;
+
+      // 500ms spacing between Firecrawl calls to stay under the rate limit.
+      if (url && emitted < maxResults && !aborted) {
+        await new Promise(r => setTimeout(r, 500));
+      }
     }
     send({ type: 'done', success: true, total: emitted });
   } catch (err) {
