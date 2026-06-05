@@ -2221,6 +2221,7 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
       _runApifyActor('nFJndFXA5zjCTuudP', {
         queries: keyword,
         maxPagesPerQuery: Math.ceil(maxResults / 10) || 1,
+        maximumLeadsEnrichmentRecords: maxResults,
         includeUnfilteredResults: false,
         mobileResults: false,
       }),
