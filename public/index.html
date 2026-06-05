@@ -4703,6 +4703,7 @@ function selectSource(src) {
     return;
   }
   _selectedDataSource = src;
+  try { localStorage.setItem(LEAD_PREFIX + 'dataSource', src); } catch (_) {}
   document.querySelectorAll('.ds-card').forEach(c => c.classList.remove('selected'));
   document.getElementById(`ds-${src}`)?.classList.add('selected');
   // Legacy compatibility: old src-* buttons no longer in DOM but harmless if present
@@ -5052,6 +5053,9 @@ async function _consumeToolSse(res, kind, statusEl) {
       } else if (evt.type === 'done') {
         if (statusEl) statusEl.textContent = `完成：共 ${_toolResults[kind].length} 条`;
         _renderToolResults(kind);
+        try {
+          localStorage.setItem(LEAD_PREFIX + 'toolResults', JSON.stringify(_toolResults));
+        } catch (_) {} // QuotaExceeded — non-fatal.
       } else if (evt.type === 'error') {
         if (statusEl) statusEl.textContent = '失败：' + (evt.error || '未知错误');
       }
@@ -8034,7 +8038,11 @@ function _restoreStep() {
     }
   }
 
-  if (saved >= 3 && _allLeads.length === 0) _showRefreshWarning(panel);
+  // Don't show the refresh warning when /app's data-source flow has its own
+  // restored state (window._appLeads is rehydrated by _restoreAppState below).
+  if (saved >= 3 && _allLeads.length === 0 && !(Array.isArray(window._appLeads) && window._appLeads.length)) {
+    _showRefreshWarning(panel);
+  }
 
   const savedWizardStep = parseInt(localStorage.getItem(LEAD_PREFIX + 'wizardStep') || '0', 10);
   if (savedWizardStep >= 1 && savedWizardStep <= WIZ_STEP_COUNT && typeof wizardGo === 'function') {
@@ -8072,6 +8080,39 @@ checkAdminAndShow();
 setTimeout(_restoreStep, 0);     // deferred: restores in-progress session after init
 setTimeout(() => _updateStepper(currentStep), 0);  // initial sync so static HTML reflects actual step
 setTimeout(onSellerInput, 0);    // set initial disabled state for step2 next btn
+
+// Restore /app data-source state — _toolResults table rows, the active source
+// panel, and the AI 分析 panel's lead list. Deferred so the mount IIFEs that
+// build #appAiPanel and the data-source panel containers have already run.
+setTimeout(function _restoreAppState() {
+  if (!getStoredToken()) return;
+  const safeParse = (raw) => { try { return JSON.parse(raw); } catch { return null; } };
+
+  // (a) Rehydrate per-source row collections. _toolResults is const-bound so
+  // we mutate per-key rather than reassigning the object.
+  const savedResults = safeParse(localStorage.getItem(LEAD_PREFIX + 'toolResults'));
+  if (savedResults && typeof savedResults === 'object') {
+    for (const k of ['gs','gm','ig','tt','fb']) {
+      if (Array.isArray(savedResults[k]) && savedResults[k].length) {
+        _toolResults[k] = savedResults[k].slice();
+        _renderToolResults(k);
+      }
+    }
+  }
+
+  // (b) Re-open the same data-source panel the user had selected. Guard on
+  // WORKING_SOURCES so a stale "linkedin"/"twitter" value (if introduced
+  // later) doesn't trigger the "即将上线" toast on every reload.
+  const savedSrc = localStorage.getItem(LEAD_PREFIX + 'dataSource');
+  if (savedSrc && WORKING_SOURCES.has(savedSrc)) selectSource(savedSrc);
+
+  // (c) Rehydrate the AI 分析 panel's lead list. setAppLeads re-writes the
+  // same key we just read from, which is a no-op round-trip — harmless.
+  const savedLeads = safeParse(localStorage.getItem(LEAD_PREFIX + 'appLeads'));
+  if (Array.isArray(savedLeads) && savedLeads.length && typeof window.setAppLeads === 'function') {
+    window.setAppLeads(savedLeads);
+  }
+}, 0);
 
 // ── Preset application (/lens pre-fills Lens config; /app stays clean) ────────
 // Runs after the persist loop has already restored any saved values, so the
@@ -9469,6 +9510,9 @@ async function smtpSendAll() {
     window._appLeads = Array.isArray(leads) ? leads.slice() : [];
     selected.clear();
     renderLeadList();
+    try {
+      localStorage.setItem(LEAD_PREFIX + 'appLeads', JSON.stringify(window._appLeads));
+    } catch (_) {} // QuotaExceeded / private-mode — non-fatal.
   };
 
   window.startAppEmailGeneration = async function () {
