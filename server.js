@@ -2420,6 +2420,147 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
   }
 });
 
+// ── /app email generation (SSE) ──────────────────────────────────────────────
+// Body: { leads: [{name, email, website, phone, address, ...}], framework: 'cold_5_step' }
+// Pipeline per lead: website scrape → Haiku pre-filter → Sonnet email gen.
+// Reuses services/aiEnrich.js (preFilterLead + generateEmails) so model IDs,
+// retry behaviour, and the system prompt builder stay consistent with the rest
+// of the codebase (current models: claude-haiku-4-5-20251001 + claude-sonnet-4-6).
+app.post('/api/generate-emails', requireAuth, async (req, res) => {
+  const inputLeads = Array.isArray(req.body?.leads) ? req.body.leads : [];
+  const framework  = (req.body?.framework || 'cold_5_step').toString().trim() || 'cold_5_step';
+
+  if (!inputLeads.length) return res.status(400).json({ success: false, error: 'leads required' });
+
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+  res.flushHeaders();
+  const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+  const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  // Strip <script>/<style> blocks first so we don't keep their contents, then
+  // strip remaining tags + collapse whitespace. Caps at 1500 chars for the LLM.
+  const _extractWebsiteText = (html) => String(html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&[a-z]+;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 1500);
+
+  // /app sellers don't pass seller info into this endpoint — leave empty so
+  // generateEmails substitutes its "your company" defaults rather than the
+  // Lens-branded credentials baked into peter_kang_3part.
+  const sellerProfile  = {};
+  const companyProfile = { companyName: '', products: '', advantages: '', icp: '' };
+
+  const runPipeline = async () => {
+    const emails = [];
+    for (let i = 0; i < inputLeads.length; i++) {
+      if (aborted) break;
+      const raw = inputLeads[i] || {};
+      const companyName = raw.name || raw.companyName || raw.title || '';
+      const website     = raw.website || '';
+
+      send({ type: 'progress', message: `正在分析 ${i + 1}/${inputLeads.length}...`, current: i + 1, total: inputLeads.length, companyName });
+
+      // 1. Website scrape — non-fatal, falls through with empty content on error.
+      let websiteContent = '';
+      if (website) {
+        try {
+          const htmlResp = await axios.get(website, {
+            timeout: 10000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+            maxRedirects: 3,
+          });
+          websiteContent = _extractWebsiteText(htmlResp.data || '');
+        } catch (err) {
+          console.log('[GenerateEmails scrape]', website, { error: err.message });
+        }
+      }
+      if (aborted) break;
+
+      // Shape both AI calls expect — preFilterLead reads companyName / address /
+      // googleRating / reviewCount / website; generateEmails reads city/state too.
+      const company = {
+        companyName,
+        address:      raw.address || raw.raw?.address || '',
+        googleRating: raw.raw?.rating  || '',
+        reviewCount:  raw.raw?.reviews || '',
+        website,
+        industry:     raw.raw?.industry || raw.raw?.categoryName || '',
+        city:         '',
+        state:        '',
+        icpReasoning: '',
+        intentReasoning: '',
+        websiteContent,
+      };
+
+      // 2. Haiku pre-filter — skip when level=='skip'.
+      try {
+        const filt = await withTimeout(preFilterLead(company, companyProfile), 60 * 1000, 'Haiku pre-filter');
+        if (filt && filt.level === 'skip') {
+          console.log(`[GenerateEmails] skip ${companyName}: ${filt.reason || ''}`);
+          continue;
+        }
+      } catch (err) {
+        console.warn('[GenerateEmails] preFilter error, keeping lead:', err.message);
+      }
+      if (aborted) break;
+
+      // 3. Sonnet email generation. templateKey is the customer-type angle —
+      // we don't have a query string in /app context, so default to the safest
+      // generic angle. generateEmails returns EMAIL_1..5_SUBJECT/BODY.
+      try {
+        const gen = await withTimeout(
+          generateEmails(company, templateKeyFromQuery(''), websiteContent, framework, null, sellerProfile),
+          120 * 1000,
+          'Sonnet emails'
+        );
+
+        // Return one entry per lead with Email 1 (the personalised hook). The
+        // remaining 4 emails are still in `gen.EMAIL_2..5_*` if a future
+        // version wants to surface the full sequence.
+        emails.push({
+          recipient: companyName,
+          email:     raw.email || '',
+          subject:   gen.EMAIL_1_SUBJECT || '',
+          body:      gen.EMAIL_1_BODY    || '',
+          to:        raw.email || companyName,
+          framework,
+        });
+      } catch (err) {
+        console.error('[GenerateEmails] gen error for', companyName, err.message);
+        emails.push({
+          recipient: companyName,
+          email:     raw.email || '',
+          subject:   '',
+          body:      '',
+          to:        raw.email || companyName,
+          framework,
+          error:     err.message || 'generation failed',
+        });
+      }
+    }
+    return emails;
+  };
+
+  try {
+    console.log(`[GenerateEmails] leads=${inputLeads.length} framework="${framework}"`);
+    const emails = await withTimeout(runPipeline(), 10 * 60 * 1000, '/api/generate-emails pipeline');
+    if (!aborted) send({ type: 'done', emails });
+  } catch (err) {
+    console.error('[GenerateEmails] error:', err.message);
+    if (!aborted) send({ type: 'error', error: err.message || '邮件生成失败' });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
+
 // ── Instagram inline tool (SSE) ──────────────────────────────────────────────
 // Runs Apify actor nH2AHrwxeTRJoN5hX and streams one row per post.
 // Body: { input, maxPosts, newerThan }
