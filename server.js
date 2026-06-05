@@ -2521,16 +2521,33 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
           'Sonnet emails'
         );
 
-        // Return one entry per lead with Email 1 (the personalised hook). The
-        // remaining 4 emails are still in `gen.EMAIL_2..5_*` if a future
-        // version wants to surface the full sequence.
+        // Substitute template placeholders for all 5 emails before emitting.
+        // {first_name} is best-effort: the first whitespace-delimited token of
+        // the company name (Probuilt Homes → "Probuilt"). {{accountSignature}}
+        // is dropped here because /app SMTP send doesn't carry a stored
+        // signature; the smtp transport's "from" header is used instead.
+        const firstName = String(companyName || '').split(/\s+/)[0] || '';
+        const replacePlaceholders = (str) => String(str || '')
+          .replace(/\{first_name\}/gi, firstName)
+          .replace(/\{company\}/gi,    companyName || '')
+          .replace(/\{website\}/gi,    website     || '')
+          .replace(/\{\{accountSignature\}\}/g, '');
+        const sequence = [1, 2, 3, 4, 5].map(n => ({
+          subject: replacePlaceholders(gen[`EMAIL_${n}_SUBJECT`] || ''),
+          body:    replacePlaceholders(gen[`EMAIL_${n}_BODY`]    || ''),
+        }));
+
+        // Return one entry per lead. `subject`/`body` carry Email 1 (the
+        // personalised hook) for the existing single-card preview; the full
+        // 5-email series is also exposed under `sequence` for downstream send.
         emails.push({
           recipient: companyName,
           email:     raw.email || '',
-          subject:   gen.EMAIL_1_SUBJECT || '',
-          body:      gen.EMAIL_1_BODY    || '',
+          subject:   sequence[0].subject,
+          body:      sequence[0].body,
           to:        raw.email || companyName,
           framework,
+          sequence,
         });
       } catch (err) {
         console.error('[GenerateEmails] gen error for', companyName, err.message);
@@ -2555,6 +2572,85 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('[GenerateEmails] error:', err.message);
     if (!aborted) send({ type: 'error', error: err.message || '邮件生成失败' });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
+
+// ── /app SMTP send (SSE) ─────────────────────────────────────────────────────
+// Body: { emails: [{ email|to, subject, body }], smtpConfig: { host, port, user, pass, senderName } }
+// Per-email events: { type: 'progress', current, total, recipient, status }
+// Final event:      { type: 'done',     sent, failed, errors: [{index, recipient, error}] }
+// Distinct from the legacy /api/smtp/send-batch — that path takes raw `leads`
+// with EMAIL_1_SUBJECT/BODY templates and applies its own placeholder + delay
+// logic. This route assumes the caller already substituted placeholders (the
+// /api/generate-emails route above does this) and sends back-to-back without
+// the 60-180s pacing — appropriate for the small /app preview-and-send batches.
+app.post('/api/smtp-send-batch', requireAuth, async (req, res) => {
+  const emails     = Array.isArray(req.body?.emails) ? req.body.emails : [];
+  const smtpConfig = req.body?.smtpConfig || {};
+
+  if (!emails.length) return res.status(400).json({ success: false, error: 'emails required' });
+  if (!smtpConfig.user || !smtpConfig.pass) return res.status(400).json({ success: false, error: 'smtp config required' });
+
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+  res.flushHeaders();
+  const sse = d => res.write('data: ' + JSON.stringify(d) + '\n\n');
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+  const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  const port = parseInt(smtpConfig.port, 10) || 587;
+  const transporter = nodemailer.createTransport({
+    host:   smtpConfig.host || 'smtp.gmail.com',
+    port,
+    secure: port === 465,
+    auth:   { user: smtpConfig.user, pass: smtpConfig.pass },
+    tls:    { rejectUnauthorized: false },
+  });
+
+  const fromName = (smtpConfig.senderName || smtpConfig.fromName || '').trim();
+  const from = fromName ? `"${fromName}" <${smtpConfig.user}>` : smtpConfig.user;
+
+  let sent = 0, failed = 0;
+  const errors = [];
+
+  try {
+    console.log(`[SmtpSendBatch] sending ${emails.length} from ${from}`);
+    for (let i = 0; i < emails.length; i++) {
+      if (aborted) break;
+      const e = emails[i] || {};
+      const to = (e.to || e.email || '').trim();
+
+      if (!to) {
+        failed++;
+        errors.push({ index: i, recipient: '', error: 'missing recipient' });
+        sse({ type: 'progress', current: i + 1, total: emails.length, recipient: '', status: 'failed' });
+        continue;
+      }
+
+      sse({ type: 'progress', current: i + 1, total: emails.length, recipient: to, status: 'sending' });
+
+      try {
+        await transporter.sendMail({
+          from,
+          to,
+          subject: e.subject || '',
+          text:    e.body    || '',
+          html:    String(e.body || '').replace(/\n/g, '<br>'),
+        });
+        sent++;
+      } catch (err) {
+        failed++;
+        errors.push({ index: i, recipient: to, error: err.message });
+        console.warn(`[SmtpSendBatch] ${to}: ${err.message}`);
+      }
+    }
+    if (!aborted) sse({ type: 'done', sent, failed, errors });
+  } catch (err) {
+    console.error('[SmtpSendBatch] error:', err.message);
+    if (!aborted) sse({ type: 'error', error: err.message || '发送失败' });
   } finally {
     clearInterval(heartbeat);
     res.end();

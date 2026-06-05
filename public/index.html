@@ -9585,6 +9585,7 @@ async function smtpSendAll() {
               : (evt.message || '正在生成邮件，请稍候...');
           } else if (evt.type === 'done') {
             emails = Array.isArray(evt.emails) ? evt.emails : [];
+            window._generatedEmails = emails;
             break streamLoop;
           } else if (evt.type === 'error') {
             serverError = evt.error || '未知错误';
@@ -9627,11 +9628,153 @@ async function smtpSendAll() {
     }
   };
 
-  // Placeholder for the upcoming send step. Real implementation will likely
-  // open an SMTP/Instantly config drawer; for now just log so the click is
-  // observable end-to-end.
+  // Build (or rebuild) the send-config drawer underneath the email preview.
+  // Reads existing SMTP credentials from the legacy SMTP setup section so
+  // /app users who already configured their inbox don't have to retype.
   window.showAppSendPanel = function () {
-    console.log('[showAppSendPanel] TODO: open send-config panel');
+    const generated = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
+    if (!generated.length) { alert('请先生成邮件'); return; }
+
+    const withRecipient = generated.filter(e => (e.email || e.to || '').toString().trim());
+    const skipped = generated.length - withRecipient.length;
+
+    // Pull SMTP creds from the existing setup inputs (legacy panel).
+    const readVal = (id) => (document.getElementById(id)?.value || '').toString().trim();
+    const host = readVal('smtpHost') || 'smtp.gmail.com';
+    const port = parseInt(readVal('smtpPort'), 10) || 587;
+    const user = readVal('smtpUser');
+    const pass = document.getElementById('smtpPass')?.value || '';
+    const smtpReady = !!(user && pass);
+
+    // Mount the drawer once; subsequent calls just repopulate so re-clicks
+    // pick up edits to the legacy SMTP fields.
+    let sendPanel = panel.querySelector('#appSendPanel');
+    if (!sendPanel) {
+      sendPanel = document.createElement('div');
+      sendPanel.id = 'appSendPanel';
+      sendPanel.style.cssText = 'margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px';
+      panel.appendChild(sendPanel);
+    }
+
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const skipNote = skipped
+      ? `<div style="font-size:12px;color:#fbbf24;margin-top:4px">⚠ ${skipped} 封因缺少收件邮箱将被跳过</div>`
+      : '';
+    const smtpRow = smtpReady
+      ? `<div style="font-size:12px;color:#86efac">✓ 已配置 (${esc(user)} · ${esc(host)}:${port})</div>`
+      : `<div style="font-size:12px;color:#fbbf24">⚠ 请先在 SMTP 设置中填入邮箱与密码</div>`;
+    const canSend = smtpReady && withRecipient.length > 0;
+
+    sendPanel.innerHTML = `
+      <div style="font-size:14px;font-weight:600;color:#e5e7eb;margin-bottom:4px">📤 发送邮件</div>
+      <div style="font-size:13px;color:#cbd5e1;margin-bottom:12px">准备发送 ${withRecipient.length} 封邮件${skipNote}</div>
+
+      <label for="smtpSenderName" style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:6px">发件人姓名</label>
+      <input type="text" id="smtpSenderName" placeholder="例：王伟" style="width:100%;padding:9px 12px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box">
+
+      <div style="padding:10px 12px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;margin-bottom:12px">
+        <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:6px">SMTP 配置</div>
+        ${smtpRow}
+      </div>
+
+      <button type="button" id="appSmtpConfirmBtn" onclick="startAppSmtpSend()" ${canSend ? '' : 'disabled'} style="width:100%;padding:11px;background:#6366f1;border:0;border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:${canSend ? 'pointer' : 'not-allowed'};opacity:${canSend ? '1' : '0.6'}">
+        ✓ 确认发送
+      </button>
+
+      <div id="appSmtpStatus" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:13px;text-align:center"></div>
+    `;
+
+    sendPanel.style.display = 'block';
+    sendPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // SSE-driven send: streams progress per email and renders the final
+  // sent/failed counts. Matches the reader pattern used elsewhere in the file.
+  window.startAppSmtpSend = async function () {
+    const all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
+    const toSend = all.filter(e => (e.email || e.to || '').toString().trim());
+    if (!toSend.length) return;
+
+    const senderName = (panel.querySelector('#smtpSenderName')?.value || '').trim();
+    const host = (document.getElementById('smtpHost')?.value || '').trim() || 'smtp.gmail.com';
+    const port = parseInt(document.getElementById('smtpPort')?.value, 10) || 587;
+    const user = (document.getElementById('smtpUser')?.value || '').trim();
+    const pass = document.getElementById('smtpPass')?.value || '';
+    if (!user || !pass) { alert('请先在 SMTP 设置中填入邮箱与密码'); return; }
+
+    const btn      = panel.querySelector('#appSmtpConfirmBtn');
+    const statusEl = panel.querySelector('#appSmtpStatus');
+    const origText = btn?.textContent || '✓ 确认发送';
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'not-allowed'; btn.textContent = '发送中...'; }
+    statusEl.style.display    = 'block';
+    statusEl.style.background = 'rgba(99,102,241,0.08)';
+    statusEl.style.color      = '#a5b4fc';
+    statusEl.textContent      = '正在准备发送...';
+
+    let finalEvt    = null;
+    let serverError = null;
+
+    try {
+      const token = (typeof getStoredToken === 'function') ? getStoredToken() : '';
+      const res = await fetch('/api/smtp-send-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
+        body: JSON.stringify({
+          emails: toSend,
+          smtpConfig: { host, port, user, pass, senderName },
+        }),
+      });
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      sendLoop:
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let idx;
+        while ((idx = buf.indexOf('\n\n')) !== -1) {
+          const chunk = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          const line = chunk.split('\n').find(l => l.startsWith('data:'));
+          if (!line) continue;
+          let evt;
+          try { evt = JSON.parse(line.slice(5).trim()); } catch { continue; }
+
+          if (evt.type === 'progress') {
+            const label = evt.recipient ? ` — ${evt.recipient}` : '';
+            statusEl.textContent = `正在发送 ${evt.current}/${evt.total}${label}`;
+          } else if (evt.type === 'done') {
+            finalEvt = evt;
+            break sendLoop;
+          } else if (evt.type === 'error') {
+            serverError = evt.error || '未知错误';
+            break sendLoop;
+          }
+        }
+      }
+
+      if (serverError) throw new Error(serverError);
+
+      const sent   = finalEvt?.sent   ?? 0;
+      const failed = finalEvt?.failed ?? 0;
+      statusEl.style.background = failed === 0 ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)';
+      statusEl.style.color      = failed === 0 ? '#86efac' : '#fbbf24';
+      statusEl.textContent      = `已发送 ${sent} 封，失败 ${failed} 封`;
+    } catch (err) {
+      statusEl.style.background = 'rgba(239,68,68,0.08)';
+      statusEl.style.color      = '#fca5a5';
+      statusEl.textContent      = '发送失败：' + (err.message || '未知错误');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor  = 'pointer';
+        btn.textContent   = origText;
+      }
+    }
   };
 
   // Master select-all toggle.
