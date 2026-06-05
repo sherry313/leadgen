@@ -110,7 +110,7 @@
     /* ── Hero ────────────────────────────────────────────────────────── */
     .hero {
       position: relative;
-      min-height: 100vh;
+      min-height: 78vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -118,6 +118,9 @@
       background: #030303;
       padding: 0;
     }
+    /* Tighten the visual gap between hero buttons and the first content
+       section. Other sections keep the default 96px rhythm. */
+    .hero + .section { padding-top: 40px; }
 
     .hero-bg-gradient {
       position: absolute;
@@ -291,7 +294,7 @@
 
     @media (max-width: 768px) {
       .hero { min-height: 100svh; position: relative; }
-      .hero-content { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); width: 90%; }
+      .hero-content { position: absolute; top: 28%; left: 50%; transform: translate(-50%, -50%); width: 90%; }
     }
 
     /* ── Buttons ─────────────────────────────────────────────────────── */
