@@ -2782,6 +2782,16 @@
       <div id="gmPanel" class="ds-tool-panel" style="display:none;margin-top:0;padding:0;background:transparent;border:0;border-radius:0">
         <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0 22px">
 
+        <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">提取内容</label>
+        <div id="gmFieldPills" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px">
+          <div class="gm-pill on" data-field="name"    onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-tag"      style="font-size:14px;color:#818cf8" aria-hidden="true"></i>名称</div>
+          <div class="gm-pill on" data-field="phone"   onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-phone"    style="font-size:14px;color:#34d399" aria-hidden="true"></i>电话</div>
+          <div class="gm-pill on" data-field="website" onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-world"    style="font-size:14px;color:#60a5fa" aria-hidden="true"></i>官网</div>
+          <div class="gm-pill on" data-field="address" onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-map-pin"  style="font-size:14px;color:#f87171" aria-hidden="true"></i>地址</div>
+          <div class="gm-pill on" data-field="rating"  onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-star"     style="font-size:14px;color:#fbbf24" aria-hidden="true"></i>评分</div>
+          <div class="gm-pill on" data-field="reviews" onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-message-2" style="font-size:14px;color:#a78bfa" aria-hidden="true"></i>评论数</div>
+        </div>
+
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
         <div id="gmKeywordsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
           <input type="text" id="gmKeyword" class="gm-kw-input" placeholder="例：home builder" autocomplete="off"
@@ -2871,6 +2881,15 @@
           <i class="ti ti-brand-instagram"></i>Instagram 抓取
         </div>
 
+        <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">提取内容</label>
+        <div id="igFieldPills" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px">
+          <div class="ig-pill on"  data-field="username"  onclick="toggleIgPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-user"  style="font-size:14px;color:#818cf8" aria-hidden="true"></i>用户名</div>
+          <div class="ig-pill on"  data-field="followers" onclick="toggleIgPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-users" style="font-size:14px;color:#c084fc" aria-hidden="true"></i>粉丝数</div>
+          <div class="ig-pill on"  data-field="posts"     onclick="toggleIgPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-photo" style="font-size:14px;color:#f472b6" aria-hidden="true"></i>帖子数</div>
+          <div class="ig-pill"     data-field="email"     onclick="toggleIgPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;font-size:12px;color:rgba(255,255,255,0.35);transition:all 0.15s"><i class="ti ti-mail" style="font-size:14px;color:#818cf8" aria-hidden="true"></i>联系邮箱</div>
+          <div class="ig-pill"     data-field="bioLink"   onclick="toggleIgPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;font-size:12px;color:rgba(255,255,255,0.35);transition:all 0.15s"><i class="ti ti-link" style="font-size:14px;color:#60a5fa" aria-hidden="true"></i>简介链接</div>
+        </div>
+
         <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:6px">输入方式</label>
         <div id="igModeTabs" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
           <button type="button" class="ig-mode on" data-mode="username" onclick="_igPickMode('username')"
@@ -2918,6 +2937,14 @@
           <i class="ti ti-brand-tiktok"></i>TikTok 抓取
         </div>
 
+        <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">提取内容</label>
+        <div id="ttFieldPills" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px">
+          <div class="tt-pill on" data-field="username"   onclick="toggleTtPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-user"  style="font-size:14px;color:#818cf8" aria-hidden="true"></i>用户名</div>
+          <div class="tt-pill on" data-field="followers"  onclick="toggleTtPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-users" style="font-size:14px;color:#c084fc" aria-hidden="true"></i>粉丝数</div>
+          <div class="tt-pill"    data-field="videoCount" onclick="toggleTtPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;font-size:12px;color:rgba(255,255,255,0.35);transition:all 0.15s"><i class="ti ti-video" style="font-size:14px;color:#ee1d52" aria-hidden="true"></i>视频数</div>
+          <div class="tt-pill"    data-field="likes"      onclick="toggleTtPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;font-size:12px;color:rgba(255,255,255,0.35);transition:all 0.15s"><i class="ti ti-heart" style="font-size:14px;color:#f87171" aria-hidden="true"></i>点赞数</div>
+        </div>
+
         <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:6px">输入方式</label>
         <div id="ttModeTabs" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
           <button type="button" class="tt-mode on" data-mode="hashtag" onclick="_ttPickMode('hashtag')"
@@ -2961,6 +2988,16 @@
       <div id="fbPanel" class="ds-tool-panel" style="display:none;margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;color:#e5e7eb">
           <i class="ti ti-brand-facebook"></i>Facebook 抓取
+        </div>
+
+        <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">提取内容</label>
+        <div id="fbFieldPills" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px">
+          <div class="fb-pill on" data-field="name"      onclick="toggleFbPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-tag"     style="font-size:14px;color:#818cf8" aria-hidden="true"></i>名称</div>
+          <div class="fb-pill on" data-field="email"     onclick="toggleFbPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-mail"    style="font-size:14px;color:#818cf8" aria-hidden="true"></i>邮箱</div>
+          <div class="fb-pill on" data-field="address"   onclick="toggleFbPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-map-pin" style="font-size:14px;color:#f87171" aria-hidden="true"></i>地址</div>
+          <div class="fb-pill on" data-field="phone"     onclick="toggleFbPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-phone"   style="font-size:14px;color:#34d399" aria-hidden="true"></i>电话</div>
+          <div class="fb-pill"    data-field="followers" onclick="toggleFbPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;font-size:12px;color:rgba(255,255,255,0.35);transition:all 0.15s"><i class="ti ti-users"   style="font-size:14px;color:#c084fc" aria-hidden="true"></i>粉丝数</div>
+          <div class="fb-pill"    data-field="website"   onclick="toggleFbPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);cursor:pointer;font-size:12px;color:rgba(255,255,255,0.35);transition:all 0.15s"><i class="ti ti-world"   style="font-size:14px;color:#60a5fa" aria-hidden="true"></i>官网</div>
         </div>
 
         <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">搜索关键词</label>
@@ -4786,6 +4823,26 @@ function toggleGsPill(el) {
     el.style.color = 'rgba(255,255,255,0.4)';
   }
 }
+
+// Shared pill-toggle behavior for the gm/ig/tt/fb extract-field selectors.
+// ON  → indigo border + tint + light-indigo text
+// OFF → faint white border/bg + dimmed text (0.35 alpha)
+function _togglePillCommon(el) {
+  el.classList.toggle('on');
+  if (el.classList.contains('on')) {
+    el.style.borderColor = 'rgba(99,102,241,0.6)';
+    el.style.background  = 'rgba(99,102,241,0.1)';
+    el.style.color       = '#a5b4fc';
+  } else {
+    el.style.borderColor = 'rgba(255,255,255,0.08)';
+    el.style.background  = 'rgba(255,255,255,0.03)';
+    el.style.color       = 'rgba(255,255,255,0.35)';
+  }
+}
+function toggleGmPill(el) { _togglePillCommon(el); }
+function toggleIgPill(el) { _togglePillCommon(el); }
+function toggleTtPill(el) { _togglePillCommon(el); }
+function toggleFbPill(el) { _togglePillCommon(el); }
 
 async function startInstagramScrape() {
   const raw = document.getElementById('igInput')?.value.trim() || '';
