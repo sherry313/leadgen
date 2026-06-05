@@ -2301,6 +2301,80 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
   }
 });
 
+// ── Google Maps inline tool (SSE) ────────────────────────────────────────────
+// Multi-keyword + single-location search for the /app inline gmPanel.
+// Calls compass~crawler-google-places directly via _runApifyActor so the
+// Apify input shape matches the actor's actual schema (searchStringsArray,
+// not the project shorthand 'searchTerms').
+// Body: { keywords: string[], location: string, maxResults: number }
+app.post('/api/google-maps-search', requireAuth, async (req, res) => {
+  const keywords = Array.isArray(req.body?.keywords)
+    ? req.body.keywords.map(k => String(k).trim()).filter(Boolean)
+    : [];
+  const location   = (req.body?.location || '').trim();
+  const maxResults = Math.min(500, Math.max(1, parseInt(req.body?.maxResults, 10) || 20));
+
+  if (!keywords.length) return res.status(400).json({ success: false, error: 'keywords required' });
+
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+  res.flushHeaders();
+  const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+  const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  try {
+    // compass~crawler-google-places expects an array of full search strings
+    // in `searchStringsArray`. We append the location to each keyword so each
+    // search is location-scoped without sending it as a separate field.
+    const searchStringsArray = location
+      ? keywords.map(k => `${k} ${location}`.trim())
+      : keywords.slice();
+
+    console.log(`[GoogleMapsTool] terms=${searchStringsArray.length} location="${location}" max=${maxResults}`);
+    const items = await withTimeout(
+      _runApifyActor('compass~crawler-google-places', {
+        searchStringsArray,
+        maxCrawledPlacesPerSearch: maxResults,
+        maxAutomaticZoomOut: 1,
+        language: 'en',
+        scrapeContacts: true,
+        scrapePlaceDetailPage: true,
+        scrapeReviews: false,
+        scrapeImages: false,
+      }),
+      12 * 60 * 1000,
+      '/api/google-maps-search Apify'
+    );
+
+    let emitted = 0;
+    for (const it of (items || [])) {
+      if (aborted) break;
+      const emails = Array.isArray(it.emails) ? it.emails : (it.email ? [it.email] : []);
+      const bizEmail = emails.find(e => !/(gmail|hotmail|yahoo|outlook)\./i.test(e)) || emails[0] || '';
+      const row = {
+        name:     it.title || '',
+        website:  it.website || '',
+        phone:    it.phone || it.phoneUnformatted || '',
+        email:    bizEmail,
+        address:  it.address || '',
+        industry: it.categoryName || '',
+        rating:   it.totalScore || '',
+        mapsUrl:  it.url || '',
+      };
+      send({ type: 'row', row });
+      emitted++;
+    }
+    send({ type: 'done', success: true, total: emitted });
+  } catch (err) {
+    console.error('[GoogleMapsTool] error:', err.message);
+    send({ type: 'error', error: err.message || 'Google Maps 抓取失败' });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
+
 // ── Instagram inline tool (SSE) ──────────────────────────────────────────────
 // Runs Apify actor nH2AHrwxeTRJoN5hX and streams one row per post.
 // Body: { input, maxPosts, newerThan }

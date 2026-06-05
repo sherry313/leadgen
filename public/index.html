@@ -2584,12 +2584,14 @@
          into the .ws-body slots below. /lens leaves everything in #step2Legacy. -->
     <div id="step2Wizard" style="display:none">
 
-      <div class="ws-pips">
-        <div class="ws-pip active" id="wsp1"></div>
-        <div class="ws-pip" id="wsp2"></div>
-        <div class="ws-pip" id="wsp3"></div>
-        <div class="ws-pip" id="wsp4"></div>
-        <div class="ws-pip" id="wsp5"></div>
+      <div id="appStep2Dots" style="display:flex;align-items:center;gap:6px;margin:14px 0 16px">
+        <div id="stepDot1" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff">1</div>
+        <div style="flex:1;height:2px;background:rgba(255,255,255,0.08)"></div>
+        <div id="stepDot2" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:12px;color:rgba(255,255,255,0.3)">2</div>
+        <div style="flex:1;height:2px;background:rgba(255,255,255,0.08)"></div>
+        <div id="stepDot3" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:12px;color:rgba(255,255,255,0.3)">3</div>
+        <div style="flex:1;height:2px;background:rgba(255,255,255,0.08)"></div>
+        <div id="stepDot4" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:12px;color:rgba(255,255,255,0.3)">4</div>
       </div>
 
       <div class="ws-card" id="ws1">
@@ -2597,19 +2599,13 @@
         <h3 class="ws-title">你想开发哪个市场？</h3>
         <div class="ws-sub">选择目标国家</div>
         <div class="ws-body" id="ws1Body"></div>
-        <div class="ws-hint">1 / 5</div>
       </div>
 
       <div class="ws-card" id="ws2" style="display:none">
-        <div class="ws2-topbar" style="display:flex;align-items:center;gap:14px;width:100%;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:22px">
-          <button type="button" class="ws-back" onclick="wizardGo(1)" style="margin:0;align-self:auto;flex-shrink:0">← 返回</button>
-          <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;color:#e5e7eb;letter-spacing:-0.01em">第二步：搜索配置</div>
-        </div>
         <div class="ws-body" id="ws2Body" style="text-align:left"></div>
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(3)">下一步 →</button>
         </div>
-        <div class="ws-hint">2 / 5</div>
       </div>
 
       <div class="ws-card" id="ws3" style="display:none">
@@ -2621,7 +2617,6 @@
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(4)">下一步 →</button>
         </div>
-        <div class="ws-hint">3 / 5</div>
       </div>
 
       <div class="ws-card" id="ws4" style="display:none">
@@ -2633,7 +2628,6 @@
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(5)">下一步 →</button>
         </div>
-        <div class="ws-hint">4 / 5</div>
       </div>
 
       <div class="ws-card" id="ws5" style="display:none">
@@ -2650,7 +2644,6 @@
             <i class="ti ti-rocket"></i>一键开始
           </button>
         </div>
-        <div class="ws-hint">5 / 5</div>
       </div>
 
     </div>
@@ -2783,6 +2776,48 @@
           <span class="ds-icon"><i class="ti ti-brand-youtube" style="font-size:28px;color:#ff0000;animation:dsF8 3.8s ease-in-out infinite" aria-hidden="true"></i></span><span class="ds-name">YouTube</span>
           <span class="ds-coming">即将上线</span>
         </button>
+      </div>
+
+      <!-- ── Google Maps panel (shown when ds-google_maps is clicked on /app; /lens keeps the wizard) ── -->
+      <div id="gmPanel" class="ds-tool-panel" style="display:none;margin-top:0;padding:0;background:transparent;border:0;border-radius:0">
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0 22px">
+
+        <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
+        <div id="gmKeywordsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
+          <input type="text" id="gmKeyword" class="gm-kw-input" placeholder="例：home builder" autocomplete="off"
+                 style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <button type="button" onclick="addGmKeywordInput()"
+                style="padding:7px 12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#94a3b8;font-family:inherit;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-bottom:20px">
+          <i class="ti ti-plus" style="font-size:14px"></i>添加
+        </button>
+
+        <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">地区（每次只能一个）</label>
+        <input type="text" id="gmLocation" placeholder="例：Sydney, Australia" autocomplete="off"
+               style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;margin-bottom:18px;box-sizing:border-box">
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+          <label for="gmMaxResults" style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin:0">每个关键词最多抓取数量</label>
+          <input type="number" id="gmMaxResults" value="20" min="1" max="500"
+                 style="width:70px;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box">
+        </div>
+
+        <button type="button" id="gmRunBtn" onclick="startGoogleMapsScrape()"
+                style="width:100%;padding:13px;background:rgba(125,211,252,0.06);border:1px solid rgba(125,211,252,0.4);border-radius:10px;color:#7dd3fc;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s">
+          <i class="ti ti-player-play"></i>开始搜索
+        </button>
+        <span id="gmStatus" style="display:block;margin-top:10px;color:#94a3b8;font-size:0.82rem;text-align:center"></span>
+
+        <div id="gmResultsWrap" style="display:none;margin-top:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span id="gmResultsCount" style="color:#cbd5e1;font-size:0.85rem"></span>
+            <button type="button" onclick="_exportToolCsv('gm')"
+                    style="padding:6px 12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e5e7eb;cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;gap:4px">
+              <i class="ti ti-download"></i>导出CSV
+            </button>
+          </div>
+          <div id="gmResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
+        </div>
       </div>
 
       <!-- ── Google Search panel (shown when ds-google_search is clicked) ── -->
@@ -4029,20 +4064,44 @@ function selectPillCountry(code) {
 const WIZ_STEP_COUNT = 5;
 
 function wizardGo(n) {
+  // /app removes the legacy ws1 country picker entirely — ws2 is the entry.
+  // Force any n=1 (init default, ws2 back-button, restored saved step) → 2.
+  // Additionally, /app + google_maps bypasses the wizard chain entirely:
+  // the inline #gmPanel on ws2 replaces country/kw/depth/seller/framework,
+  // so any non-ws2 target snaps back to ws2.
+  const _isLensWG = location.pathname === '/lens';
+  if (!_isLensWG && n === 1) n = 2;
+  if (!_isLensWG && _selectedDataSource === 'google_maps' && n !== 2) {
+    n = 2;
+  }
   localStorage.setItem(LEAD_PREFIX + 'wizardStep', n);
+  // Keep the ws2 下一步 button in sync with current source on every nav so
+  // page-load (no selectSource call) also gets the right visibility.
+  const _wsNext2 = document.querySelector('#ws2 .ws-next');
+  if (_wsNext2) _wsNext2.style.display = (!_isLensWG && _selectedDataSource === 'google_maps') ? 'none' : '';
   for (let i = 1; i <= WIZ_STEP_COUNT; i++) {
     const card = document.getElementById('ws' + i);
     if (card) card.style.display = (i === n) ? '' : 'none';
 
-    // Paint the progress pip: past = done (faded blue), current = active
-    // (wide gradient), future = default (faint white). Classes are mutually
-    // exclusive.
+    // Paint the legacy progress pip (/lens still uses these). Classes are
+    // mutually exclusive: past = done, current = active, future = default.
     const pip = document.getElementById('wsp' + i);
     if (pip) {
       pip.classList.remove('active', 'done');
       if (i < n)        pip.classList.add('done');
       else if (i === n) pip.classList.add('active');
     }
+  }
+
+  // /app: paint the new numbered-circle stepDots. stepDot(k) corresponds to
+  // ws(k+1) (ws1 is removed on /app), so the active dot index is n - 1.
+  for (let k = 1; k <= 4; k++) {
+    const dot = document.getElementById('stepDot' + k);
+    if (!dot) continue;
+    const isActive = (k === n - 1);
+    dot.style.background = isActive ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'rgba(255,255,255,0.08)';
+    dot.style.color      = isActive ? '#fff' : 'rgba(255,255,255,0.3)';
+    dot.style.fontWeight = isActive ? '600' : '400';
   }
 
   // Lazy-load framework cards when the user first lands on ws5
@@ -4561,10 +4620,20 @@ function selectSource(src) {
   document.getElementById(`src-${src}`)?.classList.add('selected');
 
   // Reveal inline tool panel for sources that bypass the wizard
+  const isLens = location.pathname === '/lens';
+  const gmPanel = document.getElementById('gmPanel');
   const gsPanel = document.getElementById('gsPanel');
   const igPanel = document.getElementById('igPanel');
   const ttPanel = document.getElementById('ttPanel');
   const fbPanel = document.getElementById('fbPanel');
+  // gmPanel is /app only — /lens keeps the existing country/city/quantity wizard for Google Maps
+  if (gmPanel) gmPanel.style.display = (!isLens && src === 'google_maps') ? 'block' : 'none';
+  // Hide the ws2 "下一步" button so the user can't try to advance into the
+  // (now-bypassed) ws3+ chain for /app + google_maps. wizardGo() short-circuits
+  // n>2 → 2 as a defence-in-depth. (ws1 is permanently hidden on /app by the
+  // applyAppStep2WizardChrome IIFE — no per-source toggle needed.)
+  const wsNext2 = document.querySelector('#ws2 .ws-next');
+  if (wsNext2) wsNext2.style.display = (!isLens && src === 'google_maps') ? 'none' : '';
   if (gsPanel) gsPanel.style.display = (src === 'google_search') ? 'block' : 'none';
   if (igPanel) igPanel.style.display = (src === 'instagram')     ? 'block' : 'none';
   if (ttPanel) ttPanel.style.display = (src === 'tiktok')        ? 'block' : 'none';
@@ -4574,7 +4643,7 @@ function selectSource(src) {
 // ── Google Search / Instagram inline tools ───────────────────────────────────
 // Both write their parsed rows into _toolResults[kind] so _exportToolCsv can
 // re-serialise the exact set the user sees in the table.
-const _toolResults = { gs: [], ig: [], tt: [], fb: [] };
+const _toolResults = { gs: [], ig: [], tt: [], fb: [], gm: [] };
 const _IG_PLACEHOLDERS = {
   username: '例：@natgeo',
   profile:  '例：https://www.instagram.com/natgeo/',
@@ -4642,6 +4711,62 @@ async function startGoogleSearch() {
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'gs', status);
+  } catch (err) {
+    if (status) status.textContent = '失败：' + err.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+function addGmKeywordInput() {
+  const list = document.getElementById('gmKeywordsList');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'gm-kw-input';
+  input.placeholder = '例：home builder';
+  input.autocomplete = 'off';
+  input.style.cssText = 'flex:1;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box';
+  const rm = document.createElement('button');
+  rm.type = 'button';
+  rm.innerHTML = '<i class="ti ti-x" style="font-size:14px"></i>';
+  rm.style.cssText = 'padding:8px 10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#94a3b8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center';
+  rm.onclick = () => row.remove();
+  row.appendChild(input);
+  row.appendChild(rm);
+  list.appendChild(row);
+  input.focus();
+}
+
+async function startGoogleMapsScrape() {
+  const keywords = Array.from(document.querySelectorAll('#gmKeywordsList .gm-kw-input'))
+    .map(i => i.value.trim())
+    .filter(Boolean);
+  if (!keywords.length) { _showToast('请输入至少一个关键词'); return; }
+  const location   = document.getElementById('gmLocation')?.value.trim() || '';
+  const maxResults = Math.max(1, parseInt(document.getElementById('gmMaxResults')?.value, 10) || 20);
+
+  const token = getStoredToken();
+  if (!token) { _showToast('请先登录'); return; }
+
+  const btn = document.getElementById('gmRunBtn');
+  const status = document.getElementById('gmStatus');
+  const wrap = document.getElementById('gmResultsWrap');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (status) status.textContent = '正在抓取…';
+  if (wrap) wrap.style.display = 'none';
+  _toolResults.gm = [];
+
+  try {
+    const res = await fetch('/api/google-maps-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ keywords, location, maxResults }),
+    });
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    await _consumeToolSse(res, 'gm', status);
   } catch (err) {
     if (status) status.textContent = '失败：' + err.message;
   } finally {
@@ -4843,6 +4968,14 @@ function _renderToolResults(kind) {
       const socialLabels = { tiktok: 'TikTok', instagram: 'Instagram', youtube: 'YouTube' };
       if (socialLabels[col]) {
         return `<a href="${esc(s)}" target="_blank" rel="noopener" style="color:#818cf8;text-decoration:none;">${socialLabels[col]} →</a>`;
+      }
+    }
+    if (kind === 'gm') {
+      if (col === 'website' || col === 'mapsUrl') {
+        return `<a href="${esc(s)}" target="_blank" rel="noopener" style="color:#818cf8;text-decoration:none;">${esc(s)}</a>`;
+      }
+      if (col === 'email') {
+        return `<a href="mailto:${esc(s)}" style="color:#818cf8;text-decoration:none;">${esc(s)}</a>`;
       }
     }
     return esc(s);
@@ -8970,6 +9103,26 @@ async function smtpSendAll() {
 
   const smtpPanel = document.getElementById('smtpPanel');
   if (smtpPanel) smtpPanel.style.display = 'block';
+})();
+
+// /app: collapse the step-2 wizard chrome. ws1 (country picker) is gone, ws2
+// is the entry, .ws-hint counters + ws-pips + ws2 topbar are deleted from the
+// HTML. This IIFE hides the bits that are SHARED with /lens (panel title/sub
+// and the two outer "返回方式选择" buttons) so /lens's legacy form layout
+// stays intact.
+(function applyAppStep2WizardChrome() {
+  const isLens = location.pathname === '/lens';
+  if (isLens) return;
+
+  const hide = (el) => { if (el) el.style.display = 'none'; };
+  hide(document.getElementById('ws1'));
+  hide(document.querySelector('#wizard-step-2 > .panel-title'));
+  hide(document.querySelector('#wizard-step-2 > .panel-sub'));
+  // Hide only the "返回方式选择" instances; leave "← 修改配置" buttons (also
+  // .step-back-btn) on steps 3/4 working.
+  document.querySelectorAll('.step-back-btn').forEach(btn => {
+    if (btn.textContent.includes('返回方式选择')) hide(btn);
+  });
 })();
 
 // ── Website list upload & enrich ──────────────────────────────────────────────
