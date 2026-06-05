@@ -361,7 +361,7 @@ ${fw.sequence_prompt || ''}`;
   const isLens = (sellerProfile.sellerName || '').includes('Lens');
   if (!isLens && resolvedKey === 'peter_kang_3part') {
     frameworkInstructions = frameworkInstructions.replace(
-      /Lens is a 300,000m² aluminium factory in Zhongshan[^".]*/g,
+      /Lens is a 200,000m² aluminium factory in Zhongshan[^".]*/g,
       `${sellerProfile.sellerName || 'We'} — ${sellerProfile.advantage || sellerProfile.products || 'your supplier'}.`
     );
   }

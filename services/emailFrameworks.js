@@ -24,7 +24,7 @@ Saw [Company]'s recent Hawthorn custom home — the curved aluminium facade caug
 
 if your aluminium supplier ghosts mid-build, how many days does your client wait?
 
-Lens is a 300,000m² aluminium factory in Zhongshan, 20 years. Currently working with a Sydney designer on a residential project.
+Lens is a 200,000m² aluminium factory in Zhongshan, 20 years. Currently working with a Sydney designer on a residential project.
 
 Worth a half-day next time you're in China? Just a chance to see if it makes sense — one more option in your back pocket.
 
@@ -42,7 +42,7 @@ Worth a half-day next time you're in China? Just a chance to see if it makes sen
 STYLE: short, customer-angle "for you" — not "buy from us".
 
 FACTS YOU MAY USE (do not invent others):
-- Lens: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Lens: 200,000m² aluminium factory in Zhongshan, 20 years experience
 - Currently working with a Sydney designer on a residential project (no name given, no specifics beyond "residential")
 - Do NOT say "Canadian distributor" / "$1-2M USD" / "23 builders" / cost-savings % / AU warehouse / any delay-related promises
 
@@ -57,10 +57,20 @@ Greeting: "Hi [first_name]," — derive first_name from the prospect's email (e.
 Body structure (45-70 words total):
   1. One sentence hook referencing something SPECIFIC from their website (a project, suburb, style detail). If website scrape is empty: "Saw [Company] — quick thought."
   2. Pain question: "if your aluminium supplier ghosts mid-[project type], how many days does your client wait?" — adapt [project type] to their work (mid-build, mid-fit-out, mid-install, mid-renovation).
-  3. Credentials line, verbatim: "Lens is a 300,000m² aluminium factory in Zhongshan, 20 years. Currently working with a Sydney designer on a residential project."
+  3. Credentials line, verbatim: "Lens is a 200,000m² aluminium factory in Zhongshan, 20 years. Currently working with a Sydney designer on a residential project."
   4. CTA, verbatim: "Worth a half-day next time you're in China? Just a chance to see if it makes sense — one more option in your back pocket."
 Sign-off: {{accountSignature}}
 Subject: curiosity-gap, lowercase-first, 5-8 words. Examples: "quick thought on your supplier risk", "before your next custom build", "when your supplier ghosts".
+
+WRITING STYLE — EMAIL 1 CRITICAL:
+- Write like a real person texting from their phone, not a copywriter
+- NO em dashes (—), NO semicolons (;), NO complex sentence structures
+- NO poetic or dramatic language. No metaphors. No scenarios.
+- Short sentences only. Max 12 words per sentence.
+- The hook must be ONE simple observation from their website. Direct and plain.
+- Do NOT use "aluminium" — say "factory" only
+- No filler openers. No "I noticed", "I came across", "I wanted to reach out"
+- If the hook sounds like it was written by a marketing agency, rewrite it simpler
 
 === EMAIL 2 (Day 3) — audit-supplier insight ===
 FIXED TEMPLATE. Output the subject and body BELOW VERBATIM. ONLY swap [Name] (use the same first_name as Email 1, or "[company] team" if unknown). Do not rephrase, do not add sentences, do not change the subject.
@@ -84,6 +94,13 @@ If you ever evaluate a new China supplier (us or anyone else), 3 questions that 
 Most won't answer #3.
 If you want, I can send our answers to all 3 — just for your reference.
 {{accountSignature}}
+
+WRITING STYLE — EMAIL 3 CRITICAL:
+- No em dashes (—), no semicolons (;)
+- No phrases that sound like a case study or testimonial
+- No dramatic before/after storytelling
+- Keep it factual and plain. One point only.
+- If any sentence sounds like it came from a marketing template, cut it
 
 === EMAIL 4 (Day 7) — factory visit invite ===
 FIXED TEMPLATE. Output the subject and body BELOW VERBATIM. ONLY swap [Name]. Do not rephrase.
@@ -162,58 +179,57 @@ Email 4 (Day 10) — Differentiator
 Email 5 (Day 14) — Breakup
 Brief farewell + offer a specific low-commitment resource (catalog/case study/spec sheet).`,
     sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
-- Body length: 50-80 words per email
+- Body length: 40-80 words per email
 - Sign-off: exactly {{accountSignature}} on its own line. No other sign-off.
-- Subject: 4-7 words, first letter lowercase, only capitalise proper nouns (China, Zhongshan, Guangdong, Sydney). Never Title Case.
-- Every sentence separated by a blank line.
+- Subject: under 7 words, all lowercase, no punctuation gimmicks, no Title Case
+- Plain text only. No bullet points, no bold, no formatting inside the body.
+- Every sentence max 12 words. Short. Direct.
+- NO em dashes (—), NO semicolons (;)
+- NO phrases: "world-class", "industry-leading", "best in class", "I hope this finds you", "I wanted to reach out", "I came across"
+- Each email must be able to stand alone if previous emails were ignored
+- No fake urgency, no hollow claims, no filler sentences
+- If any line sounds like it was written by a marketing agency, cut it and rewrite simpler
 
-GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
+GOAL: Get a reply. Not an open. Every email ends with one clear low-commitment question.
 
 FACTS YOU MAY USE (do not invent others):
-- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
-- Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
-- Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
+- Factory in Zhongshan, 20 years running
+- Products: windows, doors, kitchen cabinets, sanitary ware
+- Target: Australian wholesale showrooms, building contractors, interior designers
+- Buyers are sceptical — they have seen every generic pitch before
+- No social proof available — do not invent or imply any
+- Do not make unverifiable claims about quality or pricing
 
-NEVER:
-- Mention product pricing
-- Fabricate client names, percentages, revenue figures, number of projects, AU warehouse, delivery promises
-- Use banned phrases: no commitment, no risk, guarantee, act now, limited time, exclusive offer
-- Fabricate website details — if scrape is empty, Email 1 hook becomes: "Saw [Company] — quick thought."
+=== EMAIL 1 (Day 1) — Curiosity ===
+Hook: one simple observation from their website. Plain. Direct. Not poetic.
+Then: one direct question about whether they source from China
+Then: one line about what we make and where (factory in Zhongshan, 20 years)
+CTA: one low-commitment question to get a reply
+Subject: curiosity-gap, lowercase, under 7 words
 
-=== EMAIL 1 (Day 1) — Hook (PERSONALISED) ===
-1. One sentence referencing something specific from their website. If empty: "Saw [Company] — quick thought."
-2. One pain question about supplier reliability or sourcing friction, relevant to their work.
-3. Credentials line: "Lens — 300,000m² aluminium factory in Zhongshan, 20 years. Currently supplying a Sydney designer on a residential project."
-4. CTA: "Worth a half-day next time you're in China? Just a chance to see if it makes sense."
-Sign-off: {{accountSignature}}
+=== EMAIL 2 (Day 3) — Value ===
+Different angle from Email 1. Do not repeat the opening line.
+Address the two things buyers actually care about: lead times and what happens when something goes wrong.
+Sea freight from Zhongshan to Australia: 6-8 weeks.
+CTA: offer to get specific if relevant to what they are quoting.
 
-=== EMAIL 2 (Day 3) — Value Drop ===
-Angle: most buyers never see the factory before ordering — a visit removes the biggest sourcing risk.
-- One specific insight about why seeing a production line in person matters
-- Offer to send a factory walkthrough video as a first step
-- Under 60 words
-Sign-off: {{accountSignature}}
+=== EMAIL 3 (Day 7) — Specific Product ===
+Pick one product (windows, doors, cabinets, or sanitary ware) and be specific.
+Mention custom sizing and flexible MOQ.
+Offer to give a number if they send specs and quantities.
+CTA: ask them to send specs. No commitment needed.
+WRITING STYLE: no em dashes, no semicolons, plain sentences only.
 
-=== EMAIL 3 (Day 5) — Social Proof ===
-Use ONLY these facts, do not invent others:
-- 300,000m² factory floor in Zhongshan
-- 20 years on the same production line
-- Currently supplying a Sydney designer on a residential project
-- Tie back to factory visit invitation
-Sign-off: {{accountSignature}}
+=== EMAIL 4 (Day 12) — Before Next Order ===
+Angle: before they lock in their next order, it costs nothing to get a second quote.
+Not asking them to switch suppliers. Just get a number to compare.
+CTA: ask them to send specs and quantities.
 
-=== EMAIL 4 (Day 7) — Differentiator ===
-Angle: address the most common concern about China sourcing — specs getting lost, quality inconsistency.
-- Acknowledge the concern honestly
-- Explain how a factory visit solves it better than any document or promise
-- CTA ties back to visiting in person
-Sign-off: {{accountSignature}}
-
-=== EMAIL 5 (Day 10) — Breakup ===
-- Short and warm, no hard feelings
-- Factory visit invitation stays open
-- Ask if there is someone else at the company who handles sourcing
-Sign-off: {{accountSignature}}`,
+=== EMAIL 5 (Day 18) — Breakup ===
+Short. Warm. No hard feelings.
+Acknowledge no reply. Leave the door open.
+Ask if there is someone else at the company who handles supplier decisions.
+CTA: offer to reach out to the right person instead.`,
   },
 
   'aida': {
@@ -261,7 +277,7 @@ A = Action (simple yes/no question)`,
 GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
 
 FACTS YOU MAY USE (do not invent others):
-- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Factory: 200,000m² aluminium factory in Zhongshan, 20 years experience
 - Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
 - Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
 
@@ -275,9 +291,19 @@ Each email follows AIDA (Attention → Interest → Desire → Action). The Acti
 Email 1 (Day 1):
 - Attention: open with a specific detail from their website or work
 - Interest: connect that work to sourcing they likely already think about
-- Desire: paint what walking a 300,000m² factory in Zhongshan would show them
+- Desire: paint what walking a 200,000m² factory in Zhongshan would show them
 - Action: "worth a half-day in Zhongshan next time you're in China?"
 Sign-off: {{accountSignature}}
+
+WRITING STYLE — EMAIL 1 CRITICAL:
+- Write like a real person texting from their phone, not a copywriter
+- NO em dashes (—), NO semicolons (;), NO complex sentence structures
+- NO poetic or dramatic language. No metaphors. No scenarios.
+- Short sentences only. Max 12 words per sentence.
+- The hook must be ONE simple observation from their website. Direct and plain.
+- Do NOT use "aluminium" — say "factory" only
+- No filler openers. No "I noticed", "I came across", "I wanted to reach out"
+- If the hook sounds like it was written by a marketing agency, rewrite it simpler
 
 Email 2 (Day 4):
 - Attention: a different angle — the gap between what suppliers promise and what shows up
@@ -287,11 +313,18 @@ Email 2 (Day 4):
 Sign-off: {{accountSignature}}
 
 Email 3 (Day 7):
-- Attention: lead with the facts — 300,000m² in Zhongshan, 20 years, currently supplying a Sydney designer on a residential project
+- Attention: lead with the facts — 200,000m² in Zhongshan, 20 years, currently supplying a Sydney designer on a residential project
 - Interest: explain what those numbers look like on the actual floor
 - Desire: frame the visit as one more option in their back pocket
 - Action: "if a China trip is ever on the horizon, reply with the month"
 Sign-off: {{accountSignature}}
+
+WRITING STYLE — EMAIL 3 CRITICAL:
+- No em dashes (—), no semicolons (;)
+- No phrases that sound like a case study or testimonial
+- No dramatic before/after storytelling
+- Keep it factual and plain. One point only.
+- If any sentence sounds like it came from a marketing template, cut it
 
 Email 4 (Day 10):
 - Attention: acknowledge the common concern about visiting a Chinese supplier — time, cost, risk of wasted trip
@@ -349,7 +382,7 @@ B = Bridge (10-min call to show how → how to get there)`,
 GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
 
 FACTS YOU MAY USE (do not invent others):
-- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Factory: 200,000m² aluminium factory in Zhongshan, 20 years experience
 - Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
 - Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
 
@@ -366,6 +399,16 @@ Email 1 (Day 1):
 - Bridge: "worth a half-day in Zhongshan next time you're in China?"
 Sign-off: {{accountSignature}}
 
+WRITING STYLE — EMAIL 1 CRITICAL:
+- Write like a real person texting from their phone, not a copywriter
+- NO em dashes (—), NO semicolons (;), NO complex sentence structures
+- NO poetic or dramatic language. No metaphors. No scenarios.
+- Short sentences only. Max 12 words per sentence.
+- The hook must be ONE simple observation from their website. Direct and plain.
+- Do NOT use "aluminium" — say "factory" only
+- No filler openers. No "I noticed", "I came across", "I wanted to reach out"
+- If the hook sounds like it was written by a marketing agency, rewrite it simpler
+
 Email 2 (Day 4):
 - Before: another sourcing pain — surprises that surface only after orders ship
 - After: what changes once you've stood on the line and met the team
@@ -374,9 +417,16 @@ Sign-off: {{accountSignature}}
 
 Email 3 (Day 7):
 - Before: the limitations of supplier credentials on paper
-- After: what 300,000m² of factory floor and 20 years on the same Zhongshan line actually look like; currently supplying a Sydney designer on a residential project
+- After: what 200,000m² of factory floor and 20 years on the same Zhongshan line actually look like; currently supplying a Sydney designer on a residential project
 - Bridge: "if a China sourcing trip is on the horizon, the factory is worth half a day"
 Sign-off: {{accountSignature}}
+
+WRITING STYLE — EMAIL 3 CRITICAL:
+- No em dashes (—), no semicolons (;)
+- No phrases that sound like a case study or testimonial
+- No dramatic before/after storytelling
+- Keep it factual and plain. One point only.
+- If any sentence sounds like it came from a marketing template, cut it
 
 Email 4 (Day 10):
 - Before: the common reason buyers skip the visit — sounds expensive, sounds risky
@@ -434,7 +484,7 @@ S = Solve (single factory-direct channel: 4-week lead times)`,
 GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
 
 FACTS YOU MAY USE (do not invent others):
-- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Factory: 200,000m² aluminium factory in Zhongshan, 20 years experience
 - Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
 - Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
 
@@ -451,6 +501,16 @@ Email 1 (Day 1):
 - Solve: walking the factory in person solves it more cleanly than any document — "worth a half-day in Zhongshan next time you're in China?"
 Sign-off: {{accountSignature}}
 
+WRITING STYLE — EMAIL 1 CRITICAL:
+- Write like a real person texting from their phone, not a copywriter
+- NO em dashes (—), NO semicolons (;), NO complex sentence structures
+- NO poetic or dramatic language. No metaphors. No scenarios.
+- Short sentences only. Max 12 words per sentence.
+- The hook must be ONE simple observation from their website. Direct and plain.
+- Do NOT use "aluminium" — say "factory" only
+- No filler openers. No "I noticed", "I came across", "I wanted to reach out"
+- If the hook sounds like it was written by a marketing agency, rewrite it simpler
+
 Email 2 (Day 4):
 - Problem: trusting photos and showroom samples to represent the real factory
 - Agitate: showrooms and production lines can look like two different companies
@@ -459,9 +519,16 @@ Sign-off: {{accountSignature}}
 
 Email 3 (Day 7):
 - Problem: hard to evaluate scale and consistency without a ground-level view
-- Agitate: 300,000m² sounds abstract on paper — feels very different on the floor
+- Agitate: 200,000m² sounds abstract on paper — feels very different on the floor
 - Solve: 20 years on the same line, currently supplying a Sydney designer on a residential project; come see it
 Sign-off: {{accountSignature}}
+
+WRITING STYLE — EMAIL 3 CRITICAL:
+- No em dashes (—), no semicolons (;)
+- No phrases that sound like a case study or testimonial
+- No dramatic before/after storytelling
+- Keep it factual and plain. One point only.
+- If any sentence sounds like it came from a marketing template, cut it
 
 Email 4 (Day 10):
 - Problem: many buyers think the trip is too expensive or too disruptive
@@ -519,7 +586,7 @@ Psychology: explicitly giving permission to decline actually increases response 
 GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
 
 FACTS YOU MAY USE (do not invent others):
-- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Factory: 200,000m² aluminium factory in Zhongshan, 20 years experience
 - Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
 - Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
 
@@ -535,15 +602,32 @@ Email 1 (Day 1):
 - Freedom phrase: "if not, totally understand — appreciate you reading this far"
 Sign-off: {{accountSignature}}
 
+WRITING STYLE — EMAIL 1 CRITICAL:
+- Write like a real person texting from their phone, not a copywriter
+- NO em dashes (—), NO semicolons (;), NO complex sentence structures
+- NO poetic or dramatic language. No metaphors. No scenarios.
+- Short sentences only. Max 12 words per sentence.
+- The hook must be ONE simple observation from their website. Direct and plain.
+- Do NOT use "aluminium" — say "factory" only
+- No filler openers. No "I noticed", "I came across", "I wanted to reach out"
+- If the hook sounds like it was written by a marketing agency, rewrite it simpler
+
 Email 2 (Day 4):
 - Body: short note on why most buyers benefit from seeing the factory before ordering; offer the factory walkthrough video as a softer first step
 - Freedom phrase: "completely up to you, of course"
 Sign-off: {{accountSignature}}
 
 Email 3 (Day 7):
-- Body: 300,000m² in Zhongshan, 20 years, currently supplying a Sydney designer on a residential project — extend the visit invitation again
+- Body: 200,000m² in Zhongshan, 20 years, currently supplying a Sydney designer on a residential project — extend the visit invitation again
 - Freedom phrase: "either way, hope this is useful to know about"
 Sign-off: {{accountSignature}}
+
+WRITING STYLE — EMAIL 3 CRITICAL:
+- No em dashes (—), no semicolons (;)
+- No phrases that sound like a case study or testimonial
+- No dramatic before/after storytelling
+- Keep it factual and plain. One point only.
+- If any sentence sounds like it came from a marketing template, cut it
 
 Email 4 (Day 10):
 - Body: address the most common reason buyers hesitate (time, cost, risk of wasted trip); be honest about the logistics — we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough; they cover flights and hotel
@@ -599,7 +683,7 @@ H = Hook (interested in hearing how we can help? — action CTA)`,
 GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
 
 FACTS YOU MAY USE (do not invent others):
-- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Factory: 200,000m² aluminium factory in Zhongshan, 20 years experience
 - Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
 - Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
 
@@ -612,9 +696,19 @@ Each email follows SCH (Star → Chain → Hook). Star is always the factory vis
 
 Email 1 (Day 1):
 - Star: the visit itself — seeing the factory floor solves what no document can
-- Chain: 1-2 supporting facts (300,000m² in Zhongshan, 20 years on the same line)
+- Chain: 1-2 supporting facts (200,000m² in Zhongshan, 20 years on the same line)
 - Hook: "worth a half-day next time you're in China?"
 Sign-off: {{accountSignature}}
+
+WRITING STYLE — EMAIL 1 CRITICAL:
+- Write like a real person texting from their phone, not a copywriter
+- NO em dashes (—), NO semicolons (;), NO complex sentence structures
+- NO poetic or dramatic language. No metaphors. No scenarios.
+- Short sentences only. Max 12 words per sentence.
+- The hook must be ONE simple observation from their website. Direct and plain.
+- Do NOT use "aluminium" — say "factory" only
+- No filler openers. No "I noticed", "I came across", "I wanted to reach out"
+- If the hook sounds like it was written by a marketing agency, rewrite it simpler
 
 Email 2 (Day 4):
 - Star: a different framing — the gap between showroom and production floor
@@ -624,9 +718,16 @@ Sign-off: {{accountSignature}}
 
 Email 3 (Day 7):
 - Star: scale and continuity as the big idea
-- Chain: 300,000m² factory floor; 20 years on the same line; currently supplying a Sydney designer on a residential project
+- Chain: 200,000m² factory floor; 20 years on the same line; currently supplying a Sydney designer on a residential project
 - Hook: "if a China sourcing trip is on the horizon, come see it"
 Sign-off: {{accountSignature}}
+
+WRITING STYLE — EMAIL 3 CRITICAL:
+- No em dashes (—), no semicolons (;)
+- No phrases that sound like a case study or testimonial
+- No dramatic before/after storytelling
+- Keep it factual and plain. One point only.
+- If any sentence sounds like it came from a marketing template, cut it
 
 Email 4 (Day 10):
 - Star: addressing the visit-logistics question head-on
@@ -680,7 +781,7 @@ P = Push (specific ask: "free tomorrow?" — a concrete commitment request)`,
 GOAL: Every email has ONE purpose — invite the prospect to visit our factory in Zhongshan. Never sell product directly. Never push for a purchase decision.
 
 FACTS YOU MAY USE (do not invent others):
-- Factory: 300,000m² aluminium factory in Zhongshan, 20 years experience
+- Factory: 200,000m² aluminium factory in Zhongshan, 20 years experience
 - Current project: currently supplying a Sydney designer on a residential project (no name, no further details)
 - Factory visit: we cover airport pickup from Guangzhou, all meals, factory tour, QC lab walkthrough. Prospect covers flights and hotel.
 
@@ -697,6 +798,16 @@ Email 1 (Day 1):
 - Push: "reply with the month if a sourcing trip is on your radar"
 Sign-off: {{accountSignature}}
 
+WRITING STYLE — EMAIL 1 CRITICAL:
+- Write like a real person texting from their phone, not a copywriter
+- NO em dashes (—), NO semicolons (;), NO complex sentence structures
+- NO poetic or dramatic language. No metaphors. No scenarios.
+- Short sentences only. Max 12 words per sentence.
+- The hook must be ONE simple observation from their website. Direct and plain.
+- Do NOT use "aluminium" — say "factory" only
+- No filler openers. No "I noticed", "I came across", "I wanted to reach out"
+- If the hook sounds like it was written by a marketing agency, rewrite it simpler
+
 Email 2 (Day 4):
 - Praise: a different angle on their work — a different project, a different signal
 - Picture: paint the factory walkthrough as the simplest first step
@@ -705,9 +816,16 @@ Sign-off: {{accountSignature}}
 
 Email 3 (Day 7):
 - Praise: their reputation, longevity, or portfolio quality
-- Picture: connect their standards to what 300,000m² and 20 years on the same Zhongshan line looks like in practice; currently supplying a Sydney designer on a residential project
+- Picture: connect their standards to what 200,000m² and 20 years on the same Zhongshan line looks like in practice; currently supplying a Sydney designer on a residential project
 - Push: "worth half a day inside a longer sourcing trip"
 Sign-off: {{accountSignature}}
+
+WRITING STYLE — EMAIL 3 CRITICAL:
+- No em dashes (—), no semicolons (;)
+- No phrases that sound like a case study or testimonial
+- No dramatic before/after storytelling
+- Keep it factual and plain. One point only.
+- If any sentence sounds like it came from a marketing template, cut it
 
 Email 4 (Day 10):
 - Praise: their caution about supplier decisions — frame it as a strength
