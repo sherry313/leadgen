@@ -2218,7 +2218,12 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
   try {
     console.log(`[GoogleSearchTool] "${keyword}" max=${maxResults} fields=${fields.join(',')}`);
     const items = await withTimeout(
-      _runApifyActor('nFJndFXA5zjCTuudP', { queries: [keyword], maxResults, outputFormats: ['json'] }),
+      _runApifyActor('nFJndFXA5zjCTuudP', {
+        queries: keyword,
+        maxPagesPerQuery: Math.ceil(maxResults / 10) || 1,
+        includeUnfilteredResults: false,
+        mobileResults: false,
+      }),
       10 * 60 * 1000,
       '/api/google-search Apify'
     );
