@@ -4784,6 +4784,8 @@ async function startGoogleMapsScrape() {
   if (!keywords.length) { _showToast('请输入至少一个关键词'); return; }
   const location   = document.getElementById('gmLocation')?.value.trim() || '';
   const maxResults = Math.max(1, parseInt(document.getElementById('gmMaxResults')?.value, 10) || 20);
+  const fields = Array.from(document.querySelectorAll('#gmFieldPills .gm-pill.on')).map(p => p.dataset.field);
+  if (!fields.length) { _showToast('请至少选择一项提取内容'); return; }
 
   const token = getStoredToken();
   if (!token) { _showToast('请先登录'); return; }
@@ -4800,7 +4802,7 @@ async function startGoogleMapsScrape() {
     const res = await fetch('/api/google-maps-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ keywords, location, maxResults }),
+      body: JSON.stringify({ keywords, location, maxResults, fields }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'gm', status);
@@ -4857,6 +4859,8 @@ async function startInstagramScrape() {
 
   const maxPosts = Math.max(1, parseInt(document.getElementById('igMaxPosts')?.value, 10) || 24);
   const newerThan = document.getElementById('igNewerThan')?.value.trim() || '';
+  const fields = Array.from(document.querySelectorAll('#igFieldPills .ig-pill.on')).map(p => p.dataset.field);
+  if (!fields.length) { _showToast('请至少选择一项提取内容'); return; }
 
   const token = getStoredToken();
   if (!token) { _showToast('请先登录'); return; }
@@ -4873,7 +4877,7 @@ async function startInstagramScrape() {
     const res = await fetch('/api/instagram-scrape', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ input, maxPosts, newerThan }),
+      body: JSON.stringify({ input, maxPosts, newerThan, fields }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'ig', status);
@@ -4888,6 +4892,8 @@ async function startTikTokScrape() {
   const raw = document.getElementById('ttInput')?.value.trim() || '';
   if (!raw) { _showToast('请输入话题/关键词/链接'); return; }
   const maxVideos = Math.max(1, parseInt(document.getElementById('ttMaxVideos')?.value, 10) || 100);
+  const fields = Array.from(document.querySelectorAll('#ttFieldPills .tt-pill.on')).map(p => p.dataset.field);
+  if (!fields.length) { _showToast('请至少选择一项提取内容'); return; }
 
   const token = getStoredToken();
   if (!token) { _showToast('请先登录'); return; }
@@ -4907,7 +4913,7 @@ async function startTikTokScrape() {
     const res = await fetch('/api/tiktok-scrape', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ mode: _ttMode, input, maxVideos }),
+      body: JSON.stringify({ mode: _ttMode, input, maxVideos, fields }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'tt', status);
@@ -4940,6 +4946,8 @@ async function startFacebookScrape() {
   if (!searchTerms.length) { _showToast('请输入至少一个关键词'); return; }
   const location   = document.getElementById('fbLocation')?.value.trim() || '';
   const maxResults = Math.max(1, parseInt(document.getElementById('fbMaxResults')?.value, 10) || 20);
+  const fields = Array.from(document.querySelectorAll('#fbFieldPills .fb-pill.on')).map(p => p.dataset.field);
+  if (!fields.length) { _showToast('请至少选择一项提取内容'); return; }
 
   const token = getStoredToken();
   if (!token) { _showToast('请先登录'); return; }
@@ -4956,7 +4964,7 @@ async function startFacebookScrape() {
     const res = await fetch('/api/facebook-scrape', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ searchTerms, location, maxResults }),
+      body: JSON.stringify({ searchTerms, location, maxResults, fields }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'fb', status);

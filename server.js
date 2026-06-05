@@ -2313,6 +2313,9 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
     : [];
   const location   = (req.body?.location || '').trim();
   const maxResults = Math.min(500, Math.max(1, parseInt(req.body?.maxResults, 10) || 20));
+  const fields     = Array.isArray(req.body?.fields) && req.body.fields.length
+    ? req.body.fields
+    : ['name', 'phone', 'website', 'address', 'rating', 'reviews'];
 
   if (!keywords.length) return res.status(400).json({ success: false, error: 'keywords required' });
 
@@ -2352,7 +2355,7 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       if (aborted) break;
       const emails = Array.isArray(it.emails) ? it.emails : (it.email ? [it.email] : []);
       const bizEmail = emails.find(e => !/(gmail|hotmail|yahoo|outlook)\./i.test(e)) || emails[0] || '';
-      const row = {
+      const full = {
         name:     it.title || '',
         website:  it.website || '',
         phone:    it.phone || it.phoneUnformatted || '',
@@ -2360,8 +2363,10 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
         address:  it.address || '',
         industry: it.categoryName || '',
         rating:   it.totalScore || '',
+        reviews:  it.reviewsCount ?? '',
         mapsUrl:  it.url || '',
       };
+      const row = Object.fromEntries(fields.filter(k => k in full).map(k => [k, full[k]]));
       send({ type: 'row', row });
       emitted++;
     }
@@ -2382,6 +2387,9 @@ app.post('/api/instagram-scrape', requireAuth, async (req, res) => {
   const input      = (req.body?.input || '').trim();
   const maxPosts   = Math.min(500, Math.max(1, parseInt(req.body?.maxPosts, 10) || 24));
   const newerThan  = (req.body?.newerThan || '').trim();
+  const fields     = Array.isArray(req.body?.fields) && req.body.fields.length
+    ? req.body.fields
+    : ['username', 'followers', 'posts'];
 
   if (!input) return res.status(400).json({ success: false, error: 'input required' });
 
@@ -2407,19 +2415,25 @@ app.post('/api/instagram-scrape', requireAuth, async (req, res) => {
     for (const it of items) {
       if (aborted) break;
       if (emitted >= maxPosts) break;
-      send({
-        type: 'row',
-        row: {
-          username:    it.ownerUsername || it.username || '',
-          postUrl:     it.url || it.postUrl || '',
-          type:        it.type || '',
-          caption:     (it.caption || '').replace(/\s+/g, ' ').slice(0, 200),
-          likes:       it.likesCount ?? '',
-          comments:    it.commentsCount ?? '',
-          timestamp:   it.timestamp || it.takenAtTimestamp || '',
-          displayUrl:  it.displayUrl || '',
-        },
-      });
+      // Note: the apify/instagram-scraper actor returns POST data, not profile
+      // metadata — so `followers`, `posts` (count), `email`, `bioLink` are
+      // empty here. To populate them, swap actors (e.g. instagram-profile-scraper).
+      const full = {
+        username:    it.ownerUsername || it.username || '',
+        followers:   it.ownerFollowersCount ?? it.followersCount ?? '',
+        posts:       it.ownerPostsCount ?? it.postsCount ?? '',
+        email:       it.ownerEmail || it.email || '',
+        bioLink:     it.ownerBioLink || it.externalUrl || it.bioLink || '',
+        postUrl:     it.url || it.postUrl || '',
+        type:        it.type || '',
+        caption:     (it.caption || '').replace(/\s+/g, ' ').slice(0, 200),
+        likes:       it.likesCount ?? '',
+        comments:    it.commentsCount ?? '',
+        timestamp:   it.timestamp || it.takenAtTimestamp || '',
+        displayUrl:  it.displayUrl || '',
+      };
+      const row = Object.fromEntries(fields.filter(k => k in full).map(k => [k, full[k]]));
+      send({ type: 'row', row });
       emitted++;
     }
     send({ type: 'done', success: true, total: emitted });
@@ -2439,6 +2453,9 @@ app.post('/api/tiktok-scrape', requireAuth, async (req, res) => {
   const mode      = (req.body?.mode || 'hashtag').trim();
   const input     = (req.body?.input || '').trim();
   const maxVideos = Math.min(1000, Math.max(1, parseInt(req.body?.maxVideos, 10) || 100));
+  const fields    = Array.isArray(req.body?.fields) && req.body.fields.length
+    ? req.body.fields
+    : ['username', 'followers'];
 
   if (!input) return res.status(400).json({ success: false, error: 'input required' });
 
@@ -2471,17 +2488,21 @@ app.post('/api/tiktok-scrape', requireAuth, async (req, res) => {
       // Different actors return slightly different field names — try the most
       // common ones for username/url/counts/timestamp.
       const ts = it.createTimeISO || it.createTime || it.timestamp || '';
-      send({
-        type: 'row',
-        row: {
-          username:  it.authorMeta?.name || it.author?.uniqueId || it.username || '',
-          videoUrl:  it.webVideoUrl || it.shareUrl || it.url || (it.id ? `https://www.tiktok.com/@${it.authorMeta?.name || ''}/video/${it.id}` : ''),
-          likes:     it.diggCount    ?? it.likes    ?? it.stats?.diggCount    ?? '',
-          comments:  it.commentCount ?? it.comments ?? it.stats?.commentCount ?? '',
-          shares:    it.shareCount   ?? it.shares   ?? it.stats?.shareCount   ?? '',
-          createdAt: ts,
-        },
-      });
+      // Note: this actor returns VIDEO data, not profile/channel metadata —
+      // `followers` and `videoCount` will be empty. To populate them, swap
+      // actors (e.g. a tiktok-profile-scraper).
+      const full = {
+        username:   it.authorMeta?.name || it.author?.uniqueId || it.username || '',
+        followers:  it.authorMeta?.fans ?? it.authorMeta?.followers ?? '',
+        videoCount: it.authorMeta?.video ?? it.authorMeta?.videoCount ?? '',
+        likes:      it.diggCount    ?? it.likes    ?? it.stats?.diggCount    ?? '',
+        comments:   it.commentCount ?? it.comments ?? it.stats?.commentCount ?? '',
+        shares:     it.shareCount   ?? it.shares   ?? it.stats?.shareCount   ?? '',
+        videoUrl:   it.webVideoUrl || it.shareUrl || it.url || (it.id ? `https://www.tiktok.com/@${it.authorMeta?.name || ''}/video/${it.id}` : ''),
+        createdAt:  ts,
+      };
+      const row = Object.fromEntries(fields.filter(k => k in full).map(k => [k, full[k]]));
+      send({ type: 'row', row });
       emitted++;
     }
     send({ type: 'done', success: true, total: emitted });
