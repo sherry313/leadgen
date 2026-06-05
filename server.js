@@ -2246,11 +2246,7 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
           const fcResp = await withTimeout(
             axios.post(
               'https://api.firecrawl.dev/v1/scrape',
-              {
-                url,
-                formats: ['extract'],
-                extract: { schema: { email: 'string', phone: 'string', linkedin: 'string' } },
-              },
+              { url, formats: ['markdown'] },
               {
                 headers: {
                   'Authorization': `Bearer ${process.env.FIRECRAWL_API_KEY}`,
@@ -2261,12 +2257,19 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
             60000,
             'Firecrawl enrich'
           );
-          const firecrawlResult = fcResp.data;
-          const extract = firecrawlResult?.data?.extract || {};
-          console.log('[Firecrawl enrich]', url, extract);
-          it.email    = firecrawlResult?.data?.extract?.email    || it.email    || '';
-          it.phone    = firecrawlResult?.data?.extract?.phone    || it.phone    || '';
-          it.linkedin = firecrawlResult?.data?.extract?.linkedin || it.linkedin || '';
+          const markdown = fcResp.data?.data?.markdown || '';
+
+          const emailMatch    = markdown.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+          const email         = emailMatch ? emailMatch[0] : '';
+          const phoneMatch    = markdown.match(/(\+61|0)[0-9\s\-]{8,12}/);
+          const phone         = phoneMatch ? phoneMatch[0].trim() : '';
+          const linkedinMatch = markdown.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-]+/);
+          const linkedin      = linkedinMatch ? 'https://www.' + linkedinMatch[0] : '';
+
+          console.log('[Firecrawl enrich]', url, { email, phone, linkedin });
+          it.email    = email    || it.email    || '';
+          it.phone    = phone    || it.phone    || '';
+          it.linkedin = linkedin || it.linkedin || '';
         } catch (err) {
           console.log('[Firecrawl enrich]', url, { error: err.message });
         }
