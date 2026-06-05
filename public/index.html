@@ -2747,7 +2747,6 @@
         </button>
         <button type="button" class="ds-card" id="ds-facebook" onclick="selectSource('facebook')">
           <span class="ds-icon">👍</span><span class="ds-name">Facebook</span>
-          <span class="ds-coming">即将上线</span>
         </button>
         <button type="button" class="ds-card" id="ds-linkedin" onclick="selectSource('linkedin')">
           <span class="ds-icon">💼</span><span class="ds-name">LinkedIn</span>
@@ -2894,6 +2893,52 @@
             </button>
           </div>
           <div id="ttResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
+        </div>
+      </div>
+
+      <!-- ── Facebook panel (shown when ds-facebook is clicked) ── -->
+      <div id="fbPanel" class="ds-tool-panel" style="display:none;margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;color:#e5e7eb">
+          <i class="ti ti-brand-facebook"></i>Facebook 抓取
+        </div>
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">搜索关键词</label>
+        <div id="fbKeywordRows" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px">
+          <div class="fb-kw-row" style="display:flex;gap:6px;align-items:center">
+            <input type="text" class="fb-kw-input" placeholder="例：interior designer" autocomplete="off"
+                   style="flex:1;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff">
+          </div>
+        </div>
+        <button type="button" onclick="_fbAddKeywordRow()"
+                style="margin-bottom:12px;padding:5px 10px;background:transparent;border:1px dashed rgba(255,255,255,0.2);border-radius:6px;color:#cbd5e1;cursor:pointer;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px">
+          <i class="ti ti-plus"></i>添加
+        </button>
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">地区</label>
+        <input type="text" id="fbLocation" placeholder="例：Australia" autocomplete="off"
+               style="width:100%;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+
+        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">最多结果数</label>
+        <input type="number" id="fbMaxResults" value="20" min="1" max="500"
+               style="width:120px;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button type="button" id="fbRunBtn" onclick="startFacebookScrape()"
+                  style="padding:9px 16px;background:#6366f1;border:0;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            <i class="ti ti-player-play"></i>开始抓取
+          </button>
+          <span id="fbStatus" style="color:#94a3b8;font-size:0.85rem"></span>
+        </div>
+
+        <div id="fbResultsWrap" style="display:none;margin-top:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span id="fbResultsCount" style="color:#cbd5e1;font-size:0.85rem"></span>
+            <button type="button" onclick="_exportToolCsv('fb')"
+                    style="padding:6px 12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e5e7eb;cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;gap:4px">
+              <i class="ti ti-download"></i>导出CSV
+            </button>
+          </div>
+          <div id="fbResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
         </div>
       </div>
     </div>
@@ -4314,7 +4359,7 @@ const PRIORITY_KEYWORDS = new Set([
 
 function buildKeywords() { /* no-op: inputs are static HTML */ }
 
-const WORKING_SOURCES = new Set(['google_maps', 'google_search', 'instagram', 'tiktok']);
+const WORKING_SOURCES = new Set(['google_maps', 'google_search', 'instagram', 'tiktok', 'facebook']);
 function selectMethod(methodId) {
   if (methodId === 'keyword') {
     document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
@@ -4493,15 +4538,17 @@ function selectSource(src) {
   const gsPanel = document.getElementById('gsPanel');
   const igPanel = document.getElementById('igPanel');
   const ttPanel = document.getElementById('ttPanel');
+  const fbPanel = document.getElementById('fbPanel');
   if (gsPanel) gsPanel.style.display = (src === 'google_search') ? 'block' : 'none';
   if (igPanel) igPanel.style.display = (src === 'instagram')     ? 'block' : 'none';
   if (ttPanel) ttPanel.style.display = (src === 'tiktok')        ? 'block' : 'none';
+  if (fbPanel) fbPanel.style.display = (src === 'facebook')      ? 'block' : 'none';
 }
 
 // ── Google Search / Instagram inline tools ───────────────────────────────────
 // Both write their parsed rows into _toolResults[kind] so _exportToolCsv can
 // re-serialise the exact set the user sees in the table.
-const _toolResults = { gs: [], ig: [], tt: [] };
+const _toolResults = { gs: [], ig: [], tt: [], fb: [] };
 const _IG_PLACEHOLDERS = {
   username: '例：@natgeo',
   profile:  '例：https://www.instagram.com/natgeo/',
@@ -4650,6 +4697,55 @@ async function startTikTokScrape() {
   }
 }
 
+function _fbAddKeywordRow() {
+  const wrap = document.getElementById('fbKeywordRows');
+  if (!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'fb-kw-row';
+  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  row.innerHTML = `
+    <input type="text" class="fb-kw-input" placeholder="例：interior designer" autocomplete="off"
+           style="flex:1;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff">
+    <button type="button" onclick="this.parentElement.remove()"
+            style="padding:6px 10px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#94a3b8;cursor:pointer;font-size:0.78rem">×</button>
+  `;
+  wrap.appendChild(row);
+}
+
+async function startFacebookScrape() {
+  const searchTerms = [...document.querySelectorAll('#fbKeywordRows .fb-kw-input')]
+    .map(i => i.value.trim())
+    .filter(Boolean);
+  if (!searchTerms.length) { _showToast('请输入至少一个关键词'); return; }
+  const location   = document.getElementById('fbLocation')?.value.trim() || '';
+  const maxResults = Math.max(1, parseInt(document.getElementById('fbMaxResults')?.value, 10) || 20);
+
+  const token = getStoredToken();
+  if (!token) { _showToast('请先登录'); return; }
+
+  const btn = document.getElementById('fbRunBtn');
+  const status = document.getElementById('fbStatus');
+  const wrap = document.getElementById('fbResultsWrap');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (status) status.textContent = '正在抓取…';
+  if (wrap) wrap.style.display = 'none';
+  _toolResults.fb = [];
+
+  try {
+    const res = await fetch('/api/facebook-scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ searchTerms, location, maxResults }),
+    });
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    await _consumeToolSse(res, 'fb', status);
+  } catch (err) {
+    if (status) status.textContent = '失败：' + err.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
 // Shared SSE reader: collects {type:'row'} into _toolResults[kind] and renders
 // the table at done. Status text reflects running count / final state.
 async function _consumeToolSse(res, kind, statusEl) {
@@ -4693,8 +4789,23 @@ function _renderToolResults(kind) {
 
   const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
   const esc  = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  // Google Search rows get clickable url/website + linkedin columns; empty
+  // values stay as empty cells, no half-rendered anchor tags.
+  const cellHtml = (col, val) => {
+    const s = String(val ?? '');
+    if (!s) return '';
+    if (kind === 'gs') {
+      if (col === 'url' || col === 'website') {
+        return `<a href="${esc(s)}" target="_blank" rel="noopener" style="color:#818cf8;text-decoration:none;">${esc(s)}</a>`;
+      }
+      if (col === 'linkedin') {
+        return `<a href="${esc(s)}" target="_blank" rel="noopener" style="color:#0077b5;text-decoration:none;">LinkedIn →</a>`;
+      }
+    }
+    return esc(s);
+  };
   const head = cols.map(c => `<th style="padding:8px 10px;text-align:left;font-weight:600;color:#cbd5e1;border-bottom:1px solid rgba(255,255,255,0.08);position:sticky;top:0;background:#0b0b0c;font-size:0.78rem">${esc(c)}</th>`).join('');
-  const body = rows.map(r => `<tr>${cols.map(c => `<td style="padding:8px 10px;color:#e5e7eb;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r[c])}</td>`).join('')}</tr>`).join('');
+  const body = rows.map(r => `<tr>${cols.map(c => `<td style="padding:8px 10px;color:#e5e7eb;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cellHtml(c, r[c])}</td>`).join('')}</tr>`).join('');
   tbl.innerHTML = `<table style="width:100%;border-collapse:collapse"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
