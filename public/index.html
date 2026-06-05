@@ -2780,6 +2780,11 @@
           <div class="gm-pill on" data-field="address" onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-map-pin"  style="font-size:14px;color:#f87171" aria-hidden="true"></i>地址</div>
           <div class="gm-pill on" data-field="rating"  onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-star"     style="font-size:14px;color:#fbbf24" aria-hidden="true"></i>评分</div>
           <div class="gm-pill on" data-field="reviews" onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-message-2" style="font-size:14px;color:#a78bfa" aria-hidden="true"></i>评论数</div>
+          <div class="gm-pill on" data-field="email"     onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-mail"             style="font-size:12px;color:#818cf8" aria-hidden="true"></i>邮箱</div>
+          <div class="gm-pill on" data-field="linkedin"  onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-brand-linkedin"   style="font-size:12px;color:#0a66c2" aria-hidden="true"></i>LinkedIn</div>
+          <div class="gm-pill on" data-field="tiktok"    onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-brand-tiktok"     style="font-size:12px;color:#ee1d52" aria-hidden="true"></i>TikTok</div>
+          <div class="gm-pill on" data-field="instagram" onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-brand-instagram"  style="font-size:12px;color:#c13584" aria-hidden="true"></i>Instagram</div>
+          <div class="gm-pill on" data-field="youtube"   onclick="toggleGmPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-brand-youtube"    style="font-size:12px;color:#ff0000" aria-hidden="true"></i>YouTube</div>
         </div>
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
@@ -2817,7 +2822,7 @@
             </button>
           </div>
           <div id="gmResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
-          <button type="button" class="ai-next-btn" onclick="goToStep(3)"
+          <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
             下一步 → AI 分析
           </button>
@@ -2866,7 +2871,7 @@
             </button>
           </div>
           <div id="gsResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
-          <button type="button" class="ai-next-btn" onclick="goToStep(3)"
+          <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
             下一步 → AI 分析
           </button>
@@ -2926,7 +2931,7 @@
             </button>
           </div>
           <div id="igResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
-          <button type="button" class="ai-next-btn" onclick="goToStep(3)"
+          <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
             下一步 → AI 分析
           </button>
@@ -2983,7 +2988,7 @@
             </button>
           </div>
           <div id="ttResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
-          <button type="button" class="ai-next-btn" onclick="goToStep(3)"
+          <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
             下一步 → AI 分析
           </button>
@@ -3043,7 +3048,7 @@
             </button>
           </div>
           <div id="fbResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
-          <button type="button" class="ai-next-btn" onclick="goToStep(3)"
+          <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
             下一步 → AI 分析
           </button>
@@ -4456,6 +4461,20 @@ function goToStep(n) {
   }
 }
 function nextStep(n) { goToStep(n); }
+
+// Direct entry to the AI 分析 panel from the data-source result wraps
+// (gm/gs/ig/tt/fb). Skips goToStep(3)'s country/type + kwInput checks because
+// those tools produce results without going through the wizard's config step.
+function showAiAnalysisPanel() {
+  document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
+  const panel = document.getElementById('wizard-step-3');
+  if (!panel) return;
+  panel.classList.remove('hidden');
+  currentStep = 3;
+  try { localStorage.setItem('leadgen_current_step', 3); } catch (_) {}
+  if (typeof _updateStepper === 'function') _updateStepper(3);
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 function updateStepProgress() {
   localStorage.setItem('leadgen_current_step', currentStep);

@@ -2355,20 +2355,60 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       if (aborted) break;
       const emails = Array.isArray(it.emails) ? it.emails : (it.email ? [it.email] : []);
       const bizEmail = emails.find(e => !/(gmail|hotmail|yahoo|outlook)\./i.test(e)) || emails[0] || '';
+      const website = it.website || '';
+
+      // Mirror /api/google-search enrichment: fetch the place's website and
+      // scrape email + social handles from the HTML. Failures are non-fatal —
+      // empty fields fall through into the projection below.
+      let scraped = { email: '', linkedin: '', tiktok: '', instagram: '', youtube: '' };
+      if (website) {
+        try {
+          const htmlResp = await axios.get(website, {
+            timeout: 10000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+            maxRedirects: 3,
+          });
+          const html = htmlResp.data || '';
+          const emailMatch     = html.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+          const linkedinMatch  = html.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-_%]+/);
+          const tiktokMatch    = html.match(/tiktok\.com\/@[a-zA-Z0-9._]+/);
+          const instagramMatch = html.match(/instagram\.com\/[a-zA-Z0-9._]+/);
+          const youtubeMatch   = html.match(/youtube\.com\/(?:@|channel\/|user\/)[a-zA-Z0-9._\-]+/);
+
+          scraped.email     = emailMatch ? (emailMatch.filter(e => !e.includes('example') && !e.includes('test'))[0] || '') : '';
+          scraped.linkedin  = linkedinMatch  ? 'https://www.' + linkedinMatch[0]  : '';
+          scraped.tiktok    = tiktokMatch    ? 'https://www.' + tiktokMatch[0]    : '';
+          scraped.instagram = instagramMatch ? 'https://www.' + instagramMatch[0] : '';
+          scraped.youtube   = youtubeMatch   ? 'https://www.' + youtubeMatch[0]   : '';
+          console.log('[GoogleMapsTool DirectScrape]', website, scraped);
+        } catch (err) {
+          console.log('[GoogleMapsTool DirectScrape]', website, { error: err.message });
+        }
+      }
+
       const full = {
-        name:     it.title || '',
-        website:  it.website || '',
-        phone:    it.phone || it.phoneUnformatted || '',
-        email:    bizEmail,
-        address:  it.address || '',
-        industry: it.categoryName || '',
-        rating:   it.totalScore || '',
-        reviews:  it.reviewsCount ?? '',
-        mapsUrl:  it.url || '',
+        name:      it.title || '',
+        website,
+        phone:     it.phone || it.phoneUnformatted || '',
+        email:     scraped.email || bizEmail,
+        linkedin:  scraped.linkedin,
+        tiktok:    scraped.tiktok,
+        instagram: scraped.instagram,
+        youtube:   scraped.youtube,
+        address:   it.address || '',
+        industry:  it.categoryName || '',
+        rating:    it.totalScore || '',
+        reviews:   it.reviewsCount ?? '',
+        mapsUrl:   it.url || '',
       };
       const row = Object.fromEntries(fields.filter(k => k in full).map(k => [k, full[k]]));
       send({ type: 'row', row });
       emitted++;
+
+      // 500ms spacing between enrichment fetches, matching /api/google-search.
+      if (website && !aborted) {
+        await new Promise(r => setTimeout(r, 500));
+      }
     }
     send({ type: 'done', success: true, total: emitted });
   } catch (err) {
