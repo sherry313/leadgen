@@ -1709,6 +1709,14 @@
     @keyframes dsFloat2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
     @keyframes dsFloat3 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
     @keyframes dsFloat4 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+    @keyframes dsF1{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    @keyframes dsF2{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @keyframes dsF3{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+    @keyframes dsF4{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+    @keyframes dsF5{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @keyframes dsF6{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    @keyframes dsF7{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+    @keyframes dsF8{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
     .method-icon.ic-f1 { animation: dsFloat1 3s   ease-in-out infinite; }
     .method-icon.ic-f2 { animation: dsFloat2 3.5s ease-in-out infinite; }
     .method-icon.ic-f3 { animation: dsFloat3 4s   ease-in-out infinite; }
@@ -1746,11 +1754,13 @@
       gap: 10px;
     }
     #wizard-step-2 .ds-grid {
-      background: #181e28;
-      border: 1px solid #252d3d;
-      border-radius: 12px;
-      padding: 1rem 1.1rem;
-      margin-bottom: .75rem;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      margin-bottom: 0;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
     .ds-card {
       display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
@@ -2080,15 +2090,28 @@
       padding: 0;
     }
     .ws-body .ds-card {
-      padding: 12px 16px;
+      padding: 20px 12px;
       border-radius: 12px;
       font-size: 13px;
+      font-weight: 600;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      transition: 0.15s;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      background: #0f1318;
+      border: 1px solid rgba(255,255,255,0.06);
+      color: #cbd5e1;
+      transition: all 0.2s;
     }
-    .ws-body .ds-card:hover { transform: translateY(-1px); }
+    .ws-body .ds-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99,179,237,0.5);
+      box-shadow: 0 0 0 1px rgba(99,179,237,0.2), 0 6px 20px rgba(99,179,237,0.12);
+    }
+    .ws-body .ds-card .ds-icon { font-size: 28px; }
+    .ws-body .ds-card .ds-name { font-size: 13px; font-weight: 600; }
 
     /* When sections are moved into wizard body slots, strip their original
        top/bottom margins so they fit the card padding cleanly. */
@@ -2578,11 +2601,11 @@
       </div>
 
       <div class="ws-card" id="ws2" style="display:none">
-        <button type="button" class="ws-back" onclick="wizardGo(1)">← 返回</button>
-        <div class="ws-icon ws-icon-purple"><i class="ti ti-database"></i></div>
-        <h3 class="ws-title">从哪里搜索？</h3>
-        <div class="ws-sub">选择数据来源</div>
-        <div class="ws-body" id="ws2Body"></div>
+        <div class="ws2-topbar" style="display:flex;align-items:center;gap:14px;width:100%;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:22px">
+          <button type="button" class="ws-back" onclick="wizardGo(1)" style="margin:0;align-self:auto;flex-shrink:0">← 返回</button>
+          <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;color:#e5e7eb;letter-spacing:-0.01em">第二步：搜索配置</div>
+        </div>
+        <div class="ws-body" id="ws2Body" style="text-align:left"></div>
         <div class="ws-nav">
           <button type="button" class="ws-next" onclick="wizardGo(3)">下一步 →</button>
         </div>
@@ -2731,69 +2754,69 @@
 
     <!-- Data source (8 sources) -->
     <div id="dataSourceSection" style="margin-top:20px;margin-bottom:20px">
-      <label>数据源</label>
+      <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:12px">选择数据源</label>
       <div class="ds-grid" id="dsGrid">
         <button type="button" class="ds-card selected" id="ds-google_maps" onclick="selectSource('google_maps')">
-          <span class="ds-icon">🗺️</span><span class="ds-name">Google Maps</span>
+          <span class="ds-icon"><i class="ti ti-map-pin" style="font-size:28px;color:#34d399;animation:dsF1 3s ease-in-out infinite" aria-hidden="true"></i></span><span class="ds-name">Google Maps</span>
         </button>
         <button type="button" class="ds-card" id="ds-google_search" onclick="selectSource('google_search')">
-          <span class="ds-icon">🔍</span><span class="ds-name">Google Search</span>
+          <span class="ds-icon"><i class="ti ti-search" style="font-size:28px;color:#818cf8;animation:dsF2 3.5s ease-in-out infinite" aria-hidden="true"></i></span><span class="ds-name">Google Search</span>
         </button>
         <button type="button" class="ds-card" id="ds-instagram" onclick="selectSource('instagram')">
-          <span class="ds-icon">📷</span><span class="ds-name">Instagram</span>
+          <span class="ds-icon"><i class="ti ti-brand-instagram" style="font-size:28px;color:#c13584;animation:dsF3 2.8s ease-in-out infinite" aria-hidden="true"></i></span><span class="ds-name">Instagram</span>
         </button>
         <button type="button" class="ds-card" id="ds-tiktok" onclick="selectSource('tiktok')">
-          <span class="ds-icon">🎵</span><span class="ds-name">TikTok</span>
+          <span class="ds-icon"><i class="ti ti-brand-tiktok" style="font-size:28px;color:#ee1d52;animation:dsF4 3.2s ease-in-out infinite" aria-hidden="true"></i></span><span class="ds-name">TikTok</span>
         </button>
         <button type="button" class="ds-card" id="ds-facebook" onclick="selectSource('facebook')">
-          <span class="ds-icon">👍</span><span class="ds-name">Facebook</span>
+          <span class="ds-icon"><i class="ti ti-brand-facebook" style="font-size:28px;color:#1877f2;animation:dsF5 4s ease-in-out infinite" aria-hidden="true"></i></span><span class="ds-name">Facebook</span>
         </button>
         <button type="button" class="ds-card" id="ds-linkedin" onclick="selectSource('linkedin')">
-          <span class="ds-icon">💼</span><span class="ds-name">LinkedIn</span>
+          <span class="ds-icon"><i class="ti ti-brand-linkedin" style="font-size:28px;color:#0a66c2;animation:dsF6 3.6s ease-in-out infinite" aria-hidden="true"></i></span><span class="ds-name">LinkedIn</span>
           <span class="ds-coming">即将上线</span>
         </button>
         <button type="button" class="ds-card" id="ds-twitter" onclick="selectSource('twitter')">
-          <span class="ds-icon">𝕏</span><span class="ds-name">X / Twitter</span>
+          <span class="ds-icon"><i class="ti ti-brand-x" style="font-size:28px;color:#ffffff;animation:dsF7 2.6s ease-in-out infinite" aria-hidden="true"></i></span><span class="ds-name">X / Twitter</span>
           <span class="ds-coming">即将上线</span>
         </button>
         <button type="button" class="ds-card" id="ds-youtube" onclick="selectSource('youtube')">
-          <span class="ds-icon">▶️</span><span class="ds-name">YouTube</span>
+          <span class="ds-icon"><i class="ti ti-brand-youtube" style="font-size:28px;color:#ff0000;animation:dsF8 3.8s ease-in-out infinite" aria-hidden="true"></i></span><span class="ds-name">YouTube</span>
           <span class="ds-coming">即将上线</span>
         </button>
       </div>
 
       <!-- ── Google Search panel (shown when ds-google_search is clicked) ── -->
-      <div id="gsPanel" class="ds-tool-panel" style="display:none;margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:600;color:#e5e7eb">
-          <i class="ti ti-search"></i>Google Search 抓取
+      <div id="gsPanel" class="ds-tool-panel" style="display:none;margin-top:0;padding:0;background:transparent;border:0;border-radius:0">
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0 22px">
+
+        <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:12px">提取内容</label>
+        <div id="gsFieldPills" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:0">
+          <div class="gs-pill on" data-field="email" onclick="toggleGsPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-mail" style="font-size:14px;color:#818cf8" aria-hidden="true"></i>邮箱</div>
+          <div class="gs-pill on" data-field="phone" onclick="toggleGsPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-phone" style="font-size:14px;color:#34d399" aria-hidden="true"></i>电话</div>
+          <div class="gs-pill on" data-field="website" onclick="toggleGsPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-world" style="font-size:14px;color:#60a5fa" aria-hidden="true"></i>官网</div>
+          <div class="gs-pill on" data-field="linkedin" onclick="toggleGsPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-brand-linkedin" style="font-size:14px;color:#0a66c2" aria-hidden="true"></i>LinkedIn</div>
+          <div class="gs-pill on" data-field="tiktok" onclick="toggleGsPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-brand-tiktok" style="font-size:14px;color:#ee1d52" aria-hidden="true"></i>TikTok</div>
+          <div class="gs-pill on" data-field="instagram" onclick="toggleGsPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-brand-instagram" style="font-size:14px;color:#c13584" aria-hidden="true"></i>Instagram</div>
+          <div class="gs-pill on" data-field="youtube" onclick="toggleGsPill(this)" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.6);background:rgba(99,102,241,0.1);cursor:pointer;font-size:12px;color:#a5b4fc;transition:all 0.15s"><i class="ti ti-brand-youtube" style="font-size:14px;color:#ff0000" aria-hidden="true"></i>YouTube</div>
         </div>
 
-        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">搜索关键词</label>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:22px 0">
+
+        <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
         <input type="text" id="gsKeyword" placeholder="例：interior designer Sydney" autocomplete="off"
-               style="width:100%;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
+               style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;margin-bottom:16px;box-sizing:border-box">
 
-        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">提取内容</label>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px">
-          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="email"    checked> 邮箱</label>
-          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="phone"    checked> 电话</label>
-          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="website"  checked> 官网</label>
-          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="linkedin"  checked> LinkedIn</label>
-          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="tiktok"    checked> TikTok</label>
-          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="instagram" checked> Instagram</label>
-          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="youtube"   checked> YouTube</label>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+          <label for="gsMaxResults" style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin:0">最多结果数</label>
+          <input type="number" id="gsMaxResults" value="50" min="1" max="500"
+                 style="width:70px;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box">
         </div>
 
-        <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">最多结果数</label>
-        <input type="number" id="gsMaxResults" value="50" min="1" max="500"
-               style="width:120px;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;margin-bottom:12px">
-
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button type="button" id="gsRunBtn" onclick="startGoogleSearch()"
-                  style="padding:9px 16px;background:#6366f1;border:0;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
-            <i class="ti ti-player-play"></i>开始搜索
-          </button>
-          <span id="gsStatus" style="color:#94a3b8;font-size:0.85rem"></span>
-        </div>
+        <button type="button" id="gsRunBtn" onclick="startGoogleSearch()"
+                style="width:100%;padding:13px;background:rgba(125,211,252,0.06);border:1px solid rgba(125,211,252,0.4);border-radius:10px;color:#7dd3fc;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s">
+          <i class="ti ti-player-play"></i>开始搜索
+        </button>
+        <span id="gsStatus" style="display:block;margin-top:10px;color:#94a3b8;font-size:0.82rem;text-align:center"></span>
 
         <div id="gsResultsWrap" style="display:none;margin-top:16px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -4597,7 +4620,7 @@ async function startGoogleSearch() {
   const keyword = document.getElementById('gsKeyword')?.value.trim() || '';
   if (!keyword) { _showToast('请输入搜索关键词'); return; }
   const maxResults = Math.max(1, parseInt(document.getElementById('gsMaxResults')?.value, 10) || 50);
-  const fields = [...document.querySelectorAll('#gsPanel .gs-field-chk input:checked')].map(c => c.dataset.field);
+  const fields = Array.from(document.querySelectorAll('#gsFieldPills .gs-pill.on')).map(p => p.dataset.field);
   if (!fields.length) { _showToast('请至少选择一项提取内容'); return; }
 
   const token = getStoredToken();
@@ -4623,6 +4646,19 @@ async function startGoogleSearch() {
     if (status) status.textContent = '失败：' + err.message;
   } finally {
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+function toggleGsPill(el) {
+  el.classList.toggle('on');
+  if (el.classList.contains('on')) {
+    el.style.borderColor = 'rgba(99,102,241,0.6)';
+    el.style.background = 'rgba(99,102,241,0.1)';
+    el.style.color = '#a5b4fc';
+  } else {
+    el.style.borderColor = 'rgba(255,255,255,0.08)';
+    el.style.background = 'rgba(255,255,255,0.03)';
+    el.style.color = 'rgba(255,255,255,0.4)';
   }
 }
 
