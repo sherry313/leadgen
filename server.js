@@ -2254,13 +2254,22 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
           const email         = emailMatch ? emailMatch.filter(e => !e.includes('example') && !e.includes('test'))[0] || '' : '';
           const phoneMatch    = html.match(/(\+61|0)[0-9\s\-\(\)]{8,14}/);
           const phone         = phoneMatch ? phoneMatch[0].trim() : '';
-          const linkedinMatch = html.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-_%]+/);
-          const linkedin      = linkedinMatch ? 'https://www.' + linkedinMatch[0] : '';
+          const linkedinMatch  = html.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-_%]+/);
+          const linkedin       = linkedinMatch ? 'https://www.' + linkedinMatch[0] : '';
+          const tiktokMatch    = html.match(/tiktok\.com\/@[a-zA-Z0-9._]+/);
+          const tiktok         = tiktokMatch ? 'https://www.' + tiktokMatch[0] : '';
+          const instagramMatch = html.match(/instagram\.com\/[a-zA-Z0-9._]+/);
+          const instagram      = instagramMatch ? 'https://www.' + instagramMatch[0] : '';
+          const youtubeMatch   = html.match(/youtube\.com\/(?:@|channel\/|user\/)[a-zA-Z0-9._\-]+/);
+          const youtube        = youtubeMatch ? 'https://www.' + youtubeMatch[0] : '';
 
-          console.log('[DirectScrape]', url, { email, phone, linkedin });
-          it.email    = email    || it.email    || '';
-          it.phone    = phone    || it.phone    || '';
-          it.linkedin = linkedin || it.linkedin || '';
+          console.log('[DirectScrape]', url, { email, phone, linkedin, tiktok, instagram, youtube });
+          it.email     = email     || it.email     || '';
+          it.phone     = phone     || it.phone     || '';
+          it.linkedin  = linkedin  || it.linkedin  || '';
+          it.tiktok    = tiktok;
+          it.instagram = instagram;
+          it.youtube   = youtube;
         } catch (err) {
           console.log('[DirectScrape]', url, { error: err.message });
         }
@@ -2271,6 +2280,9 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
       if (fields.includes('phone'))    row.phone    = (Array.isArray(it.phones) ? it.phones[0] : it.phone) || '';
       if (fields.includes('website'))  row.website  = it.website || url || '';
       if (fields.includes('linkedin')) row.linkedin = it.linkedin || (Array.isArray(it.socialProfiles) ? (it.socialProfiles.find(p => /linkedin/i.test(p.url || p.platform || ''))?.url || '') : '');
+      if (fields.includes('tiktok'))    row.tiktok    = it.tiktok    || '';
+      if (fields.includes('instagram')) row.instagram = it.instagram || '';
+      if (fields.includes('youtube'))   row.youtube   = it.youtube   || '';
       send({ type: 'row', row });
       emitted++;
 

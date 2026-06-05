@@ -2777,7 +2777,10 @@
           <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="email"    checked> 邮箱</label>
           <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="phone"    checked> 电话</label>
           <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="website"  checked> 官网</label>
-          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="linkedin" checked> LinkedIn</label>
+          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="linkedin"  checked> LinkedIn</label>
+          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="tiktok"    checked> TikTok</label>
+          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="instagram" checked> Instagram</label>
+          <label class="gs-field-chk" style="display:inline-flex;align-items:center;gap:6px;color:#e5e7eb;font-size:0.85rem"><input type="checkbox" data-field="youtube"   checked> YouTube</label>
         </div>
 
         <label style="display:block;font-size:0.85rem;color:#cbd5e1;margin-bottom:4px">最多结果数</label>
@@ -4800,6 +4803,10 @@ function _renderToolResults(kind) {
       }
       if (col === 'linkedin') {
         return `<a href="${esc(s)}" target="_blank" rel="noopener" style="color:#0077b5;text-decoration:none;">LinkedIn →</a>`;
+      }
+      const socialLabels = { tiktok: 'TikTok', instagram: 'Instagram', youtube: 'YouTube' };
+      if (socialLabels[col]) {
+        return `<a href="${esc(s)}" target="_blank" rel="noopener" style="color:#818cf8;text-decoration:none;">${socialLabels[col]} →</a>`;
       }
     }
     return esc(s);
