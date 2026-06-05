@@ -4465,6 +4465,8 @@ function nextStep(n) { goToStep(n); }
 // Direct entry to the AI 分析 panel from the data-source result wraps
 // (gm/gs/ig/tt/fb). Skips goToStep(3)'s country/type + kwInput checks because
 // those tools produce results without going through the wizard's config step.
+// Also normalises everything currently in _toolResults into window._appLeads
+// so the /app #appAiPanel can render filter + lead-list state immediately.
 function showAiAnalysisPanel() {
   document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
   const panel = document.getElementById('wizard-step-3');
@@ -4473,6 +4475,28 @@ function showAiAnalysisPanel() {
   currentStep = 3;
   try { localStorage.setItem('leadgen_current_step', 3); } catch (_) {}
   if (typeof _updateStepper === 'function') _updateStepper(3);
+
+  // Gather + normalise rows across all data-source results. Each source uses
+  // slightly different keys for the company-name field — fall through in
+  // order: name → title → username.
+  if (typeof window.setAppLeads === 'function' && typeof _toolResults !== 'undefined') {
+    const leads = [];
+    for (const kind of ['gm','gs','ig','tt','fb']) {
+      for (const row of (_toolResults[kind] || [])) {
+        leads.push({
+          source:   kind,
+          name:     row.name || row.title || row.username || '',
+          email:    row.email || '',
+          website:  row.website || row.url || '',
+          phone:    row.phone || '',
+          linkedin: row.linkedin || '',
+          raw:      row,
+        });
+      }
+    }
+    window.setAppLeads(leads);
+  }
+
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -9203,6 +9227,15 @@ async function smtpSendAll() {
   // parent ResultsWrap still gates real visibility (only shows when populated).
   document.querySelectorAll('.ai-next-btn').forEach(b => { b.style.display = ''; });
 
+  // wizard-step-3 on /app: hide the manual/auto mode chooser entirely. This
+  // single .mode-chooser hide covers #manualModeCard (手动模式 + #btnStart),
+  // #autoModeCard (一键自动运行 #btnAutoRun + #autoProgress), and
+  // #campaignSelectorRow (the Instantly campaign selector). The title/sub
+  // text describes those modes so they go too.
+  hide(document.querySelector('#wizard-step-3 .mode-chooser'));
+  hide(document.querySelector('#wizard-step-3 > .panel-title'));
+  hide(document.querySelector('#wizard-step-3 > .panel-sub'));
+
   const smtpPanel = document.getElementById('smtpPanel');
   if (smtpPanel) smtpPanel.style.display = 'block';
 })();
@@ -9225,6 +9258,222 @@ async function smtpSendAll() {
   document.querySelectorAll('.step-back-btn').forEach(btn => {
     if (btn.textContent.includes('返回方式选择')) hide(btn);
   });
+})();
+
+// ── /app AI 分析 panel ────────────────────────────────────────────────────────
+// Replaces the /lens manual/auto mode chooser inside #wizard-step-3 with a
+// stripped-down filter + lead list + framework picker + generate button.
+// Lead data flows in via window.setAppLeads(leads), called from
+// showAiAnalysisPanel() once the user clicks "下一步 → AI 分析" in a data-
+// source result wrap. /lens is untouched (early return).
+//
+// applyStep4HubVisibility already hides #wizard-step-3's .mode-chooser,
+// .panel-title and .panel-sub on /app, so this IIFE only needs to MOUNT the
+// new panel, not hide the old one.
+(function mountAppAiAnalysisPanel() {
+  if (location.pathname === '/lens') return;
+
+  const step3 = document.getElementById('wizard-step-3');
+  if (!step3) return;
+
+  // Active filters live on the panel via classList.contains('on') on each pill;
+  // mirrored into this Set for fast lookups during re-render.
+  const activeFilters = new Set();
+  // Normalized leads — { source, name, email, website, phone, linkedin, raw }.
+  // Stored on window so the data-source result wraps can write to it.
+  window._appLeads = window._appLeads || [];
+  // Per-row selection state, keyed by index into window._appLeads.
+  const selected = new Set();
+
+  const FILTERS = [
+    { key: 'email',    label: '有邮箱' },
+    { key: 'website',  label: '有官网' },
+    { key: 'phone',    label: '有电话' },
+    { key: 'linkedin', label: '有LinkedIn' },
+  ];
+
+  const FRAMEWORKS = [
+    { value: 'cold_5_step', label: 'cold_5_step — B2B 销售' },
+    { value: 'aida',        label: 'AIDA' },
+    { value: 'bab',         label: 'BAB' },
+    { value: 'pas',         label: 'PAS' },
+    { value: 'byaf',        label: 'BYAF' },
+    { value: 'sch',         label: 'SCH' },
+    { value: 'three_ps',    label: '三步法' },
+  ];
+
+  // Pill styles — uses CSS-var-with-fallback so the panel keeps working if the
+  // host theme defines these tokens, and renders with indigo tints otherwise.
+  const PILL_ON  = 'display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:12px;transition:all 0.15s;'
+                 + 'background:var(--color-background-info, rgba(99,102,241,0.15));'
+                 + 'color:var(--color-text-info, #a5b4fc);'
+                 + 'border:0.5px solid var(--color-border-primary, rgba(99,102,241,0.6));';
+  const PILL_OFF = 'display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:12px;transition:all 0.15s;'
+                 + 'background:var(--color-background-secondary, rgba(255,255,255,0.04));'
+                 + 'color:var(--color-text-secondary, rgba(255,255,255,0.5));'
+                 + 'border:0.5px solid transparent;';
+
+  // Build the panel DOM.
+  const panel = document.createElement('div');
+  panel.id = 'appAiPanel';
+  panel.style.cssText = 'margin-top:18px';
+  panel.innerHTML = `
+    <div style="margin-bottom:18px">
+      <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">筛选</label>
+      <div id="appFilterPills" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 2px">
+      <input type="checkbox" id="appSelectAll" style="cursor:pointer;width:16px;height:16px;accent-color:#6366f1">
+      <label for="appSelectAll" style="font-size:13px;color:#cbd5e1;cursor:pointer">全选</label>
+      <span id="appFilteredCount" style="margin-left:auto;font-size:12px;color:#94a3b8">已筛选 0 条</span>
+    </div>
+
+    <div id="appLeadList" style="max-height:300px;overflow-y:auto;border:1px solid rgba(255,255,255,0.08);border-radius:8px;background:rgba(0,0,0,0.15)"></div>
+
+    <div style="margin-top:18px;margin-bottom:14px">
+      <label for="appFrameworkSelect" style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:8px">邮件框架</label>
+      <select id="appFrameworkSelect" style="width:100%;padding:10px 12px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:13px;outline:none">
+        ${FRAMEWORKS.map(f => `<option value="${f.value}">${f.label}</option>`).join('')}
+      </select>
+    </div>
+
+    <button type="button" id="appGenerateBtn" onclick="startAppEmailGeneration()" style="width:100%;padding:11px;background:#6366f1;border:0;border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer">
+      生成 0 封邮件
+    </button>
+  `;
+  step3.appendChild(panel);
+
+  // Mount filter pills (separately because we attach listeners + need refs).
+  const pillsHost = panel.querySelector('#appFilterPills');
+  FILTERS.forEach(f => {
+    const p = document.createElement('div');
+    p.className = 'app-filter-pill';
+    p.dataset.filter = f.key;
+    p.textContent = f.label;
+    p.style.cssText = PILL_OFF;
+    p.onclick = () => window.toggleAppFilter(p);
+    pillsHost.appendChild(p);
+  });
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const matchesFilters = (lead) => {
+    for (const f of activeFilters) if (!lead[f]) return false;
+    return true;
+  };
+
+  function renderLeadList() {
+    const host = panel.querySelector('#appLeadList');
+    const leads = window._appLeads || [];
+
+    if (!leads.length) {
+      host.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:13px">暂无数据，请先搜索</div>';
+      panel.querySelector('#appFilteredCount').textContent = '已筛选 0 条';
+      window.updateAppGenerateBtn();
+      window.updateAppSelectAll();
+      return;
+    }
+
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const tag = (txt, color) => `<span style="font-size:11px;color:${color};background:rgba(255,255,255,0.04);padding:2px 7px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${esc(txt)}</span>`;
+
+    let visibleCount = 0;
+    host.innerHTML = leads.map((lead, idx) => {
+      const passes = matchesFilters(lead);
+      if (passes) visibleCount++;
+      const rowOpacity = passes ? '1' : '0.4';
+      const cbDisabled = passes ? '' : 'disabled';
+      const isChecked  = selected.has(idx) ? 'checked' : '';
+      const tags = [
+        lead.email    ? tag(lead.email,    '#a5b4fc') : '',
+        lead.website  ? tag(lead.website,  '#60a5fa') : '',
+        lead.phone    ? tag(lead.phone,    '#34d399') : '',
+        lead.linkedin ? tag('LinkedIn',    '#0a66c2') : '',
+      ].filter(Boolean).join('');
+      return `<div class="app-lead-row" data-idx="${idx}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);opacity:${rowOpacity};transition:opacity 0.15s">
+        <input type="checkbox" class="app-lead-cb" data-idx="${idx}" ${isChecked} ${cbDisabled} style="cursor:pointer;width:15px;height:15px;accent-color:#6366f1;flex-shrink:0">
+        <div style="flex:1;min-width:0">
+          <div style="color:#e5e7eb;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(lead.name) || '<span style="color:#64748b">（无名称）</span>'}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">${tags}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Drop selections on rows no longer passing filters.
+    for (const idx of [...selected]) {
+      if (!matchesFilters(leads[idx])) selected.delete(idx);
+    }
+
+    panel.querySelector('#appFilteredCount').textContent = `已筛选 ${visibleCount} 条`;
+
+    // Wire per-row checkbox listeners.
+    host.querySelectorAll('.app-lead-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const idx = parseInt(cb.dataset.idx, 10);
+        if (cb.checked) selected.add(idx);
+        else            selected.delete(idx);
+        window.updateAppGenerateBtn();
+        window.updateAppSelectAll();
+      });
+    });
+
+    window.updateAppGenerateBtn();
+    window.updateAppSelectAll();
+  }
+
+  // ── Globals ────────────────────────────────────────────────────────────────
+  window.toggleAppFilter = function (el) {
+    const key = el.dataset.filter;
+    if (activeFilters.has(key)) { activeFilters.delete(key); el.style.cssText = PILL_OFF; }
+    else                        { activeFilters.add(key);    el.style.cssText = PILL_ON;  }
+    renderLeadList();
+  };
+
+  window.updateAppSelectAll = function () {
+    const cb = panel.querySelector('#appSelectAll');
+    if (!cb) return;
+    const leads = window._appLeads || [];
+    const passing = leads.map((l, i) => matchesFilters(l) ? i : -1).filter(i => i >= 0);
+    if (!passing.length)                        { cb.checked = false; cb.indeterminate = false; return; }
+    const checkedPassing = passing.filter(i => selected.has(i)).length;
+    cb.checked       = checkedPassing === passing.length;
+    cb.indeterminate = checkedPassing > 0 && checkedPassing < passing.length;
+  };
+
+  window.updateAppGenerateBtn = function () {
+    const btn = panel.querySelector('#appGenerateBtn');
+    if (!btn) return;
+    btn.textContent = `生成 ${selected.size} 封邮件`;
+    btn.disabled = selected.size === 0;
+    btn.style.opacity = selected.size === 0 ? '0.6' : '1';
+    btn.style.cursor  = selected.size === 0 ? 'not-allowed' : 'pointer';
+  };
+
+  window.setAppLeads = function (leads) {
+    window._appLeads = Array.isArray(leads) ? leads.slice() : [];
+    selected.clear();
+    renderLeadList();
+  };
+
+  window.startAppEmailGeneration = function () {
+    const leads = window._appLeads || [];
+    const picked = [...selected].sort((a, b) => a - b).map(i => leads[i]).filter(Boolean);
+    const framework = panel.querySelector('#appFrameworkSelect')?.value || '';
+    console.log('[startAppEmailGeneration] framework=', framework, 'leads=', picked);
+    // TODO: wire to the real generation endpoint once the /app flow is finalised.
+  };
+
+  // Master select-all toggle.
+  panel.querySelector('#appSelectAll').addEventListener('change', (e) => {
+    const leads = window._appLeads || [];
+    const passing = leads.map((l, i) => matchesFilters(l) ? i : -1).filter(i => i >= 0);
+    if (e.target.checked) passing.forEach(i => selected.add(i));
+    else                  passing.forEach(i => selected.delete(i));
+    renderLeadList();
+  });
+
+  // Initial render — empty state until setAppLeads is called.
+  renderLeadList();
 })();
 
 // ── Website list upload & enrich ──────────────────────────────────────────────
