@@ -9494,6 +9494,10 @@ async function smtpSendAll() {
     resultsEl.style.display = 'none';
     resultsEl.innerHTML = '';
 
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    let emails = [];
+    let serverError = null;
+
     try {
       const token = (typeof getStoredToken === 'function') ? getStoredToken() : '';
       const res = await fetch('/api/generate-emails', {
@@ -9504,25 +9508,67 @@ async function smtpSendAll() {
         },
         body: JSON.stringify({ leads: picked, framework }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
-      // Success: collapse the status banner into a green confirmation, render
-      // the returned emails (if any) in the preview slot below the button.
+      // SSE reader — same shape as _consumeToolSse:
+      //   • split on \n\n, find the line that starts with "data:"
+      //   • heartbeat frames (": heartbeat\n\n") have no data: line, so the
+      //     find() returns undefined and we skip naturally — no extra branch.
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      streamLoop:
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let idx;
+        while ((idx = buf.indexOf('\n\n')) !== -1) {
+          const chunk = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          const line = chunk.split('\n').find(l => l.startsWith('data:'));
+          if (!line) continue;
+          let evt;
+          try { evt = JSON.parse(line.slice(5).trim()); } catch { continue; }
+
+          if (evt.type === 'progress') {
+            // Server emits { current, total, companyName, message } — prefer
+            // the structured fields so the rendered label stays consistent
+            // even if the server message wording changes.
+            const label = evt.companyName ? ` — ${evt.companyName}` : '';
+            statusEl.textContent = (evt.current && evt.total)
+              ? `正在分析 ${evt.current}/${evt.total}${label}`
+              : (evt.message || '正在生成邮件，请稍候...');
+          } else if (evt.type === 'done') {
+            emails = Array.isArray(evt.emails) ? evt.emails : [];
+            break streamLoop;
+          } else if (evt.type === 'error') {
+            serverError = evt.error || '未知错误';
+            break streamLoop;
+          }
+        }
+      }
+
+      if (serverError) throw new Error(serverError);
+
+      // Success: green status, render emails, append the 下一步 → 发送 button.
       statusEl.style.background = 'rgba(34,197,94,0.08)';
       statusEl.style.color = '#86efac';
-      statusEl.textContent = `已生成 ${(data.emails || []).length || picked.length} 封邮件`;
+      statusEl.textContent = `已生成 ${emails.length} 封邮件`;
 
-      const emails = Array.isArray(data.emails) ? data.emails : [];
       if (emails.length) {
-        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-        resultsEl.innerHTML = emails.map((e, i) => `
+        const cardsHtml = emails.map((e, i) => `
           <div style="padding:12px;margin-bottom:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">${i + 1} · ${esc(e.to || e.lead?.name || '')}</div>
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">${i + 1} · ${esc(e.to || e.recipient || e.lead?.name || '')}</div>
             <div style="font-size:13px;color:#e5e7eb;font-weight:600;margin-bottom:6px">${esc(e.subject || '')}</div>
             <div style="font-size:12px;color:#cbd5e1;white-space:pre-wrap;line-height:1.55">${esc(e.body || '')}</div>
           </div>
         `).join('');
+        resultsEl.innerHTML = cardsHtml + `
+          <button type="button" id="appSendNextBtn" onclick="showAppSendPanel()" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
+            下一步 → 发送邮件
+          </button>
+        `;
         resultsEl.style.display = 'block';
       }
     } catch (err) {
@@ -9535,6 +9581,13 @@ async function smtpSendAll() {
       btn.style.opacity = selected.size === 0 ? '0.6' : '1';
       btn.style.cursor  = selected.size === 0 ? 'not-allowed' : 'pointer';
     }
+  };
+
+  // Placeholder for the upcoming send step. Real implementation will likely
+  // open an SMTP/Instantly config drawer; for now just log so the click is
+  // observable end-to-end.
+  window.showAppSendPanel = function () {
+    console.log('[showAppSendPanel] TODO: open send-config panel');
   };
 
   // Master select-all toggle.
