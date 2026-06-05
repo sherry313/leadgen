@@ -9629,8 +9629,10 @@ async function smtpSendAll() {
   };
 
   // Build (or rebuild) the send-config drawer underneath the email preview.
-  // Reads existing SMTP credentials from the legacy SMTP setup section so
-  // /app users who already configured their inbox don't have to retype.
+  // SMTP credentials live in their own inputs inside the drawer (not the
+  // legacy /lens SMTP panel) so /app users have a self-contained send flow.
+  // Values persist to localStorage between sessions under the
+  // leadgen_smtp{Host,Port,User,Pass} keys.
   window.showAppSendPanel = function () {
     const generated = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
     if (!generated.length) { alert('请先生成邮件'); return; }
@@ -9638,16 +9640,14 @@ async function smtpSendAll() {
     const withRecipient = generated.filter(e => (e.email || e.to || '').toString().trim());
     const skipped = generated.length - withRecipient.length;
 
-    // Pull SMTP creds from the existing setup inputs (legacy panel).
-    const readVal = (id) => (document.getElementById(id)?.value || '').toString().trim();
-    const host = readVal('smtpHost') || 'smtp.gmail.com';
-    const port = parseInt(readVal('smtpPort'), 10) || 587;
-    const user = readVal('smtpUser');
-    const pass = document.getElementById('smtpPass')?.value || '';
-    const smtpReady = !!(user && pass);
+    // Pre-populate from localStorage so returning users don't retype.
+    const lsGet = (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
+    const savedHost = lsGet('leadgen_smtpHost');
+    const savedPort = lsGet('leadgen_smtpPort') || '587';
+    const savedUser = lsGet('leadgen_smtpUser');
+    const savedPass = lsGet('leadgen_smtpPass');
 
-    // Mount the drawer once; subsequent calls just repopulate so re-clicks
-    // pick up edits to the legacy SMTP fields.
+    // Mount the drawer once; subsequent calls just repopulate.
     let sendPanel = panel.querySelector('#appSendPanel');
     if (!sendPanel) {
       sendPanel = document.createElement('div');
@@ -9660,22 +9660,31 @@ async function smtpSendAll() {
     const skipNote = skipped
       ? `<div style="font-size:12px;color:#fbbf24;margin-top:4px">⚠ ${skipped} 封因缺少收件邮箱将被跳过</div>`
       : '';
-    const smtpRow = smtpReady
-      ? `<div style="font-size:12px;color:#86efac">✓ 已配置 (${esc(user)} · ${esc(host)}:${port})</div>`
-      : `<div style="font-size:12px;color:#fbbf24">⚠ 请先在 SMTP 设置中填入邮箱与密码</div>`;
-    const canSend = smtpReady && withRecipient.length > 0;
+    const canSend = withRecipient.length > 0;  // SMTP completeness checked at submit
+
+    // Shared input style per spec — used for all 4 SMTP inputs + sender name
+    // so the drawer reads as a single coherent form.
+    const INPUT_STYLE = 'width:100%;padding:9px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-family:inherit;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box';
+    const LABEL_STYLE = "display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:6px";
 
     sendPanel.innerHTML = `
       <div style="font-size:14px;font-weight:600;color:#e5e7eb;margin-bottom:4px">📤 发送邮件</div>
-      <div style="font-size:13px;color:#cbd5e1;margin-bottom:12px">准备发送 ${withRecipient.length} 封邮件${skipNote}</div>
+      <div style="font-size:13px;color:#cbd5e1;margin-bottom:14px">准备发送 ${withRecipient.length} 封邮件${skipNote}</div>
 
-      <label for="smtpSenderName" style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:6px">发件人姓名</label>
-      <input type="text" id="smtpSenderName" placeholder="例：王伟" style="width:100%;padding:9px 12px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:13px;outline:none;margin-bottom:12px;box-sizing:border-box">
+      <label for="smtpSenderName" style="${LABEL_STYLE}">发件人姓名</label>
+      <input type="text" id="smtpSenderName" placeholder="例：王伟" style="${INPUT_STYLE};margin-bottom:14px">
 
-      <div style="padding:10px 12px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;margin-bottom:12px">
-        <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:6px">SMTP 配置</div>
-        ${smtpRow}
-      </div>
+      <label for="appSmtpHost" style="${LABEL_STYLE}">SMTP Host</label>
+      <input type="text" id="appSmtpHost" placeholder="smtp.gmail.com" value="${esc(savedHost)}" style="${INPUT_STYLE}">
+
+      <label for="appSmtpPort" style="${LABEL_STYLE}">SMTP Port</label>
+      <input type="number" id="appSmtpPort" placeholder="587" value="${esc(savedPort)}" style="${INPUT_STYLE}">
+
+      <label for="appSmtpUser" style="${LABEL_STYLE}">邮箱账号</label>
+      <input type="email" id="appSmtpUser" placeholder="you@gmail.com" value="${esc(savedUser)}" style="${INPUT_STYLE}">
+
+      <label for="appSmtpPass" style="${LABEL_STYLE}">邮箱密码/授权码</label>
+      <input type="password" id="appSmtpPass" placeholder="••••••••" value="${esc(savedPass)}" style="${INPUT_STYLE};margin-bottom:14px">
 
       <button type="button" id="appSmtpConfirmBtn" onclick="startAppSmtpSend()" ${canSend ? '' : 'disabled'} style="width:100%;padding:11px;background:#6366f1;border:0;border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:${canSend ? 'pointer' : 'not-allowed'};opacity:${canSend ? '1' : '0.6'}">
         ✓ 确认发送
@@ -9696,14 +9705,41 @@ async function smtpSendAll() {
     if (!toSend.length) return;
 
     const senderName = (panel.querySelector('#smtpSenderName')?.value || '').trim();
-    const host = (document.getElementById('smtpHost')?.value || '').trim() || 'smtp.gmail.com';
-    const port = parseInt(document.getElementById('smtpPort')?.value, 10) || 587;
-    const user = (document.getElementById('smtpUser')?.value || '').trim();
-    const pass = document.getElementById('smtpPass')?.value || '';
-    if (!user || !pass) { alert('请先在 SMTP 设置中填入邮箱与密码'); return; }
+    const host       = (panel.querySelector('#appSmtpHost')?.value     || '').trim();
+    const portStr    = (panel.querySelector('#appSmtpPort')?.value     || '').trim();
+    const user       = (panel.querySelector('#appSmtpUser')?.value     || '').trim();
+    const pass       =  panel.querySelector('#appSmtpPass')?.value     || '';
+
+    const statusEl = panel.querySelector('#appSmtpStatus');
+    const showError = (msg) => {
+      statusEl.style.display    = 'block';
+      statusEl.style.background = 'rgba(239,68,68,0.08)';
+      statusEl.style.color      = '#fca5a5';
+      statusEl.textContent      = msg;
+    };
+
+    // Spec: validate all 4 are filled. Empty port string is also rejected so
+    // we don't silently fall back to 587 when the user blanked the field.
+    if (!host || !portStr || !user || !pass) {
+      showError('请填写完整的 SMTP 配置（Host / Port / 账号 / 密码）');
+      return;
+    }
+    const port = parseInt(portStr, 10);
+    if (!port || port < 1 || port > 65535) {
+      showError('SMTP Port 无效，请填写 1-65535 之间的端口（如 587 或 465）');
+      return;
+    }
+
+    // Persist for next session — write before the request so creds survive
+    // even if the send itself fails.
+    try {
+      localStorage.setItem('leadgen_smtpHost', host);
+      localStorage.setItem('leadgen_smtpPort', String(port));
+      localStorage.setItem('leadgen_smtpUser', user);
+      localStorage.setItem('leadgen_smtpPass', pass);
+    } catch (_) {} // QuotaExceeded / private-mode — non-fatal.
 
     const btn      = panel.querySelector('#appSmtpConfirmBtn');
-    const statusEl = panel.querySelector('#appSmtpStatus');
     const origText = btn?.textContent || '✓ 确认发送';
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'not-allowed'; btn.textContent = '发送中...'; }
     statusEl.style.display    = 'block';
