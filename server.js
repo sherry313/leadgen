@@ -2227,6 +2227,14 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
   res.on('close', () => { aborted = true; });
   const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
 
+  // Persist search history + scraped leads to Supabase (multi-tenant). Non-fatal
+  // — failures are logged via the helpers' internal try/catch and don't affect
+  // the SSE stream. saveLeads at the end is fire-and-forget so the 'done' event
+  // is not delayed by the DB write.
+  let searchId = null;
+  try { searchId = await saveSearchRun({ query: keyword, location: '', maxResults, totalScraped: 0 }, req.userId); } catch (_) {}
+  const collectedLeads = [];
+
   try {
     console.log(`[GoogleSearchTool] "${keyword}" max=${maxResults} fields=${fields.join(',')}`);
     const items = await withTimeout(
@@ -2310,12 +2318,21 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
       if (fields.includes('instagram')) row.instagram = it.instagram || '';
       if (fields.includes('youtube'))   row.youtube   = it.youtube   || '';
       send({ type: 'row', row });
+      collectedLeads.push(row);
       emitted++;
 
       // 500ms spacing between Firecrawl calls to stay under the rate limit.
       if (url && emitted < maxResults && !aborted) {
         await new Promise(r => setTimeout(r, 500));
       }
+    }
+    if (searchId && collectedLeads.length) {
+      saveLeads(searchId, collectedLeads.map(r => ({
+        companyName:  r.title || '',
+        email:        r.email || '',
+        phone:        r.phone || '',
+        website:      r.website || r.url || '',
+      })), req.userId).catch(() => {});
     }
     send({ type: 'done', success: true, total: emitted });
   } catch (err) {
@@ -2351,6 +2368,13 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
   let aborted = false;
   res.on('close', () => { aborted = true; });
   const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  // Persist search history + scraped leads to Supabase (multi-tenant). Non-fatal
+  // — failures don't affect the SSE stream. saveLeads at the end is fire-and-
+  // forget so the 'done' event is not delayed by the DB write.
+  let searchId = null;
+  try { searchId = await saveSearchRun({ query: keywords.join(', '), location, maxResults, totalScraped: 0 }, req.userId); } catch (_) {}
+  const collectedLeads = [];
 
   try {
     // compass~crawler-google-places expects an array of full search strings
@@ -2443,12 +2467,23 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       };
       const row = Object.fromEntries(fields.filter(k => k in full).map(k => [k, full[k]]));
       send({ type: 'row', row });
+      collectedLeads.push(full);
       emitted++;
 
       // 500ms spacing between enrichment fetches, matching /api/google-search.
       if (website && !aborted) {
         await new Promise(r => setTimeout(r, 500));
       }
+    }
+    if (searchId && collectedLeads.length) {
+      saveLeads(searchId, collectedLeads.map(r => ({
+        companyName:  r.name || '',
+        email:        r.email || '',
+        phone:        r.phone || '',
+        website:      r.website || '',
+        city:         r.address || '',
+        googleRating: r.rating ?? null,
+      })), req.userId).catch(() => {});
     }
     send({ type: 'done', success: true, total: emitted });
   } catch (err) {
@@ -2723,6 +2758,11 @@ app.post('/api/instagram-scrape', requireAuth, async (req, res) => {
   res.on('close', () => { aborted = true; });
   const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
 
+  // Persist search history + scraped leads to Supabase (multi-tenant). Non-fatal.
+  let searchId = null;
+  try { searchId = await saveSearchRun({ query: input, location: '', maxResults: maxPosts, totalScraped: 0 }, req.userId); } catch (_) {}
+  const collectedLeads = [];
+
   try {
     console.log(`[InstagramTool] input="${input}" maxPosts=${maxPosts} newerThan="${newerThan}"`);
     const actorInput = { directUrls: [input], maxPostsPerProfile: maxPosts };
@@ -2757,7 +2797,15 @@ app.post('/api/instagram-scrape', requireAuth, async (req, res) => {
       };
       const row = Object.fromEntries(fields.filter(k => k in full).map(k => [k, full[k]]));
       send({ type: 'row', row });
+      collectedLeads.push(full);
       emitted++;
+    }
+    if (searchId && collectedLeads.length) {
+      saveLeads(searchId, collectedLeads.map(r => ({
+        companyName:  r.username || '',
+        email:        r.email || '',
+        website:      r.bioLink || r.postUrl || '',
+      })), req.userId).catch(() => {});
     }
     send({ type: 'done', success: true, total: emitted });
   } catch (err) {
@@ -2788,6 +2836,11 @@ app.post('/api/tiktok-scrape', requireAuth, async (req, res) => {
   let aborted = false;
   res.on('close', () => { aborted = true; });
   const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  // Persist search history + scraped leads to Supabase (multi-tenant). Non-fatal.
+  let searchId = null;
+  try { searchId = await saveSearchRun({ query: input, location: '', maxResults: maxVideos, totalScraped: 0 }, req.userId); } catch (_) {}
+  const collectedLeads = [];
 
   try {
     console.log(`[TikTokTool] mode=${mode} input="${input}" maxVideos=${maxVideos}`);
@@ -2826,7 +2879,14 @@ app.post('/api/tiktok-scrape', requireAuth, async (req, res) => {
       };
       const row = Object.fromEntries(fields.filter(k => k in full).map(k => [k, full[k]]));
       send({ type: 'row', row });
+      collectedLeads.push(full);
       emitted++;
+    }
+    if (searchId && collectedLeads.length) {
+      saveLeads(searchId, collectedLeads.map(r => ({
+        companyName:  r.username || '',
+        website:      r.videoUrl || '',
+      })), req.userId).catch(() => {});
     }
     send({ type: 'done', success: true, total: emitted });
   } catch (err) {
