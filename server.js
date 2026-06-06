@@ -65,6 +65,16 @@ app.get('/api/status', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ── Public Supabase config (for browser-side auth bootstrap) ─────────────────
+// Exposes the URL + anon key only. The service-role key (SUPABASE_KEY) MUST
+// never be sent here — it stays server-only.
+app.get('/api/config', (req, res) => {
+  res.json({
+    supabaseUrl:     process.env.SUPABASE_URL,
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+  });
+});
+
 // ── ICP generator (new-user wizard → editable ICP text) ──────────────────────
 // Body: { industries, companySize, painPoints, exclusions, sellerName, products, advantage, country, keyword }
 app.post('/api/generate-icp', requireAuth, async (req, res) => {
@@ -2623,10 +2633,15 @@ app.post('/api/smtp-send-batch', requireAuth, async (req, res) => {
       const e = emails[i] || {};
       const to = (e.to || e.email || '').trim();
 
-      if (!to) {
+      // Validate it looks like an email address
+      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to);
+      if (!to || !isValidEmail) {
         failed++;
-        errors.push({ index: i, recipient: '', error: 'missing recipient' });
-        sse({ type: 'progress', current: i + 1, total: emails.length, recipient: '', status: 'failed' });
+        errors.push({ index: i, recipient: to || '(empty)',
+                      error: 'invalid or missing email address' });
+        console.warn(`[SmtpSendBatch] skip invalid recipient: "${to}"`);
+        sse({ type: 'progress', current: i + 1, total: emails.length,
+              recipient: to, status: 'failed' });
         continue;
       }
 

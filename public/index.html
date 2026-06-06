@@ -4540,6 +4540,13 @@ function selectMethod(methodId) {
     document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
     document.getElementById('method-card-keyword')?.classList.add('selected');
     goToStep(2);
+    // /app: jump straight to the data-source picker (ws2 holds the moved
+    // #dataSourceSection per the reshape IIFE). Forces a reset so re-entering
+    // this method doesn't restore a half-completed downstream wizard step
+    // (ws3 keyword / ws4 seller / ws5 framework) from localStorage.
+    if (location.pathname !== '/lens' && typeof wizardGo === 'function') {
+      wizardGo(2);
+    }
     return;
   }
   if (methodId === 'website') {
@@ -5226,13 +5233,22 @@ function closeUserMenu() {
 }
 function logout() {
   localStorage.removeItem('leadgen_accessToken');
+  localStorage.removeItem('leadgen_supabase_session');
   location.href = 'landing.html';
 }
 function getStoredToken() {
+  // Try fresh session first
+  const sessionStr = localStorage.getItem('leadgen_supabase_session');
+  if (sessionStr) {
+    try {
+      const session = JSON.parse(sessionStr);
+      if (session && session.access_token) return session.access_token;
+    } catch(e) {}
+  }
+  // Fallback to stored token
   const stored = localStorage.getItem('leadgen_accessToken');
   if (stored && stored.trim()) return stored.trim();
-  const el = document.getElementById('accessToken');
-  return el ? el.value.trim() : '';
+  return '';
 }
 
 // ── ICP collapsible toggle ────────────────────────────────────────────────────
@@ -9296,6 +9312,8 @@ async function smtpSendAll() {
   style.textContent = `
     #rawSection .results-header,
     #rawSection .table-wrap,
+    #rawFilterBar,
+    #aiFilterRow,
     #rawDownloadCard,
     #preFilterSection { display: none !important; }
   `;
