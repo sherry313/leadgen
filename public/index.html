@@ -9415,16 +9415,172 @@ async function smtpSendAll() {
 
     <div id="appLeadList" style="max-height:300px;overflow-y:auto;border:1px solid rgba(255,255,255,0.08);border-radius:8px;background:rgba(0,0,0,0.15)"></div>
 
-    <div style="margin-top:18px;margin-bottom:14px">
-      <label for="appFrameworkSelect" style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:8px">邮件框架</label>
-      <select id="appFrameworkSelect" style="width:100%;padding:10px 12px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:13px;outline:none">
-        ${FRAMEWORKS.map(f => `<option value="${f.value}">${f.label}</option>`).join('')}
-      </select>
+    <div id="appAiFilterPanel" style="display:none; background: var(--color-background-primary, rgba(255,255,255,0.03)); border: 0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius: 12px; padding: 1.25rem; margin-top: 1rem; margin-bottom: 1rem;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
+        <i class="ti ti-robot" style="font-size:20px; color:#6366f1;"></i>
+        <span style="font-weight:500; font-size:16px; color: var(--color-text-primary, #e5e7eb);">AI 筛选标准</span>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); display:block; margin-bottom:6px;">目标行业</label>
+        <select id="aiFilterIndustry" style="width:100%; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-family:inherit; font-size:13px; outline:none;">
+          <option value="建筑/装修/施工">建筑 / 装修 / 施工</option>
+          <option value="室内设计">室内设计</option>
+          <option value="房产开发">房产开发</option>
+          <option value="零售/家居卖场">零售 / 家居卖场</option>
+          <option value="制造业">制造业</option>
+          <option value="贸易/进出口">贸易 / 进出口</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); display:block; margin-bottom:6px;">其他筛选要求（可选）</label>
+        <textarea id="aiFilterCustom" placeholder="例：有自己的施工团队，专注住宅翻新，有采购中国建材的意向..." style="width:100%; height:80px; resize:vertical; padding:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:8px; font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+      </div>
+      <button id="startAiFilterBtn" onclick="startAppAiFilter()" style="width:100%; padding:10px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:500; cursor:pointer; font-family:inherit;">
+        ✨ 开始 AI 筛选
+      </button>
+      <div id="aiFilterProgress" style="display:none; margin-top:12px; font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); text-align:center;">
+        🤖 AI 正在分析...
+      </div>
     </div>
 
-    <button type="button" id="appGenerateBtn" onclick="startAppEmailGeneration()" style="width:100%;padding:11px;background:#6366f1;border:0;border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer">
-      生成 0 封邮件
-    </button>
+    <div id="appAiFilterResults" style="display:none; margin-bottom:1rem;"></div>
+
+    <div id="appEmailConfigPanel" style="margin-top:18px">
+
+      <!-- Field 1: What do you do -->
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
+          display:block; margin-bottom:6px;">我是做什么的</label>
+        <input id="appSellerDesc" type="text"
+          placeholder="例：vintage bag manufacturer based in Guangzhou"
+          style="width:100%; padding:8px 12px; border-radius:8px;
+          border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+          background:var(--color-background-primary, #0b0b0c);
+          color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;" />
+      </div>
+
+      <!-- Field 2: Goal - 3 buttons, single select -->
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
+          display:block; margin-bottom:6px;">目标</label>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="app-goal-btn" data-goal="找买家"
+            onclick="selectAppGoal(this)"
+            style="flex:1; padding:8px; border-radius:8px;
+            border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+            background:var(--color-background-primary, #0b0b0c);
+            color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
+            找买家
+          </button>
+          <button type="button" class="app-goal-btn" data-goal="找供应商"
+            onclick="selectAppGoal(this)"
+            style="flex:1; padding:8px; border-radius:8px;
+            border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+            background:var(--color-background-primary, #0b0b0c);
+            color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
+            找供应商
+          </button>
+          <button type="button" class="app-goal-btn" data-goal="找合作"
+            onclick="selectAppGoal(this)"
+            style="flex:1; padding:8px; border-radius:8px;
+            border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+            background:var(--color-background-primary, #0b0b0c);
+            color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
+            找合作
+          </button>
+        </div>
+      </div>
+
+      <!-- Field 3: Signature name -->
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
+          display:block; margin-bottom:6px;">
+          签名姓名
+          <span style="color:var(--color-text-tertiary, rgba(255,255,255,0.35));"> — 建议用全名，如 Leo Li</span>
+        </label>
+        <input id="appSignatureName" type="text" placeholder="例：Leo Li"
+          style="width:100%; padding:8px 12px; border-radius:8px;
+          border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+          background:var(--color-background-primary, #0b0b0c);
+          color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;" />
+      </div>
+
+      <!-- Field 4: Email framework -->
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
+          display:block; margin-bottom:6px;">邮件框架</label>
+        <select id="appFrameworkSelect" onchange="toggleAppCustomPrompt()"
+          style="width:100%; padding:8px 12px; border-radius:8px;
+          border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+          background:var(--color-background-primary, #0b0b0c);
+          color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;">
+          <option value="aida">AIDA</option>
+          <option value="peter_kang_3part">Peter Kang 3-Part</option>
+          <option value="custom">✏️ 自定义</option>
+        </select>
+      </div>
+
+      <!-- Custom prompt box (hidden by default) -->
+      <div id="appCustomPromptBox" style="display:none; margin-bottom:1rem;">
+        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
+          display:block; margin-bottom:6px;">自定义邮件指示</label>
+        <textarea id="appCustomPrompt"
+          placeholder="例：写一封简短的开发信，问对方是否有采购需求，语气轻松，结尾用一个低门槛问题收尾..."
+          style="width:100%; height:100px; resize:vertical; padding:8px 12px;
+          border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+          background:var(--color-background-primary, #0b0b0c);
+          color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;"></textarea>
+      </div>
+
+      <!-- Preview button -->
+      <button type="button" id="appPreviewFirstBtn" onclick="appPreviewFirst()"
+        style="width:100%; padding:10px; background:#6366f1; color:#fff;
+        border:none; border-radius:8px; font-size:15px; font-weight:500;
+        cursor:pointer; font-family:inherit;">
+        ✨ 先写第 1 封，让我看看
+      </button>
+
+      <!-- Generating progress (hidden by default) -->
+      <div id="appPreviewProgress" style="display:none; margin-top:12px;
+        font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); text-align:center;">
+        ✍️ AI 正在写第 1 个客户的邮件...
+      </div>
+
+    </div>
+
+    <!-- STEP 2 — Preview panel (hidden until generation complete) -->
+    <div id="appEmailPreviewPanel" style="display:none; margin-top:1rem;">
+
+      <div id="appPreviewCompanyName" style="font-size:13px;
+        color:var(--color-text-secondary, rgba(255,255,255,0.5)); margin-bottom:12px;"></div>
+
+      <!-- Email tabs -->
+      <div id="appEmailTabs" style="display:flex; gap:6px;
+        margin-bottom:1rem; flex-wrap:wrap;"></div>
+
+      <!-- Email content -->
+      <div id="appEmailContent" style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+        border-radius:8px; padding:12px; margin-bottom:1rem;"></div>
+
+      <!-- Action buttons -->
+      <div style="display:flex; gap:8px;">
+        <button type="button" onclick="appEditConfig()"
+          style="flex:1; padding:10px; border-radius:8px;
+          border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+          background:var(--color-background-primary, #0b0b0c);
+          color:var(--color-text-primary, #e5e7eb); font-size:14px; cursor:pointer; font-family:inherit;">
+          ✏️ 有问题，修改
+        </button>
+        <button type="button" onclick="appGenerateAll()"
+          style="flex:1; padding:10px; background:#6366f1; color:#fff;
+          border:none; border-radius:8px; font-size:14px;
+          font-weight:500; cursor:pointer; font-family:inherit;">
+          ✅ 没问题，继续全部生成
+        </button>
+      </div>
+
+    </div>
 
     <div id="appGenerateStatus" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:13px;text-align:center"></div>
     <div id="appGenerateResults" style="display:none;margin-top:14px"></div>
@@ -9549,9 +9705,83 @@ async function smtpSendAll() {
     window._appLeads = Array.isArray(leads) ? leads.slice() : [];
     selected.clear();
     renderLeadList();
+    // Reveal the AI 筛选标准 panel only when there's something to filter; hide
+    // the leftover result list from a previous run so it doesn't outlive the
+    // new lead set.
+    const fp = panel.querySelector('#appAiFilterPanel');
+    const fr = panel.querySelector('#appAiFilterResults');
+    if (fp) fp.style.display = window._appLeads.length ? 'block' : 'none';
+    if (fr) { fr.style.display = 'none'; fr.innerHTML = ''; }
     try {
       localStorage.setItem(LEAD_PREFIX + 'appLeads', JSON.stringify(window._appLeads));
     } catch (_) {} // QuotaExceeded / private-mode — non-fatal.
+  };
+
+  // AI lead-qualification filter. Calls /api/ai-filter-lead per lead in
+  // sequence (one Haiku request per lead). Spec'd as global; reads from
+  // window._appLeads (not _toolResults, which is an object keyed by source).
+  // Stores the recommended subset in window._filteredLeads for downstream use.
+  window.startAppAiFilter = async function () {
+    const leads = window._appLeads || [];
+    if (!leads.length) { alert('请先搜索数据'); return; }
+
+    const industry   = document.getElementById('aiFilterIndustry').value;
+    const custom     = document.getElementById('aiFilterCustom').value;
+    const btn        = document.getElementById('startAiFilterBtn');
+    const progress   = document.getElementById('aiFilterProgress');
+    const resultsDiv = document.getElementById('appAiFilterResults');
+
+    btn.disabled = true;
+    btn.textContent = '筛选中...';
+    progress.style.display = 'block';
+    progress.textContent = '🤖 AI 正在分析...';
+    resultsDiv.style.display = 'none';
+
+    const criteria = `目标行业：${industry}。${custom ? '额外要求：' + custom : ''}`;
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    const filtered = [];
+    for (const lead of leads) {
+      try {
+        const resp = await fetch('/api/ai-filter-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+          body: JSON.stringify({ lead, criteria }),
+        });
+        const data = await resp.json();
+        filtered.push({ ...lead, _aiRecommended: !!data.recommended, _aiReason: data.reason || '' });
+      } catch (_) {
+        filtered.push({ ...lead, _aiRecommended: false, _aiReason: '分析失败' });
+      }
+      progress.textContent = `🤖 AI 正在分析 ${filtered.length}/${leads.length}...`;
+    }
+
+    progress.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = '✨ 重新筛选';
+
+    const recommended = filtered.filter(l => l._aiRecommended);
+
+    resultsDiv.innerHTML = `
+      <div style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); margin-bottom:12px;">
+        筛选结果 — 共 ${filtered.length} 家，推荐 ${recommended.length} 家
+      </div>
+      ${filtered.map(lead => `
+        <div style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:8px; padding:12px; margin-bottom:8px; display:flex; align-items:center; gap:12px; opacity:${lead._aiRecommended ? '1' : '0.5'}">
+          <div style="width:32px; height:32px; border-radius:50%; background:${lead._aiRecommended ? 'var(--color-background-success, rgba(34,197,94,0.15))' : 'var(--color-background-danger, rgba(239,68,68,0.15))'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i class="ti ti-${lead._aiRecommended ? 'check' : 'x'}" style="font-size:16px; color:${lead._aiRecommended ? 'var(--color-text-success, #86efac)' : 'var(--color-text-danger, #fca5a5)'};"></i>
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:500; font-size:14px; color:var(--color-text-primary, #e5e7eb); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(lead.name || lead.title || lead.username || '未知')}</div>
+            <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); margin-top:2px;">${esc(lead._aiReason)}</div>
+          </div>
+          <input type="checkbox" ${lead._aiRecommended ? 'checked' : 'disabled'} data-email="${esc(lead.email || '')}" class="ai-filter-checkbox" style="accent-color:#6366f1; width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
+        </div>
+      `).join('')}
+    `;
+    resultsDiv.style.display = 'block';
+
+    window._filteredLeads = recommended;
   };
 
   window.startAppEmailGeneration = async function () {
@@ -9912,6 +10142,159 @@ async function smtpSendAll() {
   // Initial render — empty state until setAppLeads is called.
   renderLeadList();
 })();
+
+// ── /app progressive email config + preview ──────────────────────────────────
+// Two-step flow inside #appAiPanel: user fills config + previews first lead,
+// then either edits config or kicks off the existing bulk generation flow
+// (window.startAppEmailGeneration). Goal state lives on a module-scoped var so
+// the preview + edit + generate-all handlers all share it.
+let _appSelectedGoal = '';
+function selectAppGoal(btn) {
+  document.querySelectorAll('.app-goal-btn').forEach(b => {
+    b.style.border = '0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12))';
+    b.style.background = 'var(--color-background-primary, #0b0b0c)';
+    b.style.color = 'var(--color-text-secondary, rgba(255,255,255,0.5))';
+  });
+  btn.style.border = '2px solid #6366f1';
+  btn.style.background = 'rgba(99,102,241,0.08)';
+  btn.style.color = '#6366f1';
+  _appSelectedGoal = btn.dataset.goal;
+}
+
+function toggleAppCustomPrompt() {
+  const val = document.getElementById('appFrameworkSelect').value;
+  document.getElementById('appCustomPromptBox').style.display =
+    val === 'custom' ? 'block' : 'none';
+}
+
+let _appPreviewEmails = null;
+async function appPreviewFirst() {
+  const sellerDesc = document.getElementById('appSellerDesc').value.trim();
+  const signatureName = document.getElementById('appSignatureName').value.trim();
+  const framework = document.getElementById('appFrameworkSelect').value;
+  const customPrompt = document.getElementById('appCustomPrompt')?.value.trim();
+
+  if (!sellerDesc) { alert('请填写你是做什么的'); return; }
+  if (!_appSelectedGoal) { alert('请选择目标'); return; }
+  if (!signatureName) { alert('请填写签名姓名'); return; }
+  if (framework === 'custom' && !customPrompt) {
+    alert('请填写自定义邮件指示'); return;
+  }
+
+  const leads = window._appLeads || [];
+  if (!leads.length) { alert('请先搜索并选择客户'); return; }
+
+  const firstLead = leads[0];
+
+  const btn = document.getElementById('appPreviewFirstBtn');
+  const progress = document.getElementById('appPreviewProgress');
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  progress.style.display = 'block';
+  document.getElementById('appEmailPreviewPanel').style.display = 'none';
+
+  try {
+    const resp = await fetch('/api/app-generate-preview', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + getStoredToken()
+      },
+      body: JSON.stringify({
+        lead: firstLead,
+        sellerDesc,
+        goal: _appSelectedGoal,
+        signatureName,
+        framework,
+        customPrompt: framework === 'custom' ? customPrompt : ''
+      })
+    });
+    const data = await resp.json();
+    _appPreviewEmails = data.emails;
+    renderAppPreview(firstLead, data.emails);
+  } catch(e) {
+    alert('生成失败，请重试');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ 先写第 1 封，让我看看';
+    progress.style.display = 'none';
+  }
+}
+
+function renderAppPreview(lead, emails) {
+  const panel = document.getElementById('appEmailPreviewPanel');
+  const companyEl = document.getElementById('appPreviewCompanyName');
+  const tabsEl = document.getElementById('appEmailTabs');
+
+  companyEl.textContent = `预览 — ${lead.name || lead.title || '第1个客户'} 的5封邮件序列`;
+
+  tabsEl.innerHTML = emails.map((e, i) => `
+    <button type="button" onclick="showAppEmail(${i})" id="appTab${i}"
+      style="padding:4px 12px; border-radius:20px; font-size:12px; cursor:pointer; font-family:inherit;
+      border:${i === 0 ? '2px solid #6366f1' : '0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12))'};
+      background:${i === 0 ? 'rgba(99,102,241,0.08)' : 'var(--color-background-primary, #0b0b0c)'};
+      color:${i === 0 ? '#6366f1' : 'var(--color-text-secondary, rgba(255,255,255,0.5))'};">
+      Email ${i + 1}
+    </button>
+  `).join('');
+
+  showAppEmail(0);
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth' });
+}
+
+function showAppEmail(index) {
+  const emails = _appPreviewEmails;
+  if (!emails || !emails[index]) return;
+  const e = emails[index];
+
+  document.querySelectorAll('[id^="appTab"]').forEach((tab, i) => {
+    tab.style.border = i === index
+      ? '2px solid #6366f1' : '0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12))';
+    tab.style.background = i === index
+      ? 'rgba(99,102,241,0.08)' : 'var(--color-background-primary, #0b0b0c)';
+    tab.style.color = i === index ? '#6366f1' : 'var(--color-text-secondary, rgba(255,255,255,0.5))';
+  });
+
+  document.getElementById('appEmailContent').innerHTML = `
+    <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); margin-bottom:4px;">Subject</div>
+    <div style="font-weight:500; font-size:14px; color:var(--color-text-primary, #e5e7eb);
+      margin-bottom:12px;">${e.subject || ''}</div>
+    <div style="font-size:14px; color:var(--color-text-primary, #e5e7eb); line-height:1.7;">
+      ${(e.body || '').replace(/\n/g, '<br>')}
+    </div>
+  `;
+}
+
+function appEditConfig() {
+  document.getElementById('appEmailPreviewPanel').style.display = 'none';
+  document.getElementById('appEmailConfigPanel').scrollIntoView({
+    behavior: 'smooth'
+  });
+}
+
+async function appGenerateAll() {
+  const leads = window._appLeads || [];
+  if (!leads.length) return;
+
+  const sellerDesc = document.getElementById('appSellerDesc').value.trim();
+  const signatureName = document.getElementById('appSignatureName').value.trim();
+  const framework = document.getElementById('appFrameworkSelect').value;
+  const customPrompt = document.getElementById('appCustomPrompt')?.value.trim();
+
+  document.getElementById('appEmailPreviewPanel').style.display = 'none';
+
+  window._appEmailConfig = { sellerDesc, goal: _appSelectedGoal,
+    signatureName, framework, customPrompt };
+
+  if (typeof generateAppEmails === 'function') {
+    generateAppEmails();
+  } else if (document.getElementById('appGenerateBtn')) {
+    document.getElementById('appGenerateBtn').click();
+  } else if (typeof startAppEmailGeneration === 'function') {
+    startAppEmailGeneration();
+  }
+}
 
 // ── Website list upload & enrich ──────────────────────────────────────────────
 let _wlRows = [];

@@ -2654,6 +2654,124 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
   }
 });
 
+// ── /app AI lead-qualification filter ────────────────────────────────────────
+// Body: { lead, criteria }
+// Returns: { recommended: boolean, reason: string }
+// Per-lead Haiku call — called sequentially from the browser's
+// startAppAiFilter(), one HTTP per lead. The Anthropic client is created
+// inline because server.js doesn't share aiEnrich.js's module-local client;
+// Node caches the SDK require and `new Anthropic()` is cheap, so per-request
+// instantiation is fine for this small call.
+app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
+  const { lead, criteria } = req.body || {};
+  if (!lead) return res.status(400).json({ recommended: false, reason: 'lead required' });
+
+  const companyName = lead.name        || lead.title || lead.username || '';
+  const website     = lead.website     || lead.url   || '';
+  const description = lead.description || lead.bio   || '';
+
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 200,
+      messages: [{
+        role: 'user',
+        content: `You are a B2B lead qualifier. Based on the criteria, determine if this company is a good match.
+
+Criteria: ${criteria}
+
+Company: ${companyName}
+Website: ${website}
+Description: ${description}
+
+Reply in JSON only:
+{"recommended": true/false, "reason": "one sentence in Chinese"}`,
+      }],
+    });
+
+    const text = response.content[0].text;
+    const json = JSON.parse(text.replace(/```json|```/g, '').trim());
+    res.json(json);
+  } catch (e) {
+    console.warn('[AI Filter]', e.message);
+    res.json({ recommended: false, reason: '分析失败' });
+  }
+});
+
+// ── /app preview-first email generation ──────────────────────────────────────
+// Body: { lead, sellerDesc, goal, signatureName, framework, customPrompt }
+// Returns: { emails: [{subject, body}, ...] } — a 5-email sequence so /app
+// users can preview before kicking off the full bulk generation.
+app.post('/api/app-generate-preview', requireAuth, async (req, res) => {
+  const { lead, sellerDesc, goal, signatureName, framework, customPrompt } = req.body;
+
+  const companyName = lead.name || lead.title || lead.username || 'the company';
+  const website = lead.website || lead.url || '';
+  const description = lead.description || lead.bio || '';
+
+  const frameworkInstructions = framework === 'custom' ? customPrompt :
+    `Use the ${framework} email framework structure.`;
+
+  const systemPrompt = `You are an expert B2B cold email copywriter.
+Write a sequence of 5 cold emails for the sender.
+
+SENDER INFO:
+- What they do: ${sellerDesc}
+- Goal: ${goal}
+- Signature: ${signatureName}
+
+EMAIL RULES:
+- Write in English only
+- 40-80 words per email body
+- Subject: under 7 words, all lowercase, no punctuation gimmicks
+- Every sentence max 12 words. Short. Direct.
+- NO em dashes, NO semicolons
+- No fake urgency, no hollow claims
+- Each email ends with one clear low-commitment question
+- Sign off with exactly: ${signatureName}
+- Plain text only, no bullet points, no bold
+
+FRAMEWORK: ${frameworkInstructions}
+
+PROSPECT:
+- Company: ${companyName}
+- Website: ${website}
+- Description: ${description}
+
+Return ONLY valid JSON in this exact format:
+{
+  "emails": [
+    {"subject": "...", "body": "..."},
+    {"subject": "...", "body": "..."},
+    {"subject": "...", "body": "..."},
+    {"subject": "...", "body": "..."},
+    {"subject": "...", "body": "..."}
+  ]
+}`;
+
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: systemPrompt }]
+    });
+
+    const text = response.content[0].text;
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    res.json(parsed);
+  } catch(e) {
+    console.error('[AppPreview] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── /app SMTP send (SSE) ─────────────────────────────────────────────────────
 // Body: { emails: [{ email|to, subject, body }], smtpConfig: { host, port, user, pass, senderName } }
 // Per-email events: { type: 'progress', current, total, recipient, status }
