@@ -3370,7 +3370,7 @@
     </div>
 
     <!-- Step A: Download -->
-    <div style="margin-top:20px;padding:18px 20px;background:rgba(30,41,59,0.85);border:1px solid var(--border);border-radius:12px">
+    <div id="rawDownloadCard" style="margin-top:20px;padding:18px 20px;background:rgba(30,41,59,0.85);border:1px solid var(--border);border-radius:12px">
       <div style="font-size:0.78rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px">下载原始数据</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button onclick="exportRawCSV()"
@@ -9281,6 +9281,27 @@ async function smtpSendAll() {
   if (smtpPanel) smtpPanel.style.display = 'block';
 })();
 
+// /app: hide the legacy raw-scrape UI and the AI prefilter section inside
+// step 3. These blocks belong to the /lens manual/auto-mode flow; /app users
+// drive things through the data-source result wraps and #appAiPanel instead.
+//
+// A plain `style.display='none'` won't stick because four code paths
+// (renderRawResults, applyAIFilter, /api/raw restore, dataset restore) all
+// set #rawSection / #preFilterSection back to display:block on the relevant
+// events. So we inject a CSS rule with !important — survives any later JS
+// toggle, and is reverted by the absence of the rule on /lens (early return).
+(function applyAppAiSectionVisibility() {
+  if (location.pathname === '/lens') return;
+  const style = document.createElement('style');
+  style.textContent = `
+    #rawSection .results-header,
+    #rawSection .table-wrap,
+    #rawDownloadCard,
+    #preFilterSection { display: none !important; }
+  `;
+  document.head.appendChild(style);
+})();
+
 // /app: collapse the step-2 wizard chrome. ws1 (country picker) is gone, ws2
 // is the entry, .ws-hint counters + ws-pips + ws2 topbar are deleted from the
 // HTML. This IIFE hides the bits that are SHARED with /lens (panel title/sub
@@ -9674,6 +9695,18 @@ async function smtpSendAll() {
       <label for="smtpSenderName" style="${LABEL_STYLE}">发件人姓名</label>
       <input type="text" id="smtpSenderName" placeholder="例：王伟" style="${INPUT_STYLE};margin-bottom:14px">
 
+      <label for="appSmtpProvider" style="${LABEL_STYLE}">快速选择服务商</label>
+      <select id="appSmtpProvider" onchange="applyAppSmtpProvider(this.value)" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:8px;padding:10px 14px;font-family:inherit;font-size:13px;outline:none;margin-bottom:6px;box-sizing:border-box">
+        <option value="">— 选择邮箱服务商 —</option>
+        <option value="gmail">Gmail</option>
+        <option value="outlook">Outlook / Office365</option>
+        <option value="qq">QQ 邮箱</option>
+        <option value="163">163 邮箱</option>
+        <option value="hostinger">Hostinger</option>
+        <option value="custom">自定义</option>
+      </select>
+      <div id="appSmtpProviderHint" style="display:none;font-size:12px;margin-bottom:10px;line-height:1.5"></div>
+
       <label for="appSmtpHost" style="${LABEL_STYLE}">SMTP Host</label>
       <input type="text" id="appSmtpHost" placeholder="smtp.gmail.com" value="${esc(savedHost)}" style="${INPUT_STYLE}">
 
@@ -9695,6 +9728,42 @@ async function smtpSendAll() {
 
     sendPanel.style.display = 'block';
     sendPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Provider quick-pick: auto-fills host/port and surfaces an auth-mode hint.
+  // Purely client-side — no API call, no effect on the existing send logic.
+  window.applyAppSmtpProvider = function (val) {
+    const presets = {
+      gmail:     { host: 'smtp.gmail.com',     port: 587, hint: '⚠️ Gmail 需使用应用专用密码，请前往 Google 账户 → 安全 → 应用专用密码 生成', warn: true  },
+      outlook:   { host: 'smtp.office365.com', port: 587, hint: '✓ 使用你的 Outlook 登录密码即可',                                        warn: false },
+      qq:        { host: 'smtp.qq.com',        port: 465, hint: '⚠️ 需要 QQ 邮箱授权码，在 QQ 邮箱设置 → 账户 → 开启 SMTP 后获取',         warn: true  },
+      '163':     { host: 'smtp.163.com',       port: 465, hint: '⚠️ 需要 163 邮箱授权码，在 163 邮箱设置 → POP3/SMTP → 开启后获取',        warn: true  },
+      hostinger: { host: 'smtp.hostinger.com', port: 587, hint: '✓ 使用 Hostinger 邮箱的登录密码即可',                                  warn: false },
+    };
+    const hostEl = document.getElementById('appSmtpHost');
+    const portEl = document.getElementById('appSmtpPort');
+    const hintEl = document.getElementById('appSmtpProviderHint');
+    if (!hostEl || !portEl || !hintEl) return;
+
+    if (val === 'custom') {
+      hostEl.value = '';
+      portEl.value = '';
+      hintEl.style.display = 'none';
+      hintEl.textContent = '';
+      return;
+    }
+    const p = presets[val];
+    if (!p) {
+      // Placeholder option re-selected — leave inputs untouched, hide the hint.
+      hintEl.style.display = 'none';
+      hintEl.textContent = '';
+      return;
+    }
+    hostEl.value = p.host;
+    portEl.value = String(p.port);
+    hintEl.style.color = p.warn ? 'rgba(255,200,100,0.85)' : 'rgba(100,255,150,0.85)';
+    hintEl.textContent = p.hint;
+    hintEl.style.display = 'block';
   };
 
   // SSE-driven send: streams progress per email and renders the final
