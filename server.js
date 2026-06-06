@@ -2253,15 +2253,29 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
       // Failures are non-fatal — fall through with whatever Apify already gave us.
       if (url) {
         try {
-          const htmlResp = await axios.get(url, {
-            timeout: 10000,
+          const _axiosOpts = {
+            timeout: 20000,
             headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
-            maxRedirects: 3,
-          });
+            maxRedirects: 5,
+            validateStatus: (status) => status < 500,
+          };
+          const htmlResp = await axios.get(url, _axiosOpts);
           const html = htmlResp.data || '';
 
-          const emailMatch    = html.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
-          const email         = emailMatch ? emailMatch.filter(e => !e.includes('example') && !e.includes('test'))[0] || '' : '';
+          const _findEmail = (h) => {
+            const all = (h || '').match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g) || [];
+            const uniq = Array.from(new Set(all)).filter(e => !e.includes('example') && !e.includes('test'));
+            return uniq[0] || '';
+          };
+          let email = _findEmail(html);
+          // Retry on /contact if homepage yielded no email — one extra fetch.
+          if (!email) {
+            try {
+              const _contactUrl = new URL('/contact', url).toString();
+              const r2 = await axios.get(_contactUrl, _axiosOpts);
+              email = _findEmail(r2.data || '');
+            } catch (_) { /* non-fatal — homepage scrape already succeeded */ }
+          }
           const phoneMatch    = html.match(/(\+61|0)[0-9\s\-\(\)]{8,14}/);
           const phone         = phoneMatch ? phoneMatch[0].trim() : '';
           const linkedinMatch  = html.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-_%]+/);
@@ -2373,19 +2387,33 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       let scraped = { email: '', linkedin: '', tiktok: '', instagram: '', youtube: '' };
       if (website) {
         try {
-          const htmlResp = await axios.get(website, {
-            timeout: 10000,
+          const _axiosOpts = {
+            timeout: 20000,
             headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
-            maxRedirects: 3,
-          });
+            maxRedirects: 5,
+            validateStatus: (status) => status < 500,
+          };
+          const htmlResp = await axios.get(website, _axiosOpts);
           const html = htmlResp.data || '';
-          const emailMatch     = html.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+          const _findEmail = (h) => {
+            const all = (h || '').match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g) || [];
+            const uniq = Array.from(new Set(all)).filter(e => !e.includes('example') && !e.includes('test'));
+            return uniq[0] || '';
+          };
           const linkedinMatch  = html.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-_%]+/);
           const tiktokMatch    = html.match(/tiktok\.com\/@[a-zA-Z0-9._]+/);
           const instagramMatch = html.match(/instagram\.com\/[a-zA-Z0-9._]+/);
           const youtubeMatch   = html.match(/youtube\.com\/(?:@|channel\/|user\/)[a-zA-Z0-9._\-]+/);
 
-          scraped.email     = emailMatch ? (emailMatch.filter(e => !e.includes('example') && !e.includes('test'))[0] || '') : '';
+          scraped.email     = _findEmail(html);
+          // Retry on /contact if homepage yielded no email — one extra fetch.
+          if (!scraped.email) {
+            try {
+              const _contactUrl = new URL('/contact', website).toString();
+              const r2 = await axios.get(_contactUrl, _axiosOpts);
+              scraped.email = _findEmail(r2.data || '');
+            } catch (_) { /* non-fatal — homepage scrape already succeeded */ }
+          }
           scraped.linkedin  = linkedinMatch  ? 'https://www.' + linkedinMatch[0]  : '';
           scraped.tiktok    = tiktokMatch    ? 'https://www.' + tiktokMatch[0]    : '';
           scraped.instagram = instagramMatch ? 'https://www.' + instagramMatch[0] : '';
@@ -2482,9 +2510,10 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
       if (website) {
         try {
           const htmlResp = await axios.get(website, {
-            timeout: 10000,
+            timeout: 20000,
             headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
-            maxRedirects: 3,
+            maxRedirects: 5,
+            validateStatus: (status) => status < 500,
           });
           websiteContent = _extractWebsiteText(htmlResp.data || '');
         } catch (err) {
