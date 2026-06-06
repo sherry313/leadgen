@@ -38,13 +38,13 @@ function getClient() {
 //   ADD COLUMN IF NOT EXISTS email_template_key  TEXT;
 
 // Step 1: INSERT a new run row and return its ID (called before the processing loop)
-async function saveSearchRun({ query, location, maxResults, totalScraped }) {
+async function saveSearchRun({ query, location, maxResults, totalScraped }, userId) {
   const db = getClient();
   if (!db) return null;
   try {
     const { data, error } = await db
       .from('search_history')
-      .insert({ query, location, max_results: maxResults, total_scraped: totalScraped })
+      .insert({ query, location, max_results: maxResults, total_scraped: totalScraped, user_id: userId || 'legacy' })
       .select('id')
       .single();
     if (error) throw error;
@@ -77,14 +77,16 @@ async function updateSearchRunCosts(id, { apifyCostUsd, anthropicCostUsd, totalC
   }
 }
 
-async function getCostSummary() {
+async function getCostSummary(userId) {
   const db = getClient();
   if (!db) return { runs: [], totalCostUsd: 0, monthCostUsd: 0 };
   try {
-    const { data, error } = await db
+    let q = db
       .from('search_history')
       .select('id, created_at, query, location, max_results, total_scraped, total_qualified, apify_cost_usd, anthropic_cost_usd, total_cost_usd')
       .order('created_at', { ascending: false });
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data, error } = await q;
     if (error) throw error;
 
     const totalCostUsd = data.reduce((s, r) => s + (r.total_cost_usd || 0), 0);
@@ -100,11 +102,13 @@ async function getCostSummary() {
   }
 }
 
-async function getExistingLeadKeys() {
+async function getExistingLeadKeys(userId) {
   const db = getClient();
   if (!db) return { placeIds: new Set(), phones: new Set(), emails: new Set(), domains: new Set() };
   try {
-    const { data, error } = await db.from('leads').select('place_id, phone_normalized, email, website_domain');
+    let q = db.from('leads').select('place_id, phone_normalized, email, website_domain');
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data, error } = await q;
     if (error) throw error;
     return {
       placeIds: new Set(data.map(r => r.place_id).filter(Boolean)),
@@ -118,13 +122,14 @@ async function getExistingLeadKeys() {
   }
 }
 
-async function saveLeads(searchId, leads) {
+async function saveLeads(searchId, leads, userId) {
   const db = getClient();
   if (!db || !searchId) return;
   const rows = leads
     .filter(l => !l.status?.startsWith('filtered'))
     .map(l => ({
       search_id:        searchId,
+      user_id:          userId || 'legacy',
       company_name:     l.companyName,
       website:          l.website,
       phone:            l.phone,
@@ -209,11 +214,13 @@ async function updateLeadEmails(searchId, companyName, emails, frameworkKey, tem
   }
 }
 
-async function getLeadById(id) {
+async function getLeadById(id, userId) {
   const db = getClient();
   if (!db || !id) return null;
   try {
-    const { data, error } = await db.from('leads').select('*').eq('id', id).single();
+    let q = db.from('leads').select('*').eq('id', id);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data, error } = await q.single();
     if (error) throw error;
     return data;
   } catch (err) {
@@ -236,15 +243,17 @@ async function updateEmailSent(id, emailNumber) {
   }
 }
 
-async function getSearchHistory(limit = 30) {
+async function getSearchHistory(limit = 30, userId) {
   const db = getClient();
   if (!db) return [];
   try {
-    const { data, error } = await db
+    let q = db
       .from('search_history')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(limit);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data, error } = await q;
     if (error) throw error;
     return data;
   } catch (err) {
@@ -253,15 +262,17 @@ async function getSearchHistory(limit = 30) {
   }
 }
 
-async function getLeadsForSearch(searchId) {
+async function getLeadsForSearch(searchId, userId) {
   const db = getClient();
   if (!db) return [];
   try {
-    const { data, error } = await db
+    let q = db
       .from('leads')
       .select('*')
       .eq('search_id', searchId)
       .order('created_at', { ascending: true });
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data, error } = await q;
     if (error) throw error;
     return data;
   } catch (err) {
@@ -271,15 +282,16 @@ async function getLeadsForSearch(searchId) {
 }
 
 // Append step-2 costs to an existing search_history row
-async function appendSearchRunCosts(id, { sonnetCostUsd, firecrawlCostUsd }) {
+async function appendSearchRunCosts(id, { sonnetCostUsd, firecrawlCostUsd }, userId) {
   const db = getClient();
   if (!db || !id) return;
   try {
-    const { data, error: readErr } = await db
+    let _readQ = db
       .from('search_history')
       .select('anthropic_cost_usd, total_cost_usd')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
+    if (userId && userId !== 'legacy') _readQ = _readQ.eq('user_id', userId);
+    const { data, error: readErr } = await _readQ.single();
     if (readErr) throw readErr;
 
     const step2Total     = sonnetCostUsd + firecrawlCostUsd;
@@ -301,14 +313,16 @@ async function appendSearchRunCosts(id, { sonnetCostUsd, firecrawlCostUsd }) {
   }
 }
 
-async function getEmailsSentCount() {
+async function getEmailsSentCount(userId) {
   const db = getClient();
   if (!db) return 0;
   try {
-    const { count, error } = await db
+    let q = db
       .from('leads')
       .select('id', { count: 'exact', head: true })
       .not('email_sent_at', 'is', null);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { count, error } = await q;
     if (error) throw error;
     return count || 0;
   } catch (err) {

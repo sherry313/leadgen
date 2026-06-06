@@ -120,7 +120,7 @@ app.post('/api/scrape', requireAuth, async (req, res) => {
   const today = new Date().toISOString().split('T')[0];
 
   // Create search_history row early so leads can reference its ID
-  const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: companies.length });
+  const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: companies.length }, req.userId);
 
   // Create a fresh Google Sheet for this run (non-blocking — pipeline continues even if this fails)
   await createRunSheet(searchQuery, today);
@@ -212,7 +212,7 @@ app.post('/api/scrape', requireAuth, async (req, res) => {
     totalQualified,
   });
 
-  const savedLeads = await saveLeads(searchId, results);
+  const savedLeads = await saveLeads(searchId, results, req.userId);
   if (savedLeads?.length) {
     const idMap = new Map(savedLeads.map(l => [l.company_name, l.id]));
     results.forEach(r => { if (r.companyName) r.dbId = idMap.get(r.companyName) || null; });
@@ -261,7 +261,7 @@ app.post('/api/generate', requireAuth, async (req, res) => {
   const step1Cost  = apifyCost + haikuCost;
   console.log(`[Cost] Step1: Apify 实际费用=$${apifyCost} | Haiku=$${haikuCost.toFixed(4)} | Step1Total=$${step1Cost.toFixed(4)}`);
 
-  const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: companies.length });
+  const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: companies.length }, req.userId);
   await updateSearchRunCosts(searchId, {
     apifyCostUsd:     apifyCost,
     anthropicCostUsd: haikuCost,
@@ -300,7 +300,7 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
     console.log('[ScrapeRaw] Got companies:', rawCompanies.length);
 
     // Dedup: filter out companies already in the database
-    const { placeIds: existingPlaceIds, phones: existingPhones, emails: existingEmails, domains: existingDomains } = await getExistingLeadKeys();
+    const { placeIds: existingPlaceIds, phones: existingPhones, emails: existingEmails, domains: existingDomains } = await getExistingLeadKeys(req.userId);
     function extractDomain(url) {
       try { return new URL(url).hostname.replace('www.', ''); } catch { return ''; }
     }
@@ -317,14 +317,14 @@ app.post('/api/scrape-raw', requireAuth, async (req, res) => {
     console.log(`[Dedup] 原始 ${rawCompanies.length} 条 → 去重后 ${companies.length} 条（跳过 ${skippedCount} 条）`);
 
     const apifyCost = apifyActualCost ?? rawCompanies.length * 0.002;
-    const searchId  = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length });
+    const searchId  = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length }, req.userId);
     await updateSearchRunCosts(searchId, { apifyCostUsd: apifyCost, anthropicCostUsd: 0, totalCostUsd: apifyCost, totalQualified: 0 });
 
     // Persist raw scraped companies so the user can navigate away and return.
     // status:'raw' satisfies saveLeads' filter (which drops 'filtered:*') even
     // though the leads table has no status column — only the row itself persists.
     try {
-      await saveLeads(searchId, companies.map(c => ({ ...c, status: 'raw' })));
+      await saveLeads(searchId, companies.map(c => ({ ...c, status: 'raw' })), req.userId);
     } catch (e) {
       console.warn(`[ScrapeRaw] saveLeads failed (non-fatal): ${e.message}`);
     }
@@ -415,7 +415,7 @@ app.post('/api/prefilter', requireAuth, async (req, res) => {
 
     const haikuCost = (haikuIn / 1_000_000 * 0.80) + (haikuOut / 1_000_000 * 4.00);
     if (searchId) {
-      try { await appendSearchRunCosts(searchId, { sonnetCostUsd: haikuCost, firecrawlCostUsd: 0 }); }
+      try { await appendSearchRunCosts(searchId, { sonnetCostUsd: haikuCost, firecrawlCostUsd: 0 }, req.userId); }
       catch (e) { console.warn('[Prefilter] cost save failed:', e.message); }
     }
 
@@ -511,8 +511,8 @@ app.post('/api/enrich', requireAuth, async (req, res) => {
   console.log(`[Cost] Step2: Sonnet=$${sonnetCost.toFixed(4)} | Firecrawl=$${firecrawlCost.toFixed(4)} | Step2Total=$${step2Cost.toFixed(4)}`);
 
   if (searchId) {
-    await appendSearchRunCosts(searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: firecrawlCost });
-    const savedLeads = await saveLeads(searchId, results);
+    await appendSearchRunCosts(searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: firecrawlCost }, req.userId);
+    const savedLeads = await saveLeads(searchId, results, req.userId);
     if (savedLeads?.length) {
       const idMap = new Map(savedLeads.map(l => [l.company_name, l.id]));
       results.forEach(r => { if (r.companyName) r.dbId = idMap.get(r.companyName) || null; });
@@ -615,8 +615,8 @@ app.post('/api/enrich-urls', requireAuth, async (req, res) => {
   console.log(`[EnrichUrls] ${companies.length} urls | Sonnet=$${sonnetCost.toFixed(4)} | Firecrawl=$${firecrawlCost.toFixed(4)}`);
 
   if (searchId) {
-    await appendSearchRunCosts(searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: firecrawlCost });
-    const savedLeads = await saveLeads(searchId, results);
+    await appendSearchRunCosts(searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: firecrawlCost }, req.userId);
+    const savedLeads = await saveLeads(searchId, results, req.userId);
     if (savedLeads?.length) {
       const idMap = new Map(savedLeads.map(l => [l.company_name, l.id]));
       results.forEach(r => { if (r.companyName) r.dbId = idMap.get(r.companyName) || null; });
@@ -740,7 +740,7 @@ app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
   const sonnetCost = (sonnetIn / 1_000_000 * 3) + (sonnetOut / 1_000_000 * 15);
   console.log(`[EmailGen] Done: ${completed}/${companies.length} | Sonnet $${sonnetCost.toFixed(4)}`);
   if (searchId) {
-    try { await appendSearchRunCosts(searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: 0 }); }
+    try { await appendSearchRunCosts(searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: 0 }, req.userId); }
     catch (e) { console.warn('[EmailGen] cost save failed:', e.message); }
   }
 
@@ -833,7 +833,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
     );
 
     // Dedup against historical leads — same logic as /api/scrape-raw
-    const { placeIds, phones, emails: existingEmails, domains } = await getExistingLeadKeys();
+    const { placeIds, phones, emails: existingEmails, domains } = await getExistingLeadKeys(req.userId);
     const extractDomain = (url) => {
       try { return new URL(url).hostname.replace('www.', ''); } catch { return ''; }
     };
@@ -849,7 +849,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
     const dedupSkipped = rawCompanies.length - newCompanies.length;
     const apifyCost = apifyActualCost ?? rawCompanies.length * 0.002;
 
-    const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length });
+    const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length }, req.userId);
     send({
       type: 'phase', phase: 'apify', status: 'done',
       scraped: rawCompanies.length, newLeads: newCompanies.length, dedupSkipped, searchId, apifyCostUsd: apifyCost,
@@ -915,7 +915,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
         ...haikuSkipped.map(c => ({ ...c, status: 'filtered: haiku', dateAdded: today })),
         ...noEmail.map(c     => ({ ...c, status: 'filtered: no_email', dateAdded: today })),
       ];
-      await saveLeads(searchId, persistRows);
+      await saveLeads(searchId, persistRows, req.userId);
       const haikuCost = (haikuIn / 1_000_000 * 0.80) + (haikuOut / 1_000_000 * 4.00);
       await updateSearchRunCosts(searchId, { apifyCostUsd: apifyCost, anthropicCostUsd: haikuCost, totalCostUsd: apifyCost + haikuCost, totalQualified: 0 });
       send({
@@ -1025,7 +1025,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
       ...noEmail.map(c     => ({ ...c, status: 'filtered: no_email', dateAdded: today })),
     ];
     try {
-      const saved = await saveLeads(searchId, allLeads);
+      const saved = await saveLeads(searchId, allLeads, req.userId);
       if (saved?.length) {
         const idMap = new Map(saved.map(l => [l.company_name, l.id]));
         allLeads.forEach(r => { if (r.companyName) r.dbId = idMap.get(r.companyName) || null; });
@@ -1186,7 +1186,7 @@ app.post('/api/auto/run-from-dataset', requireAuth, async (req, res) => {
     const newCompanies = rawCompanies;
     const dedupSkipped = 0;
 
-    const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length });
+    const searchId = await saveSearchRun({ query: searchQuery, location, maxResults, totalScraped: rawCompanies.length }, req.userId);
     send({
       type: 'phase', phase: 'apify', status: 'done',
       scraped: rawCompanies.length, newLeads: rawCompanies.length, dedupSkipped: 0,
@@ -1250,7 +1250,7 @@ app.post('/api/auto/run-from-dataset', requireAuth, async (req, res) => {
         ...haikuSkipped.map(c => ({ ...c, status: 'filtered: haiku', dateAdded: today })),
         ...noEmail.map(c     => ({ ...c, status: 'filtered: no_email', dateAdded: today })),
       ];
-      await saveLeads(searchId, persistRows);
+      await saveLeads(searchId, persistRows, req.userId);
       const haikuCost = (haikuIn / 1_000_000 * 0.80) + (haikuOut / 1_000_000 * 4.00);
       await updateSearchRunCosts(searchId, { apifyCostUsd: 0, anthropicCostUsd: haikuCost, totalCostUsd: haikuCost, totalQualified: 0 });
       send({
@@ -1353,7 +1353,7 @@ app.post('/api/auto/run-from-dataset', requireAuth, async (req, res) => {
       ...noEmail.map(c     => ({ ...c, status: 'filtered: no_email', dateAdded: today })),
     ];
     try {
-      const saved = await saveLeads(searchId, allLeads);
+      const saved = await saveLeads(searchId, allLeads, req.userId);
       if (saved?.length) {
         const idMap = new Map(saved.map(l => [l.company_name, l.id]));
         allLeads.forEach(r => { if (r.companyName) r.dbId = idMap.get(r.companyName) || null; });
@@ -1469,12 +1469,12 @@ app.post('/api/apify/resume', requireAuth, async (req, res) => {
 
 // ── Search history ────────────────────────────────────────────────────────────
 app.get('/api/history', requireAuth, async (req, res) => {
-  const [history, emailsSent] = await Promise.all([getSearchHistory(), getEmailsSentCount()]);
+  const [history, emailsSent] = await Promise.all([getSearchHistory(30, req.userId), getEmailsSentCount(req.userId)]);
   res.json({ success: true, history, emailsSent });
 });
 
 app.get('/api/history/:id', requireAuth, async (req, res) => {
-  const leads = await getLeadsForSearch(req.params.id);
+  const leads = await getLeadsForSearch(req.params.id, req.userId);
   console.log(`[History] 加载 ID: ${req.params.id}，找到 ${leads.length} 条 leads`);
   res.json({ success: true, leads });
 });
@@ -1484,7 +1484,7 @@ app.get('/api/history/:id', requireAuth, async (req, res) => {
 // return everything for the searchId — manual scrape runs only ever produce raw
 // rows here, so no filtering is needed in practice.
 app.get('/api/raw/:searchId', requireAuth, async (req, res) => {
-  const leads = await getLeadsForSearch(req.params.searchId);
+  const leads = await getLeadsForSearch(req.params.searchId, req.userId);
   console.log(`[Raw] 加载 searchId: ${req.params.searchId}，找到 ${leads.length} 条 raw leads`);
   res.json({ success: true, leads });
 });
@@ -1814,7 +1814,7 @@ app.get('/api/me', requireAuth, (req, res) => {
 // ── Admin: cost summary ───────────────────────────────────────────────────────
 app.get('/api/admin/costs', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ success: false, error: 'Admin only' });
-  const summary = await getCostSummary();
+  const summary = await getCostSummary(req.userId);
   res.json({ success: true, ...summary });
 });
 
@@ -2031,6 +2031,7 @@ app.post('/api/import-leads', requireImportPassword, async (req, res) => {
         location:      'CSV import',
         max_results:   clean.length,
         total_scraped: clean.length,
+        user_id:       req.userId || 'legacy',
       })
       .select('id')
       .single();
@@ -2039,6 +2040,7 @@ app.post('/api/import-leads', requireImportPassword, async (req, res) => {
 
     const insertRows = clean.map(r => ({
       search_id:        searchId,
+      user_id:          req.userId || 'legacy',
       company_name:     r.company_name,
       website:          r.website,
       phone:            r.phone,
