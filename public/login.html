@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>登录 - 智拓客</title>
   <meta name="robots" content="noindex, nofollow">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -157,7 +158,9 @@
       color: var(--text-muted);
       margin-bottom: 8px;
     }
-    .form-group input[type="password"] {
+    .form-group input[type="password"],
+    .form-group input[type="email"],
+    .form-group input[type="text"] {
       width: 100%;
       background: rgba(15,23,42,0.6);
       border: 1px solid rgba(148,163,184,0.2);
@@ -169,10 +172,14 @@
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .form-group input[type="password"]::placeholder {
+    .form-group input[type="password"]::placeholder,
+    .form-group input[type="email"]::placeholder,
+    .form-group input[type="text"]::placeholder {
       color: #475569;
     }
-    .form-group input[type="password"]:focus {
+    .form-group input[type="password"]:focus,
+    .form-group input[type="email"]:focus,
+    .form-group input[type="text"]:focus {
       border-color: #2563eb;
       box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
     }
@@ -318,8 +325,13 @@
     <div class="card-heading">登录 / 申请试用</div>
 
     <div class="form-group">
-      <label for="accessToken">访问令牌 Access Token</label>
-      <input type="password" id="accessToken" placeholder="请输入您的访问令牌" oninput="onTokenInput()">
+      <label for="loginEmail">邮箱</label>
+      <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="username" oninput="onFieldInput()">
+    </div>
+
+    <div class="form-group">
+      <label for="loginPassword">密码</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" oninput="onFieldInput()">
     </div>
 
     <div class="consent-block">
@@ -336,11 +348,11 @@
 
     <button class="btn-login" id="loginBtn" disabled onclick="doLogin()">登录 / 进入应用</button>
 
-    <div class="error-msg" id="errorMsg">请填写访问令牌并同意用户协议</div>
+    <div class="error-msg" id="errorMsg">请填写邮箱和密码并同意用户协议</div>
 
     <p class="helper-text">
-      还没有访问令牌？请联系：<br>
-      zhuolu34@gmail.com / +86 187 8960 4353（微信同号）
+      没有账号？请联系管理员申请：<br>
+      zhuolu34@gmail.com
     </p>
   </div>
 </main>
@@ -363,10 +375,12 @@
   /* Pick redirect target: honor ?redirect= when it's a same-origin absolute path. */
   function _redirectTarget() {
     const p = new URLSearchParams(location.search).get('redirect') || '';
-    return /^\/[^/]/.test(p) ? p : '/lens';
+    return /^\/[^/]/.test(p) ? p : '/app';
   }
 
-  /* Auto-redirect if already logged in */
+  /* Auto-redirect if already logged in (either auth scheme leaves the JWT
+     under leadgen_accessToken; the supabase session blob is the source of
+     truth but checking the token is faster). */
   (function() {
     const token = localStorage.getItem('leadgen_accessToken');
     if (token && token.trim()) {
@@ -374,13 +388,40 @@
     }
   })();
 
-  function updateButtonState() {
-    const token = document.getElementById('accessToken').value.trim();
-    const agreed = document.getElementById('agreeTerms').checked;
-    document.getElementById('loginBtn').disabled = !(token && agreed);
+  /* Supabase client init — fetch public credentials from /api/config so the
+     anon key isn't hardcoded in source. doLogin() awaits this promise.
+     Local variable is `_sbClient` (not `supabase`) because the
+     @supabase/supabase-js UMD bundle defines a global `supabase` in script
+     scope; a top-level `let supabase` would throw
+     "Identifier 'supabase' has already been declared". */
+  let _sbClient = null;
+  const _supabaseReady = (async () => {
+    try {
+      const r = await fetch('/api/config');
+      if (!r.ok) throw new Error('config fetch failed');
+      const cfg = await r.json();
+      if (cfg.supabaseUrl && cfg.supabaseAnonKey) {
+        _sbClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+      }
+    } catch (e) {
+      console.error('[login] supabase init failed:', e);
+    }
+  })();
+
+  function _showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
   }
 
-  function onTokenInput() {
+  function updateButtonState() {
+    const email   = document.getElementById('loginEmail').value.trim();
+    const pwd     = document.getElementById('loginPassword').value;
+    const agreed  = document.getElementById('agreeTerms').checked;
+    document.getElementById('loginBtn').disabled = !(email && pwd && agreed);
+  }
+
+  function onFieldInput() {
     updateButtonState();
     document.getElementById('errorMsg').classList.remove('visible');
   }
@@ -390,20 +431,49 @@
     document.getElementById('errorMsg').classList.remove('visible');
   }
 
-  function doLogin() {
-    const token = document.getElementById('accessToken').value.trim();
+  async function doLogin() {
+    const email  = document.getElementById('loginEmail').value.trim();
+    const pwd    = document.getElementById('loginPassword').value;
     const agreed = document.getElementById('agreeTerms').checked;
-    if (!token || !agreed) {
-      document.getElementById('errorMsg').classList.add('visible');
+    if (!email || !pwd || !agreed) {
+      _showError('请填写邮箱和密码并同意用户协议');
       return;
     }
-    localStorage.setItem('leadgen_accessToken', token);
-    window.location.href = _redirectTarget();
+
+    const btn = document.getElementById('loginBtn');
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '登录中…';
+
+    try {
+      await _supabaseReady;
+      if (!_sbClient) {
+        _showError('登录服务暂不可用，请稍后再试');
+        return;
+      }
+      const { data, error } = await _sbClient.auth.signInWithPassword({ email, password: pwd });
+      if (error || !data?.session?.access_token) {
+        _showError('邮箱或密码错误，请重试');
+        return;
+      }
+      localStorage.setItem('leadgen_accessToken', data.session.access_token);
+      localStorage.setItem('leadgen_supabase_session', JSON.stringify(data.session));
+      window.location.href = _redirectTarget();
+    } catch (e) {
+      console.error('[login] error:', e);
+      _showError('登录失败：' + (e.message || '请稍后再试'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
+      updateButtonState();
+    }
   }
 
-  /* Allow Enter key to submit */
-  document.getElementById('accessToken').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') doLogin();
+  /* Allow Enter key to submit from either field. */
+  ['loginEmail', 'loginPassword'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
   });
 
   /* Hamburger */
