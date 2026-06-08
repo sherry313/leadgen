@@ -232,6 +232,120 @@ Ask if there is someone else at the company who handles supplier decisions.
 CTA: offer to reach out to the right person instead.`,
   },
 
+  'cold_7_step': {
+    key: 'cold_7_step',
+    name: 'Cold 7-Step — 建材开发序列',
+    en_name: '7-Email Cold Outreach Framework',
+    source: '7-Email Cold Outreach Framework（建材澳洲买家）',
+    description: 'Initial Outreach → Value Add → Social Proof → Different Angle → Quick Check-in → Last Value → Breakup',
+    structure: [
+      { day: 0,  stage: 'Initial Outreach', purpose: '个性化介绍 + 明确价值，一个低承诺问题' },
+      { day: 3,  stage: 'Value Add',        purpose: '提供真正有用的信息，完全不提任何请求' },
+      { day: 7,  stage: 'Social Proof',     purpose: '用第三方认证作为可信度背书（无客户案例）' },
+      { day: 10, stage: 'Different Angle',  purpose: '换一个完全不同的切入点：定制尺寸' },
+      { day: 14, stage: 'Quick Check-in',   purpose: '极简、低压力跟进，2-3 句话' },
+      { day: 21, stage: 'Last Value',       purpose: '最后一份真诚价值：邀请参观工厂' },
+      { day: 28, stage: 'Breakup',          purpose: '尊重式收尾，给三个回复选项' },
+    ],
+    best_for: '澳洲建材买家：建筑承包商、装修公司、批发陈列室、室内设计师',
+    icon: '🏗️',
+    sample_subject: 'china sourcing for windows',
+    sample_email_body: `7-Email Cold Outreach Framework example (Email 1, Day 0):
+
+Subject: china sourcing for windows
+
+Hi James,
+
+Your Hawthorn renovation gallery shows a lot of custom glazing work.
+
+Do you source any windows, doors, or cabinets from China right now?
+
+We run a factory in Zhongshan. Twenty years on the same lines.
+
+What does your current sourcing setup look like?
+
+{{accountSignature}}
+
+---
+~50 words. Lowercase subject under 7 words. One specific website observation, one sourcing question, brief intro, one low-commitment question. {{accountSignature}} is the only sign-off.`,
+    sequence_prompt: `OVERRIDES — THESE OVERRIDE ANY EARLIER RULES IN THIS PROMPT:
+- This is a 7-email B2B cold outreach sequence for Australian building materials buyers.
+- Body length: 40-80 words per email.
+- Sign-off: exactly {{accountSignature}} on its own line. Do NOT write any name, "Best regards", "Cheers", "Warmly" or any other sign-off. The literal placeholder {{accountSignature}} is the entire sign-off — Instantly substitutes the sender's signature at send time.
+- Subject: under 7 words, all lowercase, no punctuation.
+- Every sentence max 12 words. Short. Direct.
+- NO em dashes (—), NO semicolons (;).
+- No fake urgency, no hollow claims, no invented social proof, no fake customer quotes.
+- Each email ends with ONE clear low-commitment question.
+- Plain text only. No bullet points, no bold.
+- English only.
+
+FACTS YOU MAY USE (do not invent others):
+- Factory in Zhongshan, 20 years running.
+- Products: windows, doors, kitchen cabinets, sanitary ware.
+- Certifications: AS2047 (Australian window standard), CE, ISO.
+- All four product categories under one roof.
+- Custom sizing available.
+- Target: Australian building contractors, renovation companies, wholesale showrooms, interior designers.
+
+NEVER:
+- Invent customer names or quotes.
+- Mention specific prices.
+- Use "world-class", "industry-leading", "best in class".
+- Start sentences with "I hope", "I wanted to reach out", "I came across".
+- Use em dashes or semicolons.
+
+=== EMAIL 1 (Day 0) — Initial Outreach ===
+Purpose: personalized introduction with clear value.
+- Hook: one specific observation from their website.
+- Ask whether they source windows, doors, cabinets, or sanitary ware from China.
+- Brief intro: factory in Zhongshan, 20 years.
+- CTA: one low-commitment question about their sourcing.
+If the website scrape is empty, the hook becomes exactly: "Saw [Company] while looking at Australian suppliers."
+
+=== EMAIL 2 (Day 3) — Value Add ===
+Purpose: provide genuine value, absolutely NO ask for business.
+- Share: our products hold AS2047, CE, and ISO certifications.
+- Why it matters for them: AS2047 compliance is needed for council approvals in Australia and reduces liability for contractors.
+- Tone: helpful, not salesy.
+- End with a soft question: is certification something they need from suppliers?
+
+=== EMAIL 3 (Day 7) — Social Proof ===
+Purpose: demonstrate credibility through certifications as third-party validation (no customer cases available).
+- Angle: AS2047, CE, and ISO are granted by independent testing bodies. This is proof our quality meets international standards.
+- Frame as "others trust us" via certification bodies, not fake customer quotes.
+- CTA: would they want to see our test reports?
+Do NOT invent customer names, quotes, or project numbers.
+
+=== EMAIL 4 (Day 10) — Different Angle ===
+Purpose: try a completely different angle.
+- New angle: custom sizing. Many Australian renovations need non-standard window and door sizes. Local suppliers cannot always deliver.
+- We manufacture to custom specs.
+- CTA: do they deal with custom sizing requests from clients?
+
+=== EMAIL 5 (Day 14) — Quick Check-in ===
+Purpose: brief, low-pressure follow-up.
+- Very short. 2-3 sentences max.
+- Reference previous emails briefly.
+- CTA: one word reply works.
+
+=== EMAIL 6 (Day 21) — Last Value ===
+Purpose: final piece of genuine value, no ask for business.
+- Offer: an invitation to visit the factory in Zhongshan.
+- Half-day visit. See the production floor, the QC process, all four product lines under one roof.
+- No pressure framing.
+- CTA: worth a half-day next time they are in China?
+
+=== EMAIL 7 (Day 28) — Breakup ===
+Purpose: respectful close that often triggers replies.
+- Give three options to reply:
+  1. Interested but timing is bad.
+  2. Not interested, totally fine.
+  3. Wrong person, point me to who handles sourcing.
+- Tone: respectful, no guilt, door always open.
+- CTA: which of the three fits best?`,
+  },
+
   'aida': {
     key: 'aida',
     name: 'AIDA 经典营销 4 段',
