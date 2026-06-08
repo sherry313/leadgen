@@ -2304,6 +2304,16 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
           it.tiktok    = tiktok;
           it.instagram = instagram;
           it.youtube   = youtube;
+          // Keep a plain-text excerpt of the page so the AI filter can use real
+          // page content later without re-fetching. Strip script/style, drop
+          // tags, collapse whitespace, cap at 1500 chars.
+          it.websiteText = html
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 1500);
         } catch (err) {
           console.log('[DirectScrape]', url, { error: err.message });
         }
@@ -2317,6 +2327,9 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
       if (fields.includes('tiktok'))    row.tiktok    = it.tiktok    || '';
       if (fields.includes('instagram')) row.instagram = it.instagram || '';
       if (fields.includes('youtube'))   row.youtube   = it.youtube   || '';
+      // Always include the scraped page text (not field-gated) so the AI filter
+      // can reuse it without re-fetching the site.
+      row.websiteText = it.websiteText || '';
       send({ type: 'row', row });
       collectedLeads.push(row);
       emitted++;
@@ -2410,7 +2423,7 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       // Mirror /api/google-search enrichment: fetch the place's website and
       // scrape email + social handles from the HTML. Failures are non-fatal —
       // empty fields fall through into the projection below.
-      let scraped = { email: '', linkedin: '', tiktok: '', instagram: '', youtube: '' };
+      let scraped = { email: '', linkedin: '', tiktok: '', instagram: '', youtube: '', websiteText: '' };
       if (website) {
         try {
           const _axiosOpts = {
@@ -2445,6 +2458,16 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
           scraped.instagram = instagramMatch ? 'https://www.' + instagramMatch[0] : '';
           scraped.youtube   = youtubeMatch   ? 'https://www.' + youtubeMatch[0]   : '';
           console.log('[GoogleMapsTool DirectScrape]', website, scraped);
+          // Keep a plain-text excerpt of the page so the AI filter can use real
+          // page content later without re-fetching. Strip script/style, drop
+          // tags, collapse whitespace, cap at 1500 chars.
+          scraped.websiteText = html
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 1500);
         } catch (err) {
           console.log('[GoogleMapsTool DirectScrape]', website, { error: err.message });
         }
@@ -2466,6 +2489,9 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
         mapsUrl:   it.url || '',
       };
       const row = Object.fromEntries(fields.filter(k => k in full).map(k => [k, full[k]]));
+      // Always include the scraped page text (not part of the field projection)
+      // so the AI filter can reuse it without re-fetching the site.
+      row.websiteText = scraped.websiteText;
       send({ type: 'row', row });
       collectedLeads.push(full);
       emitted++;
@@ -2669,6 +2695,11 @@ app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
   const companyName = lead.name        || lead.title || lead.username || '';
   const website     = lead.website     || lead.url   || '';
   const description = lead.description || lead.bio   || '';
+  // Prefer the real scraped page text (saved during the maps/search scrape) so
+  // the qualifier reasons over actual content; fall back to the URL otherwise.
+  const websiteContent = lead.websiteText
+    ? `Website content: ${lead.websiteText}`
+    : `Website URL: ${website}`;
 
   try {
     const Anthropic = require('@anthropic-ai/sdk');
@@ -2684,8 +2715,7 @@ app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
 Criteria: ${criteria}
 
 Company: ${companyName}
-Website: ${website}
-Description: ${description}
+${websiteContent}
 
 Reply in JSON only:
 {"recommended": true/false, "reason": "one sentence in Chinese"}`,
@@ -2698,6 +2728,76 @@ Reply in JSON only:
   } catch (e) {
     console.warn('[AI Filter]', e.message);
     res.json({ recommended: false, reason: '分析失败' });
+  }
+});
+
+// ── /app AI-guided ICP questionnaire ─────────────────────────────────────────
+// Body: { userDesc, keyword }
+// Returns: { questions: [{ id, icon, question, options: [...] }, ...] }
+// Drives the dynamic /app AI 筛选 questionnaire — one Haiku call that produces
+// 3 industry-specific clarifying questions from the user's free-text business
+// description + the search keyword they used.
+app.post('/api/ai-generate-questions', requireAuth, async (req, res) => {
+  const { userDesc, keyword } = req.body;
+
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 800,
+      messages: [{
+        role: 'user',
+        content: `You are helping a B2B user define their ideal customer profile for lead filtering.
+
+User description: "${userDesc}"
+Search keyword used: "${keyword}"
+
+Generate exactly 3 questions to help clarify who their ideal customers are.
+Each question should have 3-4 short answer options relevant to their industry.
+
+Rules:
+- Questions must be in Chinese
+- Options must be in Chinese
+- Questions should help distinguish good leads from bad leads
+- Do NOT ask about years of experience or company size
+- Focus on: business type, what they sell/do, who they serve, what to exclude
+- Options should be specific to their industry (not generic)
+
+Return ONLY valid JSON, no markdown:
+{
+  "questions": [
+    {
+      "id": "q1",
+      "icon": "ti-building-store",
+      "question": "问题文字",
+      "options": ["选项1", "选项2", "选项3", "选项4"]
+    },
+    {
+      "id": "q2",
+      "icon": "ti-tag",
+      "question": "问题文字",
+      "options": ["选项1", "选项2", "选项3"]
+    },
+    {
+      "id": "q3",
+      "icon": "ti-x",
+      "question": "哪些类型的公司你不想联系？",
+      "options": ["选项1", "选项2", "选项3", "选项4"]
+    }
+  ]
+}`
+      }]
+    });
+
+    const text = response.content[0].text;
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    res.json(parsed);
+  } catch(e) {
+    console.error('[AIQuestions] error:', e.message);
+    res.status(500).json({ error: e.message });
   }
 });
 

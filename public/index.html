@@ -2437,6 +2437,7 @@
     <div class="stepper-seg seg-active" id="seg1" onclick="goToStep(1)">选择方式</div>
     <div class="stepper-seg seg-idle"   id="seg2" onclick="goToStep(2)">搜索配置</div>
     <div class="stepper-seg seg-idle"   id="seg3" onclick="goToStep(3)">AI 分析</div>
+    <div class="stepper-seg seg-idle"   id="segAiFilter" onclick="showAppStep3View('filter')" style="display:none">AI 筛选</div>
     <div class="stepper-seg seg-idle"   id="seg4" onclick="goToStep(4)">邮件发送</div>
   </div>
 
@@ -4497,7 +4498,206 @@ function showAiAnalysisPanel() {
     window.setAppLeads(leads);
   }
 
+  // The "AI 筛选" tab toggles #wizard-step-3 into a filter-only sub-view that
+  // sets the lead list + field filters + email config to display:none. Entering
+  // via "下一步 → AI 分析" must restore the analysis sub-view, otherwise those
+  // sections stay hidden and the panel looks empty (only the back button shows).
+  if (typeof showAppStep3View === 'function') showAppStep3View('analysis');
+
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// /app only: #wizard-step-3 hosts three sub-views that the top stepper toggles —
+// 'analysis' (lead list), 'filter' (#appAiFilterPanel), and 'email'
+// (#appEmailConfigPanel, the 邮件发送 step). "AI 分析" calls 'analysis' (rewired
+// on /app in applyStep4HubVisibility), "AI 筛选" calls 'filter', and the
+// "下一步 → 邮件发送" button calls 'email' (goToStep(4) is a no-op on /app because
+// its target #step5Section stays display:none). /lens never reaches here.
+function showAppStep3View(view) {
+  // Make #wizard-step-3 the visible wizard panel. Bypass goToStep(3)'s
+  // country/type guards — the data-source flow doesn't populate those sets
+  // (same reason showAiAnalysisPanel exists).
+  document.querySelectorAll('.wizard-panel').forEach(p => p.classList.add('hidden'));
+  const s3 = document.getElementById('wizard-step-3');
+  if (!s3) return;
+  s3.classList.remove('hidden');
+  currentStep = 3;
+  try { localStorage.setItem('leadgen_current_step', 3); } catch (_) {}
+
+  const isFilter   = (view === 'filter');
+  const isEmail    = (view === 'email');
+  const isAnalysis = !isFilter && !isEmail;
+  const setDisp = (id, show) => { const el = document.getElementById(id); if (el) el.style.display = show ? '' : 'none'; };
+
+  // Analysis sub-view: field filters + select-all + lead list + "→ AI 筛选".
+  setDisp('appFieldFilterSection', isAnalysis);
+  setDisp('appSelectAllRow',       isAnalysis);
+  setDisp('appLeadList',           isAnalysis);
+  setDisp('appToFilterBtn',        isAnalysis);
+
+  // Filter sub-view: the AI 筛选标准 panel.
+  setDisp('appAiFilterPanel', isFilter);
+  if (isFilter) setDisp('appAiFilterResults', true);
+
+  // Email sub-view (邮件发送): the email config panel, hidden in the other two
+  // views. Clear the filter results + the redundant "→ 邮件发送" button so the
+  // email step isn't cluttered with the previous sub-view's output.
+  setDisp('appEmailConfigPanel', isEmail);
+  if (isEmail) { setDisp('appAiFilterResults', false); setDisp('appToEmailBtn', false); }
+
+  // Paint the stepper — analysis=3, AI 筛选=3.5, 邮件发送=4.
+  _updateStepper(isFilter ? 3.5 : isEmail ? 4 : 3);
+  s3.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── /app AI-guided ICP questionnaire (dynamic AI 筛选) ────────────────────────
+// Replaces the static industry/custom form in #appAiFilterPanel:
+// appGenerateQuestions() asks Haiku (via /api/ai-generate-questions) for 3
+// ICP-clarifying questions, renderAppQuestions() shows them as progressively
+// unlocked cards, and once all are answered buildAppFilterSummary() assembles
+// window._appFilterCriteria — which startAppAiFilter() then uses as the criteria.
+// /app-only: these IDs live in the /app-mounted #appAiFilterPanel.
+let _appQuestions = [];
+let _appAnswers = {};
+
+async function appGenerateQuestions() {
+  const userDesc = document.getElementById('appUserDesc').value.trim();
+  if (!userDesc) { alert('请先描述你的业务'); return; }
+
+  const btn = document.getElementById('appGenerateQBtn');
+  const progress = document.getElementById('appQProgress');
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  progress.style.display = 'block';
+
+  // Get search keyword from current search context
+  const keyword = window._lastSearchKeyword || '';
+
+  try {
+    const resp = await fetch('/api/ai-generate-questions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + getStoredToken()
+      },
+      body: JSON.stringify({ userDesc, keyword })
+    });
+    const data = await resp.json();
+    _appQuestions = data.questions || [];
+    _appAnswers = {};
+    renderAppQuestions(_appQuestions);
+    document.getElementById('appFilterStep2').style.display = 'block';
+  } catch(e) {
+    alert('生成失败，请重试');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ AI 帮我分析';
+    progress.style.display = 'none';
+  }
+}
+
+function renderAppQuestions(questions) {
+  const container = document.getElementById('appQuestionCards');
+  container.innerHTML = questions.map((q, qi) => `
+    <div id="appQCard_${qi}" style="background:var(--color-background-primary, #0b0b0c);
+      border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:12px;
+      padding:1.25rem; margin-bottom:10px;
+      ${qi > 0 ? 'opacity:0.4; pointer-events:none;' : ''}">
+      <div style="display:flex; align-items:flex-start; gap:12px;">
+        <div style="width:36px; height:36px; border-radius:50%;
+          background:rgba(99,102,241,0.1); display:flex; align-items:center;
+          justify-content:center; flex-shrink:0;">
+          <i class="ti ${q.icon || 'ti-help'}"
+            style="font-size:18px; color:#6366f1;"></i>
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:500; font-size:14px;
+            color:var(--color-text-primary, #e5e7eb); margin-bottom:12px;">
+            ${q.question}
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+            ${q.options.map(opt => `
+              <button onclick="selectAppAnswer(${qi}, '${opt.replace(/'/g, "\\'")}', this)"
+                style="padding:6px 16px; border-radius:20px;
+                border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+                background:var(--color-background-primary, #0b0b0c);
+                color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
+                ${opt}
+              </button>
+            `).join('')}
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input id="appCustom_${qi}" type="text"
+              placeholder="其他（自定义）..."
+              style="flex:1; padding:6px 12px; border-radius:20px;
+              border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+              font-size:13px; color:var(--color-text-primary, #e5e7eb);
+              background:var(--color-background-primary, #0b0b0c); font-family:inherit; outline:none;"
+              onkeydown="if(event.key==='Enter') confirmAppCustom(${qi})" />
+            <button onclick="confirmAppCustom(${qi})"
+              style="padding:6px 14px; border-radius:20px;
+              border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+              background:var(--color-background-primary, #0b0b0c);
+              color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
+              确认
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectAppAnswer(qi, value, btn) {
+  const card = document.getElementById('appQCard_' + qi);
+  card.querySelectorAll('button').forEach(b => {
+    if (b.onclick && b.onclick.toString().includes('selectAppAnswer')) {
+      b.style.background = 'var(--color-background-primary, #0b0b0c)';
+      b.style.color = 'var(--color-text-secondary, rgba(255,255,255,0.5))';
+      b.style.border = '0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12))';
+    }
+  });
+  btn.style.background = 'rgba(99,102,241,0.1)';
+  btn.style.color = '#6366f1';
+  btn.style.border = '1.5px solid #6366f1';
+  _appAnswers[qi] = value;
+  unlockNextCard(qi);
+}
+
+function confirmAppCustom(qi) {
+  const input = document.getElementById('appCustom_' + qi);
+  const val = input.value.trim();
+  if (!val) return;
+  _appAnswers[qi] = val;
+  input.style.border = '1.5px solid #6366f1';
+  unlockNextCard(qi);
+}
+
+function unlockNextCard(qi) {
+  const next = document.getElementById('appQCard_' + (qi + 1));
+  if (next) {
+    next.style.opacity = '1';
+    next.style.pointerEvents = 'auto';
+  }
+  if (Object.keys(_appAnswers).length === _appQuestions.length) {
+    buildAppFilterSummary();
+  }
+}
+
+function buildAppFilterSummary() {
+  const userDesc = document.getElementById('appUserDesc').value.trim();
+  const answers = _appQuestions.map((q, i) =>
+    `${q.question}：${_appAnswers[i] || ''}`
+  ).join('。');
+
+  window._appFilterCriteria = `${userDesc}。${answers}`;
+
+  document.getElementById('appFilterSummaryText').textContent =
+    window._appFilterCriteria;
+  document.getElementById('appFilterSummary').style.display = 'block';
+  document.getElementById('appFilterSummary').scrollIntoView({
+    behavior: 'smooth'
+  });
 }
 
 function updateStepProgress() {
@@ -4506,11 +4706,21 @@ function updateStepProgress() {
 }
 
 function _updateStepper(n) {
-  const segs = ['seg1','seg2','seg3','seg4'];
-  segs.forEach((id, i) => {
+  // segAiFilter is the /app-only "AI 筛选" tab sitting between seg3 and seg4 at
+  // position 3.5. Map each segment to its numeric position so done/active/idle
+  // painting works for fractional steps too. On /lens segAiFilter is hidden, so
+  // painting its class is a harmless no-op.
+  const segs = [
+    { id: 'seg1',        pos: 1 },
+    { id: 'seg2',        pos: 2 },
+    { id: 'seg3',        pos: 3 },
+    { id: 'segAiFilter', pos: 3.5 },
+    { id: 'seg4',        pos: 4 },
+  ];
+  segs.forEach(({ id, pos }) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.className = 'stepper-seg ' + (i + 1 < n ? 'seg-done' : i + 1 === n ? 'seg-active' : 'seg-idle');
+    el.className = 'stepper-seg ' + (pos < n ? 'seg-done' : pos === n ? 'seg-active' : 'seg-idle');
   });
 }
 
@@ -4800,6 +5010,8 @@ async function startGoogleSearch() {
   if (status) status.textContent = '正在抓取…';
   if (wrap) wrap.style.display = 'none';
   _toolResults.gs = [];
+  // Remember the search keyword so the AI 筛选 questionnaire can use it as context.
+  window._lastSearchKeyword = keyword || '';
 
   try {
     const res = await fetch('/api/google-search', {
@@ -4858,6 +5070,8 @@ async function startGoogleMapsScrape() {
   if (status) status.textContent = '正在抓取…';
   if (wrap) wrap.style.display = 'none';
   _toolResults.gm = [];
+  // Remember the search keyword(s) so the AI 筛选 questionnaire can use them as context.
+  window._lastSearchKeyword = keywords.join(', ') || '';
 
   try {
     const res = await fetch('/api/google-maps-search', {
@@ -9276,8 +9490,15 @@ async function smtpSendAll() {
   hide(document.getElementById('wizHint'));
   hide(document.getElementById('hubCardAccounts'));
 
-  // Hide the top tab bar on /app — the in-panel wizard already paces the flow.
-  hide(document.getElementById('mainStepper'));
+  // Keep the top tab bar VISIBLE on /app (it carries the seg3.5 "AI 筛选" tab).
+  // Reveal the /app-only "AI 筛选" segment — it ships hidden so /lens never sees
+  // it — and rewire seg3 ("AI 分析") to the analysis sub-view so it hides the
+  // filter panel. seg4 keeps its goToStep(4) handler. /lens is untouched: this
+  // IIFE early-returns above on /lens.
+  const segFilter = document.getElementById('segAiFilter');
+  if (segFilter) segFilter.style.display = '';
+  const seg3El = document.getElementById('seg3');
+  if (seg3El) seg3El.setAttribute('onclick', "showAppStep3View('analysis')");
 
   // Show the "下一步 → AI 分析" buttons inside each data-source result wrap.
   // They carry style="display:none" by default so /lens never sees them; the
@@ -9402,12 +9623,12 @@ async function smtpSendAll() {
       ← 返回搜索结果
     </button>
 
-    <div style="margin-bottom:18px">
+    <div id="appFieldFilterSection" style="margin-bottom:18px">
       <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">筛选</label>
       <div id="appFilterPills" style="display:flex;flex-wrap:wrap;gap:7px"></div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 2px">
+    <div id="appSelectAllRow" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 2px">
       <input type="checkbox" id="appSelectAll" style="cursor:pointer;width:16px;height:16px;accent-color:#6366f1">
       <label for="appSelectAll" style="font-size:13px;color:#cbd5e1;cursor:pointer">全选</label>
       <span id="appFilteredCount" style="margin-left:auto;font-size:12px;color:#94a3b8">已筛选 0 条</span>
@@ -9415,38 +9636,69 @@ async function smtpSendAll() {
 
     <div id="appLeadList" style="max-height:300px;overflow-y:auto;border:1px solid rgba(255,255,255,0.08);border-radius:8px;background:rgba(0,0,0,0.15)"></div>
 
+    <!-- Analysis sub-view → AI 筛选 sub-view. showAppStep3View('filter') also
+         highlights the AI 筛选 stepper tab (it calls _updateStepper(3.5)). -->
+    <button type="button" id="appToFilterBtn" onclick="showAppStep3View('filter')" style="width:100%; margin-top:12px; padding:10px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:500; cursor:pointer; font-family:inherit;">
+      下一步 → AI 筛选
+    </button>
+
     <div id="appAiFilterPanel" style="display:none; background: var(--color-background-primary, rgba(255,255,255,0.03)); border: 0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius: 12px; padding: 1.25rem; margin-top: 1rem; margin-bottom: 1rem;">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
-        <i class="ti ti-robot" style="font-size:20px; color:#6366f1;"></i>
-        <span style="font-weight:500; font-size:16px; color: var(--color-text-primary, #e5e7eb);">AI 筛选标准</span>
+      <!-- STEP 1 — business description input (always shown) -->
+      <div id="appFilterStep1">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.25rem;">
+          <i class="ti ti-robot" style="font-size:20px; color:#6366f1;"></i>
+          <span style="font-weight:500; font-size:16px; color:var(--color-text-primary, #e5e7eb);">告诉我你在做什么</span>
+        </div>
+        <textarea id="appUserDesc"
+          placeholder="详细描述你的业务，例如：我们是专门供应日本市场的 vintage 奢品包包批发商，主要品牌包括 Chanel、LV、Hermès，我们的客户是在日本经营二手奢品的买手店和寄卖店..."
+          style="width:100%; height:100px; resize:vertical; padding:10px 12px;
+          border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+          font-size:14px; color:var(--color-text-primary, #e5e7eb);
+          background:var(--color-background-primary, #0b0b0c); margin-bottom:12px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+        <button id="appGenerateQBtn" onclick="appGenerateQuestions()"
+          style="width:100%; padding:10px; background:#6366f1; color:#fff;
+          border:none; border-radius:8px; font-size:15px; font-weight:500; cursor:pointer; font-family:inherit;">
+          ✨ AI 帮我分析
+        </button>
+        <div id="appQProgress" style="display:none; margin-top:10px;
+          font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); text-align:center;">
+          🤖 AI 正在生成问题...
+        </div>
       </div>
-      <div style="margin-bottom:1rem;">
-        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); display:block; margin-bottom:6px;">目标行业</label>
-        <select id="aiFilterIndustry" style="width:100%; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-family:inherit; font-size:13px; outline:none;">
-          <option value="建筑/装修/施工">建筑 / 装修 / 施工</option>
-          <option value="室内设计">室内设计</option>
-          <option value="房产开发">房产开发</option>
-          <option value="零售/家居卖场">零售 / 家居卖场</option>
-          <option value="制造业">制造业</option>
-          <option value="贸易/进出口">贸易 / 进出口</option>
-          <option value="其他">其他</option>
-        </select>
-      </div>
-      <div style="margin-bottom:1rem;">
-        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); display:block; margin-bottom:6px;">其他筛选要求（可选）</label>
-        <textarea id="aiFilterCustom" placeholder="例：有自己的施工团队，专注住宅翻新，有采购中国建材的意向..." style="width:100%; height:80px; resize:vertical; padding:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:8px; font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
-      </div>
-      <button id="startAiFilterBtn" onclick="startAppAiFilter()" style="width:100%; padding:10px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:500; cursor:pointer; font-family:inherit;">
-        ✨ 开始 AI 筛选
-      </button>
-      <div id="aiFilterProgress" style="display:none; margin-top:12px; font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); text-align:center;">
-        🤖 AI 正在分析...
+
+      <!-- STEP 2 — dynamic AI-generated questions (hidden until generated) -->
+      <div id="appFilterStep2" style="display:none; margin-top:1rem;">
+        <div id="appQuestionCards"></div>
+
+        <div id="appFilterSummary" style="display:none;
+          background:rgba(99,102,241,0.06);
+          border:0.5px solid rgba(99,102,241,0.3);
+          border-radius:8px; padding:1.25rem; margin-top:1rem;">
+          <div style="font-size:13px; color:#6366f1; font-weight:500; margin-bottom:8px;">
+            ✓ 筛选标准已生成
+          </div>
+          <div id="appFilterSummaryText" style="font-size:13px;
+            color:var(--color-text-secondary, rgba(255,255,255,0.5)); line-height:1.7;"></div>
+          <button id="startAiFilterBtn" onclick="startAppAiFilter()"
+            style="width:100%; margin-top:12px; padding:10px; background:#6366f1;
+            color:#fff; border:none; border-radius:8px; font-size:14px;
+            font-weight:500; cursor:pointer; font-family:inherit;">
+            开始 AI 筛选 →
+          </button>
+          <div id="aiFilterProgress" style="display:none; margin-top:12px; font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); text-align:center;">
+            🤖 AI 正在分析...
+          </div>
+        </div>
       </div>
     </div>
 
     <div id="appAiFilterResults" style="display:none; margin-bottom:1rem;"></div>
 
-    <div id="appEmailConfigPanel" style="margin-top:18px">
+    <button id="appToEmailBtn" onclick="window._filteredLeads = getAppFilteredLeads(); showAppStep3View('email')" style="display:none; width:100%; margin-top:1rem; padding:10px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:500; cursor:pointer;">
+      下一步 → 邮件发送
+    </button>
+
+    <div id="appEmailConfigPanel" style="margin-top:18px;display:none">
 
       <!-- Field 1: What do you do -->
       <div style="margin-bottom:1rem;">
@@ -9705,12 +9957,13 @@ async function smtpSendAll() {
     window._appLeads = Array.isArray(leads) ? leads.slice() : [];
     selected.clear();
     renderLeadList();
-    // Reveal the AI 筛选标准 panel only when there's something to filter; hide
-    // the leftover result list from a previous run so it doesn't outlive the
-    // new lead set.
+    // The AI 筛选标准 panel is now a separate stepper sub-view, revealed only via
+    // the top "AI 筛选" tab (showAppStep3View('filter')). Landing on this step
+    // shows the analysis sub-view, so keep the filter panel hidden here; still
+    // clear any leftover results from a previous run.
     const fp = panel.querySelector('#appAiFilterPanel');
     const fr = panel.querySelector('#appAiFilterResults');
-    if (fp) fp.style.display = window._appLeads.length ? 'block' : 'none';
+    if (fp) fp.style.display = 'none';
     if (fr) { fr.style.display = 'none'; fr.innerHTML = ''; }
     try {
       localStorage.setItem(LEAD_PREFIX + 'appLeads', JSON.stringify(window._appLeads));
@@ -9722,11 +9975,12 @@ async function smtpSendAll() {
   // window._appLeads (not _toolResults, which is an object keyed by source).
   // Stores the recommended subset in window._filteredLeads for downstream use.
   window.startAppAiFilter = async function () {
-    const leads = window._appLeads || [];
-    if (!leads.length) { alert('请先搜索数据'); return; }
+    // Only analyze the leads the user checked in #appLeadList. Selection is
+    // tracked by the closure-scoped `selected` Set of indices into _appLeads
+    // (the lead objects carry no _selected flag), so derive the subset here.
+    const leads = (window._appLeads || []).filter((l, i) => selected.has(i));
+    if (!leads.length) { alert('请先选择要分析的客户'); return; }
 
-    const industry   = document.getElementById('aiFilterIndustry').value;
-    const custom     = document.getElementById('aiFilterCustom').value;
     const btn        = document.getElementById('startAiFilterBtn');
     const progress   = document.getElementById('aiFilterProgress');
     const resultsDiv = document.getElementById('appAiFilterResults');
@@ -9737,7 +9991,8 @@ async function smtpSendAll() {
     progress.textContent = '🤖 AI 正在分析...';
     resultsDiv.style.display = 'none';
 
-    const criteria = `目标行业：${industry}。${custom ? '额外要求：' + custom : ''}`;
+    const criteria = window._appFilterCriteria || '';
+    if (!criteria) { alert('请先完成 AI 引导问题'); return; }
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
     const filtered = [];
@@ -9746,7 +10001,13 @@ async function smtpSendAll() {
         const resp = await fetch('/api/ai-filter-lead', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
-          body: JSON.stringify({ lead, criteria }),
+          // _appLeads keeps the scraped page text under raw (showAiAnalysisPanel
+          // doesn't copy it to the top level), so surface it as lead.websiteText
+          // for the qualifier. Falls back to '' for leads scraped before this.
+          body: JSON.stringify({
+            lead: { ...lead, websiteText: lead.websiteText || lead.raw?.websiteText || '' },
+            criteria,
+          }),
         });
         const data = await resp.json();
         filtered.push({ ...lead, _aiRecommended: !!data.recommended, _aiReason: data.reason || '' });
@@ -9772,16 +10033,35 @@ async function smtpSendAll() {
             <i class="ti ti-${lead._aiRecommended ? 'check' : 'x'}" style="font-size:16px; color:${lead._aiRecommended ? 'var(--color-text-success, #86efac)' : 'var(--color-text-danger, #fca5a5)'};"></i>
           </div>
           <div style="flex:1; min-width:0;">
-            <div style="font-weight:500; font-size:14px; color:var(--color-text-primary, #e5e7eb); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(lead.name || lead.title || lead.username || '未知')}</div>
+            <div style="font-weight:500; font-size:14px; color:var(--color-text-primary, #e5e7eb); display:flex; align-items:center; gap:8px;">
+              <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(lead.name || lead.title || lead.username || '未知')}</span>
+              ${(lead.website || lead.url || lead.raw?.website) ? `<a href="${esc(lead.website || lead.url || lead.raw?.website)}" target="_blank" rel="noopener" style="font-size:11px; color:#6366f1; text-decoration:none; opacity:0.8; flex-shrink:0;">🔗 官网</a>` : ''}
+            </div>
             <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); margin-top:2px;">${esc(lead._aiReason)}</div>
           </div>
-          <input type="checkbox" ${lead._aiRecommended ? 'checked' : 'disabled'} data-email="${esc(lead.email || '')}" class="ai-filter-checkbox" style="accent-color:#6366f1; width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
+          <input type="checkbox" ${lead._aiRecommended ? 'checked' : ''} data-email="${esc(lead.email || '')}" class="ai-filter-checkbox" style="accent-color:#6366f1; width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
         </div>
       `).join('')}
     `;
     resultsDiv.style.display = 'block';
 
+    const toEmailBtn = document.getElementById('appToEmailBtn');
+    if (toEmailBtn) toEmailBtn.style.display = 'block';
+
     window._filteredLeads = recommended;
+  };
+
+  // Collect the leads whose checkbox is currently ticked in the AI 筛选 results.
+  // Checkbox state is the source of truth (the user can override the AI's
+  // default check either way), matched back to _appLeads by email. Exposed
+  // globally for the "下一步 → 邮件发送" button's inline onclick.
+  window.getAppFilteredLeads = function () {
+    const checkboxes = document.querySelectorAll('.ai-filter-checkbox');
+    const leads = window._appLeads || [];
+    const checkedEmails = new Set(
+      [...checkboxes].filter(cb => cb.checked).map(cb => cb.dataset.email)
+    );
+    return leads.filter(l => checkedEmails.has(l.email || l.raw?.email || ''));
   };
 
   window.startAppEmailGeneration = async function () {
@@ -9793,13 +10073,18 @@ async function smtpSendAll() {
     const btn        = panel.querySelector('#appGenerateBtn');
     const statusEl   = panel.querySelector('#appGenerateStatus');
     const resultsEl  = panel.querySelector('#appGenerateResults');
-    const origText   = btn.textContent;
+    const origText   = btn ? btn.textContent : '';
 
-    // Loading state: lock the button, surface progress underneath.
-    btn.disabled = true;
-    btn.textContent = '生成中...';
-    btn.style.opacity = '0.6';
-    btn.style.cursor = 'not-allowed';
+    // Loading state: lock the button, surface progress underneath. #appGenerateBtn
+    // no longer exists in the preview-first flow (appGenerateAll triggers this),
+    // so guard every btn access — otherwise btn.textContent threw and the whole
+    // generation aborted, leaving the user on the config panel.
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '生成中...';
+      btn.style.opacity = '0.6';
+      btn.style.cursor = 'not-allowed';
+    }
     statusEl.style.display = 'block';
     statusEl.style.background = 'rgba(99,102,241,0.08)';
     statusEl.style.color = '#a5b4fc';
@@ -9884,16 +10169,23 @@ async function smtpSendAll() {
           </button>
         `;
         resultsEl.style.display = 'block';
+        // Auto-navigate to the SMTP send panel now that emails exist — confirming
+        // the preview ("没问题，继续全部生成") should land on 发送邮件, not leave the
+        // user on the config panel. window._generatedEmails was just set above,
+        // which is what showAppSendPanel reads.
+        if (typeof showAppSendPanel === 'function') showAppSendPanel();
       }
     } catch (err) {
       statusEl.style.background = 'rgba(239,68,68,0.08)';
       statusEl.style.color = '#fca5a5';
       statusEl.textContent = '生成失败：' + (err.message || '未知错误');
     } finally {
-      btn.disabled = selected.size === 0;
-      btn.textContent = origText;
-      btn.style.opacity = selected.size === 0 ? '0.6' : '1';
-      btn.style.cursor  = selected.size === 0 ? 'not-allowed' : 'pointer';
+      if (btn) {
+        btn.disabled = selected.size === 0;
+        btn.textContent = origText;
+        btn.style.opacity = selected.size === 0 ? '0.6' : '1';
+        btn.style.cursor  = selected.size === 0 ? 'not-allowed' : 'pointer';
+      }
     }
   };
 
@@ -9915,6 +10207,7 @@ async function smtpSendAll() {
     const savedPort = lsGet('leadgen_smtpPort') || '587';
     const savedUser = lsGet('leadgen_smtpUser');
     const savedPass = lsGet('leadgen_smtpPass');
+    const savedCampaign = lsGet('leadgen_app_instantly_campaign');
 
     // Mount the drawer once; subsequent calls just repopulate.
     let sendPanel = panel.querySelector('#appSendPanel');
@@ -9940,42 +10233,159 @@ async function smtpSendAll() {
       <div style="font-size:14px;font-weight:600;color:#e5e7eb;margin-bottom:4px">📤 发送邮件</div>
       <div style="font-size:13px;color:#cbd5e1;margin-bottom:14px">准备发送 ${withRecipient.length} 封邮件${skipNote}</div>
 
-      <label for="smtpSenderName" style="${LABEL_STYLE}">发件人姓名</label>
-      <input type="text" id="smtpSenderName" placeholder="例：王伟" style="${INPUT_STYLE};margin-bottom:14px">
+      <!-- Send-method toggle: SMTP (default) vs Instantly -->
+      <div style="display:flex; gap:8px; margin-bottom:1rem;">
+        <button id="appSendMethodSmtp" onclick="setAppSendMethod('smtp')"
+          style="flex:1; padding:8px; border-radius:8px;
+          border:2px solid #6366f1; background:rgba(99,102,241,0.08);
+          color:#6366f1; font-size:13px; font-weight:500; cursor:pointer; font-family:inherit;">
+          📧 SMTP 发送
+        </button>
+        <button id="appSendMethodInstantly" onclick="setAppSendMethod('instantly')"
+          style="flex:1; padding:8px; border-radius:8px;
+          border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+          background:var(--color-background-primary, #0b0b0c);
+          color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
+          ⚡ Instantly 发送
+        </button>
+      </div>
 
-      <label for="appSmtpProvider" style="${LABEL_STYLE}">快速选择服务商</label>
-      <select id="appSmtpProvider" onchange="applyAppSmtpProvider(this.value)" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:8px;padding:10px 14px;font-family:inherit;font-size:13px;outline:none;margin-bottom:6px;box-sizing:border-box">
-        <option value="">— 选择邮箱服务商 —</option>
-        <option value="gmail">Gmail</option>
-        <option value="outlook">Outlook / Office365</option>
-        <option value="qq">QQ 邮箱</option>
-        <option value="163">163 邮箱</option>
-        <option value="hostinger">Hostinger</option>
-        <option value="custom">自定义</option>
-      </select>
-      <div id="appSmtpProviderHint" style="display:none;font-size:12px;margin-bottom:10px;line-height:1.5"></div>
+      <!-- SMTP send panel (default) -->
+      <div id="appSmtpSendPanel">
+        <label for="smtpSenderName" style="${LABEL_STYLE}">发件人姓名</label>
+        <input type="text" id="smtpSenderName" placeholder="例：王伟" style="${INPUT_STYLE};margin-bottom:14px">
 
-      <label for="appSmtpHost" style="${LABEL_STYLE}">SMTP Host</label>
-      <input type="text" id="appSmtpHost" placeholder="smtp.gmail.com" value="${esc(savedHost)}" style="${INPUT_STYLE}">
+        <label for="appSmtpProvider" style="${LABEL_STYLE}">快速选择服务商</label>
+        <select id="appSmtpProvider" onchange="applyAppSmtpProvider(this.value)" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:8px;padding:10px 14px;font-family:inherit;font-size:13px;outline:none;margin-bottom:6px;box-sizing:border-box">
+          <option value="">— 选择邮箱服务商 —</option>
+          <option value="gmail">Gmail</option>
+          <option value="outlook">Outlook / Office365</option>
+          <option value="qq">QQ 邮箱</option>
+          <option value="163">163 邮箱</option>
+          <option value="hostinger">Hostinger</option>
+          <option value="custom">自定义</option>
+        </select>
+        <div id="appSmtpProviderHint" style="display:none;font-size:12px;margin-bottom:10px;line-height:1.5"></div>
 
-      <label for="appSmtpPort" style="${LABEL_STYLE}">SMTP Port</label>
-      <input type="number" id="appSmtpPort" placeholder="587" value="${esc(savedPort)}" style="${INPUT_STYLE}">
+        <label for="appSmtpHost" style="${LABEL_STYLE}">SMTP Host</label>
+        <input type="text" id="appSmtpHost" placeholder="smtp.gmail.com" value="${esc(savedHost)}" style="${INPUT_STYLE}">
 
-      <label for="appSmtpUser" style="${LABEL_STYLE}">邮箱账号</label>
-      <input type="email" id="appSmtpUser" placeholder="you@gmail.com" value="${esc(savedUser)}" style="${INPUT_STYLE}">
+        <label for="appSmtpPort" style="${LABEL_STYLE}">SMTP Port</label>
+        <input type="number" id="appSmtpPort" placeholder="587" value="${esc(savedPort)}" style="${INPUT_STYLE}">
 
-      <label for="appSmtpPass" style="${LABEL_STYLE}">邮箱密码/授权码</label>
-      <input type="password" id="appSmtpPass" placeholder="••••••••" value="${esc(savedPass)}" style="${INPUT_STYLE};margin-bottom:14px">
+        <label for="appSmtpUser" style="${LABEL_STYLE}">邮箱账号</label>
+        <input type="email" id="appSmtpUser" placeholder="you@gmail.com" value="${esc(savedUser)}" style="${INPUT_STYLE}">
 
-      <button type="button" id="appSmtpConfirmBtn" onclick="startAppSmtpSend()" ${canSend ? '' : 'disabled'} style="width:100%;padding:11px;background:#6366f1;border:0;border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:${canSend ? 'pointer' : 'not-allowed'};opacity:${canSend ? '1' : '0.6'}">
-        ✓ 确认发送
-      </button>
+        <label for="appSmtpPass" style="${LABEL_STYLE}">邮箱密码/授权码</label>
+        <input type="password" id="appSmtpPass" placeholder="••••••••" value="${esc(savedPass)}" style="${INPUT_STYLE};margin-bottom:14px">
 
-      <div id="appSmtpStatus" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:13px;text-align:center"></div>
+        <button type="button" id="appSmtpConfirmBtn" onclick="startAppSmtpSend()" ${canSend ? '' : 'disabled'} style="width:100%;padding:11px;background:#6366f1;border:0;border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:${canSend ? 'pointer' : 'not-allowed'};opacity:${canSend ? '1' : '0.6'}">
+          ✓ 确认发送
+        </button>
+
+        <div id="appSmtpStatus" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:13px;text-align:center"></div>
+      </div>
+
+      <!-- Instantly send panel (hidden by default). Uses the server .env API key
+           via /api/instantly/add-lead — same backend as /lens. Campaign chosen by
+           pasting a Campaign ID (per /app spec). -->
+      <div id="appInstantlySendPanel" style="display:none">
+        <label for="appInstantlyCampaignId" style="${LABEL_STYLE}">Instantly Campaign ID</label>
+        <input type="text" id="appInstantlyCampaignId" placeholder="粘贴 Instantly Campaign ID" value="${esc(savedCampaign)}" style="${INPUT_STYLE};margin-bottom:14px">
+
+        <button type="button" id="appInstantlyConfirmBtn" onclick="startAppInstantlySend()" ${canSend ? '' : 'disabled'} style="width:100%;padding:11px;background:#6366f1;border:0;border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:${canSend ? 'pointer' : 'not-allowed'};opacity:${canSend ? '1' : '0.6'}">
+          ⚡ 推送到 Instantly
+        </button>
+
+        <div id="appInstantlyStatus" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:13px;text-align:center"></div>
+      </div>
     `;
 
     sendPanel.style.display = 'block';
     sendPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Toggle the /app send panel between SMTP and Instantly. Purely shows/hides
+  // the two sub-panels and repaints the toggle buttons — no send side effects.
+  window.setAppSendMethod = function (method) {
+    const isSmtp = method !== 'instantly';
+    const smtpPanel = panel.querySelector('#appSmtpSendPanel');
+    const instPanel = panel.querySelector('#appInstantlySendPanel');
+    if (smtpPanel) smtpPanel.style.display = isSmtp ? 'block' : 'none';
+    if (instPanel) instPanel.style.display = isSmtp ? 'none'  : 'block';
+
+    const setActive = (btn, active) => {
+      if (!btn) return;
+      btn.style.border     = active ? '2px solid #6366f1' : '0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12))';
+      btn.style.background  = active ? 'rgba(99,102,241,0.08)' : 'var(--color-background-primary, #0b0b0c)';
+      btn.style.color       = active ? '#6366f1' : 'var(--color-text-secondary, rgba(255,255,255,0.5))';
+      btn.style.fontWeight  = active ? '500' : '400';
+    };
+    setActive(panel.querySelector('#appSendMethodSmtp'),      isSmtp);
+    setActive(panel.querySelector('#appSendMethodInstantly'), !isSmtp);
+  };
+
+  // Push the generated emails to an Instantly campaign — one /api/instantly/add-lead
+  // call per lead, the same backend (and server .env API key) /lens uses. Each
+  // lead's 5-email sequence is sent as lead.emails:[{subject,body}×5].
+  window.startAppInstantlySend = async function () {
+    const all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
+    const toSend = all.filter(e => (e.email || e.to || '').toString().trim());
+    if (!toSend.length) return;
+
+    const campaignId = (panel.querySelector('#appInstantlyCampaignId')?.value || '').trim();
+    const statusEl = panel.querySelector('#appInstantlyStatus');
+    const showStatus = (msg, color, bg) => {
+      if (!statusEl) return;
+      statusEl.style.display = 'block';
+      statusEl.style.color = color;
+      statusEl.style.background = bg;
+      statusEl.textContent = msg;
+    };
+    if (!campaignId) { showStatus('请填写 Instantly Campaign ID', '#fca5a5', 'rgba(239,68,68,0.08)'); return; }
+
+    // Persist for next time (separate key from /lens's selected_campaign_id).
+    try { localStorage.setItem('leadgen_app_instantly_campaign', campaignId); } catch (_) {}
+
+    const btn = panel.querySelector('#appInstantlyConfirmBtn');
+    const origText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'not-allowed'; btn.textContent = '推送中...'; }
+
+    const token = (typeof getStoredToken === 'function') ? getStoredToken() : '';
+    let ok = 0, fail = 0;
+    for (let i = 0; i < toSend.length; i++) {
+      const e = toSend[i];
+      showStatus(`正在推送 ${i + 1}/${toSend.length}...`, '#a5b4fc', 'rgba(99,102,241,0.08)');
+      try {
+        const seq = Array.isArray(e.sequence) ? e.sequence : [];
+        const emails = [0, 1, 2, 3, 4].map(n => ({ subject: seq[n]?.subject || '', body: seq[n]?.body || '' }));
+        const res = await fetch('/api/instantly/add-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
+          body: JSON.stringify({
+            campaignId,
+            lead: {
+              email:       e.email || e.to || '',
+              companyName: e.recipient || '',
+              website:     e.website || '',
+              phone:       e.phone || '',
+              emails,
+            },
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        // Treat DUPLICATE_LEAD as soft-success, same as /lens bulk send.
+        if (data?.success || data?.error_code === 'DUPLICATE_LEAD') ok++;
+        else fail++;
+      } catch (_) {
+        fail++;
+      }
+    }
+
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.textContent = origText; }
+    showStatus(`完成：成功 ${ok}，失败 ${fail}`,
+      ok > 0 ? '#86efac' : '#fca5a5',
+      ok > 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)');
   };
 
   // Provider quick-pick: auto-fills host/port and surfaces an auth-mode hint.
@@ -10274,7 +10684,10 @@ function appEditConfig() {
 }
 
 async function appGenerateAll() {
-  const leads = window._appLeads || [];
+  // Use the AI-filter selection when present, otherwise all leads.
+  const leads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
+    ? window._filteredLeads
+    : (window._appLeads || []);
   if (!leads.length) return;
 
   const sellerDesc = document.getElementById('appSellerDesc').value.trim();
@@ -10286,14 +10699,79 @@ async function appGenerateAll() {
 
   window._appEmailConfig = { sellerDesc, goal: _appSelectedGoal,
     signatureName, framework, customPrompt };
+  const cfg = window._appEmailConfig;
 
-  if (typeof generateAppEmails === 'function') {
-    generateAppEmails();
-  } else if (document.getElementById('appGenerateBtn')) {
-    document.getElementById('appGenerateBtn').click();
-  } else if (typeof startAppEmailGeneration === 'function') {
-    startAppEmailGeneration();
+  const statusEl  = document.getElementById('appGenerateStatus');
+  const resultsEl = document.getElementById('appGenerateResults');
+  if (resultsEl) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; }
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(99,102,241,0.08)';
+    statusEl.style.color = '#a5b4fc';
   }
+
+  // Each entry: subject/body = Email 1 (single-card preview/send), sequence = the
+  // full 5-email series — the shape showAppSendPanel + the SMTP batch expect.
+  const toEntry = (lead, seq) => {
+    const sequence = Array.isArray(seq) ? seq.map(e => ({ subject: e.subject || '', body: e.body || '' })) : [];
+    const email = lead.email || lead.raw?.email || '';
+    const recipient = lead.name || lead.title || lead.username || '';
+    return {
+      recipient, email, to: email || recipient,
+      subject: sequence[0]?.subject || '',
+      body:    sequence[0]?.body    || '',
+      framework: cfg.framework, sequence,
+    };
+  };
+
+  // Generate the full 5-email sequence for one lead via the SAME config-aware
+  // endpoint the preview uses, so every lead respects sellerDesc/goal/signature.
+  const genFor = async (lead) => {
+    const resp = await fetch('/api/app-generate-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+      body: JSON.stringify({
+        lead,
+        sellerDesc: cfg.sellerDesc,
+        goal: cfg.goal,
+        signatureName: cfg.signatureName,
+        framework: cfg.framework,
+        customPrompt: cfg.framework === 'custom' ? (cfg.customPrompt || '') : '',
+      }),
+    });
+    const data = await resp.json();
+    return toEntry(lead, data.emails);
+  };
+
+  // The first lead was already generated by appPreviewFirst (on window._appLeads[0]);
+  // reuse that sequence when leads[0] is that same lead, otherwise regenerate it.
+  const previewed = (window._appLeads || [])[0];
+  const reuseFirst = previewed && leads[0]
+    && (leads[0].email || '') === (previewed.email || '')
+    && (leads[0].name || leads[0].title || '') === (previewed.name || previewed.title || '')
+    && Array.isArray(_appPreviewEmails) && _appPreviewEmails.length;
+
+  const results = [];
+  for (let i = 0; i < leads.length; i++) {
+    if (statusEl) statusEl.textContent = `正在生成 ${i + 1}/${leads.length} 封邮件...`;
+    try {
+      if (i === 0 && reuseFirst) results.push(toEntry(leads[0], _appPreviewEmails));
+      else                       results.push(await genFor(leads[i]));
+    } catch (e) {
+      console.warn('[appGenerateAll] generation failed for', leads[i]?.name || '', e.message);
+    }
+  }
+
+  window._generatedEmails = results;
+
+  if (statusEl) {
+    statusEl.style.background = 'rgba(34,197,94,0.08)';
+    statusEl.style.color = '#86efac';
+    statusEl.textContent = `已生成 ${results.length} 封邮件`;
+  }
+
+  // Navigate to the SMTP send panel now that emails exist.
+  if (typeof showAppSendPanel === 'function') showAppSendPanel();
 }
 
 // ── Website list upload & enrich ──────────────────────────────────────────────
