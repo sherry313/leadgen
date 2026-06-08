@@ -9700,98 +9700,206 @@ async function smtpSendAll() {
 
     <div id="appEmailConfigPanel" style="margin-top:18px;display:none">
 
-      <!-- Field 1: What do you do -->
-      <div style="margin-bottom:1rem;">
-        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
-          display:block; margin-bottom:6px;">我是做什么的</label>
-        <input id="appSellerDesc" type="text"
-          placeholder="例：vintage bag manufacturer based in Guangzhou"
-          style="width:100%; padding:8px 12px; border-radius:8px;
-          border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
-          background:var(--color-background-primary, #0b0b0c);
-          color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;" />
+      <!-- Hidden compatibility fields: the existing preview/send flow
+           (appPreviewFirst / appGenerateAll / startAppEmailGeneration) still
+           reads these IDs. The 4-step wizard below populates them on hand-off. -->
+      <input type="hidden" id="appSellerDesc">
+      <input type="hidden" id="appSignatureName">
+      <input type="hidden" id="appFrameworkSelect" value="cold_7_step">
+      <input type="hidden" id="appCustomPrompt">
+
+      <!-- ===== STEP 1 — Basic info ===== -->
+      <div id="fwStep1">
+        <!-- Header -->
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
+          <div style="width:34px; height:34px; border-radius:8px; background:#534AB7; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i class="ti ti-mail-forward" style="color:#fff; font-size:18px;"></i>
+          </div>
+          <div>
+            <div style="font-size:17px; font-weight:500; color:var(--color-text-primary, #e5e7eb);">第 1 步 · 告诉 AI 你是做什么的</div>
+            <div style="font-size:12px; color:var(--color-text-tertiary, rgba(255,255,255,0.35));">填得越具体，邮件越精准。垃圾进，垃圾出。</div>
+          </div>
+        </div>
+
+        <!-- Field 1 — 产品 / 服务 -->
+        <div style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:var(--border-radius-lg, 12px); background:var(--color-background-primary, #0b0b0c); overflow:hidden; margin-bottom:1.25rem;">
+          <div style="display:flex; align-items:center; gap:8px; padding:10px 14px 0;">
+            <div style="width:26px; height:26px; border-radius:6px; background:#EEEDFE; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <i class="ti ti-package" style="color:#534AB7; font-size:15px;"></i>
+            </div>
+            <span style="font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb);">产品 / 服务</span>
+          </div>
+          <div style="padding:8px 14px 14px;">
+            <div style="font-size:11px; color:var(--color-text-tertiary, rgba(255,255,255,0.35)); margin-bottom:8px;">选一个或多个，也可以自定义</div>
+            <div class="fw-pills" data-group="fwProduct" style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span class="fw-pill pill-p" data-group="fwProduct" data-val="铝合金门窗" onclick="fwTogglePill(this,'fwProduct')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">铝合金门窗</span>
+              <span class="fw-pill pill-p" data-group="fwProduct" data-val="卫浴配件" onclick="fwTogglePill(this,'fwProduct')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">卫浴配件</span>
+              <span class="fw-pill pill-p" data-group="fwProduct" data-val="二手奢侈品包包" onclick="fwTogglePill(this,'fwProduct')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">二手奢侈品包包</span>
+              <span class="fw-pill pill-p" data-group="fwProduct" data-val="建材" onclick="fwTogglePill(this,'fwProduct')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">建材</span>
+              <span class="fw-pill pill-p" data-group="fwProduct" data-val="服装 / 饰品" onclick="fwTogglePill(this,'fwProduct')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">服装 / 饰品</span>
+              <span class="fw-pill pill-p" data-group="fwProduct" data-val="食品 / 饮料" onclick="fwTogglePill(this,'fwProduct')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">食品 / 饮料</span>
+              <span class="fw-pill pill-p" data-group="fwProduct" data-val="软件 / SaaS" onclick="fwTogglePill(this,'fwProduct')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">软件 / SaaS</span>
+              <span class="fw-pill pill-p fw-pill-custom" data-group="fwProduct" onclick="fwToggleCustom('fwProduct')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">＋ 自定义</span>
+            </div>
+            <input id="fwProductCustom" type="text" placeholder="例：定制家具、工业零件..." oninput="fwCompilePills('fwProduct')"
+              style="width:100%; margin-top:8px; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none; display:none;" />
+            <div id="fwProductSelected" style="display:none; font-size:12px; color:#534AB7; margin-top:8px;"></div>
+            <textarea id="fwProductDetail" oninput="fwCompilePills('fwProduct')" placeholder="例：二手奢侈品包包批发，主要品牌 LV、Gucci、Chanel，成色分级 9成新 / 8成新 / 7成新，每月库存约 50 件，附真伪鉴定证书"
+              style="width:100%; margin-top:10px; height:80px; resize:vertical; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;"></textarea>
+            <input type="hidden" id="fwProduct">
+          </div>
+        </div>
+
+        <!-- Field 2 — 目标客户 -->
+        <div style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:var(--border-radius-lg, 12px); background:var(--color-background-primary, #0b0b0c); overflow:hidden; margin-bottom:1.25rem;">
+          <div style="display:flex; align-items:center; gap:8px; padding:10px 14px 0;">
+            <div style="width:26px; height:26px; border-radius:6px; background:#E1F5EE; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <i class="ti ti-users" style="color:#0F6E56; font-size:15px;"></i>
+            </div>
+            <span style="font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb);">目标客户</span>
+          </div>
+          <div style="padding:8px 14px 14px;">
+            <div style="font-size:11px; color:var(--color-text-tertiary, rgba(255,255,255,0.35)); margin-bottom:8px;">选一个或多个</div>
+            <div class="fw-pills" data-group="fwTargetCustomer" style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span class="fw-pill pill-t" data-group="fwTargetCustomer" data-val="室内设计师" onclick="fwTogglePill(this,'fwTargetCustomer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">室内设计师</span>
+              <span class="fw-pill pill-t" data-group="fwTargetCustomer" data-val="建筑商" onclick="fwTogglePill(this,'fwTargetCustomer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">建筑商</span>
+              <span class="fw-pill pill-t" data-group="fwTargetCustomer" data-val="线下零售门店" onclick="fwTogglePill(this,'fwTargetCustomer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">线下零售门店</span>
+              <span class="fw-pill pill-t" data-group="fwTargetCustomer" data-val="买手店 / 精品店" onclick="fwTogglePill(this,'fwTargetCustomer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">买手店 / 精品店</span>
+              <span class="fw-pill pill-t" data-group="fwTargetCustomer" data-val="餐厅 / 咖啡馆" onclick="fwTogglePill(this,'fwTargetCustomer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">餐厅 / 咖啡馆</span>
+              <span class="fw-pill pill-t" data-group="fwTargetCustomer" data-val="电商卖家" onclick="fwTogglePill(this,'fwTargetCustomer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">电商卖家</span>
+              <span class="fw-pill pill-t" data-group="fwTargetCustomer" data-val="批发商" onclick="fwTogglePill(this,'fwTargetCustomer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">批发商</span>
+              <span class="fw-pill pill-t fw-pill-custom" data-group="fwTargetCustomer" onclick="fwToggleCustom('fwTargetCustomer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">＋ 自定义</span>
+            </div>
+            <input id="fwTargetCustomerCustom" type="text" placeholder="例：澳洲高端住宅开发商..." oninput="fwCompilePills('fwTargetCustomer')"
+              style="width:100%; margin-top:8px; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none; display:none;" />
+            <div id="fwTargetCustomerSelected" style="display:none; font-size:12px; color:#0F6E56; margin-top:8px;"></div>
+            <textarea id="fwTargetCustomerDetail" oninput="fwCompilePills('fwTargetCustomer')" placeholder="例：欧美线下独立精品店、买手店，专售二手奢侈品包包，客群为中产阶级注重性价比的消费者"
+              style="width:100%; margin-top:10px; height:80px; resize:vertical; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;"></textarea>
+            <input type="hidden" id="fwTargetCustomer">
+          </div>
+        </div>
+
+        <!-- Field 3 — 真实客户案例 -->
+        <div style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:var(--border-radius-lg, 12px); background:var(--color-background-primary, #0b0b0c); overflow:hidden; margin-bottom:1.25rem;">
+          <div style="display:flex; align-items:center; gap:8px; padding:10px 14px 0;">
+            <div style="width:26px; height:26px; border-radius:6px; background:#E6F1FB; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <i class="ti ti-trophy" style="color:#185FA5; font-size:15px;"></i>
+            </div>
+            <span style="font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb);">真实客户案例 <span style="font-size:11px; font-weight:400; color:var(--color-text-tertiary, rgba(255,255,255,0.35));">（没有就勾选暂无）</span></span>
+          </div>
+          <div style="padding:8px 14px 14px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+              <span id="fwNoCasePill" class="fw-pill" onclick="fwToggleNoCase()" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">暂无案例</span>
+              <span style="font-size:11px; color:var(--color-text-tertiary, rgba(255,255,255,0.35));">勾选后 AI 会绕开 social proof</span>
+            </div>
+            <textarea id="fwCaseStudy" placeholder="例：纽约 SoHo 一家买手店，合作 3 个月，月供货 10 件 LV 和 Gucci 包，复购率 100%，零退货"
+              style="width:100%; height:80px; resize:vertical; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;"></textarea>
+          </div>
+        </div>
+
+        <!-- Field 4 — 零风险入口 -->
+        <div style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:var(--border-radius-lg, 12px); background:var(--color-background-primary, #0b0b0c); overflow:hidden; margin-bottom:1.25rem;">
+          <div style="display:flex; align-items:center; gap:8px; padding:10px 14px 0;">
+            <div style="width:26px; height:26px; border-radius:6px; background:#FAEEDA; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <i class="ti ti-gift" style="color:#BA7517; font-size:15px;"></i>
+            </div>
+            <span style="font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb);">零风险入口</span>
+          </div>
+          <div style="padding:8px 14px 14px;">
+            <div style="font-size:11px; color:var(--color-text-tertiary, rgba(255,255,255,0.35)); margin-bottom:8px;">让对方不用承担风险就能开始了解你</div>
+            <div class="fw-pills" data-group="fwLowRiskOffer" style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span class="fw-pill pill-o" data-group="fwLowRiskOffer" data-val="免费寄样品" onclick="fwTogglePill(this,'fwLowRiskOffer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">免费寄样品</span>
+              <span class="fw-pill pill-o" data-group="fwLowRiskOffer" data-val="小批量起订" onclick="fwTogglePill(this,'fwLowRiskOffer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">小批量起订</span>
+              <span class="fw-pill pill-o" data-group="fwLowRiskOffer" data-val="免费图纸 / 方案" onclick="fwTogglePill(this,'fwLowRiskOffer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">免费图纸 / 方案</span>
+              <span class="fw-pill pill-o" data-group="fwLowRiskOffer" data-val="样品目录 + 报价单" onclick="fwTogglePill(this,'fwLowRiskOffer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">样品目录 + 报价单</span>
+              <span class="fw-pill pill-o" data-group="fwLowRiskOffer" data-val="工厂参观接待" onclick="fwTogglePill(this,'fwLowRiskOffer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">工厂参观接待</span>
+              <span class="fw-pill pill-o" data-group="fwLowRiskOffer" data-val="免费咨询" onclick="fwTogglePill(this,'fwLowRiskOffer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">免费咨询</span>
+              <span class="fw-pill pill-o fw-pill-custom" data-group="fwLowRiskOffer" onclick="fwToggleCustom('fwLowRiskOffer')" style="padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; font-family:inherit; user-select:none; border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));">＋ 自定义</span>
+            </div>
+            <input id="fwLowRiskOfferCustom" type="text" placeholder="例：先看货后付款..." oninput="fwCompilePills('fwLowRiskOffer')"
+              style="width:100%; margin-top:8px; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none; display:none;" />
+            <div id="fwLowRiskOfferSelected" style="display:none; font-size:12px; color:#BA7517; margin-top:8px;"></div>
+            <textarea id="fwLowRiskOfferDetail" oninput="fwCompilePills('fwLowRiskOffer')" placeholder="例：最小起订 5 件，平均单价 $300-800，7 天无理由退换，支持先看货后付款"
+              style="width:100%; margin-top:10px; height:80px; resize:vertical; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;"></textarea>
+            <input type="hidden" id="fwLowRiskOffer">
+          </div>
+        </div>
+
+        <!-- Field 5 — 发件人姓名 + 职位 + 公司 -->
+        <div style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:var(--border-radius-lg, 12px); background:var(--color-background-primary, #0b0b0c); overflow:hidden; margin-bottom:1.25rem;">
+          <div style="display:flex; align-items:center; gap:8px; padding:10px 14px 0;">
+            <div style="width:26px; height:26px; border-radius:6px; background:#FAECE7; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <i class="ti ti-user-circle" style="color:#993C1D; font-size:15px;"></i>
+            </div>
+            <span style="font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb);">发件人姓名 + 职位 + 公司</span>
+          </div>
+          <div style="padding:8px 14px 14px;">
+            <input id="fwSenderName" type="text" placeholder="例：Libby Li，Sourcing Director，LuxeSupply Co."
+              style="width:100%; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;" />
+          </div>
+        </div>
+
+        <button type="button" onclick="fwValidateInputs()"
+          style="width:100%; padding:10px; background:#6366f1; color:#fff;
+          border:none; border-radius:8px; font-size:15px; font-weight:500;
+          cursor:pointer; font-family:inherit;">
+          提交给 AI 审核 →
+        </button>
       </div>
 
-      <!-- Field 2: Goal - 3 buttons, single select -->
-      <div style="margin-bottom:1rem;">
-        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
-          display:block; margin-bottom:6px;">目标</label>
+      <!-- ===== STEP 2 — AI quality control ===== -->
+      <div id="fwStep2" style="display:none;">
+        <div style="font-size:15px; font-weight:600; color:var(--color-text-primary, #e5e7eb); margin-bottom:12px;">第 2 步 · AI 质量审核</div>
+        <div id="fwStep2Loading" style="display:none; font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); text-align:center; padding:16px 0;">
+          <i class="ti ti-loader-2"></i> AI 分析中，检查信息是否足够具体...
+        </div>
+        <div id="fwReviewRows"></div>
+        <div id="fwAllPassedMsg" style="display:none; font-size:13px; color:#86efac; border-left:3px solid #22c55e; background:rgba(34,197,94,0.08); border-radius:4px; padding:8px 10px; margin:8px 0;">
+          所有信息已通过审核
+        </div>
+        <button type="button" id="fwGenBtn" disabled onclick="fwGeneratePreview()"
+          style="width:100%; margin-top:8px; padding:10px; background:#6366f1; color:#fff;
+          border:none; border-radius:8px; font-size:15px; font-weight:500;
+          cursor:pointer; font-family:inherit; opacity:0.5;">
+          生成邮件框架 →
+        </button>
+      </div>
+
+      <!-- ===== STEP 3 — Framework confirmation ===== -->
+      <div id="fwStep3" style="display:none;">
+        <div style="font-size:15px; font-weight:600; color:var(--color-text-primary, #e5e7eb); margin-bottom:12px;">第 3 步 · 确认邮件序列</div>
+        <div id="fwStep3Loading" style="display:none; font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); text-align:center; padding:16px 0;">
+          <i class="ti ti-loader-2"></i> AI 设计专属邮件序列...
+        </div>
+        <div id="fwSequenceRows"></div>
+        <div style="margin:14px 0 1rem;">
+          <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); display:block; margin-bottom:6px;">签名</label>
+          <textarea id="fwSignature" placeholder="姓名、职位、公司、联系方式"
+            style="width:100%; height:70px; resize:vertical; padding:8px 12px; border-radius:8px;
+            border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+            background:var(--color-background-primary, #0b0b0c);
+            color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;"></textarea>
+        </div>
         <div style="display:flex; gap:8px;">
-          <button type="button" class="app-goal-btn" data-goal="找买家"
-            onclick="selectAppGoal(this)"
-            style="flex:1; padding:8px; border-radius:8px;
+          <button type="button" onclick="fwBackToStep2()"
+            style="flex:0 0 auto; padding:10px 16px; background:var(--color-background-primary, #0b0b0c);
+            color:var(--color-text-secondary, rgba(255,255,255,0.6));
             border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
-            background:var(--color-background-primary, #0b0b0c);
-            color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
-            找买家
+            border-radius:8px; font-size:14px; cursor:pointer; font-family:inherit;">
+            ← 修改答案
           </button>
-          <button type="button" class="app-goal-btn" data-goal="找供应商"
-            onclick="selectAppGoal(this)"
-            style="flex:1; padding:8px; border-radius:8px;
-            border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
-            background:var(--color-background-primary, #0b0b0c);
-            color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
-            找供应商
-          </button>
-          <button type="button" class="app-goal-btn" data-goal="找合作"
-            onclick="selectAppGoal(this)"
-            style="flex:1; padding:8px; border-radius:8px;
-            border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
-            background:var(--color-background-primary, #0b0b0c);
-            color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
-            找合作
+          <button type="button" onclick="fwProceedToPreview()"
+            style="flex:1; padding:10px; background:#6366f1; color:#fff;
+            border:none; border-radius:8px; font-size:15px; font-weight:500;
+            cursor:pointer; font-family:inherit;">
+            看起来不错，生成 Email 1 →
           </button>
         </div>
       </div>
 
-      <!-- Field 3: Signature name -->
-      <div style="margin-bottom:1rem;">
-        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
-          display:block; margin-bottom:6px;">
-          签名姓名
-          <span style="color:var(--color-text-tertiary, rgba(255,255,255,0.35));"> — 建议用全名，如 Leo Li</span>
-        </label>
-        <input id="appSignatureName" type="text" placeholder="例：Leo Li"
-          style="width:100%; padding:8px 12px; border-radius:8px;
-          border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
-          background:var(--color-background-primary, #0b0b0c);
-          color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;" />
-      </div>
-
-      <!-- Field 4: Email framework -->
-      <div style="margin-bottom:1rem;">
-        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
-          display:block; margin-bottom:6px;">邮件框架</label>
-        <select id="appFrameworkSelect" onchange="toggleAppCustomPrompt()"
-          style="width:100%; padding:8px 12px; border-radius:8px;
-          border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
-          background:var(--color-background-primary, #0b0b0c);
-          color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;">
-          <option value="aida">AIDA</option>
-          <option value="peter_kang_3part">Peter Kang 3-Part</option>
-          <option value="custom">✏️ 自定义</option>
-        </select>
-      </div>
-
-      <!-- Custom prompt box (hidden by default) -->
-      <div id="appCustomPromptBox" style="display:none; margin-bottom:1rem;">
-        <label style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5));
-          display:block; margin-bottom:6px;">自定义邮件指示</label>
-        <textarea id="appCustomPrompt"
-          placeholder="例：写一封简短的开发信，问对方是否有采购需求，语气轻松，结尾用一个低门槛问题收尾..."
-          style="width:100%; height:100px; resize:vertical; padding:8px 12px;
-          border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
-          background:var(--color-background-primary, #0b0b0c);
-          color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;"></textarea>
-      </div>
-
-      <!-- Preview button -->
+      <!-- Hidden hand-off controls: appPreviewFirst() toggles these. -->
       <button type="button" id="appPreviewFirstBtn" onclick="appPreviewFirst()"
-        style="width:100%; padding:10px; background:#6366f1; color:#fff;
-        border:none; border-radius:8px; font-size:15px; font-weight:500;
-        cursor:pointer; font-family:inherit;">
-        ✨ 先写第 1 封，让我看看
-      </button>
+        style="display:none;">✨ 先写第 1 封，让我看看</button>
 
       <!-- Generating progress (hidden by default) -->
       <div id="appPreviewProgress" style="display:none; margin-top:12px;
@@ -10577,6 +10685,283 @@ function toggleAppCustomPrompt() {
     val === 'custom' ? 'block' : 'none';
 }
 
+// ── /app email framework wizard (Step 1-3) ───────────────────────────────────
+// Replaces the old single-card config (sellerDesc / goal / signature / framework).
+// Step 1 collects answers, Step 2 runs an AI quality check, Step 3 previews the
+// 7-email plan. fwProceedToPreview() then populates the hidden config fields and
+// hands off to the EXISTING Email-1 preview flow (appPreviewFirst), passing a
+// built frameworkContext string so Sonnet stays consistent with the plan.
+const FW_FIELD_LABELS = {
+  product:        '产品 / 服务',
+  targetCustomer: '目标客户',
+  caseStudy:      '真实客户案例',
+  lowRiskOffer:   '零风险入口',
+  senderName:     '发件人姓名 + 公司',
+};
+let _fwOriginal = {};
+let _fwReview = [];
+let _fwFixes = {};
+let _fwSequence = [];
+
+function fwEsc(s) {
+  return (s || '').toString().replace(/[&<>"]/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+}
+
+function fwGetInputs() {
+  return {
+    product:        document.getElementById('fwProduct').value.trim(),
+    targetCustomer: document.getElementById('fwTargetCustomer').value.trim(),
+    caseStudy:      document.getElementById('fwCaseStudy').value.trim(),
+    lowRiskOffer:   document.getElementById('fwLowRiskOffer').value.trim(),
+    senderName:     document.getElementById('fwSenderName').value.trim(),
+  };
+}
+
+function fwBackToStep1() {
+  document.getElementById('fwStep2').style.display = 'none';
+  document.getElementById('fwStep3').style.display = 'none';
+  document.getElementById('fwStep1').style.display = 'block';
+}
+function fwBackToStep2() {
+  document.getElementById('fwStep3').style.display = 'none';
+  document.getElementById('fwStep2').style.display = 'block';
+}
+
+async function fwValidateInputs() {
+  const inp = fwGetInputs();
+  if (!inp.product)        { alert('请填写产品 / 服务'); return; }
+  if (!inp.targetCustomer) { alert('请填写目标客户'); return; }
+  if (!inp.senderName)     { alert('请填写发件人姓名 + 公司'); return; }
+  _fwOriginal = inp;
+
+  document.getElementById('fwStep1').style.display = 'none';
+  document.getElementById('fwStep2').style.display = 'block';
+  document.getElementById('fwStep2Loading').style.display = 'block';
+  document.getElementById('fwReviewRows').innerHTML = '';
+  document.getElementById('fwAllPassedMsg').style.display = 'none';
+  const genBtn = document.getElementById('fwGenBtn');
+  genBtn.disabled = true; genBtn.style.opacity = '0.5';
+
+  try {
+    const resp = await fetch('/api/validate-framework-inputs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+      body: JSON.stringify(inp),
+    });
+    const data = await resp.json();
+    _fwReview = Array.isArray(data) ? data : [];
+    fwRenderReview();
+  } catch (e) {
+    alert('AI 审核失败，请重试');
+    fwBackToStep1();
+  } finally {
+    document.getElementById('fwStep2Loading').style.display = 'none';
+  }
+}
+
+function fwRenderReview() {
+  const html = _fwReview.map(r => {
+    const label = FW_FIELD_LABELS[r.field] || r.field;
+    const valueHtml = fwEsc(r.value) || '<span style="color:rgba(255,255,255,0.35)">（留空）</span>';
+    const head =
+      `<div style="font-size:13px; color:rgba(255,255,255,0.85); margin-bottom:4px;">${fwEsc(label)}</div>` +
+      `<div style="font-size:13px; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">${valueHtml}</div>`;
+    if (r.passed) {
+      return `<div style="margin-bottom:16px;">${head}
+        <div style="font-size:12px; color:#86efac; border-left:3px solid #22c55e; background:rgba(34,197,94,0.08); border-radius:4px; padding:6px 10px;">够用——AI 知道要写什么</div>
+      </div>`;
+    }
+    return `<div style="margin-bottom:16px;">${head}
+      <div style="border-left:3px solid #eab308; background:rgba(234,179,8,0.08); border-radius:4px; padding:8px 10px;">
+        <div style="font-size:12px; color:#fde047; margin-bottom:6px;">${fwEsc(r.reason)}</div>
+        <div style="font-size:12px; color:#fcd34d; margin-bottom:8px;">${fwEsc(r.followUpQuestion)}</div>
+        <input type="text" id="fwFix_${fwEsc(r.field)}" oninput="fwCheckFixes()" placeholder="补充更具体的信息（至少 10 个字）"
+          style="width:100%; padding:8px 12px; border-radius:8px;
+          border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
+          background:var(--color-background-primary, #0b0b0c);
+          color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;">
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('fwReviewRows').innerHTML = html;
+  fwCheckFixes();
+}
+
+function fwCheckFixes() {
+  const failed = _fwReview.filter(r => !r.passed);
+  let allOk = true;
+  failed.forEach(r => {
+    const el = document.getElementById('fwFix_' + r.field);
+    if (!el || el.value.trim().length < 10) allOk = false;
+  });
+  const btn = document.getElementById('fwGenBtn');
+  btn.disabled = !allOk;
+  btn.style.opacity = allOk ? '1' : '0.5';
+  document.getElementById('fwAllPassedMsg').style.display = allOk ? 'block' : 'none';
+}
+
+async function fwGeneratePreview() {
+  const fixes = {};
+  _fwReview.filter(r => !r.passed).forEach(r => {
+    const el = document.getElementById('fwFix_' + r.field);
+    if (el) fixes[r.field] = el.value.trim();
+  });
+  _fwFixes = fixes;
+
+  document.getElementById('fwStep2').style.display = 'none';
+  document.getElementById('fwStep3').style.display = 'block';
+  document.getElementById('fwStep3Loading').style.display = 'block';
+  document.getElementById('fwSequenceRows').innerHTML = '';
+
+  try {
+    const resp = await fetch('/api/generate-framework-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+      body: JSON.stringify(Object.assign({}, _fwOriginal, { fixes })),
+    });
+    const data = await resp.json();
+    _fwSequence = Array.isArray(data) ? data : [];
+    fwRenderSequence();
+  } catch (e) {
+    alert('生成框架失败，请重试');
+    fwBackToStep2();
+  } finally {
+    document.getElementById('fwStep3Loading').style.display = 'none';
+  }
+}
+
+function fwRenderSequence() {
+  document.getElementById('fwSequenceRows').innerHTML = _fwSequence.map(e => `
+    <div style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.08)); border-radius:8px; padding:10px 12px; margin-bottom:8px; background:rgba(255,255,255,0.03);">
+      <span style="display:inline-block; font-size:11px; color:#a5b4fc; background:rgba(99,102,241,0.12); border-radius:20px; padding:2px 10px; margin-bottom:6px;">Email ${fwEsc(String(e.emailNumber))} · Day ${fwEsc(String(e.day))}</span>
+      <div style="font-size:14px; color:var(--color-text-primary, #e5e7eb); font-weight:500; margin-bottom:4px;">${fwEsc(e.subject)}</div>
+      <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); line-height:1.6;">${fwEsc(e.description)}</div>
+    </div>
+  `).join('');
+}
+
+function fwProceedToPreview() {
+  const signature = document.getElementById('fwSignature').value.trim();
+  if (!signature) { alert('请填写签名'); return; }
+
+  // Merge each Step-1 answer with its Step-2 fix.
+  const merged = {};
+  ['product', 'targetCustomer', 'caseStudy', 'lowRiskOffer', 'senderName'].forEach(k => {
+    const fix = (_fwFixes[k] || '').trim();
+    merged[k] = fix ? ((_fwOriginal[k] || '') + ' ' + fix).trim() : (_fwOriginal[k] || '');
+  });
+
+  const seqLines = _fwSequence
+    .map(e => `Email ${e.emailNumber} (Day ${e.day}): ${e.subject} - ${e.description}`)
+    .join('\n');
+
+  window._appFrameworkContext =
+`Product/Service: ${merged.product}
+Target customer: ${merged.targetCustomer}
+Real customer case: ${merged.caseStudy || '(none provided)'}
+Zero-risk entry offer: ${merged.lowRiskOffer || '(none provided)'}
+Sender: ${merged.senderName}
+
+Confirmed 7-email sequence plan to follow:
+${seqLines}`;
+
+  // Populate the hidden fields the existing preview/send flow reads, then hand off.
+  document.getElementById('appSellerDesc').value =
+    merged.product + (merged.targetCustomer ? (' targeting ' + merged.targetCustomer) : '');
+  document.getElementById('appSignatureName').value = signature;
+  document.getElementById('appFrameworkSelect').value = 'cold_7_step';
+  _appSelectedGoal = '找买家';
+
+  appPreviewFirst();
+}
+
+// ── Step 1 pill helpers ──────────────────────────────────────────────────────
+// Pills (fields 1/2/4) compile selected pill values + custom text into the
+// field's hidden input; the field's detail textarea is folded in too so no
+// input is lost. Field 3's 暂无案例 pill toggles its textarea. Selected colors
+// are applied inline (keyed by group) alongside the toggled .on class.
+// Self-contained — they do not touch fwValidateInputs/fwGetInputs.
+const FW_PILL_COLORS = {
+  fwProduct:        { bg: '#EEEDFE', fg: '#3C3489', bd: '#AFA9EC' },
+  fwTargetCustomer: { bg: '#E1F5EE', fg: '#085041', bd: '#5DCAA5' },
+  fwLowRiskOffer:   { bg: '#FAEEDA', fg: '#633806', bd: '#EF9F27' },
+};
+function fwApplyPillColor(el, group, on) {
+  const c = FW_PILL_COLORS[group];
+  if (on && c) {
+    el.style.background  = c.bg;
+    el.style.color       = c.fg;
+    el.style.borderColor = c.bd;
+  } else {
+    el.style.background  = 'transparent';
+    el.style.color       = 'var(--color-text-secondary, rgba(255,255,255,0.6))';
+    el.style.borderColor = 'var(--color-border-tertiary, rgba(255,255,255,0.12))';
+  }
+}
+function fwTogglePill(el, group) {
+  const on = el.classList.toggle('on');
+  fwApplyPillColor(el, group, on);
+  fwCompilePills(group);
+}
+function fwToggleCustom(group) {
+  const inp = document.getElementById(group + 'Custom');
+  if (!inp) { fwCompilePills(group); return; }
+  const show = inp.style.display === 'none';
+  inp.style.display = show ? 'block' : 'none';
+  if (!show) inp.value = '';
+  const pill = document.querySelector('.fw-pills[data-group="' + group + '"] .fw-pill-custom');
+  if (pill) {
+    pill.classList.toggle('on', show);
+    fwApplyPillColor(pill, group, show);
+  }
+  fwCompilePills(group);
+}
+function fwCompilePills(group) {
+  const container = document.querySelector('.fw-pills[data-group="' + group + '"]');
+  const vals = [];
+  if (container) {
+    container.querySelectorAll('.fw-pill.on[data-val]').forEach(function (p) {
+      vals.push((p.dataset.val || p.textContent).trim());
+    });
+  }
+  const custom = document.getElementById(group + 'Custom');
+  if (custom && custom.value.trim()) vals.push(custom.value.trim());
+  const compiled = vals.join('、');
+  const disp = document.getElementById(group + 'Selected');
+  if (disp) {
+    disp.textContent = compiled ? ('已选：' + compiled) : '';
+    disp.style.display = compiled ? 'block' : 'none';
+  }
+  const detail = document.getElementById(group + 'Detail');
+  const parts = [];
+  if (compiled) parts.push(compiled);
+  if (detail && detail.value.trim()) parts.push(detail.value.trim());
+  const hidden = document.getElementById(group);
+  if (hidden) hidden.value = parts.join('、');
+}
+function fwToggleNoCase() {
+  const pill = document.getElementById('fwNoCasePill');
+  const ta = document.getElementById('fwCaseStudy');
+  if (!pill || !ta) return;
+  const on = pill.classList.toggle('on');
+  if (on) {
+    pill.style.background  = '#FCEBEB';
+    pill.style.color       = '#791F1F';
+    pill.style.borderColor = '#F09595';
+    ta.value = '暂无案例';
+    ta.disabled = true;
+    ta.style.opacity = '0.35';
+  } else {
+    pill.style.background  = 'transparent';
+    pill.style.color       = 'var(--color-text-secondary, rgba(255,255,255,0.6))';
+    pill.style.borderColor = 'var(--color-border-tertiary, rgba(255,255,255,0.12))';
+    ta.value = '';
+    ta.disabled = false;
+    ta.style.opacity = '1';
+  }
+}
+
 let _appPreviewEmails = null;
 async function appPreviewFirst() {
   const sellerDesc = document.getElementById('appSellerDesc').value.trim();
@@ -10616,7 +11001,8 @@ async function appPreviewFirst() {
         goal: _appSelectedGoal,
         signatureName,
         framework,
-        customPrompt: framework === 'custom' ? customPrompt : ''
+        customPrompt: framework === 'custom' ? customPrompt : '',
+        frameworkContext: window._appFrameworkContext || ''
       })
     });
     const data = await resp.json();
@@ -10737,6 +11123,7 @@ async function appGenerateAll() {
         signatureName: cfg.signatureName,
         framework: cfg.framework,
         customPrompt: cfg.framework === 'custom' ? (cfg.customPrompt || '') : '',
+        frameworkContext: window._appFrameworkContext || '',
       }),
     });
     const data = await resp.json();

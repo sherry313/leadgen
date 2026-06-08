@@ -2701,13 +2701,18 @@ app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
     ? `Website content: ${lead.websiteText}`
     : `Website URL: ${website}`;
 
+  if (!lead.websiteText && description.length < 30) {
+    return res.json({ recommended: false, reason: '信息不足（无官网内容及公司描述），请手动判断' });
+  }
+
   try {
     const Anthropic = require('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 200,
+      max_tokens: 400,
+      system: "You are a strict B2B lead qualifier. Only recommend a lead when you have clear evidence it matches the criteria. If information is thin or ambiguous, return recommended: false and explain what's missing. Reply in valid JSON only, no markdown, no extra text.",
       messages: [{
         role: 'user',
         content: `You are a B2B lead qualifier. Based on the criteria, determine if this company is a good match.
@@ -2715,6 +2720,7 @@ app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
 Criteria: ${criteria}
 
 Company: ${companyName}
+Description: ${description}
 ${websiteContent}
 
 Reply in JSON only:
@@ -2727,7 +2733,7 @@ Reply in JSON only:
     res.json(json);
   } catch (e) {
     console.warn('[AI Filter]', e.message);
-    res.json({ recommended: false, reason: '分析失败' });
+    res.json({ recommended: false, reason: '分析出错，请手动检查' });
   }
 });
 
@@ -2806,7 +2812,7 @@ Return ONLY valid JSON, no markdown:
 // Returns: { emails: [{subject, body}, ...] } — a 5-email sequence so /app
 // users can preview before kicking off the full bulk generation.
 app.post('/api/app-generate-preview', requireAuth, async (req, res) => {
-  const { lead, sellerDesc, goal, signatureName, framework, customPrompt } = req.body;
+  const { lead, sellerDesc, goal, signatureName, framework, customPrompt, frameworkContext } = req.body;
 
   const companyName = lead.name || lead.title || lead.username || 'the company';
   const website = lead.website || lead.url || '';
@@ -2840,7 +2846,7 @@ PROSPECT:
 - Company: ${companyName}
 - Website: ${website}
 - Description: ${description}
-
+${frameworkContext ? `\nADDITIONAL FRAMEWORK CONTEXT (follow this confirmed plan):\n${frameworkContext}\n` : ''}
 Return ONLY valid JSON in this exact format:
 {
   "emails": [
@@ -2868,6 +2874,95 @@ Return ONLY valid JSON in this exact format:
     res.json(parsed);
   } catch(e) {
     console.error('[AppPreview] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── /app framework wizard — Step 2 quality control ───────────────────────────
+// Body: { product, targetCustomer, caseStudy, lowRiskOffer, senderName }
+// Returns: a JSON array of 5 review objects (one per field, in fixed order)
+// { field, value, passed, reason, followUpQuestion }. Drives the AI review step
+// of the /app 4-step email wizard.
+app.post('/api/validate-framework-inputs', requireAuth, async (req, res) => {
+  const { product, targetCustomer, caseStudy, lowRiskOffer, senderName } = req.body || {};
+
+  const systemPrompt = `You are a cold email quality controller. Review each field and decide if it contains enough specific information to write a compelling cold email. Be strict and demanding — vague answers will produce generic emails that get zero replies.
+
+When a field fails, you MUST:
+1. Write 'reason' in Chinese — explain specifically WHY the answer is too vague and what problem it causes for the email
+2. Write 'followUpQuestion' in Chinese — ask 2-3 specific follow-up questions that will extract the exact details needed
+
+Examples of FAILING answers and why:
+- '二手奢侈品包包' → fails because: which brands? what condition grades? how do you verify authenticity?
+- '有案例' → fails because: which store? what city? what result? without specifics this is worthless as social proof
+- '可以寄样品' → fails because: free or paid? how many? delivery time? minimum order?
+- 'libby' → fails because: no surname, no title, no company name, no credibility
+
+Return ONLY a JSON array of 5 objects. Each object: { field: string, value: string, passed: boolean, reason: string, followUpQuestion: string }. If passed is true, reason and followUpQuestion must be empty strings. No preamble, no markdown, no extra text. Return the 5 objects in this exact order: product, targetCustomer, caseStudy, lowRiskOffer, senderName.`;
+
+  const userPrompt = `product: ${product || ''}\ntargetCustomer: ${targetCustomer || ''}\ncaseStudy: ${caseStudy || ''}\nlowRiskOffer: ${lowRiskOffer || ''}\nsenderName: ${senderName || ''}`;
+
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    }), 60000, '/api/validate-framework-inputs');
+
+    const text = response.content[0].text;
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    res.json(parsed);
+  } catch(e) {
+    console.error('[ValidateFramework] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── /app framework wizard — Step 3 sequence preview ──────────────────────────
+// Body: { product, targetCustomer, caseStudy, lowRiskOffer, senderName, fixes }
+// Merges original answers with `fixes` (field:fixedAnswer), then asks Haiku to
+// design a 7-email sequence. Returns: a JSON array of 7 objects
+// { emailNumber, day, subject, description }.
+app.post('/api/generate-framework-preview', requireAuth, async (req, res) => {
+  const { product, targetCustomer, caseStudy, lowRiskOffer, senderName, fixes } = req.body || {};
+  const fixMap = fixes || {};
+
+  const merge = (orig, key) => {
+    const fix = (fixMap[key] || '').toString().trim();
+    return fix ? `${(orig || '').toString().trim()} ${fix}`.trim() : (orig || '').toString().trim();
+  };
+  const mProduct = merge(product, 'product');
+  const mTarget  = merge(targetCustomer, 'targetCustomer');
+  const mCase    = merge(caseStudy, 'caseStudy');
+  const mOffer   = merge(lowRiskOffer, 'lowRiskOffer');
+  const mSender  = merge(senderName, 'senderName');
+
+  const systemPrompt = "You are a cold email strategist. Design a 7-email cold outreach B2B sequence using this structure: Email 1 Day 0 (personalized opening question, single low-commitment CTA), Email 2 Day 3 (pure value, no ask — share something useful), Email 3 Day 7 (social proof from real case), Email 4 Day 10 (different angle — lead with the zero-risk offer), Email 5 Day 14 (short check-in, no pressure), Email 6 Day 21 (final value resource, no ask), Email 7 Day 28 (breakup email with 3 options). Every subject line must be specific to the user's product and customer — no generic lines. Return ONLY a JSON array of 7 objects: [{ emailNumber: 1, day: 0, subject: string, description: string }]. No preamble, no markdown.";
+
+  const userPrompt = `Product: ${mProduct}. Target customer: ${mTarget}. Case study: ${mCase}. Zero-risk offer: ${mOffer}. Sender: ${mSender}.`;
+
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    }), 60000, '/api/generate-framework-preview');
+
+    const text = response.content[0].text;
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    res.json(parsed);
+  } catch(e) {
+    console.error('[GenerateFramework] error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
