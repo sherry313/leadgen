@@ -11451,6 +11451,7 @@ async function fwAutoRun(providedInputs) {
     return;
   }
   fwAutoSetStep(0, 'done', '审核输入质量');
+  console.log('[fwAutoRun] starting step B');
 
   // STEP B — generate the 7-email framework (no fixes needed, all passed).
   fwAutoSetStep(1, 'active', '生成邮件框架');
@@ -11462,6 +11463,7 @@ async function fwAutoRun(providedInputs) {
       body: JSON.stringify(Object.assign({}, inp, { fixes: {} })),
     });
     framework = await resp.json();
+    console.log('[fwAutoRun] step B complete, framework length:', Array.isArray(framework) ? framework.length : typeof framework);
   } catch (e) {
     fwAutoSetStep(1, 'error');
     showErr('生成邮件框架失败，请重试');
