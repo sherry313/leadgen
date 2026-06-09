@@ -2534,15 +2534,17 @@ app.post('/api/auto-search', requireAuth, async (req, res) => {
       locationQuery: location,
       maxCrawledPlacesPerSearch: maxResults,
       language: 'en',
+      scrapeContacts: true,
     });
 
     const leads = items.map(item => ({
       name: item.title || item.name || '',
-      website: item.website || '',
+      website: item.website || item.url || '',
       phone: item.phone || item.phoneUnformatted || '',
       address: item.address || item.street || '',
-      email: item.email || '',
-      description: item.description || item.categoryName || '',
+      email: item.email || (item.emails && item.emails[0]) || '',
+      description: item.description || item.categoryName || item.category || '',
+      websiteText: item.description || item.categoryName || '',
     }));
 
     return res.json({ success: true, leads });

@@ -2755,6 +2755,16 @@
   <button class="auto-submit-btn" onclick="autoSubmitForm()" style="position:relative; z-index:10;">// Step 1：AI 审核输入质量 →</button>
 </div>
 
+<div id="appAutoProgressPanel" style="display:none; padding:80px 1.5rem 2rem; font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif; min-height:100vh">
+  <p style="font-size:18px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px">自动运行中</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 2rem">请勿关闭页面，完成后自动跳转到发送界面</p>
+  <div id="autoStepList" style="display:flex;flex-direction:column;gap:0"></div>
+  <div id="autoFilterResults" style="display:none;margin-top:1.5rem;background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1rem">
+    <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:10px">筛选结果（实时更新）</div>
+    <div id="autoFilterResultsList"></div>
+  </div>
+</div>
+
 <div id="appAutoSendPanel" style="display:none; background:#0a0f1a; min-height:100vh; padding:80px 1.5rem 2rem; font-family:var(--font-mono,monospace); color:#E2EEF9;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:2rem">
     <button onclick="appBackToAutoForm()" style="font-size:11px;color:#5a8aad;background:transparent;border:1px solid #1e3a5f;border-radius:3px;padding:5px 10px;cursor:pointer;font-family:var(--font-mono,monospace)">← 返回</button>
@@ -11281,6 +11291,69 @@ function autoConfirmRun() {
   fwAutoRunFromStepB(window._autoInputs);
 }
 
+function autoShowProgressPanel() {
+  document.getElementById('appAutoPanel').style.display = 'none';
+  document.getElementById('appModeSelect').style.display = 'none';
+  var container = document.querySelector('.container');
+  if (container) container.style.display = 'none';
+  document.getElementById('appAutoProgressPanel').style.display = 'block';
+  window.scrollTo(0, 0);
+  var steps = [
+    { id: 'step-validate', icon: 'ti-shield-check', name: 'AI 审核输入质量', detail: '检查中...' },
+    { id: 'step-search', icon: 'ti-map-pin', name: 'Google Maps 搜索', detail: '搜索中...' },
+    { id: 'step-filter', icon: 'ti-filter', name: '分析官网 + AI 筛选', detail: '等待搜索完成' },
+    { id: 'step-emails', icon: 'ti-mail', name: '生成邮件序列', detail: '等待筛选完成' },
+    { id: 'step-done', icon: 'ti-send', name: '准备发送', detail: '等待邮件生成' }
+  ];
+  var html = '';
+  steps.forEach(function(s) {
+    html += '<div id="' + s.id + '" style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:0.5px solid var(--color-border-tertiary)">';
+    html += '<div class="auto-step-icon wait" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)">';
+    html += '<i class="ti ' + s.icon + '" style="font-size:16px;color:var(--color-text-tertiary)" aria-hidden="true"></i></div>';
+    html += '<div style="flex:1;padding-top:4px">';
+    html += '<p style="font-size:14px;font-weight:500;color:var(--color-text-tertiary);margin:0 0 2px" class="step-name">' + s.name + '</p>';
+    html += '<p style="font-size:12px;color:var(--color-text-tertiary);margin:0" class="step-detail">' + s.detail + '</p>';
+    html += '</div></div>';
+  });
+  document.getElementById('autoStepList').innerHTML = html;
+}
+
+function autoSetStepState(stepId, state, detail) {
+  var el = document.getElementById(stepId);
+  if (!el) return;
+  var iconEl = el.querySelector('.auto-step-icon');
+  var nameEl = el.querySelector('.step-name');
+  var detailEl = el.querySelector('.step-detail');
+  if (state === 'active') {
+    iconEl.style.background = 'var(--color-background-info)';
+    iconEl.style.borderColor = 'var(--color-border-info)';
+    iconEl.innerHTML = '<div style="width:14px;height:14px;border:1.5px solid var(--color-border-info);border-top-color:var(--color-text-info);border-radius:50%;animation:spin 0.8s linear infinite"></div>';
+    nameEl.style.color = 'var(--color-text-primary)';
+  } else if (state === 'done') {
+    iconEl.style.background = 'var(--color-background-success)';
+    iconEl.style.borderColor = 'var(--color-border-success)';
+    iconEl.innerHTML = '<i class="ti ti-circle-check" style="font-size:16px;color:var(--color-text-success)" aria-hidden="true"></i>';
+    nameEl.style.color = 'var(--color-text-primary)';
+  } else if (state === 'error') {
+    iconEl.style.background = 'var(--color-background-danger)';
+    iconEl.style.borderColor = 'var(--color-border-danger)';
+    iconEl.innerHTML = '<i class="ti ti-circle-x" style="font-size:16px;color:var(--color-text-danger)" aria-hidden="true"></i>';
+    nameEl.style.color = 'var(--color-text-danger)';
+  }
+  if (detail && detailEl) detailEl.textContent = detail;
+}
+
+function autoAddFilterResult(name, status, reason) {
+  document.getElementById('autoFilterResults').style.display = 'block';
+  var list = document.getElementById('autoFilterResultsList');
+  var badge = status === 'pass'
+    ? '<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-success);color:var(--color-text-success)">符合标准</span>'
+    : '<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-secondary);color:var(--color-text-tertiary)">不符合</span>';
+  var row = '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:13px">';
+  row += '<span style="color:var(--color-text-primary)">' + name + '</span>' + badge + '</div>';
+  list.innerHTML += row;
+}
+
 function autoSetQty(el, qty) {
   document.querySelectorAll('#auto-pp-qty .auto-pill').forEach(function(p){ p.classList.remove('on'); });
   el.classList.add('on');
@@ -11596,131 +11669,125 @@ async function fwAutoRun(providedInputs) {
 }
 
 async function fwAutoRunFromStepB(inp) {
-  const prog  = document.getElementById('fwAutoProgress');
-  const errEl = document.getElementById('fwAutoError');
-  const showErr = (msg) => { if (errEl) { errEl.style.display = 'block'; errEl.textContent = msg; } };
-  console.log('[fwAutoRun] starting step B');
+  const showErr = function(msg) {
+    var errEl = document.getElementById('fwAutoError');
+    if (errEl) { errEl.style.display = 'block'; errEl.textContent = msg; }
+    alert(msg);
+  };
 
-  // STEP B — generate the 7-email framework (no fixes needed, all passed).
-  fwAutoSetStep(1, 'active', '生成邮件框架');
-  let framework;
+  autoShowProgressPanel();
+
+  autoSetStepState('step-validate', 'done', '5 个字段全部通过');
+
+  autoSetStepState('step-search', 'active', '正在搜索...');
+  let searchLeads = [];
   try {
-    const resp = await fetch('/api/generate-framework-preview', {
+    const searchResp = await fetch('/api/auto-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
-      body: JSON.stringify(Object.assign({}, inp, { fixes: {} })),
+      body: JSON.stringify({ keyword: inp.keyword, location: inp.location, maxResults: inp.maxResults || 20 })
     });
-    framework = await resp.json();
-    console.log('[fwAutoRun] step B complete, framework length:', Array.isArray(framework) ? framework.length : typeof framework);
-  } catch (e) {
-    fwAutoSetStep(1, 'error');
-    showErr('生成邮件框架失败，请重试');
+    const searchData = await searchResp.json();
+    searchLeads = (searchData.leads || []);
+    autoSetStepState('step-search', 'done', '找到 ' + searchLeads.length + ' 家');
+  } catch(e) {
+    autoSetStepState('step-search', 'error', '搜索失败: ' + e.message);
     return;
   }
-  if (!Array.isArray(framework) || !framework.length) {
-    fwAutoSetStep(1, 'error');
-    showErr('生成邮件框架失败，请重试');
+
+  if (!searchLeads.length) {
+    autoSetStepState('step-search', 'error', '没有找到结果，请换关键词重试');
+    return;
+  }
+
+  autoSetStepState('step-filter', 'active', '开始筛选...');
+  var filteredLeads = [];
+  for (var i = 0; i < searchLeads.length; i++) {
+    var lead = searchLeads[i];
+    autoSetStepState('step-filter', 'active', '分析第 ' + (i+1) + ' / ' + searchLeads.length + ' 家: ' + (lead.name || ''));
+    try {
+      const filterResp = await fetch('/api/ai-filter-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+        body: JSON.stringify({ lead: lead, criteria: inp.criteria })
+      });
+      const filterData = await filterResp.json();
+      if (filterData.recommended) {
+        filteredLeads.push(lead);
+        autoAddFilterResult(lead.name || '', 'pass', filterData.reason || '');
+      } else {
+        autoAddFilterResult(lead.name || '', 'fail', filterData.reason || '');
+      }
+    } catch(e) {
+      autoAddFilterResult(lead.name || '', 'fail', '分析失败');
+    }
+  }
+  autoSetStepState('step-filter', 'done', '通过筛选: ' + filteredLeads.length + ' 家');
+
+  if (!filteredLeads.length) {
+    autoSetStepState('step-emails', 'error', '没有符合标准的客户');
+    return;
+  }
+
+  autoSetStepState('step-emails', 'active', '开始生成邮件...');
+  var framework;
+  try {
+    const fwResp = await fetch('/api/generate-framework-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+      body: JSON.stringify(Object.assign({}, inp, { fixes: {} }))
+    });
+    framework = await fwResp.json();
+  } catch(e) {
+    autoSetStepState('step-emails', 'error', '生成框架失败');
     return;
   }
   window._fwAutoFramework = framework;
-  fwAutoSetStep(1, 'done', '生成邮件框架');
 
-  // STEP C — generate the email sequence for every selected lead.
-  fwAutoSetStep(2, 'active', '生成邮件内容');
-  const leads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
-    ? window._filteredLeads
-    : (window._appLeads || []);
-  // Auto-search if no leads available
-  if (!leads.length && inp.keyword && inp.location) {
-    fwAutoSetStep(2, 'active', '正在搜索目标客户...');
+  const ctx = JSON.stringify(framework) + '\n\nCase study: ' + (inp.caseStudy || 'none') + '. Zero-risk offer: ' + (inp.lowRiskOffer || 'none') + '. Sender: ' + (inp.senderName || '');
+  var results = [];
+  for (var j = 0; j < filteredLeads.length; j++) {
+    autoSetStepState('step-emails', 'active', '生成第 ' + (j+1) + ' / ' + filteredLeads.length + ' 封: ' + (filteredLeads[j].name || ''));
     try {
-      const searchResp = await fetch('/api/auto-search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
-        body: JSON.stringify({ keyword: inp.keyword, location: inp.location, maxResults: inp.maxResults || 20 }),
-      });
-      const searchData = await searchResp.json();
-      if ((searchData.leads || []).length) {
-        window._appLeads = (searchData.leads || []);
-        window._filteredLeads = (searchData.leads || []);
-      }
-    } catch (e) {
-      console.warn('[fwAutoRun] search failed', e.message);
-    }
-  }
-  const autoLeads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
-    ? window._filteredLeads
-    : (window._appLeads || []);
-  console.log('[fwAutoRun] step C, autoLeads:', autoLeads.length, 'filteredLeads:', window._filteredLeads ? window._filteredLeads.length : 0);
-  if (!autoLeads.length) {
-    fwAutoSetStep(2, 'error');
-    showErr('搜索没有找到结果，请换关键词重试');
-    return;
-  }
-
-  const sellerDesc = inp.product + (inp.targetCustomer ? (' targeting ' + inp.targetCustomer) : '');
-  const ctx = JSON.stringify(window._fwAutoFramework) + '\n\nAdditional context — Case study: ' + (inp.caseStudy || 'none') + '. Zero-risk offer details: ' + (inp.lowRiskOffer || 'none') + '. Sender: ' + (inp.senderName || '');
-  const toEntry = (lead, seq) => {
-    const sequence = Array.isArray(seq) ? seq.map(e => ({ subject: e.subject || '', body: e.body || '' })) : [];
-    const email = lead.email || lead.raw?.email || '';
-    const recipient = lead.name || lead.title || lead.username || '';
-    return {
-      recipient, email, to: email || recipient,
-      subject: sequence[0]?.subject || '',
-      body:    sequence[0]?.body    || '',
-      framework: 'cold_7_step', sequence,
-    };
-  };
-
-  const results = [];
-  for (let i = 0; i < autoLeads.length; i++) {
-    fwAutoSetStep(2, 'active', '生成邮件内容 (' + (i + 1) + '/' + autoLeads.length + ')...');
-    try {
-      const resp = await fetch('/api/app-generate-preview', {
+      const emailResp = await fetch('/api/app-generate-preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
         body: JSON.stringify({
-          lead: autoLeads[i],
-          product: inp.product, targetCustomer: inp.targetCustomer, caseStudy: inp.caseStudy,
-          lowRiskOffer: inp.lowRiskOffer, senderName: inp.senderName,
-          sellerDesc, goal: '找买家', signatureName: inp.senderName,
+          lead: filteredLeads[j],
+          product: inp.product, targetCustomer: inp.targetCustomer,
+          caseStudy: inp.caseStudy, lowRiskOffer: inp.lowRiskOffer,
+          senderName: inp.senderName, sellerDesc: inp.product,
+          goal: '找买家', signatureName: inp.senderName,
           framework: 'cold_7_step', customPrompt: '',
-          frameworkContext: ctx,
-        }),
+          frameworkContext: ctx
+        })
       });
-      const data = await resp.json();
-      results.push(toEntry(autoLeads[i], data.emails));
-    } catch (e) {
-      console.warn('[fwAutoRun] generation failed for', autoLeads[i]?.name || '', e.message);
+      const emailData = await emailResp.json();
+      var sequence = Array.isArray(emailData.emails) ? emailData.emails.map(function(e){ return { subject: e.subject||'', body: e.body||'' }; }) : [];
+      results.push({
+        recipient: filteredLeads[j].name || '',
+        email: filteredLeads[j].email || '',
+        to: filteredLeads[j].email || filteredLeads[j].name || '',
+        subject: sequence[0] ? sequence[0].subject : '',
+        body: sequence[0] ? sequence[0].body : '',
+        framework: 'cold_7_step',
+        sequence: sequence
+      });
+    } catch(e) {
+      console.warn('[autoRun] email gen failed for', filteredLeads[j].name, e.message);
     }
   }
-  if (!results.length) {
-    fwAutoSetStep(2, 'error');
-    showErr('邮件生成失败，请重试');
-    return;
-  }
+
+  autoSetStepState('step-emails', 'done', '已生成 ' + results.length + ' 家邮件序列');
+  autoSetStepState('step-done', 'done', '完成');
+
   window._fwAutoEmails = results;
   window._generatedEmails = results;
-  fwAutoSetStep(2, 'done', '生成邮件内容');
 
-  // STEP D — hand off to the send panel (skip Step 3 confirmation entirely).
-  fwAutoSetStep(3, 'active', '准备发送');
-  fwAutoSetStep(3, 'done', '准备发送');
-  if (prog) prog.style.display = 'none';
-  var fwStep1El = document.getElementById('fwStep1');
-  if (fwStep1El) fwStep1El.style.display = 'none';
-  // Hide auto form, show generated emails directly
-  document.getElementById('appAutoPanel').style.display = 'none';
-  document.getElementById('appModeSelect').style.display = 'none';
-
-  // Show the container and go to email send step
-  var container = document.querySelector('.container');
-  if (container) container.style.display = '';
-
-  // Store emails for the send panel
-  window._generatedEmails = window._fwAutoEmails;
-  if (prog) prog.style.display = 'none';
-  autoShowSendPanel();
+  setTimeout(function() {
+    document.getElementById('appAutoProgressPanel').style.display = 'none';
+    autoShowSendPanel();
+  }, 1500);
 }
 
 // ── Step 1 pill helpers ──────────────────────────────────────────────────────
