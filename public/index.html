@@ -11482,15 +11482,15 @@ async function fwAutoRun(providedInputs) {
   if (!leads.length && inp.keyword && inp.location) {
     fwAutoSetStep(2, 'active', '正在搜索目标客户...');
     try {
-      const searchResp = await fetch('/api/google-maps-search', {
+      const searchResp = await fetch('/api/auto-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
-        body: JSON.stringify({ keyword: inp.keyword, location: inp.location, limit: 20 }),
+        body: JSON.stringify({ keyword: inp.keyword, location: inp.location, maxResults: 20 }),
       });
       const searchData = await searchResp.json();
-      if (searchData.leads && searchData.leads.length) {
-        window._appLeads = searchData.leads;
-        window._filteredLeads = searchData.leads;
+      if ((searchData.leads || []).length) {
+        window._appLeads = (searchData.leads || []);
+        window._filteredLeads = (searchData.leads || []);
       }
     } catch (e) {
       console.warn('[fwAutoRun] search failed', e.message);

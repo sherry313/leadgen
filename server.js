@@ -2521,6 +2521,37 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
   }
 });
 
+app.post('/api/auto-search', requireAuth, async (req, res) => {
+  const keyword = String(req.body.keyword || '').trim();
+  const location = String(req.body.location || '').trim();
+  const maxResults = Math.min(parseInt(req.body.maxResults) || 20, 50);
+
+  if (!keyword) return res.status(400).json({ success: false, error: 'keyword required' });
+
+  try {
+    const items = await _runApifyActor('compass~crawler-google-places', {
+      searchStringsArray: [keyword],
+      locationQuery: location,
+      maxCrawledPlacesPerSearch: maxResults,
+      language: 'en',
+    });
+
+    const leads = items.map(item => ({
+      name: item.title || item.name || '',
+      website: item.website || '',
+      phone: item.phone || item.phoneUnformatted || '',
+      address: item.address || item.street || '',
+      email: item.email || '',
+      description: item.description || item.categoryName || '',
+    }));
+
+    return res.json({ success: true, leads });
+  } catch (e) {
+    console.error('[auto-search] error:', e.message);
+    return res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // ── /app email generation (SSE) ──────────────────────────────────────────────
 // Body: { leads: [{name, email, website, phone, address, ...}], framework: 'cold_5_step' }
 // Pipeline per lead: website scrape → Haiku pre-filter → Sonnet email gen.
