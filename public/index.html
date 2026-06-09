@@ -11382,6 +11382,8 @@ ${seqLines}`;
 // stopping for confirmation. Reuses the existing API routes and showAppSendPanel.
 // If any field fails validation, it drops into the manual Step 2 review instead.
 function fwAutoSetStep(i, state, labelText) {
+  var prog = document.getElementById('fwAutoProgress');
+  if (!prog) return;
   const icon  = document.getElementById('fwAutoIcon' + i);
   const label = document.getElementById('fwAutoLabel' + i);
   if (label && labelText) label.textContent = labelText;
