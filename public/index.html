@@ -11503,6 +11503,7 @@ async function fwAutoRun(providedInputs) {
   const autoLeads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
     ? window._filteredLeads
     : (window._appLeads || []);
+  console.log('[fwAutoRun] step C, autoLeads:', autoLeads.length, 'filteredLeads:', window._filteredLeads ? window._filteredLeads.length : 0);
   if (!autoLeads.length) {
     fwAutoSetStep(2, 'error');
     showErr('搜索没有找到结果，请换关键词重试');
