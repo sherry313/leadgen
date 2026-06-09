@@ -2897,6 +2897,9 @@ Examples of FAILING answers and why:
 - '有案例' → fails because: which store? what city? what result? without specifics this is worthless as social proof
 - '可以寄样品' → fails because: free or paid? how many? delivery time? minimum order?
 - 'libby' → fails because: no surname, no title, no company name, no credibility
+- 'Libby Li, Sourcing Director, LuxeSupply Co.' → PASSES: full name + title + company is sufficient for B2B cold email
+
+For senderName: PASS if it contains a full name (first + last) AND a company name. Do NOT require LinkedIn, email domain, or additional verification. A name like 'Libby Li' is a valid full name.
 
 Return ONLY a JSON array of 5 objects. Each object: { field: string, value: string, passed: boolean, reason: string, followUpQuestion: string }. If passed is true, reason and followUpQuestion must be empty strings. No preamble, no markdown, no extra text. Return the 5 objects in this exact order: product, targetCustomer, caseStudy, lowRiskOffer, senderName.`;
 
