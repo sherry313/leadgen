@@ -11157,7 +11157,7 @@ function autoSubmitForm() {
     targetCustomer: document.getElementById('autoTargetCustomer').value.trim(),
     criteria: document.getElementById('autoCriteria').value.trim(),
     caseStudy: document.getElementById('autoCaseStudy').value.trim(),
-    lowRiskOffer: document.getElementById('autoLowRiskOffer').value.trim(),
+    lowRiskOffer: (document.getElementById('auto-cv-o').textContent.replace('已选：','').trim() + ' ' + document.getElementById('autoLowRiskOffer').value.trim()).trim(),
     senderName: document.getElementById('autoSenderName').value.trim()
   };
   window._autoInputs = inputs;
