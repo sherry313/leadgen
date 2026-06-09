@@ -2157,8 +2157,8 @@
 
       /* Step 3 mode chooser: stack the two cards vertically, full width */
       .mode-chooser    { grid-template-columns: 1fr !important; gap: 10px !important; }
-      .mode-card       { padding: 16px !important; border-radius: 14px !important; }
-      .mode-card .btn-start { font-size: 0.9rem; padding: 12px; }
+      .legacy-mode-card       { padding: 16px !important; border-radius: 14px !important; }
+      .legacy-mode-card .btn-start { font-size: 0.9rem; padding: 12px; }
 
       /* Auto-mode campaign select: ditch min-width so it fits, go full-width */
       .auto-campaign-select { min-width: 0 !important; width: 100% !important; }
@@ -2408,6 +2408,163 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- /app mode-selection screen styles -->
+  <style>
+    @keyframes floatA {0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    @keyframes floatB {0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+    #appModeSelect {
+      background: #0a0f1a;
+      min-height: 100vh;
+      padding: 2.5rem 1.5rem;
+      padding-top: 80px;
+      font-family: var(--font-mono, monospace);
+    }
+
+    #appModeSelect .mode-sys-label {
+      font-size: 10px; color: #378ADD; letter-spacing: 0.15em;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+
+    #appModeSelect .mode-title {
+      font-size: 22px; font-weight: 500; color: #e8f4fd;
+      margin-bottom: 4px; letter-spacing: -0.02em;
+    }
+
+    #appModeSelect .mode-sub {
+      font-size: 12px; color: #5a8aad; margin-bottom: 2rem; letter-spacing: 0.02em;
+    }
+
+    #appModeSelect .mode-cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem;
+      position: relative; z-index: 1;
+    }
+
+    #appModeSelect .mode-card {
+      border: 1px solid #1e3a5f; border-radius: 8px; padding: 1.25rem;
+      cursor: pointer; pointer-events: auto; background: #0d1626; position: relative; overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #appModeSelect .mode-card.card-rec { animation: floatA 3s ease-in-out infinite; pointer-events: auto; }
+    #appModeSelect .mode-card.card-adv { animation: floatB 3.4s ease-in-out infinite 0.4s; pointer-events: auto; }
+    #appModeSelect .mode-card:hover { border-color: #378ADD; box-shadow: 0 0 24px rgba(55,138,221,0.2); animation-play-state: paused; }
+    #appModeSelect .mode-card.selected { border-color: #378ADD; box-shadow: 0 0 24px rgba(55,138,221,0.25); }
+
+    #appModeSelect .mode-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #185FA5, #85B7EB);
+    }
+    #appModeSelect .mode-card.card-rec::before {
+      background: linear-gradient(90deg, #378ADD, #85B7EB, #378ADD);
+    }
+
+    #appModeSelect .card-glow {
+      position: absolute; top: -40px; right: -40px; width: 120px; height: 120px;
+      border-radius: 50%; background: rgba(55,138,221,0.06); pointer-events: none;
+    }
+
+    #appModeSelect .card-mode-id { font-size: 10px; color: #378ADD; letter-spacing: 0.12em; margin-bottom: 12px; }
+    #appModeSelect .card-mode-id.dim { color: #2a4a6a; }
+
+    #appModeSelect .card-icon-box {
+      width: 42px; height: 42px; border: 1px solid #1e3a5f; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px; background: #0a0f1a;
+    }
+    #appModeSelect .card-icon-box i { color: #378ADD; font-size: 20px; }
+
+    #appModeSelect .card-mode-name { font-size: 15px; font-weight: 500; color: #e8f4fd; margin-bottom: 4px; }
+    #appModeSelect .card-mode-tag { font-size: 10px; color: #378ADD; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+    #appModeSelect .card-mode-tag.dim { color: #2a4a6a; }
+
+    #appModeSelect .card-mode-desc {
+      font-size: 12px; color: #7ba8c8; line-height: 1.65; margin-bottom: 12px;
+      border-left: 2px solid #1e3a5f; padding-left: 8px;
+    }
+
+    #appModeSelect .card-spec { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #5a8aad; margin-bottom: 4px; }
+    #appModeSelect .card-spec-dot { width: 4px; height: 4px; border-radius: 50%; background: #378ADD; flex-shrink: 0; }
+    #appModeSelect .card-spec.dim { color: #2a4a6a; }
+    #appModeSelect .card-spec.dim .card-spec-dot { background: #2a4a6a; }
+
+    #appModeSelect .card-mode-btn {
+      width: 100%; margin-top: 14px; padding: 8px; font-size: 11px;
+      letter-spacing: 0.08em; text-transform: uppercase; border-radius: 4px;
+      cursor: pointer; border: 1px solid #1e3a5f; background: transparent;
+      color: #5a8aad; font-family: var(--font-mono, monospace); transition: all 0.15s;
+    }
+    #appModeSelect .mode-card.card-rec .card-mode-btn { background: #185FA5; color: #E6F1FB; border-color: #185FA5; }
+    #appModeSelect .mode-card.selected .card-mode-btn { background: #185FA5; color: #E6F1FB; border-color: #185FA5; }
+
+    #modeAutoFlow {
+      border: 1px solid #1e3a5f; border-radius: 4px; padding: 1.25rem;
+      background: #0d1626; position: relative; margin-bottom: 1rem;
+    }
+    #modeAutoFlow::before {
+      content: 'PROCESS // AUTO_MODE'; position: absolute; top: -8px; left: 12px;
+      background: #0a0f1a; font-size: 10px; color: #378ADD; letter-spacing: 0.1em; padding: 0 6px;
+    }
+    #modeAutoFlow .flow-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px dashed #1e3a5f; }
+    #modeAutoFlow .flow-row:last-child { border-bottom: none; }
+    #modeAutoFlow .flow-num { font-size: 10px; font-weight: 500; color: #378ADD; letter-spacing: 0.05em; width: 24px; flex-shrink: 0; padding-top: 2px; }
+    #modeAutoFlow .flow-name { font-size: 13px; font-weight: 500; color: #85B7EB; margin-bottom: 2px; }
+    #modeAutoFlow .flow-note { font-size: 11px; color: #5a8aad; }
+
+    #modeConfirmBtn {
+      width: 100%; padding: 12px; background: #185FA5; color: #E6F1FB; border: none;
+      border-radius: 4px; font-size: 12px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; cursor: pointer; font-family: var(--font-mono, monospace);
+      position: relative; overflow: hidden;
+    }
+    #modeConfirmBtn::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 60px; height: 100%;
+      background: rgba(255,255,255,0.12); transform: skewX(-20deg); transition: left 0.5s;
+    }
+    #modeConfirmBtn:hover::after { left: 130%; }
+
+    /* /app auto-mode form */
+    #appAutoPanel {
+      background: #0a0f1a;
+      min-height: 100vh;
+      padding: 80px 1.5rem 2rem;
+      font-family: var(--font-mono, monospace);
+      color: #e8f4fd;
+    }
+    .auto-top-bar { display:flex; align-items:center; gap:12px; margin-bottom:2rem; }
+    .auto-back-btn { font-size:11px; color:#5a8aad; letter-spacing:0.08em; background:transparent; border:1px solid #1e3a5f; border-radius:3px; padding:5px 10px; cursor:pointer; font-family:var(--font-mono,monospace); }
+    .auto-back-btn:hover { border-color:#378ADD; color:#378ADD; }
+    .auto-mode-label { font-size:10px; color:#378ADD; letter-spacing:0.15em; text-transform:uppercase; }
+    .auto-page-title { font-size:20px; font-weight:500; color:#e8f4fd; margin-bottom:4px; letter-spacing:-0.02em; }
+    .auto-page-sub { font-size:12px; color:#5a8aad; margin-bottom:2rem; }
+    .auto-section { border:1px solid #1e3a5f; border-radius:6px; padding:1.25rem; margin-bottom:1.25rem; position:relative; }
+    .auto-section::before { content:attr(data-label); position:absolute; top:-8px; left:12px; background:#0a0f1a; font-size:10px; color:#378ADD; letter-spacing:0.1em; padding:0 6px; }
+    .auto-field { margin-bottom:1.25rem; }
+    .auto-field:last-child { margin-bottom:0; }
+    .auto-field-label { font-size:11px; color:#378ADD; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px; display:block; }
+    .auto-field-hint { font-size:11px; color:#2a4a6a; margin-bottom:6px; display:block; }
+    .auto-input { width:100%; background:#0f1f35; border:1px solid #2a4f7a; border-radius:3px; padding:8px 10px; font-size:13px; color:#e8f4fd; font-family:var(--font-mono,monospace); outline:none; }
+    .auto-input:focus { border-color:#378ADD; background:#0d1e33; }
+    .auto-textarea { width:100%; background:#0f1f35; border:1px solid #2a4f7a; border-radius:3px; padding:8px 10px; font-size:13px; color:#e8f4fd; font-family:var(--font-mono,monospace); outline:none; resize:vertical; min-height:60px; }
+    .auto-textarea:focus { border-color:#378ADD; background:#0d1e33; }
+    .auto-input::placeholder, .auto-textarea::placeholder { color:#2a4a6a; }
+    .auto-pills { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px; }
+    .auto-pill { font-size:11px; padding:4px 10px; border-radius:20px; border:1px solid #1e3a5f; background:transparent; color:#5a8aad; cursor:pointer; font-family:var(--font-mono,monospace); transition:all 0.12s; }
+    .auto-pill:hover { border-color:#378ADD; color:#378ADD; }
+    .auto-pill.on { background:#185FA5; color:#E6F1FB; border-color:#185FA5; }
+    .auto-pill-dashed { border-style:dashed !important; }
+    .auto-compiled { font-size:11px; color:#378ADD; min-height:14px; margin-top:4px; }
+    .auto-sources { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .auto-source { background:#0f1f35; border:1px solid #2a4f7a; border-radius:4px; padding:8px 10px; display:flex; align-items:center; gap:8px; cursor:pointer; transition:all 0.12s; }
+    .auto-source:hover { border-color:#378ADD; }
+    .auto-source.on { border-color:#378ADD; background:#0d2440; }
+    .auto-source i { font-size:16px; color:#5a8aad; }
+    .auto-source.on i { color:#378ADD; }
+    .auto-source span { font-size:12px; color:#5a8aad; }
+    .auto-source.on span { color:#85B7EB; }
+    .auto-submit-btn { width:100%; padding:12px; background:#185FA5; color:#E6F1FB; border:none; border-radius:4px; font-size:12px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; font-family:var(--font-mono,monospace); pointer-events:auto; position:relative; z-index:10; }
+    .auto-submit-btn:hover { background:#0C447C; }
+  </style>
 </head>
 <body>
 
@@ -2430,7 +2587,226 @@
   <div class="hamburger" id="hamburger" style="display:none"><span></span><span></span><span></span></div>
 </nav>
 
-<div class="container">
+<!-- ════════ /app MODE SELECTION (shown first; .container stays hidden until a mode is chosen) ════════ -->
+<div id="appModeSelect">
+  <div style="margin-bottom:8px; font-size:10px; color:#378ADD; letter-spacing:0.15em; text-transform:uppercase;">sys // cold outreach engine v2</div>
+  <div style="font-size:22px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:4px;">选择运行模式</div>
+  <div style="font-size:12px; color:var(--color-text-tertiary, rgba(255,255,255,0.35)); margin-bottom:24px;">// 选好之后填一次信息，剩下的交给系统</div>
+
+  <div class="mode-cards">
+
+    <!-- CARD 1 — 自动模式 -->
+    <div class="mode-card card-rec" id="modeCardAuto" onclick="appSelectMode('auto')">
+      <div class="card-glow"></div>
+      <div class="card-mode-id">MODE_01</div>
+      <div class="card-icon-box"><i class="ti ti-bolt" aria-hidden="true"></i></div>
+      <p class="card-mode-name">自动模式</p>
+      <p class="card-mode-tag">// recommended</p>
+      <p class="card-mode-desc">填一次信息，系统全自动跑完所有流程，直接出可发送的邮件。</p>
+      <div class="card-spec"><div class="card-spec-dot"></div>AI 审核 + 自动搜索</div>
+      <div class="card-spec"><div class="card-spec-dot"></div>自动筛选目标客户</div>
+      <div class="card-spec"><div class="card-spec-dot"></div>批量生成 7 封序列</div>
+      <button class="card-mode-btn" id="btnModeAuto">// 选择此模式</button>
+    </div>
+
+    <!-- CARD 2 — 手动模式 -->
+    <div class="mode-card card-adv" id="modeCardManual" onclick="appSelectMode('manual')">
+      <div class="card-mode-id dim">MODE_02</div>
+      <div class="card-icon-box"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i></div>
+      <p class="card-mode-name">手动模式</p>
+      <p class="card-mode-tag dim">// advanced</p>
+      <p class="card-mode-desc">每一步自己控制，可以在中间调整筛选标准和邮件框架。</p>
+      <div class="card-spec dim"><div class="card-spec-dot"></div>搜索 → 查看结果</div>
+      <div class="card-spec dim"><div class="card-spec-dot"></div>筛选 → 确认框架</div>
+      <div class="card-spec dim"><div class="card-spec-dot"></div>逐步生成 + 发送</div>
+      <button class="card-mode-btn" id="btnModeManual">// 选择此模式</button>
+    </div>
+
+  </div>
+
+  <!-- collapsible auto-mode flow (shown only when 自动模式 selected) -->
+  <div id="modeAutoFlow" style="display:none;">
+    <div class="flow-row"><span class="flow-num">01</span><div><div class="flow-name">填写信息</div><div class="flow-note">关键词、地区、产品、目标客户、筛选标准、发件人</div></div></div>
+    <div class="flow-row"><span class="flow-num">02</span><div><div class="flow-name">AI 审核输入质量</div><div class="flow-note">信息不够具体会被拦截，补充清楚再继续</div></div></div>
+    <div class="flow-row"><span class="flow-num">03</span><div><div class="flow-name">自动搜索目标客户</div><div class="flow-note">根据关键词 + 地区抓取，无需手动操作</div></div></div>
+    <div class="flow-row"><span class="flow-num">04</span><div><div class="flow-name">AI 自动筛选</div><div class="flow-note">根据你填的标准过滤不符合的公司</div></div></div>
+    <div class="flow-row"><span class="flow-num">05</span><div><div class="flow-name">批量生成邮件序列</div><div class="flow-note">每个客户 7 封，全部基于你填的信息</div></div></div>
+    <div class="flow-row"><span class="flow-num">06</span><div><div class="flow-name">进入发送界面</div><div class="flow-note">SMTP 或 Instantly，一键推送</div></div></div>
+  </div>
+
+  <!-- confirm (hidden until a mode is selected) -->
+  <button type="button" id="modeConfirmBtn" onclick="appConfirmMode()"
+    style="display:none; width:100%; margin-top:16px; padding:12px; background:#185FA5; color:#E6F1FB; border:none; border-radius:4px; font-size:14px; font-weight:500; cursor:pointer;">
+    // 确认并开始 →
+  </button>
+</div>
+
+<!-- /app AUTO MODE panel (placeholder — built in a later prompt) -->
+<div id="appAutoPanel" style="display:none">
+  <div class="auto-top-bar">
+    <button onclick="appBackToModeSelect()" class="auto-back-btn">← 返回模式选择</button>
+    <span class="auto-mode-label">// AUTO_MODE</span>
+  </div>
+  <p class="auto-page-title">填写信息</p>
+  <p class="auto-page-sub">// 填一次，AI 全跑完。垃圾进，垃圾出。</p>
+
+  <div class="auto-section" data-label="SEARCH_CONFIG // 搜索配置">
+    <div class="auto-field">
+      <span class="auto-field-label">关键词</span>
+      <span class="auto-field-hint">你要找什么类型的客户</span>
+      <input class="auto-input" type="text" id="autoKeyword" oninput="autoSaveForm()" placeholder="例：interior designer, luxury boutique, custom home builder">
+    </div>
+    <div class="auto-field">
+      <span class="auto-field-label">地区</span>
+      <input class="auto-input" type="text" id="autoLocation" oninput="autoSaveForm()" placeholder="例：Sydney Australia, New York USA, London UK">
+    </div>
+    <div class="auto-field">
+      <span class="auto-field-label">数据源</span>
+      <span class="auto-field-hint">选一个或多个</span>
+      <div class="auto-sources">
+        <div class="auto-source on" data-source="google-maps" onclick="autoToggleSource(this)">
+          <i class="ti ti-map-pin" aria-hidden="true"></i><span>Google Maps</span>
+        </div>
+        <div class="auto-source" data-source="google-search" onclick="autoToggleSource(this)">
+          <i class="ti ti-search" aria-hidden="true"></i><span>Google Search</span>
+        </div>
+        <div class="auto-source" data-source="instagram" onclick="autoToggleSource(this)">
+          <i class="ti ti-brand-instagram" aria-hidden="true"></i><span>Instagram</span>
+        </div>
+        <div class="auto-source" data-source="tiktok" onclick="autoToggleSource(this)">
+          <i class="ti ti-brand-tiktok" aria-hidden="true"></i><span>TikTok</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auto-section" data-label="EMAIL_CONFIG // 邮件配置">
+    <div class="auto-field">
+      <span class="auto-field-label">产品 / 服务</span>
+      <div class="auto-pills" id="auto-pp-p">
+        <button class="auto-pill" onclick="autoTP(this,'p')">铝合金门窗</button>
+        <button class="auto-pill" onclick="autoTP(this,'p')">卫浴配件</button>
+        <button class="auto-pill" onclick="autoTP(this,'p')">二手奢侈品包包</button>
+        <button class="auto-pill" onclick="autoTP(this,'p')">建材</button>
+        <button class="auto-pill" onclick="autoTP(this,'p')">服装 / 饰品</button>
+        <button class="auto-pill" onclick="autoTP(this,'p')">软件 / SaaS</button>
+        <button class="auto-pill auto-pill-dashed" onclick="autoTC('p')">＋ 自定义</button>
+      </div>
+      <input type="text" class="auto-input" id="auto-ci-p" style="display:none" placeholder="输入你的产品..." oninput="autoUC('p')">
+      <div class="auto-compiled" id="auto-cv-p"></div>
+      <textarea class="auto-textarea" id="autoProduct" oninput="autoSaveForm()" style="margin-top:6px" placeholder="例：二手奢侈品包包批发，主要品牌 LV、Gucci、Chanel，成色 9成新 / 8成新，附鉴定证书，月库存 50 件"></textarea>
+    </div>
+
+    <div class="auto-field">
+      <span class="auto-field-label">目标客户</span>
+      <div class="auto-pills" id="auto-pp-t">
+        <button class="auto-pill" onclick="autoTP(this,'t')">室内设计师</button>
+        <button class="auto-pill" onclick="autoTP(this,'t')">建筑商</button>
+        <button class="auto-pill" onclick="autoTP(this,'t')">买手店 / 精品店</button>
+        <button class="auto-pill" onclick="autoTP(this,'t')">线下零售门店</button>
+        <button class="auto-pill" onclick="autoTP(this,'t')">批发商</button>
+        <button class="auto-pill auto-pill-dashed" onclick="autoTC('t')">＋ 自定义</button>
+      </div>
+      <input type="text" class="auto-input" id="auto-ci-t" style="display:none" placeholder="输入目标客户..." oninput="autoUC('t')">
+      <div class="auto-compiled" id="auto-cv-t"></div>
+      <textarea class="auto-textarea" id="autoTargetCustomer" oninput="autoSaveForm()" style="margin-top:6px" placeholder="例：欧美线下独立精品店、买手店，专售二手奢侈品包包，客群为注重性价比的中产消费者"></textarea>
+    </div>
+
+    <div class="auto-field">
+      <span class="auto-field-label">筛选标准</span>
+      <span class="auto-field-hint">AI 筛选时用这个标准过滤不符合的公司</span>
+      <textarea class="auto-textarea" id="autoCriteria" oninput="autoSaveForm()" placeholder="例：专门卖包包的线下精品店，目标客群是中产阶级，不要综合类寄售店、线上店、服装店"></textarea>
+    </div>
+
+    <div class="auto-field">
+      <span class="auto-field-label">真实客户案例</span>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <button class="auto-pill auto-pill-dashed" id="autoNoCaseBtn" onclick="autoToggleNoCase()">暂无案例</button>
+        <span class="auto-field-hint" style="margin:0">勾选后 AI 会绕开 social proof</span>
+      </div>
+      <textarea class="auto-textarea" id="autoCaseStudy" oninput="autoSaveForm()" placeholder="例：纽约 SoHo 一家买手店，合作 3 个月，月供货 10 件 LV 和 Gucci 包，复购率 100%，零退货"></textarea>
+    </div>
+
+    <div class="auto-field">
+      <span class="auto-field-label">零风险入口</span>
+      <div class="auto-pills" id="auto-pp-o">
+        <button class="auto-pill" onclick="autoTP(this,'o')">免费寄样品</button>
+        <button class="auto-pill" onclick="autoTP(this,'o')">小批量起订</button>
+        <button class="auto-pill" onclick="autoTP(this,'o')">样品目录 + 报价单</button>
+        <button class="auto-pill" onclick="autoTP(this,'o')">免费咨询</button>
+        <button class="auto-pill auto-pill-dashed" onclick="autoTC('o')">＋ 自定义</button>
+      </div>
+      <input type="text" class="auto-input" id="auto-ci-o" style="display:none" placeholder="输入零风险入口..." oninput="autoUC('o')">
+      <div class="auto-compiled" id="auto-cv-o"></div>
+      <textarea class="auto-textarea" id="autoLowRiskOffer" oninput="autoSaveForm()" style="margin-top:6px" placeholder="例：最小起订 5 件，平均单价 $300-800，7 天无理由退换，先看货后付款"></textarea>
+    </div>
+
+    <div class="auto-field">
+      <span class="auto-field-label">发件人</span>
+      <input class="auto-input" type="text" id="autoSenderName" oninput="autoSaveForm()" placeholder="例：Libby Li，Sourcing Director，LuxeSupply Co.">
+    </div>
+  </div>
+
+  <button class="auto-submit-btn" onclick="autoSubmitForm()" style="position:relative; z-index:10;">// 提交给 AI 审核 →</button>
+</div>
+
+<script>
+// /app mode selection — additive; does not touch existing tab logic.
+function appSelectMode(mode) {
+  window._appMode = mode;
+  const auto   = document.getElementById('modeCardAuto');
+  const manual = document.getElementById('modeCardManual');
+  if (auto)   auto.classList.toggle('selected',   mode === 'auto');
+  if (manual) manual.classList.toggle('selected', mode === 'manual');
+  const btnAuto   = document.getElementById('btnModeAuto');
+  const btnManual = document.getElementById('btnModeManual');
+  if (btnAuto)   btnAuto.textContent   = (mode === 'auto')   ? '// 已选择 ✓' : '// 选择此模式';
+  if (btnManual) btnManual.textContent = (mode === 'manual') ? '// 已选择 ✓' : '// 选择此模式';
+  const flow = document.getElementById('modeAutoFlow');
+  if (flow) flow.style.display = (mode === 'auto') ? 'block' : 'none';
+  const btn = document.getElementById('modeConfirmBtn');
+  if (btn) {
+    btn.style.display = 'block';
+    btn.textContent = '// 确认并开始 →';
+  }
+}
+
+function appConfirmMode() {
+  const mode = window._appMode;
+  if (!mode) return;
+  const modeSel   = document.getElementById('appModeSelect');
+  const container = document.querySelector('.container');
+  const autoPanel = document.getElementById('appAutoPanel');
+  if (modeSel) modeSel.style.display = 'none';
+  if (mode === 'manual') {
+    if (autoPanel) autoPanel.style.display = 'none';
+    if (container) container.style.display = '';
+    if (typeof goToStep === 'function') goToStep(1);
+  } else {
+    if (container) container.style.display = 'none';
+    if (autoPanel) autoPanel.style.display = 'block';
+    autoLoadForm();
+  }
+}
+
+function appBackToModeSelect() {
+  window._appMode = null;
+  const modeSel   = document.getElementById('appModeSelect');
+  const container = document.querySelector('.container');
+  const autoPanel = document.getElementById('appAutoPanel');
+  if (container) container.style.display = 'none';
+  if (autoPanel) autoPanel.style.display = 'none';
+  if (modeSel) modeSel.style.display = '';
+  document.getElementById('modeCardAuto')?.classList.remove('selected');
+  document.getElementById('modeCardManual')?.classList.remove('selected');
+  const flow = document.getElementById('modeAutoFlow');
+  if (flow) flow.style.display = 'none';
+  const btn = document.getElementById('modeConfirmBtn');
+  if (btn) btn.style.display = 'none';
+}
+</script>
+
+<div class="container" style="display:none">
 
   <!-- Stepper (capsule bar) -->
   <div class="stepper" id="mainStepper">
@@ -9839,12 +10215,44 @@ async function smtpSendAll() {
           </div>
         </div>
 
-        <button type="button" onclick="fwValidateInputs()"
-          style="width:100%; padding:10px; background:#6366f1; color:#fff;
-          border:none; border-radius:8px; font-size:15px; font-weight:500;
-          cursor:pointer; font-family:inherit;">
-          提交给 AI 审核 →
-        </button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" onclick="fwAutoRun()"
+            style="flex:1; padding:10px; background:#534AB7; color:#fff;
+            border:none; border-radius:8px; font-size:15px; font-weight:500;
+            cursor:pointer; font-family:inherit;">
+            ⚡ 自动模式
+          </button>
+          <div style="flex:1;">
+            <button type="button" onclick="fwValidateInputs()"
+              style="width:100%; padding:10px; background:#6366f1; color:#fff;
+              border:none; border-radius:8px; font-size:15px; font-weight:500;
+              cursor:pointer; font-family:inherit;">
+              提交给 AI 审核 →
+            </button>
+          </div>
+        </div>
+
+        <!-- 自动模式 progress card (hidden until fwAutoRun runs; stays on Step 1) -->
+        <div id="fwAutoProgress" style="display:none; margin-top:1.25rem; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:var(--border-radius-lg, 12px); background:var(--color-background-primary, #0b0b0c); padding:16px 16px 18px;">
+          <div style="font-size:15px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:14px;">AI 正在处理...</div>
+          <div style="display:flex; align-items:center; gap:10px; padding:7px 0;">
+            <span id="fwAutoIcon0" style="width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;"><span style="width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.2);"></span></span>
+            <span id="fwAutoLabel0" style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.6));">审核输入质量</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:7px 0;">
+            <span id="fwAutoIcon1" style="width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;"><span style="width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.2);"></span></span>
+            <span id="fwAutoLabel1" style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.6));">生成邮件框架</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:7px 0;">
+            <span id="fwAutoIcon2" style="width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;"><span style="width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.2);"></span></span>
+            <span id="fwAutoLabel2" style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.6));">生成邮件内容</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:7px 0;">
+            <span id="fwAutoIcon3" style="width:18px; height:18px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;"><span style="width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.2);"></span></span>
+            <span id="fwAutoLabel3" style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.6));">准备发送</span>
+          </div>
+          <div id="fwAutoError" style="display:none; margin-top:10px; font-size:12px; color:#f87171;"></div>
+        </div>
       </div>
 
       <!-- ===== STEP 2 — AI quality control ===== -->
@@ -10708,6 +11116,87 @@ function fwEsc(s) {
     ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 }
 
+// ── 自动模式 form helpers (#appAutoPanel) ────────────────────────────────────
+function autoToggleSource(el) { el.classList.toggle('on'); }
+
+function autoTP(el, g) { el.classList.toggle('on'); autoUC(g); }
+
+function autoTC(g) {
+  var ci = document.getElementById('auto-ci-'+g);
+  var show = ci.style.display === 'none';
+  ci.style.display = show ? 'block' : 'none';
+  if (show) ci.focus();
+  autoUC(g);
+}
+
+function autoUC(g) {
+  var pills = document.querySelectorAll('#auto-pp-'+g+' .auto-pill.on');
+  var vals = [];
+  pills.forEach(function(p) { vals.push(p.textContent.trim()); });
+  var ci = document.getElementById('auto-ci-'+g);
+  if (ci && ci.value.trim()) vals.push(ci.value.trim());
+  var cv = document.getElementById('auto-cv-'+g);
+  if (cv) cv.textContent = vals.length ? '已选：' + vals.join('、') : '';
+}
+
+function autoToggleNoCase() {
+  var btn = document.getElementById('autoNoCaseBtn');
+  var ta = document.getElementById('autoCaseStudy');
+  btn.classList.toggle('on');
+  if (btn.classList.contains('on')) { ta.value = ''; ta.disabled = true; ta.style.opacity = '0.3'; }
+  else { ta.disabled = false; ta.style.opacity = '1'; }
+}
+
+function autoSubmitForm() {
+  console.log('autoSubmitForm fired');
+  var inputs = {
+    keyword: document.getElementById('autoKeyword').value.trim(),
+    location: document.getElementById('autoLocation').value.trim(),
+    sources: Array.from(document.querySelectorAll('.auto-source.on')).map(function(el){ return el.dataset.source; }),
+    product: document.getElementById('autoProduct').value.trim(),
+    targetCustomer: document.getElementById('autoTargetCustomer').value.trim(),
+    criteria: document.getElementById('autoCriteria').value.trim(),
+    caseStudy: document.getElementById('autoCaseStudy').value.trim(),
+    lowRiskOffer: document.getElementById('autoLowRiskOffer').value.trim(),
+    senderName: document.getElementById('autoSenderName').value.trim()
+  };
+  window._autoInputs = inputs;
+  fwAutoRun(inputs);
+}
+
+function autoSaveForm() {
+  localStorage.setItem('autoForm', JSON.stringify({
+    keyword: document.getElementById('autoKeyword').value,
+    location: document.getElementById('autoLocation').value,
+    product: document.getElementById('autoProduct').value,
+    targetCustomer: document.getElementById('autoTargetCustomer').value,
+    criteria: document.getElementById('autoCriteria').value,
+    caseStudy: document.getElementById('autoCaseStudy').value,
+    lowRiskOffer: document.getElementById('autoLowRiskOffer').value,
+    senderName: document.getElementById('autoSenderName').value
+  }));
+}
+
+function autoLoadForm() {
+  var saved;
+  try { saved = JSON.parse(localStorage.getItem('autoForm')); } catch (e) { saved = null; }
+  if (!saved) return;
+  var map = {
+    autoKeyword: saved.keyword,
+    autoLocation: saved.location,
+    autoProduct: saved.product,
+    autoTargetCustomer: saved.targetCustomer,
+    autoCriteria: saved.criteria,
+    autoCaseStudy: saved.caseStudy,
+    autoLowRiskOffer: saved.lowRiskOffer,
+    autoSenderName: saved.senderName
+  };
+  Object.keys(map).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el && map[id] != null) el.value = map[id];
+  });
+}
+
 function fwGetInputs() {
   return {
     product:        document.getElementById('fwProduct').value.trim(),
@@ -10874,6 +11363,161 @@ ${seqLines}`;
   _appSelectedGoal = '找买家';
 
   appPreviewFirst();
+}
+
+// ── 自动模式 (one-shot pipeline) ──────────────────────────────────────────────
+// Chains validate → framework → per-lead email generation → send panel without
+// stopping for confirmation. Reuses the existing API routes and showAppSendPanel.
+// If any field fails validation, it drops into the manual Step 2 review instead.
+function fwAutoSetStep(i, state, labelText) {
+  const icon  = document.getElementById('fwAutoIcon' + i);
+  const label = document.getElementById('fwAutoLabel' + i);
+  if (label && labelText) label.textContent = labelText;
+  if (!icon) return;
+  if (state === 'wait') {
+    icon.innerHTML = '<span style="width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.2);"></span>';
+    if (label) label.style.color = 'var(--color-text-secondary, rgba(255,255,255,0.6))';
+  } else if (state === 'active') {
+    icon.innerHTML = '<i class="ti ti-loader-2" style="font-size:16px; color:#6366f1;"></i>';
+    if (label) label.style.color = 'var(--color-text-primary, #e5e7eb)';
+  } else if (state === 'done') {
+    icon.innerHTML = '<i class="ti ti-circle-check-filled" style="font-size:16px; color:#22c55e;"></i>';
+    if (label) label.style.color = 'var(--color-text-primary, #e5e7eb)';
+  } else if (state === 'error') {
+    icon.innerHTML = '<i class="ti ti-circle-x-filled" style="font-size:16px; color:#ef4444;"></i>';
+    if (label) label.style.color = '#f87171';
+  }
+}
+
+async function fwAutoRun(providedInputs) {
+  var inp = providedInputs || fwGetInputs();
+  if (!inp.product)        { alert('请填写产品 / 服务'); return; }
+  if (!inp.targetCustomer) { alert('请填写目标客户'); return; }
+  if (!inp.senderName)     { alert('请填写发件人姓名 + 公司'); return; }
+  _fwOriginal = inp;
+
+  const prog  = document.getElementById('fwAutoProgress');
+  const errEl = document.getElementById('fwAutoError');
+  const showErr = (msg) => { if (errEl) { errEl.style.display = 'block'; errEl.textContent = msg; } };
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+  for (let i = 0; i < 4; i++) fwAutoSetStep(i, 'wait');
+  if (prog) prog.style.display = 'block';
+
+  // STEP A — validate input quality.
+  fwAutoSetStep(0, 'active', '审核输入质量');
+  let review;
+  try {
+    const resp = await fetch('/api/validate-framework-inputs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+      body: JSON.stringify(inp),
+    });
+    review = await resp.json();
+  } catch (e) {
+    fwAutoSetStep(0, 'error');
+    showErr('AI 审核失败，请重试');
+    return;
+  }
+  _fwReview = Array.isArray(review) ? review : [];
+  if (_fwReview.some(r => !r.passed)) {
+    // Stop auto mode — hand the user the manual Step 2 review to fix failed fields.
+    if (prog) prog.style.display = 'none';
+    document.getElementById('fwStep1').style.display = 'none';
+    document.getElementById('fwStep2').style.display = 'block';
+    document.getElementById('fwStep2Loading').style.display = 'none';
+    document.getElementById('fwAllPassedMsg').style.display = 'none';
+    const genBtn = document.getElementById('fwGenBtn');
+    if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.5'; }
+    fwRenderReview();
+    return;
+  }
+  fwAutoSetStep(0, 'done', '审核输入质量');
+
+  // STEP B — generate the 7-email framework (no fixes needed, all passed).
+  fwAutoSetStep(1, 'active', '生成邮件框架');
+  let framework;
+  try {
+    const resp = await fetch('/api/generate-framework-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+      body: JSON.stringify(Object.assign({}, inp, { fixes: {} })),
+    });
+    framework = await resp.json();
+  } catch (e) {
+    fwAutoSetStep(1, 'error');
+    showErr('生成邮件框架失败，请重试');
+    return;
+  }
+  if (!Array.isArray(framework) || !framework.length) {
+    fwAutoSetStep(1, 'error');
+    showErr('生成邮件框架失败，请重试');
+    return;
+  }
+  window._fwAutoFramework = framework;
+  fwAutoSetStep(1, 'done', '生成邮件框架');
+
+  // STEP C — generate the email sequence for every selected lead.
+  fwAutoSetStep(2, 'active', '生成邮件内容');
+  const leads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
+    ? window._filteredLeads
+    : (window._appLeads || []);
+  if (!leads.length) {
+    fwAutoSetStep(2, 'error');
+    showErr('没有可用的客户，请先搜索并筛选');
+    return;
+  }
+
+  const sellerDesc = inp.product + (inp.targetCustomer ? (' targeting ' + inp.targetCustomer) : '');
+  const ctx = JSON.stringify(window._fwAutoFramework) + '\n\nAdditional context — Case study: ' + (inp.caseStudy || 'none') + '. Zero-risk offer details: ' + (inp.lowRiskOffer || 'none') + '. Sender: ' + (inp.senderName || '');
+  const toEntry = (lead, seq) => {
+    const sequence = Array.isArray(seq) ? seq.map(e => ({ subject: e.subject || '', body: e.body || '' })) : [];
+    const email = lead.email || lead.raw?.email || '';
+    const recipient = lead.name || lead.title || lead.username || '';
+    return {
+      recipient, email, to: email || recipient,
+      subject: sequence[0]?.subject || '',
+      body:    sequence[0]?.body    || '',
+      framework: 'cold_7_step', sequence,
+    };
+  };
+
+  const results = [];
+  for (let i = 0; i < leads.length; i++) {
+    fwAutoSetStep(2, 'active', '生成邮件内容 (' + (i + 1) + '/' + leads.length + ')...');
+    try {
+      const resp = await fetch('/api/app-generate-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+        body: JSON.stringify({
+          lead: leads[i],
+          product: inp.product, targetCustomer: inp.targetCustomer, caseStudy: inp.caseStudy,
+          lowRiskOffer: inp.lowRiskOffer, senderName: inp.senderName,
+          sellerDesc, goal: '找买家', signatureName: inp.senderName,
+          framework: 'cold_7_step', customPrompt: '',
+          frameworkContext: ctx,
+        }),
+      });
+      const data = await resp.json();
+      results.push(toEntry(leads[i], data.emails));
+    } catch (e) {
+      console.warn('[fwAutoRun] generation failed for', leads[i]?.name || '', e.message);
+    }
+  }
+  if (!results.length) {
+    fwAutoSetStep(2, 'error');
+    showErr('邮件生成失败，请重试');
+    return;
+  }
+  window._fwAutoEmails = results;
+  window._generatedEmails = results;
+  fwAutoSetStep(2, 'done', '生成邮件内容');
+
+  // STEP D — hand off to the send panel (skip Step 3 confirmation entirely).
+  fwAutoSetStep(3, 'active', '准备发送');
+  fwAutoSetStep(3, 'done', '准备发送');
+  if (prog) prog.style.display = 'none';
+  document.getElementById('fwStep1').style.display = 'none';
+  if (typeof showAppSendPanel === 'function') showAppSendPanel();
 }
 
 // ── Step 1 pill helpers ──────────────────────────────────────────────────────
