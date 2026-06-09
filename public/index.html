@@ -11391,9 +11391,6 @@ function fwAutoSetStep(i, state, labelText) {
 
 async function fwAutoRun(providedInputs) {
   var inp = providedInputs || fwGetInputs();
-  if (!inp.product)        { alert('请填写产品 / 服务'); return; }
-  if (!inp.targetCustomer) { alert('请填写目标客户'); return; }
-  if (!inp.senderName)     { alert('请填写发件人姓名 + 公司'); return; }
   _fwOriginal = inp;
 
   const prog  = document.getElementById('fwAutoProgress');
