@@ -11560,7 +11560,20 @@ async function fwAutoRun(providedInputs) {
   if (prog) prog.style.display = 'none';
   var fwStep1El = document.getElementById('fwStep1');
   if (fwStep1El) fwStep1El.style.display = 'none';
-  if (typeof showAppSendPanel === 'function') showAppSendPanel();
+  console.log('[fwAutoRun] step D - showAppSendPanel exists:', typeof showAppSendPanel);
+  // Hide auto form, show generated emails directly
+  document.getElementById('appAutoPanel').style.display = 'none';
+  document.getElementById('appModeSelect').style.display = 'none';
+
+  // Show the container and go to email send step
+  var container = document.querySelector('.container');
+  if (container) container.style.display = '';
+
+  // Store emails for the send panel
+  window._generatedEmails = window._fwAutoEmails;
+
+  // Go to email send tab (step 5)
+  if (typeof goToStep === 'function') goToStep(4);
 }
 
 // ── Step 1 pill helpers ──────────────────────────────────────────────────────
