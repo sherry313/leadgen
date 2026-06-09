@@ -2741,7 +2741,7 @@
     </div>
   </div>
 
-  <button class="auto-submit-btn" onclick="autoSubmitForm()" style="position:relative; z-index:10;">// 提交给 AI 审核 →</button>
+  <button class="auto-submit-btn" onclick="autoSubmitForm()" style="position:relative; z-index:10;">// Step 1：AI 审核输入质量 →</button>
 </div>
 
 <script>
@@ -11203,6 +11203,15 @@ function autoResubmit() {
   fwAutoRun(merged);
 }
 
+function autoConfirmRun() {
+  var panel = document.getElementById('autoConfirmPanel');
+  if (panel) panel.remove();
+  var reviewPanel = document.getElementById('autoReviewPanel');
+  if (reviewPanel) reviewPanel.remove();
+  // Skip step A (already passed), go straight to step B
+  fwAutoRunFromStepB(window._autoInputs);
+}
+
 function fwGetInputs() {
   return {
     product:        document.getElementById('fwProduct').value.trim(),
@@ -11451,6 +11460,24 @@ async function fwAutoRun(providedInputs) {
     return;
   }
   fwAutoSetStep(0, 'done', '审核输入质量');
+
+  // Show confirmation before proceeding
+  var existingConfirm = document.getElementById('autoConfirmPanel');
+  if (existingConfirm) existingConfirm.remove();
+  var confirmHtml = '<div id="autoConfirmPanel" style="margin-top:1.5rem;background:#0A1628;border:1px solid #2A5580;border-radius:6px;padding:1.25rem">';
+  confirmHtml += '<p style="font-size:13px;color:#5BA3E0;margin-bottom:4px">// 审核通过 ✓</p>';
+  confirmHtml += '<p style="font-size:12px;color:#7EB8F0;margin-bottom:1rem">所有信息已通过审核。点击下方按钮开始自动搜索、筛选并生成邮件。</p>';
+  confirmHtml += '<button onclick="autoConfirmRun()" style="width:100%;padding:10px;background:#185FA5;color:#E6F1FB;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">⚡ 确认 — 开始搜索 + 筛选 + 生成邮件</button>';
+  confirmHtml += '</div>';
+  document.getElementById('appAutoPanel').insertAdjacentHTML('beforeend', confirmHtml);
+  document.getElementById('appAutoPanel').scrollTop = document.getElementById('appAutoPanel').scrollHeight;
+  return;
+}
+
+async function fwAutoRunFromStepB(inp) {
+  const prog  = document.getElementById('fwAutoProgress');
+  const errEl = document.getElementById('fwAutoError');
+  const showErr = (msg) => { if (errEl) { errEl.style.display = 'block'; errEl.textContent = msg; } };
   console.log('[fwAutoRun] starting step B');
 
   // STEP B — generate the 7-email framework (no fixes needed, all passed).
