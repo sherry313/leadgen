@@ -11197,6 +11197,18 @@ function autoLoadForm() {
   });
 }
 
+function autoResubmit() {
+  var fixes = {};
+  document.querySelectorAll('[data-fix-field]').forEach(function(el) {
+    if (el.value.trim()) fixes[el.dataset.fixField] = el.value.trim();
+  });
+  var merged = Object.assign({}, window._autoInputs, fixes);
+  window._autoInputs = merged;
+  var reviewPanel = document.getElementById('autoReviewPanel');
+  if (reviewPanel) reviewPanel.remove();
+  fwAutoRun(merged);
+}
+
 function fwGetInputs() {
   return {
     product:        document.getElementById('fwProduct').value.trim(),
@@ -11417,15 +11429,27 @@ async function fwAutoRun(providedInputs) {
   }
   _fwReview = Array.isArray(review) ? review : [];
   if (_fwReview.some(r => !r.passed)) {
-    // Stop auto mode — hand the user the manual Step 2 review to fix failed fields.
     if (prog) prog.style.display = 'none';
-    document.getElementById('fwStep1').style.display = 'none';
-    document.getElementById('fwStep2').style.display = 'block';
-    document.getElementById('fwStep2Loading').style.display = 'none';
-    document.getElementById('fwAllPassedMsg').style.display = 'none';
-    const genBtn = document.getElementById('fwGenBtn');
-    if (genBtn) { genBtn.disabled = true; genBtn.style.opacity = '0.5'; }
-    fwRenderReview();
+    // Show failed fields inline in #appAutoPanel
+    var existingReview = document.getElementById('autoReviewPanel');
+    if (existingReview) existingReview.remove();
+    var reviewHtml = '<div id="autoReviewPanel" style="margin-top:1.5rem">';
+    reviewHtml += '<p style="font-size:13px;color:#E2EEF9;font-weight:500;margin-bottom:1rem">// AI 审核结果 — 请修正以下字段</p>';
+    _fwReview.forEach(function(r) {
+      if (!r.passed) {
+        reviewHtml += '<div style="background:#0A1628;border:1px solid #2A5580;border-radius:6px;padding:12px;margin-bottom:10px">';
+        reviewHtml += '<div style="font-size:11px;color:#F59E0B;font-weight:500;margin-bottom:4px">⚠ ' + r.field + '</div>';
+        reviewHtml += '<div style="font-size:12px;color:#7EB8F0;margin-bottom:8px">' + r.reason + '</div>';
+        reviewHtml += '<div style="font-size:12px;color:#E2EEF9;margin-bottom:6px">' + r.followUpQuestion + '</div>';
+        reviewHtml += '<input type="text" data-fix-field="' + r.field + '" placeholder="补充更具体的信息..." style="width:100%;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px 10px;font-size:13px;color:#E2EEF9;outline:none;box-sizing:border-box">';
+        reviewHtml += '</div>';
+      }
+    });
+    reviewHtml += '<button onclick="autoResubmit()" style="width:100%;margin-top:1rem;padding:10px;background:#185FA5;color:#E6F1FB;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">// 重新提交 →</button>';
+    reviewHtml += '</div>';
+    var autoPanel = document.getElementById('appAutoPanel');
+    autoPanel.insertAdjacentHTML('beforeend', reviewHtml);
+    autoPanel.scrollTop = autoPanel.scrollHeight;
     return;
   }
   fwAutoSetStep(0, 'done', '审核输入质量');
