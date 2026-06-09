@@ -11601,7 +11601,11 @@ async function fwAutoRunFromStepB(inp) {
   window._generatedEmails = window._fwAutoEmails;
 
   // Go to email send tab (step 5)
-  if (typeof goToStep === 'function') goToStep(4);
+  if (typeof showAppSendPanel === 'function') {
+    showAppSendPanel();
+  } else if (typeof goToStep === 'function') {
+    goToStep(4);
+  }
 }
 
 // ── Step 1 pill helpers ──────────────────────────────────────────────────────
