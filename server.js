@@ -2524,7 +2524,7 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
 app.post('/api/auto-search', requireAuth, async (req, res) => {
   const keyword = String(req.body.keyword || '').trim();
   const location = String(req.body.location || '').trim();
-  const maxResults = Math.min(parseInt(req.body.maxResults) || 20, 50);
+  const maxResults = Math.min(parseInt(req.body.maxResults) || 20, 100);
 
   if (!keyword) return res.status(400).json({ success: false, error: 'keyword required' });
 

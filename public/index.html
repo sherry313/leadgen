@@ -2677,6 +2677,17 @@
           <i class="ti ti-brand-tiktok" aria-hidden="true"></i><span>TikTok</span>
         </div>
       </div>
+      <div class="auto-field" style="margin-top:1rem">
+        <span class="auto-field-label">抓取数量</span>
+        <span class="auto-field-hint">每个数据源最多抓取多少家</span>
+        <div class="auto-pills" id="auto-pp-qty">
+          <button class="auto-pill on" onclick="autoSetQty(this,10)">10家</button>
+          <button class="auto-pill" onclick="autoSetQty(this,20)">20家</button>
+          <button class="auto-pill" onclick="autoSetQty(this,50)">50家</button>
+          <button class="auto-pill" onclick="autoSetQty(this,100)">100家</button>
+        </div>
+        <input type="hidden" id="autoMaxResults" value="10">
+      </div>
     </div>
   </div>
 
@@ -11146,6 +11157,7 @@ function autoSubmitForm() {
   var inputs = {
     keyword: document.getElementById('autoKeyword').value.trim(),
     location: document.getElementById('autoLocation').value.trim(),
+    maxResults: parseInt(document.getElementById('autoMaxResults').value) || 10,
     sources: Array.from(document.querySelectorAll('.auto-source.on')).map(function(el){ return el.dataset.source; }),
     product: document.getElementById('autoProduct').value.trim(),
     targetCustomer: document.getElementById('autoTargetCustomer').value.trim(),
@@ -11210,6 +11222,12 @@ function autoConfirmRun() {
   if (reviewPanel) reviewPanel.remove();
   // Skip step A (already passed), go straight to step B
   fwAutoRunFromStepB(window._autoInputs);
+}
+
+function autoSetQty(el, qty) {
+  document.querySelectorAll('#auto-pp-qty .auto-pill').forEach(function(p){ p.classList.remove('on'); });
+  el.classList.add('on');
+  document.getElementById('autoMaxResults').value = qty;
 }
 
 function fwGetInputs() {
@@ -11516,7 +11534,7 @@ async function fwAutoRunFromStepB(inp) {
       const searchResp = await fetch('/api/auto-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
-        body: JSON.stringify({ keyword: inp.keyword, location: inp.location, maxResults: 20 }),
+        body: JSON.stringify({ keyword: inp.keyword, location: inp.location, maxResults: inp.maxResults || 20 }),
       });
       const searchData = await searchResp.json();
       if ((searchData.leads || []).length) {
