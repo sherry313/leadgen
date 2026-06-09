@@ -2755,6 +2755,63 @@
   <button class="auto-submit-btn" onclick="autoSubmitForm()" style="position:relative; z-index:10;">// Step 1：AI 审核输入质量 →</button>
 </div>
 
+<div id="appAutoSendPanel" style="display:none; background:#0a0f1a; min-height:100vh; padding:80px 1.5rem 2rem; font-family:var(--font-mono,monospace); color:#E2EEF9;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:2rem">
+    <button onclick="appBackToAutoForm()" style="font-size:11px;color:#5a8aad;background:transparent;border:1px solid #1e3a5f;border-radius:3px;padding:5px 10px;cursor:pointer;font-family:var(--font-mono,monospace)">← 返回</button>
+    <span style="font-size:10px;color:#378ADD;letter-spacing:0.15em;text-transform:uppercase">// AUTO_MODE // 邮件已生成</span>
+  </div>
+  <p style="font-size:18px;font-weight:500;margin-bottom:4px">邮件已生成完毕</p>
+  <p style="font-size:12px;color:#5a8aad;margin-bottom:2rem" id="autoSendSummary">共生成 0 家客户的邮件序列</p>
+
+  <div style="border:1px solid #1e3a5f;border-radius:6px;padding:1.25rem;margin-bottom:1.25rem;background:#0d1626">
+    <div style="font-size:10px;color:#378ADD;letter-spacing:0.1em;margin-bottom:1rem">SEND_METHOD // 发送方式</div>
+    <div style="display:flex;gap:10px;margin-bottom:1rem">
+      <button id="autoSendMethodSMTP" onclick="autoSelectSendMethod('smtp')" style="flex:1;padding:10px;background:#1A4B8C;color:#C8E0F8;border:1px solid #378ADD;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-mono,monospace)">📧 SMTP 发送</button>
+      <button id="autoSendMethodInstantly" onclick="autoSelectSendMethod('instantly')" style="flex:1;padding:10px;background:transparent;color:#5a8aad;border:1px solid #1e3a5f;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-mono,monospace)">⚡ Instantly</button>
+    </div>
+
+    <div id="autoSmtpPanel">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
+          <div style="font-size:11px;color:#378ADD;margin-bottom:4px">HOST</div>
+          <input id="autoSmtpHost" type="text" placeholder="smtp.gmail.com" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+        </div>
+        <div>
+          <div style="font-size:11px;color:#378ADD;margin-bottom:4px">PORT</div>
+          <input id="autoSmtpPort" type="text" placeholder="587" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#378ADD;margin-bottom:4px">邮箱账号</div>
+        <input id="autoSmtpUser" type="text" placeholder="your@email.com" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+      </div>
+      <div style="margin-bottom:1rem">
+        <div style="font-size:11px;color:#378ADD;margin-bottom:4px">密码 / 应用专用密码</div>
+        <input id="autoSmtpPass" type="password" placeholder="••••••••" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+      </div>
+      <button onclick="autoStartSmtpSend()" style="width:100%;padding:10px;background:#185FA5;color:#E6F1FB;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">// 开始发送</button>
+    </div>
+
+    <div id="autoInstantlyPanel" style="display:none">
+      <div style="margin-bottom:1rem">
+        <div style="font-size:11px;color:#378ADD;margin-bottom:4px">Campaign ID</div>
+        <input id="autoInstantlyCampaign" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+      </div>
+      <button onclick="autoStartInstantlySend()" style="width:100%;padding:10px;background:#185FA5;color:#E6F1FB;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">// 推送到 Instantly</button>
+    </div>
+  </div>
+
+  <div style="border:1px solid #1e3a5f;border-radius:6px;background:#0d1626;overflow:hidden">
+    <div style="font-size:10px;color:#378ADD;letter-spacing:0.1em;padding:1rem 1.25rem 0.5rem">LEADS // 已生成邮件列表</div>
+    <div id="autoLeadsList" style="max-height:400px;overflow-y:auto"></div>
+  </div>
+
+  <div id="autoSendProgress" style="display:none;margin-top:1rem;border:1px solid #1e3a5f;border-radius:6px;padding:1.25rem;background:#0d1626">
+    <div style="font-size:11px;color:#378ADD;margin-bottom:8px">// 发送进度</div>
+    <div id="autoSendProgressText" style="font-size:13px;color:#E2EEF9"></div>
+  </div>
+</div>
+
 <script>
 // /app mode selection — additive; does not touch existing tab logic.
 function appSelectMode(mode) {
@@ -11230,6 +11287,52 @@ function autoSetQty(el, qty) {
   document.getElementById('autoMaxResults').value = qty;
 }
 
+function autoShowSendPanel() {
+  var container = document.querySelector('.container');
+  if (container) container.style.display = 'none';
+  document.getElementById('appModeSelect').style.display = 'none';
+  var emails = window._fwAutoEmails || [];
+  document.getElementById('autoSendSummary').textContent = '共生成 ' + emails.length + ' 家客户的邮件序列';
+  var list = document.getElementById('autoLeadsList');
+  list.innerHTML = '';
+  emails.forEach(function(e, i) {
+    var row = '<div style="padding:10px 1.25rem;border-bottom:1px solid #1e3a5f;display:flex;align-items:center;justify-content:space-between">';
+    row += '<div><div style="font-size:13px;color:#E2EEF9">' + (e.recipient || e.to || 'Unknown') + '</div>';
+    row += '<div style="font-size:11px;color:#5a8aad">' + (e.email || '无邮箱') + '</div></div>';
+    row += '<div style="font-size:11px;color:#378ADD">' + (e.sequence ? e.sequence.length : 1) + ' 封</div>';
+    row += '</div>';
+    list.innerHTML += row;
+  });
+  document.getElementById('appAutoPanel').style.display = 'none';
+  document.getElementById('appAutoSendPanel').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function autoSelectSendMethod(method) {
+  document.getElementById('autoSmtpPanel').style.display = method === 'smtp' ? 'block' : 'none';
+  document.getElementById('autoInstantlyPanel').style.display = method === 'instantly' ? 'block' : 'none';
+  document.getElementById('autoSendMethodSMTP').style.background = method === 'smtp' ? '#1A4B8C' : 'transparent';
+  document.getElementById('autoSendMethodSMTP').style.borderColor = method === 'smtp' ? '#378ADD' : '#1e3a5f';
+  document.getElementById('autoSendMethodSMTP').style.color = method === 'smtp' ? '#C8E0F8' : '#5a8aad';
+  document.getElementById('autoSendMethodInstantly').style.background = method === 'instantly' ? '#1A4B8C' : 'transparent';
+  document.getElementById('autoSendMethodInstantly').style.borderColor = method === 'instantly' ? '#378ADD' : '#1e3a5f';
+  document.getElementById('autoSendMethodInstantly').style.color = method === 'instantly' ? '#C8E0F8' : '#5a8aad';
+}
+
+function appBackToAutoForm() {
+  document.getElementById('appAutoSendPanel').style.display = 'none';
+  document.getElementById('appAutoPanel').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function autoStartSmtpSend() {
+  alert('SMTP 发送功能开发中');
+}
+
+function autoStartInstantlySend() {
+  alert('Instantly 推送功能开发中');
+}
+
 function fwGetInputs() {
   return {
     product:        document.getElementById('fwProduct').value.trim(),
@@ -11606,7 +11709,6 @@ async function fwAutoRunFromStepB(inp) {
   if (prog) prog.style.display = 'none';
   var fwStep1El = document.getElementById('fwStep1');
   if (fwStep1El) fwStep1El.style.display = 'none';
-  console.log('[fwAutoRun] step D - showAppSendPanel exists:', typeof showAppSendPanel);
   // Hide auto form, show generated emails directly
   document.getElementById('appAutoPanel').style.display = 'none';
   document.getElementById('appModeSelect').style.display = 'none';
@@ -11617,13 +11719,8 @@ async function fwAutoRunFromStepB(inp) {
 
   // Store emails for the send panel
   window._generatedEmails = window._fwAutoEmails;
-
-  // Go to email send tab (step 5)
-  if (typeof showAppSendPanel === 'function') {
-    showAppSendPanel();
-  } else if (typeof goToStep === 'function') {
-    goToStep(4);
-  }
+  if (prog) prog.style.display = 'none';
+  autoShowSendPanel();
 }
 
 // ── Step 1 pill helpers ──────────────────────────────────────────────────────
