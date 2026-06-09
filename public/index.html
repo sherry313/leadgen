@@ -11409,6 +11409,7 @@ async function fwAutoRun(providedInputs) {
   if (prog) prog.style.display = 'block';
 
   // STEP A — validate input quality.
+  console.log('[fwAutoRun] starting step A');
   fwAutoSetStep(0, 'active', '审核输入质量');
   let review;
   try {
@@ -11418,6 +11419,7 @@ async function fwAutoRun(providedInputs) {
       body: JSON.stringify(inp),
     });
     review = await resp.json();
+    console.log('[fwAutoRun] step A complete, review:', JSON.stringify(review));
   } catch (e) {
     fwAutoSetStep(0, 'error');
     showErr('AI 审核失败，请重试');
