@@ -11478,9 +11478,30 @@ async function fwAutoRun(providedInputs) {
   const leads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
     ? window._filteredLeads
     : (window._appLeads || []);
-  if (!leads.length) {
+  // Auto-search if no leads available
+  if (!leads.length && inp.keyword && inp.location) {
+    fwAutoSetStep(2, 'active', '正在搜索目标客户...');
+    try {
+      const searchResp = await fetch('/api/google-maps-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+        body: JSON.stringify({ keyword: inp.keyword, location: inp.location, limit: 20 }),
+      });
+      const searchData = await searchResp.json();
+      if (searchData.leads && searchData.leads.length) {
+        window._appLeads = searchData.leads;
+        window._filteredLeads = searchData.leads;
+      }
+    } catch (e) {
+      console.warn('[fwAutoRun] search failed', e.message);
+    }
+  }
+  const autoLeads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
+    ? window._filteredLeads
+    : (window._appLeads || []);
+  if (!autoLeads.length) {
     fwAutoSetStep(2, 'error');
-    showErr('没有可用的客户，请先搜索并筛选');
+    showErr('搜索没有找到结果，请换关键词重试');
     return;
   }
 
@@ -11499,14 +11520,14 @@ async function fwAutoRun(providedInputs) {
   };
 
   const results = [];
-  for (let i = 0; i < leads.length; i++) {
-    fwAutoSetStep(2, 'active', '生成邮件内容 (' + (i + 1) + '/' + leads.length + ')...');
+  for (let i = 0; i < autoLeads.length; i++) {
+    fwAutoSetStep(2, 'active', '生成邮件内容 (' + (i + 1) + '/' + autoLeads.length + ')...');
     try {
       const resp = await fetch('/api/app-generate-preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
         body: JSON.stringify({
-          lead: leads[i],
+          lead: autoLeads[i],
           product: inp.product, targetCustomer: inp.targetCustomer, caseStudy: inp.caseStudy,
           lowRiskOffer: inp.lowRiskOffer, senderName: inp.senderName,
           sellerDesc, goal: '找买家', signatureName: inp.senderName,
@@ -11515,9 +11536,9 @@ async function fwAutoRun(providedInputs) {
         }),
       });
       const data = await resp.json();
-      results.push(toEntry(leads[i], data.emails));
+      results.push(toEntry(autoLeads[i], data.emails));
     } catch (e) {
-      console.warn('[fwAutoRun] generation failed for', leads[i]?.name || '', e.message);
+      console.warn('[fwAutoRun] generation failed for', autoLeads[i]?.name || '', e.message);
     }
   }
   if (!results.length) {
@@ -11533,7 +11554,8 @@ async function fwAutoRun(providedInputs) {
   fwAutoSetStep(3, 'active', '准备发送');
   fwAutoSetStep(3, 'done', '准备发送');
   if (prog) prog.style.display = 'none';
-  document.getElementById('fwStep1').style.display = 'none';
+  var fwStep1El = document.getElementById('fwStep1');
+  if (fwStep1El) fwStep1El.style.display = 'none';
   if (typeof showAppSendPanel === 'function') showAppSendPanel();
 }
 
