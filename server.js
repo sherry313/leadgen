@@ -2579,7 +2579,7 @@ app.post('/api/scrape-website', requireAuth, async (req, res) => {
       18000,
       'scrape-website timeout'
     );
-    const html = response.data || '';
+    const html = typeof response.data === 'string' ? response.data : JSON.stringify(response.data || '');
     const text = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
