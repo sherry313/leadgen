@@ -11716,6 +11716,9 @@ async function fwAutoRunFromStepB(inp) {
         if (scrapeData.text && scrapeData.text.length > 50) {
           lead.websiteText = scrapeData.text;
         }
+        if (!lead.email && scrapeData.email) {
+          lead.email = scrapeData.email;
+        }
       } catch(e) {
         console.warn('[auto-filter] scrape failed for', lead.name, e.message);
       }

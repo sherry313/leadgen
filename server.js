@@ -2587,7 +2587,10 @@ app.post('/api/scrape-website', requireAuth, async (req, res) => {
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 1500);
-    res.json({ text });
+    const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+    const emails = (html.match(emailRegex) || []).filter(e => !e.includes('example') && !e.includes('sentry') && !e.includes('wix'));
+    const email = emails[0] || '';
+    res.json({ text, email });
   } catch (e) {
     console.error('[scrape-website] error:', e.message);
     res.json({ text: '' });
