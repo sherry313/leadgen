@@ -2537,6 +2537,9 @@ app.post('/api/auto-search', requireAuth, async (req, res) => {
       scrapeContacts: true,
     });
 
+    console.log('[auto-search] sample item fields:', JSON.stringify(Object.keys(items[0] || {})));
+    console.log('[auto-search] sample item:', JSON.stringify(items[0] || {}, null, 2).substring(0, 500));
+
     const leads = items.map(item => ({
       name: item.title || item.name || '',
       website: item.website || item.url || '',
