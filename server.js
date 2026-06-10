@@ -2554,6 +2554,18 @@ app.post('/api/auto-search', requireAuth, async (req, res) => {
   }
 });
 
+app.post('/api/scrape-website', requireAuth, async (req, res) => {
+  const { url } = req.body || {};
+  if (!url) return res.status(400).json({ error: 'url required' });
+  try {
+    const crawled = await withTimeout(crawlWebsite(url), 15000, 'scrape-website timeout');
+    res.json({ text: crawled.content || '' });
+  } catch (e) {
+    console.error('[scrape-website] error:', e.message);
+    res.json({ text: '' });
+  }
+});
+
 // ── /app email generation (SSE) ──────────────────────────────────────────────
 // Body: { leads: [{name, email, website, phone, address, ...}], framework: 'cold_5_step' }
 // Pipeline per lead: website scrape → Haiku pre-filter → Sonnet email gen.

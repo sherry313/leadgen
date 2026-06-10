@@ -11709,6 +11709,21 @@ async function fwAutoRunFromStepB(inp) {
       autoAddFilterResult(lead.name || 'Unknown', false, '无邮箱，跳过');
       continue;
     }
+    if (lead.website && (!lead.websiteText || lead.websiteText.length < 50)) {
+      try {
+        const scrapeResp = await fetch('/api/scrape-website', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+          body: JSON.stringify({ url: lead.website })
+        });
+        const scrapeData = await scrapeResp.json();
+        if (scrapeData.text && scrapeData.text.length > 50) {
+          lead.websiteText = scrapeData.text;
+        }
+      } catch(e) {
+        console.warn('[auto-filter] scrape failed for', lead.name, e.message);
+      }
+    }
     try {
       const filterResp = await fetch('/api/ai-filter-lead', {
         method: 'POST',
