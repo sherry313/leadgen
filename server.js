@@ -2569,8 +2569,25 @@ app.post('/api/scrape-website', requireAuth, async (req, res) => {
   const { url } = req.body || {};
   if (!url) return res.status(400).json({ error: 'url required' });
   try {
-    const crawled = await withTimeout(crawlWebsite(url), 15000, 'scrape-website timeout');
-    res.json({ text: crawled.content || '' });
+    const axios = require('axios');
+    const response = await withTimeout(
+      axios.get(url, {
+        timeout: 15000,
+        maxRedirects: 5,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+      }),
+      18000,
+      'scrape-website timeout'
+    );
+    const html = response.data || '';
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 1500);
+    res.json({ text });
   } catch (e) {
     console.error('[scrape-website] error:', e.message);
     res.json({ text: '' });
