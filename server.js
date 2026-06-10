@@ -2804,9 +2804,17 @@ Reply in JSON only:
       }],
     });
 
-    const text = response.content[0].text;
-    const json = JSON.parse(text.replace(/```json|```/g, '').trim());
-    res.json(json);
+    const content = response.content[0].text;
+    let parsed;
+    try {
+      const rawText = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
+    } catch(e) {
+      console.error('[AI Filter]', e.message, '| raw:', content.substring(0, 100));
+      return res.json({ recommended: false, reason: '分析出错，请手动检查' });
+    }
+    res.json({ recommended: parsed.recommended, reason: parsed.reason });
   } catch (e) {
     console.warn('[AI Filter]', e.message);
     res.json({ recommended: false, reason: '分析出错，请手动检查' });
