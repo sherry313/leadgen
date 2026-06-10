@@ -11705,10 +11705,6 @@ async function fwAutoRunFromStepB(inp) {
   for (var i = 0; i < searchLeads.length; i++) {
     var lead = searchLeads[i];
     autoSetStepState('step-filter', 'active', '分析第 ' + (i+1) + ' / ' + searchLeads.length + ' 家: ' + (lead.name || ''));
-    if (!lead.email || lead.email.trim() === '') {
-      autoAddFilterResult(lead.name || 'Unknown', false, '无邮箱，跳过');
-      continue;
-    }
     if (lead.website && (!lead.websiteText || lead.websiteText.length < 50)) {
       try {
         const scrapeResp = await fetch('/api/scrape-website', {
@@ -11731,7 +11727,7 @@ async function fwAutoRunFromStepB(inp) {
         body: JSON.stringify({ lead: lead, criteria: inp.criteria })
       });
       const filterData = await filterResp.json();
-      if (filterData.recommended) {
+      if (filterData.recommended && lead.email && lead.email.trim()) {
         filteredLeads.push(lead);
         autoAddFilterResult(lead.name || '', 'pass', filterData.reason || '');
       } else {
