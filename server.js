@@ -2529,13 +2529,21 @@ app.post('/api/auto-search', requireAuth, async (req, res) => {
   if (!keyword) return res.status(400).json({ success: false, error: 'keyword required' });
 
   try {
-    const items = await _runApifyActor('compass~crawler-google-places', {
-      searchStringsArray: [keyword],
-      locationQuery: location,
-      maxCrawledPlacesPerSearch: maxResults,
-      language: 'en',
-      scrapeContacts: true,
-    });
+    console.log('[auto-search] calling Apify with:', { keyword, location, maxResults });
+    let items;
+    try {
+      items = await _runApifyActor('compass~crawler-google-places', {
+        searchStringsArray: [keyword],
+        locationQuery: location,
+        maxCrawledPlacesPerSearch: maxResults,
+        language: 'en',
+        scrapeContacts: true,
+      });
+      console.log('[auto-search] Apify returned', items ? items.length : 0, 'items');
+    } catch(e) {
+      console.error('[auto-search] Apify error:', e.message);
+      return res.status(500).json({ success: false, error: e.message });
+    }
 
     console.log('[auto-search] sample item fields:', JSON.stringify(Object.keys(items[0] || {})));
     console.log('[auto-search] sample item:', JSON.stringify(items[0] || {}, null, 2).substring(0, 500));
