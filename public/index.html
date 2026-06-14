@@ -5007,6 +5007,7 @@ function showAppStep3View(view) {
 // /app-only: these IDs live in the /app-mounted #appAiFilterPanel.
 let _appQuestions = [];
 let _appAnswers = {};
+let _appSelected = {}; // qi -> array of selected option labels (multi-select)
 
 async function appGenerateQuestions() {
   const userDesc = document.getElementById('appUserDesc').value.trim();
@@ -5033,6 +5034,7 @@ async function appGenerateQuestions() {
     const data = await resp.json();
     _appQuestions = data.questions || [];
     _appAnswers = {};
+    _appSelected = {};
     renderAppQuestions(_appQuestions);
     document.getElementById('appFilterStep2').style.display = 'block';
   } catch(e) {
@@ -5059,18 +5061,22 @@ function renderAppQuestions(questions) {
             style="font-size:18px; color:#6366f1;"></i>
         </div>
         <div style="flex:1;">
-          <div style="font-weight:500; font-size:14px;
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+            font-weight:500; font-size:14px;
             color:var(--color-text-primary, #e5e7eb); margin-bottom:12px;">
-            ${q.question}
+            <span>${q.question}</span>
+            <span style="font-size:11px; font-weight:500; padding:2px 8px;
+              border-radius:20px; color:#6366f1; background:rgba(99,102,241,0.1);
+              border:0.5px solid rgba(99,102,241,0.35);">可多选</span>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
             ${q.options.map(opt => `
-              <button onclick="selectAppAnswer(${qi}, '${opt.replace(/'/g, "\\'")}', this)"
+              <button onclick="toggleAppOption(${qi}, '${opt.replace(/'/g, "\\'")}', this)"
                 style="padding:6px 16px; border-radius:20px;
                 border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
                 background:var(--color-background-primary, #0b0b0c);
                 color:var(--color-text-secondary, rgba(255,255,255,0.5)); font-size:13px; cursor:pointer; font-family:inherit;">
-                ${opt}
+                <i class="ti ti-check appck" style="display:none; font-size:12px; margin-right:4px;"></i>${opt}
               </button>
             `).join('')}
           </div>
@@ -5082,6 +5088,7 @@ function renderAppQuestions(questions) {
               font-size:13px; color:var(--color-text-primary, #e5e7eb);
               background:var(--color-background-primary, #0b0b0c); font-family:inherit; outline:none;"
               onkeydown="if(event.key==='Enter') confirmAppCustom(${qi})" />
+            <span id="appCount_${qi}" style="font-size:12px; color:#6366f1; white-space:nowrap;">已选 0 项</span>
             <button onclick="confirmAppCustom(${qi})"
               style="padding:6px 14px; border-radius:20px;
               border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));
@@ -5096,28 +5103,39 @@ function renderAppQuestions(questions) {
   `).join('');
 }
 
-function selectAppAnswer(qi, value, btn) {
-  const card = document.getElementById('appQCard_' + qi);
-  card.querySelectorAll('button').forEach(b => {
-    if (b.onclick && b.onclick.toString().includes('selectAppAnswer')) {
-      b.style.background = 'var(--color-background-primary, #0b0b0c)';
-      b.style.color = 'var(--color-text-secondary, rgba(255,255,255,0.5))';
-      b.style.border = '0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12))';
-    }
-  });
-  btn.style.background = 'rgba(99,102,241,0.1)';
-  btn.style.color = '#6366f1';
-  btn.style.border = '1.5px solid #6366f1';
-  _appAnswers[qi] = value;
-  unlockNextCard(qi);
+function toggleAppOption(qi, value, btn) {
+  const list = _appSelected[qi] || (_appSelected[qi] = []);
+  const idx = list.indexOf(value);
+  const check = btn.querySelector('.appck');
+  if (idx === -1) {
+    list.push(value);
+    btn.style.background = 'rgba(99,102,241,0.1)';
+    btn.style.color = '#6366f1';
+    btn.style.border = '1.5px solid #6366f1';
+    if (check) check.style.display = 'inline-block';
+  } else {
+    list.splice(idx, 1);
+    btn.style.background = 'var(--color-background-primary, #0b0b0c)';
+    btn.style.color = 'var(--color-text-secondary, rgba(255,255,255,0.5))';
+    btn.style.border = '0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12))';
+    if (check) check.style.display = 'none';
+  }
+  updateAppCount(qi);
+}
+
+function updateAppCount(qi) {
+  const el = document.getElementById('appCount_' + qi);
+  if (el) el.textContent = '已选 ' + (_appSelected[qi] || []).length + ' 项';
 }
 
 function confirmAppCustom(qi) {
   const input = document.getElementById('appCustom_' + qi);
-  const val = input.value.trim();
-  if (!val) return;
-  _appAnswers[qi] = val;
-  input.style.border = '1.5px solid #6366f1';
+  const custom = input.value.trim();
+  const parts = (_appSelected[qi] || []).slice();
+  if (custom) parts.push(custom);
+  if (parts.length === 0) return;
+  _appAnswers[qi] = parts.join('、');
+  input.style.border = custom ? '1.5px solid #6366f1' : input.style.border;
   unlockNextCard(qi);
 }
 
