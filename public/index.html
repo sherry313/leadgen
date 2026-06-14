@@ -3254,6 +3254,23 @@ function appBackToModeSelect() {
             <option value="Australia"   style="background:#0b0b0c;color:#e5e7eb">🇦🇺 澳大利亚 · Australia</option>
             <option value="USA"         style="background:#0b0b0c;color:#e5e7eb">🇺🇸 美国 · USA</option>
             <option value="New Zealand" style="background:#0b0b0c;color:#e5e7eb">🇳🇿 新西兰 · New Zealand</option>
+            <option value="Singapore"            style="background:#0b0b0c;color:#e5e7eb">🇸🇬 新加坡 · Singapore</option>
+            <option value="Malaysia"             style="background:#0b0b0c;color:#e5e7eb">🇲🇾 马来西亚 · Malaysia</option>
+            <option value="Thailand"             style="background:#0b0b0c;color:#e5e7eb">🇹🇭 泰国 · Thailand</option>
+            <option value="Indonesia"            style="background:#0b0b0c;color:#e5e7eb">🇮🇩 印尼 · Indonesia</option>
+            <option value="Philippines"          style="background:#0b0b0c;color:#e5e7eb">🇵🇭 菲律宾 · Philippines</option>
+            <option value="Vietnam"              style="background:#0b0b0c;color:#e5e7eb">🇻🇳 越南 · Vietnam</option>
+            <option value="United Arab Emirates" style="background:#0b0b0c;color:#e5e7eb">🇦🇪 阿联酋 · United Arab Emirates</option>
+            <option value="Saudi Arabia"         style="background:#0b0b0c;color:#e5e7eb">🇸🇦 沙特阿拉伯 · Saudi Arabia</option>
+            <option value="Qatar"                style="background:#0b0b0c;color:#e5e7eb">🇶🇦 卡塔尔 · Qatar</option>
+            <option value="Kuwait"               style="background:#0b0b0c;color:#e5e7eb">🇰🇼 科威特 · Kuwait</option>
+            <option value="Bahrain"              style="background:#0b0b0c;color:#e5e7eb">🇧🇭 巴林 · Bahrain</option>
+            <option value="Oman"                 style="background:#0b0b0c;color:#e5e7eb">🇴🇲 阿曼 · Oman</option>
+            <option value="South Africa"         style="background:#0b0b0c;color:#e5e7eb">🇿🇦 南非 · South Africa</option>
+            <option value="Nigeria"              style="background:#0b0b0c;color:#e5e7eb">🇳🇬 尼日利亚 · Nigeria</option>
+            <option value="Kenya"                style="background:#0b0b0c;color:#e5e7eb">🇰🇪 肯尼亚 · Kenya</option>
+            <option value="Egypt"                style="background:#0b0b0c;color:#e5e7eb">🇪🇬 埃及 · Egypt</option>
+            <option value="Morocco"              style="background:#0b0b0c;color:#e5e7eb">🇲🇦 摩洛哥 · Morocco</option>
           </select>
           <select id="gmCity" onchange="onGmCityChange()" disabled
                   style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;appearance:none;-webkit-appearance:none">
@@ -5536,6 +5553,23 @@ const _GM_CITIES = {
   'Australia':   [['Sydney','悉尼'],['Melbourne','墨尔本'],['Brisbane','布里斯班'],['Perth','珀斯'],['Adelaide','阿德莱德'],['Gold Coast','黄金海岸'],['Canberra','堪培拉'],['Newcastle','纽卡斯尔'],['Hobart','霍巴特'],['Darwin','达尔文']],
   'USA':         [['New York','纽约'],['Los Angeles','洛杉矶'],['Chicago','芝加哥'],['Houston','休斯顿'],['Phoenix','凤凰城'],['San Francisco','旧金山'],['Seattle','西雅图'],['Miami','迈阿密'],['Dallas','达拉斯'],['Atlanta','亚特兰大'],['Boston','波士顿']],
   'New Zealand': [['Auckland','奥克兰'],['Wellington','惠灵顿'],['Christchurch','基督城'],['Hamilton','汉密尔顿'],['Tauranga','陶朗加'],['Dunedin','但尼丁'],['Queenstown','皇后镇']],
+  'Singapore':   [['Singapore','新加坡']],
+  'Malaysia':    [['Kuala Lumpur','吉隆坡'],['Penang','槟城'],['Johor Bahru','新山'],['Ipoh','怡保'],['Kuching','古晋'],['Kota Kinabalu','亚庇'],['Malacca','马六甲']],
+  'Thailand':    [['Bangkok','曼谷'],['Chiang Mai','清迈'],['Phuket','普吉'],['Pattaya','芭提雅'],['Nonthaburi','暖武里'],['Hat Yai','合艾']],
+  'Indonesia':   [['Jakarta','雅加达'],['Surabaya','泗水'],['Bandung','万隆'],['Medan','棉兰'],['Bali (Denpasar)','巴厘岛'],['Semarang','三宝垄'],['Makassar','望加锡']],
+  'Philippines': [['Manila','马尼拉'],['Quezon City','奎松市'],['Cebu','宿务'],['Davao','达沃'],['Makati','马卡蒂'],['Pasig','帕西格']],
+  'Vietnam':     [['Ho Chi Minh City','胡志明市'],['Hanoi','河内'],['Da Nang','岘港'],['Hai Phong','海防'],['Bien Hoa','边和'],['Can Tho','芹苴']],
+  'United Arab Emirates': [['Dubai','迪拜'],['Abu Dhabi','阿布扎比'],['Sharjah','沙迦'],['Ajman','阿治曼'],['Al Ain','艾因'],['Ras Al Khaimah','哈伊马角']],
+  'Saudi Arabia': [['Riyadh','利雅得'],['Jeddah','吉达'],['Dammam','达曼'],['Mecca','麦加'],['Medina','麦地那'],['Khobar','胡拜尔']],
+  'Qatar':       [['Doha','多哈'],['Al Rayyan','赖扬'],['Al Wakrah','瓦克拉']],
+  'Kuwait':      [['Kuwait City','科威特城'],['Hawalli','哈瓦利'],['Al Ahmadi','艾哈迈迪'],['Salmiya','萨尔米亚']],
+  'Bahrain':     [['Manama','麦纳麦'],['Muharraq','穆哈拉格'],['Riffa','里法']],
+  'Oman':        [['Muscat','马斯喀特'],['Salalah','塞拉莱'],['Sohar','苏哈尔'],['Nizwa','尼兹瓦']],
+  'South Africa': [['Johannesburg','约翰内斯堡'],['Cape Town','开普敦'],['Durban','德班'],['Pretoria','比勒陀利亚'],['Port Elizabeth','伊丽莎白港'],['Bloemfontein','布隆方丹']],
+  'Nigeria':     [['Lagos','拉各斯'],['Abuja','阿布贾'],['Port Harcourt','哈科特港'],['Kano','卡诺'],['Ibadan','伊巴丹']],
+  'Kenya':       [['Nairobi','内罗毕'],['Mombasa','蒙巴萨'],['Kisumu','基苏木'],['Nakuru','纳库鲁']],
+  'Egypt':       [['Cairo','开罗'],['Alexandria','亚历山大'],['Giza','吉萨'],['Sharm El Sheikh','沙姆沙伊赫'],['Port Said','塞得港']],
+  'Morocco':     [['Casablanca','卡萨布兰卡'],['Rabat','拉巴特'],['Marrakech','马拉喀什'],['Tangier','丹吉尔'],['Fez','非斯'],['Agadir','阿加迪尔']],
 };
 function onGmCountryChange() {
   const country = document.getElementById('gmCountry').value;
