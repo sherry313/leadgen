@@ -42,3 +42,11 @@ test-instantly.js
 test-sheets.js
 setup-instantly-sequence.js
 services/test.js
+
+# One-time / local scripts (not for the repo)
+scripts/
+
+# Customer data & dumps (real PII — never commit)
+*.csv
+emails-dump.txt
+*-dump.txt

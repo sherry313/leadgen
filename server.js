@@ -1942,10 +1942,10 @@ const _productsDb = (() => {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) return null;
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 })();
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin2026';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 function requireAdminPassword(req, res, next) {
-  if (req.headers['x-admin-password'] !== ADMIN_PASSWORD) {
+  if (!ADMIN_PASSWORD || req.headers['x-admin-password'] !== ADMIN_PASSWORD) {
     return res.status(401).json({ success: false, error: 'invalid admin password' });
   }
   next();
@@ -1986,10 +1986,10 @@ app.post('/api/admin/products', requireAdminPassword, async (req, res) => {
 });
 
 // ── CSV import: paste rows + password → INSERT into leads ────────────────────
-const IMPORT_PASSWORD = process.env.IMPORT_PASSWORD || 'lens2026';
+const IMPORT_PASSWORD = process.env.IMPORT_PASSWORD;
 
 function requireImportPassword(req, res, next) {
-  if (req.headers['x-import-password'] !== IMPORT_PASSWORD) {
+  if (!IMPORT_PASSWORD || req.headers['x-import-password'] !== IMPORT_PASSWORD) {
     return res.status(401).json({ success: false, error: 'invalid import password' });
   }
   next();
