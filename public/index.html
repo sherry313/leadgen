@@ -3247,8 +3247,22 @@ function appBackToModeSelect() {
         </button>
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">地区（每次只能一个）</label>
-        <input type="text" id="gmLocation" placeholder="例：Sydney, Australia" autocomplete="off"
-               style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;margin-bottom:18px;box-sizing:border-box">
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+          <select id="gmCountry" onchange="onGmCountryChange()"
+                  style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;appearance:none;-webkit-appearance:none">
+            <option value="" disabled selected style="background:#0b0b0c;color:#94a3b8">请选择国家</option>
+            <option value="Australia"   style="background:#0b0b0c;color:#e5e7eb">🇦🇺 澳大利亚 · Australia</option>
+            <option value="USA"         style="background:#0b0b0c;color:#e5e7eb">🇺🇸 美国 · USA</option>
+            <option value="New Zealand" style="background:#0b0b0c;color:#e5e7eb">🇳🇿 新西兰 · New Zealand</option>
+          </select>
+          <select id="gmCity" onchange="onGmCityChange()" disabled
+                  style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;appearance:none;-webkit-appearance:none">
+            <option value="" disabled selected style="background:#0b0b0c;color:#94a3b8">请选择城市</option>
+          </select>
+          <input type="text" id="gmCityManual" oninput="updateGmLocation()" placeholder="输入城市英文名，例：Cairns" autocomplete="off"
+                 style="display:none;width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(99,102,241,0.5);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <input type="hidden" id="gmLocation">
 
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
           <label for="gmMaxResults" style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin:0">每个关键词最多抓取数量</label>
@@ -5514,6 +5528,56 @@ function addGmKeywordInput() {
   row.appendChild(rm);
   list.appendChild(row);
   input.focus();
+}
+
+// /app manual region: dependent Country → City dropdowns feed the hidden #gmLocation.
+// The assembled value stays in the old "City, Country" English format the server expects.
+const _GM_CITIES = {
+  'Australia':   [['Sydney','悉尼'],['Melbourne','墨尔本'],['Brisbane','布里斯班'],['Perth','珀斯'],['Adelaide','阿德莱德'],['Gold Coast','黄金海岸'],['Canberra','堪培拉'],['Newcastle','纽卡斯尔'],['Hobart','霍巴特'],['Darwin','达尔文']],
+  'USA':         [['New York','纽约'],['Los Angeles','洛杉矶'],['Chicago','芝加哥'],['Houston','休斯顿'],['Phoenix','凤凰城'],['San Francisco','旧金山'],['Seattle','西雅图'],['Miami','迈阿密'],['Dallas','达拉斯'],['Atlanta','亚特兰大'],['Boston','波士顿']],
+  'New Zealand': [['Auckland','奥克兰'],['Wellington','惠灵顿'],['Christchurch','基督城'],['Hamilton','汉密尔顿'],['Tauranga','陶朗加'],['Dunedin','但尼丁'],['Queenstown','皇后镇']],
+};
+function onGmCountryChange() {
+  const country = document.getElementById('gmCountry').value;
+  const citySel = document.getElementById('gmCity');
+  const manual  = document.getElementById('gmCityManual');
+  manual.style.display = 'none';
+  manual.value = '';
+  citySel.innerHTML = '<option value="" disabled selected style="background:#0b0b0c;color:#94a3b8">请选择城市</option>';
+  (_GM_CITIES[country] || []).forEach(([en, zh]) => {
+    const o = document.createElement('option');
+    o.value = en;
+    o.textContent = en + ' ' + zh;
+    o.style.background = '#0b0b0c';
+    o.style.color = '#e5e7eb';
+    citySel.appendChild(o);
+  });
+  const other = document.createElement('option');
+  other.value = '__other__';
+  other.textContent = '其他城市(手动输入)';
+  other.style.background = '#0b0b0c';
+  other.style.color = '#e5e7eb';
+  citySel.appendChild(other);
+  citySel.disabled = !country;
+  updateGmLocation();
+}
+function onGmCityChange() {
+  const manual = document.getElementById('gmCityManual');
+  if (document.getElementById('gmCity').value === '__other__') {
+    manual.style.display = 'block';
+    manual.focus();
+  } else {
+    manual.style.display = 'none';
+    manual.value = '';
+  }
+  updateGmLocation();
+}
+function updateGmLocation() {
+  const country = document.getElementById('gmCountry').value;
+  const citySel = document.getElementById('gmCity');
+  let city = citySel.value;
+  if (city === '__other__') city = document.getElementById('gmCityManual').value.trim();
+  document.getElementById('gmLocation').value = (country && city) ? (city + ', ' + country) : '';
 }
 
 async function startGoogleMapsScrape() {
