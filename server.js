@@ -2788,12 +2788,14 @@ app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 400,
-      system: "You are a strict B2B lead qualifier. Only recommend a lead when you have clear evidence it matches the criteria. If information is thin or ambiguous, return recommended: false and explain what's missing. Reply in valid JSON only, no markdown, no extra text.",
+      system: "You are a strict lead qualifier working for a B2B seller. Only recommend a lead when you have clear evidence it matches the criteria. IMPORTANT: judge by whether the company could PURCHASE or RESELL the seller's product category — NOT by who the company itself sells to. A company that sells to end consumers (a B2C retailer, store, or showroom) is NOT disqualified for that reason alone; such businesses still buy wholesale from suppliers like the seller. Do not reject a lead merely for being a retailer or selling to consumers. If information is thin or ambiguous, return recommended: false and explain what's missing. Reply in valid JSON only, no markdown, no extra text.",
       messages: [{
         role: 'user',
-        content: `You are a B2B lead qualifier. Based on the criteria, determine if this company is a good match.
+        content: `You are a lead qualifier for a B2B seller. Based on the criteria, determine if this company is a good match.
 
 Criteria: ${criteria}
+
+Match rule: a consumer-facing retailer / store / showroom (B2C) IS a valid match if it stocks, resells, or could purchase the seller's product category — it buys wholesale from suppliers like the seller. Do not reject it just for selling to end consumers. Only reject when the company clearly does not deal in the seller's product category.
 
 Company: ${companyName}
 Description: ${description}
