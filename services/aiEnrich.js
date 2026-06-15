@@ -385,6 +385,23 @@ ${fw.sequence_prompt || ''}`;
   const sellerProducts = sellerProfile.products   || '';
   const sellerAdvantage= sellerProfile.advantage  || '';
 
+  // Optional extra seller context (/app manual form). Read defensively and
+  // include ONLY the non-empty fields. When all four are absent/empty,
+  // sellerExtraContext === '' so the prompt below is byte-for-byte identical to
+  // before — /lens and auto-mode callers (which don't send these) are unchanged.
+  const sellerPricing        = (sellerProfile.pricing        || '').trim();
+  const sellerTargetCustomer = (sellerProfile.targetCustomer || '').trim();
+  const sellerCaseStudy      = (sellerProfile.caseStudy      || '').trim();
+  const sellerLowRiskOffer   = (sellerProfile.lowRiskOffer   || '').trim();
+  const _extraLines = [];
+  if (sellerPricing)        _extraLines.push(`价格/竞争力 (pricing): ${sellerPricing}`);
+  if (sellerTargetCustomer) _extraLines.push(`目标客户 (target customer): ${sellerTargetCustomer}`);
+  if (sellerCaseStudy)      _extraLines.push(`真实案例/信任背书 (case study — use this as REAL social proof when relevant, with the specific numbers/details given): ${sellerCaseStudy}`);
+  if (sellerLowRiskOffer)   _extraLines.push(`零风险入口 (low-risk offer — weave this in as the call-to-action / risk-reducer): ${sellerLowRiskOffer}`);
+  const sellerExtraContext = _extraLines.length
+    ? `\n\n=== ADDITIONAL SELLER CONTEXT (use when relevant) ===\n${_extraLines.join('\n')}`
+    : '';
+
   // Build the requested JSON schema dynamically for EMAIL_1 … EMAIL_N.
   const _jsonSchema = Array.from({ length: N }, (_, i) =>
     `  "EMAIL_${i + 1}_SUBJECT": "...",\n  "EMAIL_${i + 1}_BODY": "..."`).join(',\n');
@@ -398,7 +415,7 @@ Write ${N} personalized cold emails for this Australian prospect. Be creative �
 === SELLER ===
 Company: ${sellerName}
 Products: ${sellerProducts}
-Advantage: ${sellerAdvantage}
+Advantage: ${sellerAdvantage}${sellerExtraContext}
 
 === CUSTOMER TYPE: ${template.en_label} (${templateKey}) ===
 Pain points: ${cfg.pain_point || ''}

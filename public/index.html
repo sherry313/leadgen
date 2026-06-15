@@ -5093,7 +5093,20 @@ let _appSelected = {}; // qi -> array of selected option labels (multi-select)
 
 async function appGenerateQuestions() {
   const userDesc = document.getElementById('appUserDesc').value.trim();
-  if (!userDesc) { alert('请先描述你的业务'); return; }
+
+  // Enrich the description with business-info fields 1-4 (/app only). Each
+  // field is optional — skip empties so no "产品：；" fragments appear. If all
+  // four are empty, enrichedDesc === userDesc (exactly today's behaviour).
+  const bi = window._appBusinessInfo || {};
+  const _biParts = [];
+  if ((bi.product || '').trim())        _biParts.push('产品：' + bi.product.trim());
+  if ((bi.advantage || '').trim())      _biParts.push('优势：' + bi.advantage.trim());
+  if ((bi.pricing || '').trim())        _biParts.push('价格/竞争力：' + bi.pricing.trim());
+  if ((bi.targetCustomer || '').trim()) _biParts.push('目标客户：' + bi.targetCustomer.trim());
+  const biContext = _biParts.join('；');
+  const enrichedDesc = biContext ? (biContext + '。' + userDesc) : userDesc;
+
+  if (!enrichedDesc) { alert('请先描述你的业务，或在上方填写业务信息'); return; }
 
   const btn = document.getElementById('appGenerateQBtn');
   const progress = document.getElementById('appQProgress');
@@ -5111,7 +5124,7 @@ async function appGenerateQuestions() {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + getStoredToken()
       },
-      body: JSON.stringify({ userDesc, keyword })
+      body: JSON.stringify({ userDesc: enrichedDesc, keyword })
     });
     const data = await resp.json();
     _appQuestions = data.questions || [];
@@ -5238,7 +5251,18 @@ function buildAppFilterSummary() {
     `${q.question}：${_appAnswers[i] || ''}`
   ).join('。');
 
-  window._appFilterCriteria = `${userDesc}。${answers}`;
+  // Prepend business-info fields 1-4 (/app only) so the per-lead qualifier gets
+  // them too. Each field optional — skip empties (no "产品：；" fragments). If
+  // all four are empty, this is exactly today's `${userDesc}。${answers}`.
+  const bi = window._appBusinessInfo || {};
+  const _biParts = [];
+  if ((bi.product || '').trim())        _biParts.push('产品：' + bi.product.trim());
+  if ((bi.advantage || '').trim())      _biParts.push('优势：' + bi.advantage.trim());
+  if ((bi.pricing || '').trim())        _biParts.push('价格/竞争力：' + bi.pricing.trim());
+  if ((bi.targetCustomer || '').trim()) _biParts.push('目标客户：' + bi.targetCustomer.trim());
+  const biContext = _biParts.join('；');
+
+  window._appFilterCriteria = (biContext ? biContext + '。' : '') + `${userDesc}。${answers}`;
 
   document.getElementById('appFilterSummaryText').textContent =
     window._appFilterCriteria;
@@ -9744,6 +9768,23 @@ async function startEmailGeneration() {
   if (confirmBtn) confirmBtn.disabled = true;
   if (progEl) progEl.style.display = 'flex';
 
+  // Base seller profile — shared with /lens, unchanged.
+  const companyProfile = {
+    sellerName: document.getElementById('sellerName')?.value?.trim() || '',
+    products:   document.getElementById('products')?.value?.trim()   || '',
+    advantage:  document.getElementById('advantage')?.value?.trim()  || '',
+  };
+  // /app only: attach extra business-info context when non-empty. /lens never
+  // enters this block, so its companyProfile stays exactly as before. Backend
+  // (generateEmails) reads these optionally and ignores empties.
+  if (location.pathname !== '/lens') {
+    const bi = window._appBusinessInfo || {};
+    if ((bi.pricing        || '').trim()) companyProfile.pricing        = bi.pricing.trim();
+    if ((bi.targetCustomer || '').trim()) companyProfile.targetCustomer = bi.targetCustomer.trim();
+    if ((bi.caseStudy      || '').trim()) companyProfile.caseStudy      = bi.caseStudy.trim();
+    if ((bi.lowRiskOffer   || '').trim()) companyProfile.lowRiskOffer   = bi.lowRiskOffer.trim();
+  }
+
   try {
     const res = await fetch('/api/leads/generate-emails', {
       method: 'POST',
@@ -9754,11 +9795,7 @@ async function startEmailGeneration() {
         framework_key:   _selectedFrameworkKey,
         custom_framework:_selectedFrameworkKey === 'custom' ? _selectedCustomFramework : null,
         searchId:        _currentSearchId,
-        companyProfile: {
-          sellerName: document.getElementById('sellerName')?.value?.trim() || '',
-          products:   document.getElementById('products')?.value?.trim()   || '',
-          advantage:  document.getElementById('advantage')?.value?.trim()  || '',
-        },
+        companyProfile,
       }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
