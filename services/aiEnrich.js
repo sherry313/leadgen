@@ -297,7 +297,7 @@ JSON RULES (apply to every string value):
 // ── Email generation using a chosen customer-type angle + writing framework ────
 // Returns: { EMAIL_1_SUBJECT, EMAIL_1_BODY, ..., EMAIL_5_SUBJECT, EMAIL_5_BODY, usage }
 
-function _buildEmailSystemPrompt(frameworkInstructions, sellerProfile = {}) {
+function _buildEmailSystemPrompt(frameworkInstructions, sellerProfile = {}, emailCount = 5) {
   const name = sellerProfile.sellerName || 'your company';
   const sellerDesc = sellerProfile.products
     ? `${name}, selling ${sellerProfile.products}`
@@ -306,7 +306,7 @@ function _buildEmailSystemPrompt(frameworkInstructions, sellerProfile = {}) {
 
 You are an expert B2B cold email copywriter helping ${sellerDesc} reach Australian business prospects.
 
-Write a 5-email cold outreach sequence following this framework:
+Write a ${emailCount}-email cold outreach sequence following this framework:
 
 ${frameworkInstructions}
 
@@ -315,7 +315,7 @@ SUBJECT LINE IRON RULES (apply to ALL frameworks):
 2. The Experiment: you may use emoji or write "[No Subject]" if it feels right
 3. Casual: NEVER capitalise every word. ✅ "can you spare 5 minutes?" ❌ "Can You Spare 5 Minutes?"
 4. Length: 3-7 words. Hyper-specific — NEVER use "Quick question", "Following up", "Touching base", "Partnership opportunity"
-5. All 5 subject lines must feel different from each other
+5. All ${emailCount} subject lines must feel different from each other
 
 BODY IRON RULES:
 1. Each email body: UNDER 100 words (body only, not counting sign-off)
@@ -341,6 +341,17 @@ async function generateEmails(lead, templateKey, websiteContent, frameworkKey, c
   let frameworkInstructions;
   const resolvedKey = frameworkKey || 'cold_5_step';
 
+  // Determine how many emails this framework produces (N). Frameworks that carry a
+  // real day schedule (cold_5_step → 5, cold_7_step → 7) tag every structure entry
+  // with a numeric `day` — use that count. Everything else (peter_kang_3part, aida,
+  // bab, pas, byaf, sch, three_ps, custom) has no day schedule and stays at 5.
+  const _fwDef = frameworks[resolvedKey];
+  const _daySchedule = (_fwDef && Array.isArray(_fwDef.structure))
+    ? _fwDef.structure.filter(s => typeof s.day === 'number').map(s => s.day)
+    : [];
+  const N = _daySchedule.length || 5;
+  const _dayList = _daySchedule.length ? _daySchedule.join(', ') : '1, 4, 7, 10, 14';
+
   if (resolvedKey === 'custom' && customFrameworkData) {
     const cf = customFrameworkData;
     frameworkInstructions = `SEQUENCE STRUCTURE — ${cf.name || 'Custom Framework'}:
@@ -348,7 +359,7 @@ ${cf.structure || ''}
 ${cf.rules ? `\nWriting requirements: ${cf.rules}` : ''}
 ${cf.sample ? `\nStyle example to emulate:\n${cf.sample}` : ''}
 
-Generate 5 emails on Days 1, 4, 7, 10, 14 following the structure above.`;
+Generate ${N} emails on Days ${_dayList} following the structure above.`;
   } else {
     const fw = frameworks[resolvedKey] || frameworks['cold_5_step'];
     frameworkInstructions = `SEQUENCE STRUCTURE — ${fw.en_name} (${fw.description}):
@@ -374,11 +385,15 @@ ${fw.sequence_prompt || ''}`;
   const sellerProducts = sellerProfile.products   || '';
   const sellerAdvantage= sellerProfile.advantage  || '';
 
+  // Build the requested JSON schema dynamically for EMAIL_1 … EMAIL_N.
+  const _jsonSchema = Array.from({ length: N }, (_, i) =>
+    `  "EMAIL_${i + 1}_SUBJECT": "...",\n  "EMAIL_${i + 1}_BODY": "..."`).join(',\n');
+
   const userPrompt = `CRITICAL: Write ONLY in English. Do not use any Chinese characters or Chinese text anywhere in the email. All content must be in English only.
 
 If any seller information or website content below is in Chinese, translate it to English in your reasoning before writing the email. Never quote Chinese text directly.
 
-Write 5 personalized cold emails for this Australian prospect. Be creative — vary your hook angle, the specific pain point you address, the case study you cite, and the objection you handle. Don't default to the obvious first option.
+Write ${N} personalized cold emails for this Australian prospect. Be creative — vary your hook angle, the specific pain point you address, the case study you cite, and the objection you handle. Don't default to the obvious first option.
 
 === SELLER ===
 Company: ${sellerName}
@@ -413,19 +428,10 @@ ${websiteContent || 'No website content available.'}
 === OUTPUT ===
 Return this exact JSON structure with no extra text:
 {
-  "EMAIL_1_SUBJECT": "...",
-  "EMAIL_1_BODY": "...",
-  "EMAIL_2_SUBJECT": "...",
-  "EMAIL_2_BODY": "...",
-  "EMAIL_3_SUBJECT": "...",
-  "EMAIL_3_BODY": "...",
-  "EMAIL_4_SUBJECT": "...",
-  "EMAIL_4_BODY": "...",
-  "EMAIL_5_SUBJECT": "...",
-  "EMAIL_5_BODY": "..."
+${_jsonSchema}
 }
 
-Follow the framework structure above strictly for all 5 emails. Each body under 100 words. Write ONLY in English — no Chinese characters in any subject or body field. Return ONLY valid JSON. All string values must escape internal double quotes with a backslash (\\"). No markdown code fences. No extra text before or after the JSON object.`;
+Follow the framework structure above strictly for all ${N} emails. Each body under 100 words. Write ONLY in English — no Chinese characters in any subject or body field. Return ONLY valid JSON. All string values must escape internal double quotes with a backslash (\\"). No markdown code fences. No extra text before or after the JSON object.`;
 
   let rawText = '';
   let totalIn = 0, totalOut = 0;
@@ -433,7 +439,7 @@ Follow the framework structure above strictly for all 5 emails. Each body under 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
-      system: _buildEmailSystemPrompt(frameworkInstructions, sellerProfile),
+      system: _buildEmailSystemPrompt(frameworkInstructions, sellerProfile, N),
       messages: [{ role: 'user', content: userPrompt }],
     });
 
@@ -471,15 +477,11 @@ Follow the framework structure above strictly for all 5 emails. Each body under 
         console.log(`[AI] ${lead.companyName}: JSON reformat retry succeeded`);
       } catch (retryErr) {
         console.error(`[AI] JSON reformat retry also failed for ${lead.companyName}: ${retryErr.message}`);
-        return {
-          EMAIL_1_SUBJECT: '', EMAIL_1_BODY: '',
-          EMAIL_2_SUBJECT: '', EMAIL_2_BODY: '',
-          EMAIL_3_SUBJECT: '', EMAIL_3_BODY: '',
-          EMAIL_4_SUBJECT: '', EMAIL_4_BODY: '',
-          EMAIL_5_SUBJECT: '', EMAIL_5_BODY: '',
-          usage: { input_tokens: totalIn, output_tokens: totalOut },
-          error: `JSON parse failed after retry: ${retryErr.message}`,
-        };
+        const out = {};
+        for (let i = 1; i <= N; i++) { out[`EMAIL_${i}_SUBJECT`] = ''; out[`EMAIL_${i}_BODY`] = ''; }
+        out.usage = { input_tokens: totalIn, output_tokens: totalOut };
+        out.error = `JSON parse failed after retry: ${retryErr.message}`;
+        return out;
       }
     }
 
@@ -487,25 +489,22 @@ Follow the framework structure above strictly for all 5 emails. Each body under 
 
     await new Promise(r => setTimeout(r, 300));
 
-    return {
-      EMAIL_1_SUBJECT: result.EMAIL_1_SUBJECT || '',  EMAIL_1_BODY: result.EMAIL_1_BODY || '',
-      EMAIL_2_SUBJECT: result.EMAIL_2_SUBJECT || '',  EMAIL_2_BODY: result.EMAIL_2_BODY || '',
-      EMAIL_3_SUBJECT: result.EMAIL_3_SUBJECT || '',  EMAIL_3_BODY: result.EMAIL_3_BODY || '',
-      EMAIL_4_SUBJECT: result.EMAIL_4_SUBJECT || '',  EMAIL_4_BODY: result.EMAIL_4_BODY || '',
-      EMAIL_5_SUBJECT: result.EMAIL_5_SUBJECT || '',  EMAIL_5_BODY: result.EMAIL_5_BODY || '',
-      usage: { input_tokens: totalIn, output_tokens: totalOut },
-    };
+    // Collect EMAIL_1 … EMAIL_N. If the model returned fewer than N, missing
+    // slots fall back to '' (graceful — no crash).
+    const out = {};
+    for (let i = 1; i <= N; i++) {
+      out[`EMAIL_${i}_SUBJECT`] = result[`EMAIL_${i}_SUBJECT`] || '';
+      out[`EMAIL_${i}_BODY`]    = result[`EMAIL_${i}_BODY`]    || '';
+    }
+    out.usage = { input_tokens: totalIn, output_tokens: totalOut };
+    return out;
   } catch (err) {
     console.error(`[AI] Email gen FAILED for ${lead.companyName}: ${err.message}`);
     if (rawText) console.error(`[AI] Full raw response:\n${rawText}`);
-    return {
-      EMAIL_1_SUBJECT: '', EMAIL_1_BODY: '',
-      EMAIL_2_SUBJECT: '', EMAIL_2_BODY: '',
-      EMAIL_3_SUBJECT: '', EMAIL_3_BODY: '',
-      EMAIL_4_SUBJECT: '', EMAIL_4_BODY: '',
-      EMAIL_5_SUBJECT: '', EMAIL_5_BODY: '',
-      usage: { input_tokens: totalIn, output_tokens: totalOut },
-    };
+    const out = {};
+    for (let i = 1; i <= N; i++) { out[`EMAIL_${i}_SUBJECT`] = ''; out[`EMAIL_${i}_BODY`] = ''; }
+    out.usage = { input_tokens: totalIn, output_tokens: totalOut };
+    return out;
   }
 }
 

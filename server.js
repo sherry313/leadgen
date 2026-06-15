@@ -979,11 +979,11 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
     // templateKey (customer-type angle) is still server-derived from the query.
     // frameworkKey now honors the user's wizard pick (ws5 on /app). /lens auto
     // and any caller that omits framework_key continues to get peter_kang_3part.
-    const ALLOWED_FW_KEYS = new Set(['peter_kang_3part','cold_5_step','aida','bab','pas','byaf','sch','three_ps']);
+    const ALLOWED_FW_KEYS = new Set(['peter_kang_3part','cold_5_step','cold_7_step','aida','bab','pas','byaf','sch','three_ps']);
     const templateKey  = templateKeyFromQuery(searchQuery);
     const frameworkKey = (clientFrameworkKey && ALLOWED_FW_KEYS.has(clientFrameworkKey))
       ? clientFrameworkKey
-      : 'peter_kang_3part';
+      : ((companyProfile.sellerName || '').includes('Lens') ? 'peter_kang_3part' : 'cold_7_step');
     console.log(`[Auto] frameworkKey=${frameworkKey} (client sent: ${clientFrameworkKey || '(none)'})`);
     let emailsGenerated = 0;
     if (qualified.length) {
@@ -1311,11 +1311,11 @@ app.post('/api/auto/run-from-dataset', requireAuth, async (req, res) => {
     send({ type: 'phase', phase: 'qualify', status: 'done', qualified: qualified.length });
 
     // ── Phase 4: email generation ──────────────────────────────────────────
-    const ALLOWED_FW_KEYS = new Set(['peter_kang_3part','cold_5_step','aida','bab','pas','byaf','sch','three_ps']);
+    const ALLOWED_FW_KEYS = new Set(['peter_kang_3part','cold_5_step','cold_7_step','aida','bab','pas','byaf','sch','three_ps']);
     const templateKey  = templateKeyFromQuery(searchQuery);
     const frameworkKey = (clientFrameworkKey && ALLOWED_FW_KEYS.has(clientFrameworkKey))
       ? clientFrameworkKey
-      : 'peter_kang_3part';
+      : ((companyProfile.sellerName || '').includes('Lens') ? 'peter_kang_3part' : 'cold_7_step');
     let emailsGenerated = 0;
     if (qualified.length) {
       send({ type: 'phase', phase: 'emails', status: 'start', total: qualified.length, templateKey, frameworkKey });

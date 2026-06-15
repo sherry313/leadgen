@@ -6148,7 +6148,7 @@ function toggleEmails(idx) {
   btn.title = open ? '收起详细分析' : '查看 AI 评估理由和详细分析';
 }
 function switchTab(idx, n) {
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 7; i++) {
     document.getElementById(`ep-${idx}-${i}`)?.classList.remove('active');
     document.getElementById(`et-${idx}-${i}`)?.classList.remove('active');
   }
@@ -6195,11 +6195,35 @@ function _getLeadEmail(lead, n) {
   };
 }
 
+// How many emails a lead actually carries (1..7): the highest EMAIL_n slot that
+// has any content. /app cold_7_step → 7, /lens 5-email frameworks → 5. Falls back
+// to 5 when nothing is populated yet, preserving the original behaviour.
+function _leadEmailCount(lead) {
+  let max = 0;
+  for (let n = 1; n <= 7; n++) {
+    const { subject, body } = _getLeadEmail(lead, n);
+    if ((subject || '').trim() || (body || '').trim()) max = n;
+  }
+  return max || 5;
+}
+// Ascending [1..N] index list for iterating a lead's emails dynamically.
+function _leadEmailRange(lead) {
+  return Array.from({ length: _leadEmailCount(lead) }, (_, i) => i + 1);
+}
+// Day schedule matching the email count: cold_7_step = 0/3/7/10/14/21/28,
+// 5-email frameworks = 1/4/7/10/14.
+function _daySchedule(count) {
+  const base = count > 5
+    ? ['Day 0', 'Day 3', 'Day 7', 'Day 10', 'Day 14', 'Day 21', 'Day 28']
+    : ['Day 1', 'Day 4', 'Day 7', 'Day 10', 'Day 14'];
+  return base.slice(0, count);
+}
+
 // True if the lead has any of its 5 emails populated with subject or body.
 // Replaces the older `lead.EMAIL_1_BODY?.trim()` gate, which excluded leads
 // where only later emails had content or where the data shape differed.
 function _leadHasEmailContent(lead) {
-  for (let n = 1; n <= 5; n++) {
+  for (let n = 1; n <= 7; n++) {
     const { subject, body } = _getLeadEmail(lead, n);
     if ((subject || '').trim() || (body || '').trim()) return true;
   }
@@ -6253,7 +6277,7 @@ function renderResults(leads) {
     return;
   }
 
-  const TAB_LABELS = ['第1封（开场）','跟进1','跟进2','跟进3','跟进4'];
+  const TAB_LABELS = ['第1封（开场）','跟进1','跟进2','跟进3','跟进4','跟进5','跟进6'];
 
   tbody.innerHTML = displayItems.map(({ lead, origIdx }) => {
     const qualified     = _isLeadQualified(lead);
@@ -6293,11 +6317,11 @@ function renderResults(leads) {
 
     const hasEmails = !!(lead.EMAIL_1_SUBJECT || lead.EMAIL_1_BODY);
 
-    const tabsHtml = [1,2,3,4,5].map(n =>
+    const tabsHtml = _leadEmailRange(lead).map(n =>
       `<button class="tab-btn${n===1?' active':''}" id="et-${origIdx}-${n}" onclick="switchTab(${origIdx},${n})">${TAB_LABELS[n-1]}</button>`
     ).join('');
 
-    const panelsHtml = [1,2,3,4,5].map(n => {
+    const panelsHtml = _leadEmailRange(lead).map(n => {
       const subj = _substitutePlaceholders(lead[`EMAIL_${n}_SUBJECT`] || '', lead);
       const body = _substitutePlaceholders(lead[`EMAIL_${n}_BODY`] || '', lead);
       const copyBtn = subj||body
@@ -6337,7 +6361,7 @@ function renderResults(leads) {
 
     const detailBtn     = (lead.intentReasoning || lead.icpReasoning) ? `<button class="btn-sm" id="toggle-${origIdx}" onclick="toggleEmails(${origIdx})" title="查看 AI 评估理由">展开 ▾</button>` : '';
     const viewEmailsBtn = hasEmails
-      ? `<button class="btn-sm btn-view-emails" id="emailbtn-${origIdx}" onclick="openEmailDrawer(${origIdx})" title="查看已生成的 5 封开发信">📝 查看邮件</button>`
+      ? `<button class="btn-sm btn-view-emails" id="emailbtn-${origIdx}" onclick="openEmailDrawer(${origIdx})" title="查看已生成的 ${_leadEmailCount(lead)} 封开发信">📝 查看邮件</button>`
       : (qualified ? `<button class="btn-sm" id="emailbtn-${origIdx}" onclick="goToStep(4)" title="前往第四步选模板生成邮件" style="color:#60a5fa;border-color:rgba(37,99,235,0.4)">✉️ 生成邮件</button>` : '');
     const leadKey = getLeadKey(lead);
     const alreadySent = _isSentLS(leadKey);
@@ -6423,7 +6447,8 @@ function downloadCSV() {
     '公司名称','网站','电话','邮箱','Facebook','Instagram','LinkedIn','负责人',
     '地址','行业','谷歌评分','评论数','营业时间','意向评分','意向分析',
     '开发信主题','开发信正文','跟进1主题','跟进1正文','跟进2主题','跟进2正文',
-    '跟进3主题','跟进3正文','跟进4主题','跟进4正文','状态','添加日期'
+    '跟进3主题','跟进3正文','跟进4主题','跟进4正文','跟进5主题','跟进5正文',
+    '跟进6主题','跟进6正文','状态','添加日期'
   ];
   const esc = v => { const s=String(v??'').replace(/"/g,'""'); return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s}"`:s; };
   const rows = _lastResults.map(l => [
@@ -6436,6 +6461,8 @@ function downloadCSV() {
     l.EMAIL_3_SUBJECT, l.EMAIL_3_BODY,
     l.EMAIL_4_SUBJECT, l.EMAIL_4_BODY,
     l.EMAIL_5_SUBJECT, l.EMAIL_5_BODY,
+    l.EMAIL_6_SUBJECT, l.EMAIL_6_BODY,
+    l.EMAIL_7_SUBJECT, l.EMAIL_7_BODY,
     l.status, l.dateAdded,
   ].map(esc).join(','));
   const csv  = [headers.join(','), ...rows].join('\r\n');
@@ -6749,6 +6776,7 @@ async function startAutoRun() {
       let buffer = '';
       let fatalError = null;
       let doneEvent  = null;
+      let emailsSeqCount = 5; // emails-per-lead for this run; set from the framework at 'emails' start
 
       while (true) {
         const { done, value } = await reader.read();
@@ -6780,9 +6808,10 @@ async function startAutoRun() {
             } else if (evt.phase === 'qualify' && evt.status === 'done') {
               currentEl.textContent = `合格线索：${evt.qualified} 条（icp≥5 且 intent≥5）`;
             } else if (evt.phase === 'emails' && evt.status === 'start') {
+              emailsSeqCount = evt.frameworkKey === 'cold_7_step' ? 7 : 5;
               currentEl.textContent = `生成开发信（${evt.templateKey} · ${evt.frameworkKey}）0/${evt.total}…`;
             } else if (evt.phase === 'emails' && evt.status === 'done') {
-              currentEl.textContent = `已生成 ${evt.generated} 条 × 5 封开发信`;
+              currentEl.textContent = `已生成 ${evt.generated} 条 × ${emailsSeqCount} 封开发信`;
             } else if (evt.phase === 'push' && evt.status === 'start') {
               currentEl.textContent = `推送至 Instantly 0/${evt.total}…`;
             } else if (evt.phase === 'push' && evt.status === 'done') {
@@ -7388,6 +7417,8 @@ function _normalizeLeadRow(r) {
     EMAIL_3_SUBJECT:   r.email3_subject || '',  EMAIL_3_BODY: r.email3_body || '',
     EMAIL_4_SUBJECT:   r.email4_subject || '',  EMAIL_4_BODY: r.email4_body || '',
     EMAIL_5_SUBJECT:   r.email5_subject || '',  EMAIL_5_BODY: r.email5_body || '',
+    EMAIL_6_SUBJECT:   r.email6_subject || '',  EMAIL_6_BODY: r.email6_body || '',
+    EMAIL_7_SUBJECT:   r.email7_subject || '',  EMAIL_7_BODY: r.email7_body || '',
     emailFrameworkKey: r.email_framework_key || null,
     emailTemplateKey:  r.email_template_key  || null,
     status:            'enriched',
@@ -7468,7 +7499,7 @@ function restoreIcp() {
 // ── Email Drawer ──────────────────────────────────────────────────────────────
 const _sentEmails = new Set(); // key: `${dbId||companyName}-${emailNum}`
 let _drawerLead = null;
-const DRAWER_TAB_LABELS = ['第1封', '跟进1', '跟进2', '跟进3', '跟进4'];
+const DRAWER_TAB_LABELS = ['第1封', '跟进1', '跟进2', '跟进3', '跟进4', '跟进5', '跟进6'];
 
 function openEmailDrawer(leadIdx) {
   const lead = _allLeads[leadIdx];
@@ -7477,7 +7508,7 @@ function openEmailDrawer(leadIdx) {
 
   document.getElementById('drawerCompanyName').textContent = lead.companyName || '—';
 
-  document.getElementById('drawerTabsBar').innerHTML = DRAWER_TAB_LABELS.map((label, i) =>
+  document.getElementById('drawerTabsBar').innerHTML = DRAWER_TAB_LABELS.slice(0, _leadEmailCount(lead)).map((label, i) =>
     `<button class="drawer-tab${i===0?' active':''}" onclick="switchDrawerTab(${i+1})">${label}</button>`
   ).join('');
 
@@ -7495,8 +7526,8 @@ function openEmailDrawer(leadIdx) {
   sendBtn.title = alreadySent   ? 'Already in Instantly'
     : !hasEmail   ? 'No email address — cannot add to Instantly'
     : !hasCampaign ? '请先点击导航栏「📬 邮件」选择 Campaign'
-    : 'Add all 5 emails to Instantly campaign';
-  document.getElementById('drawerScroll').innerHTML = [1,2,3,4,5].map(n => {
+    : `Add all ${_leadEmailCount(lead)} emails to Instantly campaign`;
+  document.getElementById('drawerScroll').innerHTML = _leadEmailRange(lead).map(n => {
     const subj = _substitutePlaceholders(lead[`EMAIL_${n}_SUBJECT`] || '', lead);
     const body = _substitutePlaceholders(lead[`EMAIL_${n}_BODY`] || '', lead);
     const sent = _sentEmails.has(`${leadKey}-${n}`);
@@ -7530,7 +7561,7 @@ function closeEmailDrawer() {
 
 function switchDrawerTab(n) {
   document.querySelectorAll('.drawer-tab').forEach((t, i) => t.classList.toggle('active', i + 1 === n));
-  for (let i = 1; i <= 5; i++) document.getElementById(`dpanel-${i}`)?.classList.toggle('active', i === n);
+  for (let i = 1; i <= 7; i++) document.getElementById(`dpanel-${i}`)?.classList.toggle('active', i === n);
   document.getElementById('drawerScroll').scrollTop = 0;
 }
 
@@ -7560,7 +7591,7 @@ async function sendSequenceToInstantly() {
 
   const lead = {
     ..._drawerLead,
-    emails: [1,2,3,4,5].map(n => ({
+    emails: _leadEmailRange(_drawerLead).map(n => ({
       subject: _drawerLead[`EMAIL_${n}_SUBJECT`] || '',
       body:    _drawerLead[`EMAIL_${n}_BODY`]    || '',
     })).filter(e => e.subject || e.body),
@@ -7658,7 +7689,7 @@ async function sendLeadToInstantly(origIdx) {
         lead: {
           email: lead.email, companyName: lead.companyName,
           website: lead.website || '', phone: lead.phone || '',
-          emails: [1,2,3,4,5].map(n => ({
+          emails: _leadEmailRange(lead).map(n => ({
             subject: lead[`EMAIL_${n}_SUBJECT`] || '',
             body:    lead[`EMAIL_${n}_BODY`]    || '',
           })),
@@ -7711,7 +7742,8 @@ function updateBulkCost() {
   const n  = [...document.querySelectorAll('.result-check:checked')].length;
   const el = document.getElementById('bulkCostEst');
   if (_bulkSelectedFwKey) {
-    el.textContent = `预估生成 ${n} 条 × 5 封邮件，费用约 $${(n * 0.025).toFixed(3)}`;
+    const seq = _bulkSelectedFwKey === 'cold_7_step' ? 7 : 5;
+    el.textContent = `预估生成 ${n} 条 × ${seq} 封邮件，费用约 $${(n * 0.025).toFixed(3)}`;
   } else {
     el.textContent = '请选择框架以查看预估费用';
   }
@@ -7819,7 +7851,7 @@ async function confirmBulkGenerate() {
           });
           const n = (data.results || []).length;
           closeBulkEmailModal();
-          _showToast(`✓ 已生成 ${n} 条 × 5 封邮件，可前往第四步配置发送`);
+          _showToast(`✓ 已生成 ${n} 条 × ${_leadEmailCount(data.results?.[0] || {})} 封邮件，可前往第四步配置发送`);
           _renderEmailPreview(data.results || [], 'bulkEmailPreview');
           _updateBulkPushBar();
         }
@@ -7891,7 +7923,7 @@ async function bulkSendInstantly(targets) {
 
     let errorCode = null;
     try {
-      const outgoingEmails = [1,2,3,4,5].map(n => _getLeadEmail(lead, n));
+      const outgoingEmails = _leadEmailRange(lead).map(n => _getLeadEmail(lead, n));
       _diagLog('bulkSendInstantly.fetch.pre', {
         idx: t + 1, total: targets.length, email: lead.email, campaignId,
         emailsResolved: outgoingEmails.map(e => ({ hasSubject: !!e.subject.trim(), hasBody: !!e.body.trim() })),
@@ -8435,7 +8467,7 @@ function updateInstantlyButtons() {
     drawerBtn.disabled = !hasEmail || !hasCampaign;
     if (!hasCampaign) drawerBtn.title = '请先选择 Campaign';
     else if (!hasEmail) drawerBtn.title = 'No email address — cannot add to Instantly';
-    else drawerBtn.title = 'Add all 5 emails to Instantly campaign';
+    else drawerBtn.title = `Add all ${_leadEmailCount(_drawerLead)} emails to Instantly campaign`;
   }
 }
 
@@ -9613,11 +9645,12 @@ function _renderEmailPreview(results, containerId) {
   const cid = containerId || 'emailPreview';
   const el = document.getElementById(cid);
   if (!el || !results || !results.length) return;
-  const DAYS = ['Day 1', 'Day 4', 'Day 7', 'Day 10', 'Day 14'];
   el.innerHTML = `<div style="font-size:0.78rem;font-weight:700;color:var(--sub);margin-bottom:8px;letter-spacing:0.04em">📬 邮件预览（点击展开）</div>` +
     results.map((lead, i) => {
       const rowId = cid + '-r' + i;
-      const emails = [1,2,3,4,5].map(n => ({
+      const idxs = _leadEmailRange(lead);
+      const DAYS = _daySchedule(idxs.length);
+      const emails = idxs.map(n => ({
         subject: _substitutePlaceholders(lead[`EMAIL_${n}_SUBJECT`] || lead[`email_${n}_subject`] || '', lead),
         body:    _substitutePlaceholders(lead[`EMAIL_${n}_BODY`]    || lead[`email_${n}_body`]    || '', lead),
         day:     DAYS[n - 1]
@@ -9627,7 +9660,7 @@ function _renderEmailPreview(results, containerId) {
         <div class="epv-header" onclick="document.getElementById('${rowId}').classList.toggle('open')">
           <div style="display:flex;align-items:center;gap:8px">
             <span class="epv-company">${_esc(lead.companyName || '未知公司')}</span>
-            <span class="epv-badge" style="${ok ? 'color:#34d399;background:rgba(16,185,129,0.12)' : 'color:#f87171;background:rgba(239,68,68,0.1)'}">${ok ? '✓ 5 封' : '生成失败'}</span>
+            <span class="epv-badge" style="${ok ? 'color:#34d399;background:rgba(16,185,129,0.12)' : 'color:#f87171;background:rgba(239,68,68,0.1)'}">${ok ? `✓ ${emails.length} 封` : '生成失败'}</span>
           </div>
           <span class="epv-arrow">▶</span>
         </div>
@@ -9709,7 +9742,7 @@ async function startEmailGeneration() {
           });
           renderResults(_allLeads);
           const n = (data.results || []).length;
-          setStatus(`✅ 邮件生成完成：${n} 条线索已生成 5 封个性化开发信`, 'success');
+          setStatus(`✅ 邮件生成完成：${n} 条线索已生成 ${_leadEmailCount(data.results?.[0] || {})} 封个性化开发信`, 'success');
           _showToast(`✓ 已为 ${n} 条线索生成邮件（框架：${_selectedFrameworkKey}）`);
           _updateGenerateBtn();
           // State 3: show email preview and Instantly section
@@ -11031,7 +11064,8 @@ async function smtpSendAll() {
 
   // Push the generated emails to an Instantly campaign — one /api/instantly/add-lead
   // call per lead, the same backend (and server .env API key) /lens uses. Each
-  // lead's 5-email sequence is sent as lead.emails:[{subject,body}×5].
+  // lead's full sequence is sent as lead.emails:[{subject,body}×N] (N = however
+  // many the framework produced — 7 for cold_7_step, 5 for the 5-email frameworks).
   window.startAppInstantlySend = async function () {
     const all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
     const toSend = all.filter(e => (e.email || e.to || '').toString().trim());
@@ -11062,7 +11096,7 @@ async function smtpSendAll() {
       showStatus(`正在推送 ${i + 1}/${toSend.length}...`, '#a5b4fc', 'rgba(99,102,241,0.08)');
       try {
         const seq = Array.isArray(e.sequence) ? e.sequence : [];
-        const emails = [0, 1, 2, 3, 4].map(n => ({ subject: seq[n]?.subject || '', body: seq[n]?.body || '' }));
+        const emails = seq.map(s => ({ subject: s?.subject || '', body: s?.body || '' }));
         const res = await fetch('/api/instantly/add-lead', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
@@ -12070,7 +12104,7 @@ function renderAppPreview(lead, emails) {
   const companyEl = document.getElementById('appPreviewCompanyName');
   const tabsEl = document.getElementById('appEmailTabs');
 
-  companyEl.textContent = `预览 — ${lead.name || lead.title || '第1个客户'} 的5封邮件序列`;
+  companyEl.textContent = `预览 — ${lead.name || lead.title || '第1个客户'} 的${(emails || []).length}封邮件序列`;
 
   tabsEl.innerHTML = emails.map((e, i) => `
     <button type="button" onclick="showAppEmail(${i})" id="appTab${i}"
@@ -12145,7 +12179,8 @@ async function appGenerateAll() {
   }
 
   // Each entry: subject/body = Email 1 (single-card preview/send), sequence = the
-  // full 5-email series — the shape showAppSendPanel + the SMTP batch expect.
+  // full series (however many the framework produced) — the shape showAppSendPanel
+  // + the SMTP batch expect.
   const toEntry = (lead, seq) => {
     const sequence = Array.isArray(seq) ? seq.map(e => ({ subject: e.subject || '', body: e.body || '' })) : [];
     const email = lead.email || lead.raw?.email || '';
@@ -12158,8 +12193,8 @@ async function appGenerateAll() {
     };
   };
 
-  // Generate the full 5-email sequence for one lead via the SAME config-aware
-  // endpoint the preview uses, so every lead respects sellerDesc/goal/signature.
+  // Generate the full sequence for one lead via the SAME config-aware endpoint the
+  // preview uses, so every lead respects sellerDesc/goal/signature.
   const genFor = async (lead) => {
     const resp = await fetch('/api/app-generate-preview', {
       method: 'POST',
