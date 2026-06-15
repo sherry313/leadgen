@@ -5073,11 +5073,35 @@ function showAppStep3View(view) {
   // views. Clear the filter results + the redundant "→ 邮件发送" button so the
   // email step isn't cluttered with the previous sub-view's output.
   setDisp('appEmailConfigPanel', isEmail);
-  if (isEmail) { setDisp('appAiFilterResults', false); setDisp('appToEmailBtn', false); }
+  if (isEmail) {
+    setDisp('appAiFilterResults', false); setDisp('appToEmailBtn', false);
+    if (location.pathname !== '/lens') _appPrefillEmailFromBusinessInfo();
+  }
 
   // Paint the stepper — analysis=3, AI 筛选=3.5, 邮件发送=4.
   _updateStepper(isFilter ? 3.5 : isEmail ? 4 : 3);
   s3.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// /app only: the 业务信息 form (选择方式 step) already collected product /
+// targetCustomer / caseStudy / lowRiskOffer / senderName. Reuse those for the
+// 邮件发送 framework wizard — fwGetInputs() reads the fwProduct/fwTargetCustomer/
+// fwCaseStudy/fwLowRiskOffer/fwSenderName value fields — instead of asking again,
+// then hide the duplicate input cards. Only hides when the core fields are present,
+// so an empty business-info form falls back to today's visible UI. /lens never
+// reaches here (guarded by the caller).
+function _appPrefillEmailFromBusinessInfo() {
+  const bi = window._appBusinessInfo || {};
+  const set = (id, val) => { const el = document.getElementById(id); if (el && (val || '').trim()) el.value = val.trim(); };
+  set('fwProduct',        bi.product);
+  set('fwTargetCustomer', bi.targetCustomer);
+  set('fwCaseStudy',      bi.caseStudy);
+  set('fwLowRiskOffer',   bi.lowRiskOffer);
+  set('fwSenderName',     bi.senderName);
+  const haveCore = (bi.product || '').trim() && (bi.targetCustomer || '').trim() && (bi.senderName || '').trim();
+  const dup  = document.getElementById('fwManualInputs');
+  const note = document.getElementById('fwUsesBusinessInfo');
+  if (dup && note && haveCore) { dup.style.display = 'none'; note.style.display = 'flex'; }
 }
 
 // ── /app AI-guided ICP questionnaire (dynamic AI 筛选) ────────────────────────
@@ -10472,6 +10496,10 @@ async function smtpSendAll() {
 
       <!-- ===== STEP 1 — Basic info ===== -->
       <div id="fwStep1">
+        <!-- /app: these inputs duplicate the 业务信息 form (选择方式 step). On /app
+             they are pre-filled from window._appBusinessInfo and hidden by
+             _appPrefillEmailFromBusinessInfo(); /lens keeps them visible as-is. -->
+        <div id="fwManualInputs">
         <!-- Header -->
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
           <div style="width:34px; height:34px; border-radius:8px; background:#534AB7; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
@@ -10599,6 +10627,12 @@ async function smtpSendAll() {
             <input id="fwSenderName" type="text" placeholder="例：Libby Li，Sourcing Director，LuxeSupply Co."
               style="width:100%; padding:8px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:var(--color-background-primary, #0b0b0c); color:var(--color-text-primary, #e5e7eb); font-size:14px; font-family:inherit; outline:none;" />
           </div>
+        </div>
+        </div><!-- /fwManualInputs -->
+
+        <div id="fwUsesBusinessInfo" style="display:none; margin-bottom:1.25rem; padding:12px 14px; border:0.5px solid rgba(99,102,241,0.3); background:rgba(99,102,241,0.06); border-radius:12px; font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.6)); align-items:center; gap:8px;">
+          <i class="ti ti-circle-check" style="color:#6366f1; font-size:16px; flex-shrink:0;"></i>
+          <span>已使用你在「业务信息」里填写的内容（产品、目标客户、案例、零风险入口、发件人）。需要修改请回到第一步「业务信息」。</span>
         </div>
 
         <div style="display:flex; gap:8px;">
