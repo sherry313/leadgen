@@ -983,7 +983,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
     const templateKey  = templateKeyFromQuery(searchQuery);
     const frameworkKey = (clientFrameworkKey && ALLOWED_FW_KEYS.has(clientFrameworkKey))
       ? clientFrameworkKey
-      : ((companyProfile.sellerName || '').includes('Lens') ? 'peter_kang_3part' : 'cold_7_step');
+      : 'cold_7_step';
     console.log(`[Auto] frameworkKey=${frameworkKey} (client sent: ${clientFrameworkKey || '(none)'})`);
     let emailsGenerated = 0;
     if (qualified.length) {
@@ -1315,7 +1315,7 @@ app.post('/api/auto/run-from-dataset', requireAuth, async (req, res) => {
     const templateKey  = templateKeyFromQuery(searchQuery);
     const frameworkKey = (clientFrameworkKey && ALLOWED_FW_KEYS.has(clientFrameworkKey))
       ? clientFrameworkKey
-      : ((companyProfile.sellerName || '').includes('Lens') ? 'peter_kang_3part' : 'cold_7_step');
+      : 'cold_7_step';
     let emailsGenerated = 0;
     if (qualified.length) {
       send({ type: 'phase', phase: 'emails', status: 'start', total: qualified.length, templateKey, frameworkKey });
@@ -2605,7 +2605,7 @@ app.post('/api/scrape-website', requireAuth, async (req, res) => {
 // of the codebase (current models: claude-haiku-4-5-20251001 + claude-sonnet-4-6).
 app.post('/api/generate-emails', requireAuth, async (req, res) => {
   const inputLeads = Array.isArray(req.body?.leads) ? req.body.leads : [];
-  const framework  = (req.body?.framework || 'cold_5_step').toString().trim() || 'cold_5_step';
+  const framework  = (req.body?.framework || 'cold_7_step').toString().trim() || 'cold_7_step';
 
   if (!inputLeads.length) return res.status(400).json({ success: false, error: 'leads required' });
 

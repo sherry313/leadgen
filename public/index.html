@@ -2891,6 +2891,56 @@ function appBackToModeSelect() {
 
   <!-- Step 1: Method selection -->
   <div class="wizard-panel" id="wizard-step-1">
+
+    <!-- /app manual: business info (Step 1 of 3 — additive only, not wired into
+         filtering/email yet). Hidden by default; revealed only on /app by the
+         mountAppBusinessInfo IIFE so /lens never sees it. -->
+    <div id="appBusinessInfoCard" style="display:none; background:var(--color-background-primary, rgba(255,255,255,0.03)); border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:12px; padding:1.25rem; margin-bottom:1.25rem;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <i class="ti ti-briefcase" style="font-size:20px; color:#6366f1;"></i>
+        <span style="font-weight:500; font-size:16px; color:var(--color-text-primary, #e5e7eb);">业务信息</span>
+      </div>
+      <div style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); margin-bottom:16px;">填一次就好，AI 筛选和写开发信都会用到这些信息。</div>
+
+      <div style="font-size:12px; font-weight:600; color:#6366f1; letter-spacing:0.04em; margin-bottom:12px;">筛选 + 邮件都会用</div>
+
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">产品 / 服务</label>
+      <textarea id="biProduct" placeholder="例：不锈钢浴室柜、淋浴房、卫浴空间定制；可来图定制"
+        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">我的优势</label>
+      <textarea id="biAdvantage" placeholder="例：自有工厂、产能充足、支持OEM定制、通过澳洲AS2047认证"
+        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">价格 / 竞品优势</label>
+      <textarea id="biPricing" placeholder="例：同等品质价格低15%，MOQ更低，交期更快"
+        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">目标客户</label>
+      <textarea id="biTargetCustomer" placeholder="例：卫浴展厅/门店、室内设计公司、装修公司、建材经销商"
+        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:18px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+
+      <div style="font-size:12px; font-weight:600; color:#6366f1; letter-spacing:0.04em; margin-bottom:12px;">写邮件用</div>
+
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">真实案例 / 信任背书</label>
+      <textarea id="biCaseStudy" placeholder="例：曾为东南亚某建材进口商批量供货；没有案例可写工厂实力与认证"
+        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">零风险入口</label>
+      <textarea id="biLowRiskOffer" placeholder="例：可免费寄样品+AS2047认证报告，运费我方承担，先看实物再谈"
+        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">发件人落款</label>
+      <textarea id="biSenderName" placeholder="例：Libby，XX门窗有限公司，外贸经理"
+        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:4px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+
+      <button id="appBiNextBtn" type="button"
+        style="width:100%; margin-top:18px; padding:12px 16px; border:none; border-radius:8px; background:#6366f1; color:#fff; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; transition:opacity 0.15s, background 0.15s;">
+        填好了，下一步 →
+      </button>
+    </div>
+
+    <div id="appMethodChooser">
     <div class="method-screen-title">Find leads</div>
     <div class="method-screen-sub">选择获客方式，开始自动化</div>
 
@@ -2922,6 +2972,7 @@ function appBackToModeSelect() {
         <div class="method-desc">已有 Apify 数据，跳过抓取直接分析发送</div>
         <span class="method-tag new">resume</span>
       </div>
+    </div>
     </div>
   </div>
 
@@ -10158,6 +10209,83 @@ async function smtpSendAll() {
   });
 })();
 
+// ── /app manual business-info form (Step 1 of 3 — additive only) ─────────────
+// Reveals #appBusinessInfoCard on /app, repopulates the 7 fields from
+// localStorage('appBusinessInfo'), and auto-saves on every input (mirroring the
+// auto-mode autoSaveForm/autoLoadForm pattern). Nothing reads window._appBusinessInfo
+// yet — filtering/email wiring happens in steps 2 and 3. /lens early-returns.
+(function mountAppBusinessInfo() {
+  if (location.pathname === '/lens') return;
+  const card = document.getElementById('appBusinessInfoCard');
+  if (!card) return;
+  card.style.display = 'block';
+
+  const FIELDS = {
+    biProduct:        'product',
+    biAdvantage:      'advantage',
+    biPricing:        'pricing',
+    biTargetCustomer: 'targetCustomer',
+    biCaseStudy:      'caseStudy',
+    biLowRiskOffer:   'lowRiskOffer',
+    biSenderName:     'senderName',
+  };
+  const KEY = 'appBusinessInfo';
+
+  function saveAppBusinessInfo() {
+    const out = {};
+    Object.entries(FIELDS).forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      out[key] = el ? el.value : '';
+    });
+    window._appBusinessInfo = out;
+    try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (_) {}
+  }
+
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (_) { saved = null; }
+  Object.entries(FIELDS).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (saved && saved[key] != null) el.value = saved[key];
+    el.addEventListener('input', saveAppBusinessInfo);
+  });
+  window._appBusinessInfo = saved || {};
+
+  // Progressive disclosure (/app only): hide the method chooser until all 7
+  // business-info fields are filled and the user clicks 下一步. /lens never
+  // reaches here (early return above), so its chooser stays visible as before.
+  const chooser = document.getElementById('appMethodChooser');
+  const nextBtn = document.getElementById('appBiNextBtn');
+  if (chooser && nextBtn) {
+    chooser.style.display = 'none';
+
+    function allBiFilled() {
+      return Object.keys(FIELDS).every(id => {
+        const el = document.getElementById(id);
+        return el && el.value.trim() !== '';
+      });
+    }
+    function updateNextGate() {
+      const ok = allBiFilled();
+      nextBtn.disabled = !ok;
+      nextBtn.style.background = ok ? '#6366f1' : 'rgba(255,255,255,0.08)';
+      nextBtn.style.color = ok ? '#fff' : 'rgba(255,255,255,0.35)';
+      nextBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
+    }
+    Object.keys(FIELDS).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', updateNextGate);
+    });
+    updateNextGate();
+
+    nextBtn.addEventListener('click', function () {
+      if (nextBtn.disabled) return;
+      chooser.style.display = '';
+      chooser.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+})();
+
 // ── /app AI 分析 panel ────────────────────────────────────────────────────────
 // Replaces the /lens manual/auto mode chooser inside #wizard-step-3 with a
 // stripped-down filter + lead list + framework picker + generate button.
@@ -10244,7 +10372,7 @@ async function smtpSendAll() {
       <div id="appFilterStep1">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.25rem;">
           <i class="ti ti-robot" style="font-size:20px; color:#6366f1;"></i>
-          <span style="font-weight:500; font-size:16px; color:var(--color-text-primary, #e5e7eb);">告诉我你在做什么</span>
+          <span style="font-weight:500; font-size:16px; color:var(--color-text-primary, #e5e7eb);">你是做什么的？</span>
         </div>
         <textarea id="appUserDesc"
           placeholder="详细描述你的业务，例如：我们是专门供应日本市场的 vintage 奢品包包批发商，主要品牌包括 Chanel、LV、Hermès，我们的客户是在日本经营二手奢品的买手店和寄卖店..."
