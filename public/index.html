@@ -5069,7 +5069,7 @@ function showAppStep3View(view) {
   setDisp('appAiFilterPanel', isFilter);
   if (isFilter) {
     setDisp('appAiFilterResults', true);
-    if (location.pathname !== '/lens') _appAutoGenerateScreening();
+    if (location.pathname !== '/lens' && typeof window.appAutoRunScreening === 'function') window.appAutoRunScreening();
   }
 
   // Email sub-view (邮件发送): the email config panel, hidden in the other two
@@ -5105,23 +5105,6 @@ function _appPrefillEmailFromBusinessInfo() {
   const dup  = document.getElementById('fwManualInputs');
   const note = document.getElementById('fwUsesBusinessInfo');
   if (dup && note && haveCore) { dup.style.display = 'none'; note.style.display = 'flex'; }
-}
-
-// /app only: the 业务信息 form already describes the business — don't ask again in
-// the AI 筛选 step. Hide the "你是做什么的" manual input and auto-generate the
-// screening questions from window._appBusinessInfo (appGenerateQuestions builds its
-// context from it). Runs once — skips if questions already exist. Falls back to the
-// visible input when business info is empty. /lens never reaches here (caller guard).
-function _appAutoGenerateScreening() {
-  const bi = window._appBusinessInfo || {};
-  const haveInfo = (bi.product || '').trim() || (bi.targetCustomer || '').trim() || (bi.advantage || '').trim();
-  const manual = document.getElementById('appScreeningManualInput');
-  const note   = document.getElementById('appScreeningUsesBusinessInfo');
-  if (manual) manual.style.display = haveInfo ? 'none' : '';
-  if (note)   note.style.display   = haveInfo ? 'flex' : 'none';
-  if (haveInfo && !(_appQuestions && _appQuestions.length) && typeof appGenerateQuestions === 'function') {
-    appGenerateQuestions();
-  }
 }
 
 // ── /app AI-guided ICP questionnaire (dynamic AI 筛选) ────────────────────────
@@ -10449,9 +10432,13 @@ async function smtpSendAll() {
     </button>
 
     <div id="appAiFilterPanel" style="display:none; background: var(--color-background-primary, rgba(255,255,255,0.03)); border: 0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius: 12px; padding: 1.25rem; margin-top: 1rem; margin-bottom: 1rem;">
-      <!-- STEP 1 — business description input. On /app this is hidden and the
-           screening questions are generated from 业务信息 (see _appAutoGenerateScreening);
-           /lens keeps it visible. -->
+      <!-- /app: auto-filter waiting state. appAutoRunScreening() fills/shows this
+           while it runs the filter; the question UI below stays hidden on /app. -->
+      <div id="appScreeningRunning" style="display:none; align-items:center; gap:10px; padding:14px 16px; border:0.5px solid rgba(99,102,241,0.3); background:rgba(99,102,241,0.06); border-radius:12px; font-size:14px; color:var(--color-text-secondary, rgba(255,255,255,0.75));"></div>
+
+      <!-- STEP 1 — business description input + question UI. On /app this is hidden
+           and the filter runs automatically from 业务信息 (see appAutoRunScreening);
+           shown only as a fallback when business info is empty. /lens keeps it visible. -->
       <div id="appFilterStep1">
         <div id="appScreeningUsesBusinessInfo" style="display:none; margin-bottom:1rem; padding:12px 14px; border:0.5px solid rgba(99,102,241,0.3); background:rgba(99,102,241,0.06); border-radius:12px; font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.6)); align-items:center; gap:8px;">
           <i class="ti ti-circle-check" style="color:#6366f1; font-size:16px; flex-shrink:0;"></i>
@@ -11013,6 +11000,67 @@ async function smtpSendAll() {
     if (toEmailBtn) toEmailBtn.style.display = 'block';
 
     window._filteredLeads = recommended;
+  };
+
+  // /app: skip the screening questions entirely — build the filter criteria from
+  // 业务信息 and run the filter automatically, showing a "正在筛选" waiting state.
+  // Falls back to the original manual input + question flow when business info is
+  // empty. Lives inside this IIFE so it can read the closure-scoped `selected` set.
+  window.appAutoRunScreening = async function () {
+    const running = document.getElementById('appScreeningRunning');
+    const bi = window._appBusinessInfo || {};
+    const parts = [];
+    if ((bi.product || '').trim())        parts.push('产品：' + bi.product.trim());
+    if ((bi.advantage || '').trim())      parts.push('优势：' + bi.advantage.trim());
+    if ((bi.pricing || '').trim())        parts.push('价格/竞争力：' + bi.pricing.trim());
+    if ((bi.targetCustomer || '').trim()) parts.push('目标客户：' + bi.targetCustomer.trim());
+    const criteria = parts.join('；');
+
+    // No business info → fall back to the original manual input + questions flow.
+    if (!criteria) {
+      const s1f = document.getElementById('appFilterStep1');
+      const manual = document.getElementById('appScreeningManualInput');
+      const note = document.getElementById('appScreeningUsesBusinessInfo');
+      if (s1f) s1f.style.display = '';
+      if (manual) manual.style.display = '';
+      if (note) note.style.display = 'none';
+      if (running) running.style.display = 'none';
+      return;
+    }
+    window._appFilterCriteria = criteria;
+
+    // Auto flow: hide the manual input + question UI entirely.
+    const s1 = document.getElementById('appFilterStep1');
+    const s2 = document.getElementById('appFilterStep2');
+    if (s1) s1.style.display = 'none';
+    if (s2) s2.style.display = 'none';
+
+    // Already filtered (results on screen) → don't re-run on tab revisits.
+    // setAppLeads() clears these on a new search, so this self-resets.
+    const resultsEl = document.getElementById('appAiFilterResults');
+    if (resultsEl && resultsEl.style.display !== 'none' && resultsEl.innerHTML.trim()) {
+      if (running) running.style.display = 'none';
+      return;
+    }
+
+    const leadsCount = (window._appLeads || []).filter((l, i) => selected.has(i)).length;
+    if (!leadsCount) {
+      if (running) {
+        running.style.display = 'flex';
+        running.innerHTML = '<span>请先在「AI 分析」里勾选要筛选的客户，再回到这一步。</span>';
+      }
+      return;
+    }
+
+    if (running) {
+      running.style.display = 'flex';
+      running.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(99,102,241,0.3);border-top-color:#6366f1;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div><span>客官请稍等，正在为您智能筛选客户…</span>';
+    }
+    try {
+      await window.startAppAiFilter();
+    } finally {
+      if (running) running.style.display = 'none';
+    }
   };
 
   // Collect the leads whose checkbox is currently ticked in the AI 筛选 results.
