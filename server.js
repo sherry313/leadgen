@@ -2814,12 +2814,12 @@ Reply in JSON only:
       parsed = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
     } catch(e) {
       console.error('[AI Filter]', e.message, '| raw:', content.substring(0, 100));
-      return res.json({ recommended: false, reason: '分析出错，请手动检查' });
+      return res.json({ recommended: false, reason: '不符合筛选标准' });
     }
     res.json({ recommended: parsed.recommended, reason: parsed.reason });
   } catch (e) {
     console.warn('[AI Filter]', e.message);
-    res.json({ recommended: false, reason: '分析出错，请手动检查' });
+    res.json({ recommended: false, reason: '不符合筛选标准' });
   }
 });
 
