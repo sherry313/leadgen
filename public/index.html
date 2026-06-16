@@ -2884,7 +2884,7 @@ function appBackToModeSelect() {
   <div class="stepper" id="mainStepper">
     <div class="stepper-seg seg-active" id="seg1" onclick="goToStep(1)">选择方式</div>
     <div class="stepper-seg seg-idle"   id="seg2" onclick="goToStep(2)">搜索配置</div>
-    <div class="stepper-seg seg-idle"   id="seg3" onclick="goToStep(3)">AI 分析</div>
+    <div class="stepper-seg seg-idle"   id="seg3" onclick="goToStep(3)">筛选结果</div>
     <div class="stepper-seg seg-idle"   id="segAiFilter" onclick="showAppStep3View('filter')" style="display:none">AI 筛选</div>
     <div class="stepper-seg seg-idle"   id="seg4" onclick="goToStep(4)">邮件发送</div>
   </div>
@@ -3355,7 +3355,7 @@ function appBackToModeSelect() {
           <div id="gmResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
           <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
-            下一步 → AI 分析
+            下一步 → 筛选结果
           </button>
         </div>
       </div>
@@ -3404,7 +3404,7 @@ function appBackToModeSelect() {
           <div id="gsResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
           <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
-            下一步 → AI 分析
+            下一步 → 筛选结果
           </button>
         </div>
       </div>
@@ -3464,7 +3464,7 @@ function appBackToModeSelect() {
           <div id="igResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
           <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
-            下一步 → AI 分析
+            下一步 → 筛选结果
           </button>
         </div>
       </div>
@@ -3521,7 +3521,7 @@ function appBackToModeSelect() {
           <div id="ttResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
           <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
-            下一步 → AI 分析
+            下一步 → 筛选结果
           </button>
         </div>
       </div>
@@ -3581,7 +3581,7 @@ function appBackToModeSelect() {
           <div id="fbResultsTable" style="overflow-x:auto;max-height:480px;border:1px solid rgba(255,255,255,0.08);border-radius:6px"></div>
           <button type="button" class="ai-next-btn" onclick="showAiAnalysisPanel()"
                   style="display:none;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;align-items:center;justify-content:center;gap:8px">
-            下一步 → AI 分析
+            下一步 → 筛选结果
           </button>
         </div>
       </div>
@@ -11047,7 +11047,7 @@ async function smtpSendAll() {
     if (!leadsCount) {
       if (running) {
         running.style.display = 'flex';
-        running.innerHTML = '<span>请先在「AI 分析」里勾选要筛选的客户，再回到这一步。</span>';
+        running.innerHTML = '<span>请先在「筛选结果」里勾选要筛选的客户，再回到这一步。</span>';
       }
       return;
     }
