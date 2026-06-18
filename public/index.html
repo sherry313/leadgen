@@ -10651,20 +10651,7 @@ async function smtpSendAll() {
         </div>
 
         <div style="display:flex; gap:8px;">
-          <button type="button" onclick="fwAutoRun()"
-            style="flex:1; padding:10px; background:#534AB7; color:#fff;
-            border:none; border-radius:8px; font-size:15px; font-weight:500;
-            cursor:pointer; font-family:inherit;">
-            ⚡ 自动模式
-          </button>
-          <div style="flex:1;">
-            <button type="button" onclick="fwValidateInputs()"
-              style="width:100%; padding:10px; background:#6366f1; color:#fff;
-              border:none; border-radius:8px; font-size:15px; font-weight:500;
-              cursor:pointer; font-family:inherit;">
-              提交给 AI 审核 →
-            </button>
-          </div>
+          <button onclick="fwAutoRun()" style="width:100%; padding:12px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">开始生成邮件 →</button>
         </div>
 
         <!-- 自动模式 progress card (hidden until fwAutoRun runs; stays on Step 1) -->
