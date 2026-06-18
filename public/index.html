@@ -5060,6 +5060,9 @@ function showAppStep3View(view) {
   setDisp('appSelectAllRow',       isAnalysis);
   setDisp('appLeadList',           isAnalysis);
   setDisp('appToFilterBtn',        isAnalysis);
+  // 邮件发送 button belongs to the AI 筛选 results (shown by startAppAiFilter),
+  // not the lead-list step — keep it hidden here.
+  if (isAnalysis) setDisp('appToEmailBtn', false);
 
   // Filter sub-view: the AI 筛选标准 panel.
   setDisp('appAiFilterPanel', isFilter);
