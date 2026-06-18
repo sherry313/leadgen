@@ -5077,6 +5077,9 @@ function showAppStep3View(view) {
   setDisp('appEmailConfigPanel', isEmail);
   if (isEmail) {
     setDisp('appAiFilterResults', false); setDisp('appToEmailBtn', false);
+    // Clear the search-context status banner (e.g. "已恢复上次搜索结果") — it
+    // doesn't belong on the email step. setStatus re-shows it during generation.
+    const _sb = document.getElementById('statusBar'); if (_sb) _sb.style.display = 'none';
     if (location.pathname !== '/lens') _appPrefillEmailFromBusinessInfo();
   }
 
