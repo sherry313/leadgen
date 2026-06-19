@@ -11241,7 +11241,26 @@ async function smtpSendAll() {
     const LABEL_STYLE = "display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:6px";
 
     sendPanel.innerHTML = `
-      <div style="font-size:14px;font-weight:600;color:#e5e7eb;margin-bottom:4px">📤 发送邮件</div>
+      <div style="font-size:14px;font-weight:600;color:#e5e7eb;margin-bottom:10px"><i class="ti ti-mail" style="color:#6366f1;margin-right:6px"></i>邮件预览（${generated.length} 个客户）</div>
+      ${generated.map((g, gi) => {
+        const seq = (Array.isArray(g.sequence) && g.sequence.length) ? g.sequence : [{ subject: g.subject, body: g.body }];
+        return `<div style="border:1px solid rgba(255,255,255,0.08);border-radius:8px;margin-bottom:10px;overflow:hidden">
+          <div onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none'" style="padding:10px 12px;background:rgba(255,255,255,0.03);cursor:pointer;display:flex;align-items:center;gap:8px">
+            <span style="font-weight:500;font-size:13px;color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.recipient || '未知客户')}</span>
+            <span style="flex-shrink:0;font-size:11px;color:#6366f1;background:rgba(99,102,241,0.12);padding:2px 8px;border-radius:20px">${seq.length} 封</span>
+            <span style="margin-left:auto;flex-shrink:0;font-size:11px;color:#64748b">${esc(g.email || '无邮箱')}</span>
+          </div>
+          <div style="display:${gi === 0 ? 'block' : 'none'};padding:12px">
+            ${seq.map((e, n) => `<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:${n < seq.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none'}">
+              <div style="font-size:11px;color:#64748b;margin-bottom:4px">第 ${n + 1} 封</div>
+              <div style="font-size:13px;font-weight:500;color:#e5e7eb;margin-bottom:6px">${esc(e.subject || '（无主题）')}</div>
+              <div style="font-size:12px;color:#cbd5e1;line-height:1.6;white-space:pre-wrap">${esc(e.body || '（无正文）')}</div>
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+
+      <div style="font-size:14px;font-weight:600;color:#e5e7eb;margin:18px 0 4px"><i class="ti ti-send" style="color:#6366f1;margin-right:6px"></i>发送邮件</div>
       <div style="font-size:13px;color:#cbd5e1;margin-bottom:14px">准备发送 ${withRecipient.length} 封邮件${skipNote}</div>
 
       <!-- Send-method toggle: SMTP (default) vs Instantly -->
