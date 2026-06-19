@@ -11012,15 +11012,18 @@ async function smtpSendAll() {
     if ((bi.targetCustomer || '').trim()) parts.push('目标客户：' + bi.targetCustomer.trim());
     const criteria = parts.join('；');
 
-    // No business info → fall back to the original manual input + questions flow.
+    // No business info → AI 筛选 never shows a form (per design). Hide the manual
+    // input entirely and prompt the user back to 第一步 to fill 业务信息.
     if (!criteria) {
       const s1f = document.getElementById('appFilterStep1');
-      const manual = document.getElementById('appScreeningManualInput');
-      const note = document.getElementById('appScreeningUsesBusinessInfo');
-      if (s1f) s1f.style.display = '';
-      if (manual) manual.style.display = '';
-      if (note) note.style.display = 'none';
-      if (running) running.style.display = 'none';
+      const s2f = document.getElementById('appFilterStep2');
+      if (s1f) s1f.style.display = 'none';
+      if (s2f) s2f.style.display = 'none';
+      if (running) {
+        running.style.display = 'flex';
+        running.innerHTML = '<span style="flex:1;">请先回到第一步「业务信息」填写你的产品和目标客户，AI 才能自动筛选。</span>'
+          + '<button onclick="goToStep(1)" style="flex-shrink:0;padding:8px 16px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;">去填写 →</button>';
+      }
       return;
     }
     window._appFilterCriteria = criteria;
