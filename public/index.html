@@ -10660,7 +10660,7 @@ async function smtpSendAll() {
         </div>
 
         <div style="display:flex; gap:8px;">
-          <button onclick="fwAutoRun()" style="width:100%; padding:12px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">开始生成邮件 →</button>
+          <button onclick="appStartEmailGen()" style="width:100%; padding:12px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">开始生成邮件 →</button>
         </div>
 
         <!-- 自动模式 progress card (hidden until fwAutoRun runs; stays on Step 1) -->
@@ -12513,6 +12513,32 @@ async function appGenerateAll() {
 
   // Navigate to the SMTP send panel now that emails exist.
   if (typeof showAppSendPanel === 'function') showAppSendPanel();
+}
+
+// /app 邮件发送 "开始生成邮件" entry. The 业务信息 form already holds everything, so
+// populate the (hidden) generation config from window._appBusinessInfo, then generate
+// emails for the AI-filtered leads via appGenerateAll(). Replaces the old fwAutoRun()
+// wiring — that was the auto-mode (re-search/filter) pipeline and stalled because its
+// next-step button lived in the hidden #appAutoPanel.
+function appStartEmailGen() {
+  const bi = window._appBusinessInfo || {};
+  const parts = [];
+  if ((bi.product || '').trim())        parts.push('产品/服务：' + bi.product.trim());
+  if ((bi.advantage || '').trim())      parts.push('优势：' + bi.advantage.trim());
+  if ((bi.targetCustomer || '').trim()) parts.push('目标客户：' + bi.targetCustomer.trim());
+  if ((bi.caseStudy || '').trim())      parts.push('真实案例：' + bi.caseStudy.trim());
+  if ((bi.lowRiskOffer || '').trim())   parts.push('零风险入口：' + bi.lowRiskOffer.trim());
+
+  const sd = document.getElementById('appSellerDesc');     if (sd) sd.value = parts.join('；');
+  const sn = document.getElementById('appSignatureName');  if (sn) sn.value = (bi.senderName || '').trim();
+  const fw = document.getElementById('appFrameworkSelect'); if (fw && !fw.value) fw.value = 'cold_7_step';
+  if (!_appSelectedGoal) _appSelectedGoal = '找买家';
+
+  const leads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
+    ? window._filteredLeads : (window._appLeads || []);
+  if (!leads.length) { alert('还没有客户线索，请先完成搜索和 AI 筛选'); return; }
+
+  appGenerateAll();
 }
 
 // ── Website list upload & enrich ──────────────────────────────────────────────
