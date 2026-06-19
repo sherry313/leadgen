@@ -5077,9 +5077,12 @@ function showAppStep3View(view) {
   setDisp('appEmailConfigPanel', isEmail);
   if (isEmail) {
     setDisp('appAiFilterResults', false); setDisp('appToEmailBtn', false);
-    // Clear the search-context status banner (e.g. "已恢复上次搜索结果") — it
-    // doesn't belong on the email step. setStatus re-shows it during generation.
+    // Clear the search-context status banner (e.g. "已恢复上次搜索结果") + the raw
+    // results section — neither belongs on the email step. They can be force-shown
+    // by the async restore flow, so hide them here. setStatus re-shows the bar
+    // during generation if needed.
     const _sb = document.getElementById('statusBar'); if (_sb) _sb.style.display = 'none';
+    const _rs = document.getElementById('rawSection'); if (_rs) _rs.style.display = 'none';
     if (location.pathname !== '/lens') _appPrefillEmailFromBusinessInfo();
   }
 
