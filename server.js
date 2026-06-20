@@ -2916,6 +2916,8 @@ app.post('/api/app-generate-preview', requireAuth, async (req, res) => {
   const emailCount = (framework && framework.includes('7')) ? 7 : 5;
   const emailSlots = Array.from({ length: emailCount }, () => '    {"subject": "...", "body": "..."}').join(',\n');
 
+  const websiteContext = lead && lead.websiteText ? `\nLEAD WEBSITE CONTENT (use this to write a personalized opening for Email 1):\n${lead.websiteText.substring(0, 800)}` : '';
+
   const systemPrompt = `You are an expert B2B cold email copywriter.
 Write a sequence of ${emailCount} cold emails for the sender.
 
@@ -2934,6 +2936,9 @@ EMAIL RULES:
 - Each email ends with one clear low-commitment question
 - Sign off with exactly: ${signatureName}
 - Plain text only, no bullet points, no bold
+${websiteContext}
+
+EMAIL 1 PERSONALIZATION: For Email 1: use the LEAD WEBSITE CONTENT above to write ONE specific observation about their business (what they build, their style, their projects). If no website content is available, use: "Saw ${companyName} while looking at Australian suppliers."
 
 FRAMEWORK: ${frameworkInstructions}
 
