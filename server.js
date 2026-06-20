@@ -2916,7 +2916,7 @@ app.post('/api/app-generate-preview', requireAuth, async (req, res) => {
   const emailCount = (framework && framework.includes('7')) ? 7 : 5;
   const emailSlots = Array.from({ length: emailCount }, () => '    {"subject": "...", "body": "..."}').join(',\n');
 
-  const websiteContext = lead && lead.websiteText ? `\nLEAD WEBSITE CONTENT (use this to write a personalized opening for Email 1):\n${lead.websiteText.substring(0, 800)}` : '';
+  const websiteContext = lead && (lead.websiteText || lead.raw?.websiteText) ? `\nLEAD WEBSITE CONTENT (use this to write a personalized opening for Email 1):\n${(lead.websiteText || lead.raw?.websiteText).substring(0, 800)}` : '';
 
   const systemPrompt = `You are an expert B2B cold email copywriter.
 Write a sequence of ${emailCount} cold emails for the sender.
