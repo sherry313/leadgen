@@ -2907,8 +2907,11 @@ app.post('/api/app-generate-preview', requireAuth, async (req, res) => {
   const frameworkInstructions = framework === 'custom' ? customPrompt :
     `Use the ${framework} email framework structure.`;
 
+  const emailCount = (framework && framework.includes('7')) ? 7 : 5;
+  const emailSlots = Array.from({ length: emailCount }, () => '    {"subject": "...", "body": "..."}').join(',\n');
+
   const systemPrompt = `You are an expert B2B cold email copywriter.
-Write a sequence of 5 cold emails for the sender.
+Write a sequence of ${emailCount} cold emails for the sender.
 
 SENDER INFO:
 - What they do: ${sellerDesc}
@@ -2936,11 +2939,7 @@ ${frameworkContext ? `\nADDITIONAL FRAMEWORK CONTEXT (follow this confirmed plan
 Return ONLY valid JSON in this exact format:
 {
   "emails": [
-    {"subject": "...", "body": "..."},
-    {"subject": "...", "body": "..."},
-    {"subject": "...", "body": "..."},
-    {"subject": "...", "body": "..."},
-    {"subject": "...", "body": "..."}
+${emailSlots}
   ]
 }`;
 
