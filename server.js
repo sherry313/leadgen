@@ -12,6 +12,7 @@ const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
 const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun } = require('./services/supabase');
+const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -2907,8 +2908,10 @@ app.post('/api/app-generate-preview', requireAuth, async (req, res) => {
   const website = lead.website || lead.url || '';
   const description = lead.description || lead.bio || '';
 
+  const frameworkObj = emailFrameworks && emailFrameworks[framework];
+  const sequencePrompt = frameworkObj ? frameworkObj.sequence_prompt : null;
   const frameworkInstructions = framework === 'custom' ? customPrompt :
-    `Use the ${framework} email framework structure.`;
+    (sequencePrompt || `Use the ${framework} email framework structure.`);
 
   const emailCount = (framework && framework.includes('7')) ? 7 : 5;
   const emailSlots = Array.from({ length: emailCount }, () => '    {"subject": "...", "body": "..."}').join(',\n');
@@ -2933,6 +2936,8 @@ EMAIL RULES:
 - Plain text only, no bullet points, no bold
 
 FRAMEWORK: ${frameworkInstructions}
+
+CRITICAL OVERRIDE: SENDER INFO above is the ONLY source of truth for who the sender is, what they sell, and their advantages. If the FRAMEWORK section names any specific company, factory, location, product, or certification, IGNORE it and use ONLY the sender's real details from SENDER INFO. Never state a fact that is not in SENDER INFO.
 
 PROSPECT:
 - Company: ${companyName}
