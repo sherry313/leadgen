@@ -2785,6 +2785,8 @@ app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
     const Anthropic = require('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+    console.log('[ai-filter] companyName:', companyName, '| description:', description.substring(0, 100), '| websiteText length:', (lead.websiteText || '').length, '| criteria:', criteria.substring(0, 100));
+
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 400,
@@ -2816,6 +2818,7 @@ Reply in JSON only:
       console.error('[AI Filter]', e.message, '| raw:', content.substring(0, 100));
       return res.json({ recommended: false, reason: '不符合筛选标准' });
     }
+    console.log('[ai-filter] result:', JSON.stringify(parsed));
     res.json({ recommended: parsed.recommended, reason: parsed.reason });
   } catch (e) {
     console.warn('[AI Filter]', e.message);
