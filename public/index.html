@@ -2913,8 +2913,18 @@ function appBackToModeSelect() {
         style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
 
       <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">目标客户</label>
-      <textarea id="biTargetCustomer" placeholder="例：卫浴展厅/门店、室内设计公司、装修公司、建材经销商"
-        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:18px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+      <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.45)); margin-bottom:8px;">AI 根据上面的产品和优势自动推荐，勾选你的目标客户，也可以自定义添加。</div>
+
+      <!-- AI-recommended target-customer pills + custom add. The compiled,
+           comma-joined value is written to the hidden #biTargetCustomer below so
+           the next-step gate, saveAppBusinessInfo and every downstream
+           targetCustomer reader keep working unchanged. -->
+      <div id="biTcStatus" style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.4)); margin-bottom:10px;">先填好「产品 / 服务」和「我的优势」，AI 会在这里推荐目标客户。</div>
+      <div id="biTcPills" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;"></div>
+      <input id="biTcCustomInput" type="text" placeholder="自定义目标客户，回车添加（例：建材进口商）"
+        style="display:none; width:100%; padding:9px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;">
+      <input type="hidden" id="biTargetCustomer">
+      <div style="margin-bottom:18px;"></div>
 
       <div style="font-size:12px; font-weight:600; color:#6366f1; letter-spacing:0.04em; margin-bottom:12px;">写邮件用</div>
 
@@ -10357,6 +10367,140 @@ async function smtpSendAll() {
       chooser.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
+})();
+
+// ── /app 业务信息: 目标客户 AI-recommended pill chooser ───────────────────────
+// Reads 产品/服务 (#biProduct) + 我的优势 (#biAdvantage), calls
+// /api/recommend-target-customers (debounced), and renders the result as
+// multi-select pills + a 自定义 add. The compiled value is written to the hidden
+// #biTargetCustomer and an 'input' event is dispatched so saveAppBusinessInfo and
+// the next-step gate (both registered in mountAppBusinessInfo) run unchanged.
+// /lens early-returns.
+(function mountTargetCustomerChooser() {
+  if (location.pathname === '/lens') return;
+  const hidden      = document.getElementById('biTargetCustomer');
+  const pillsBox    = document.getElementById('biTcPills');
+  const statusEl    = document.getElementById('biTcStatus');
+  const customInput = document.getElementById('biTcCustomInput');
+  const productEl   = document.getElementById('biProduct');
+  const advEl       = document.getElementById('biAdvantage');
+  if (!hidden || !pillsBox || !statusEl || !customInput || !productEl || !advEl) return;
+
+  let selected  = [];   // ordered list of chosen target-customer labels
+  let suggested = [];   // AI-recommended labels (may overlap with selected)
+
+  // Hydrate from a previously saved value (mountAppBusinessInfo already restored
+  // it into the hidden input from localStorage before this IIFE runs).
+  if (hidden.value.trim()) {
+    selected = hidden.value.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+  }
+
+  function compile() {
+    hidden.value = selected.join('、');
+    hidden.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function makePill(label, isSel) {
+    const span = document.createElement('span');
+    span.textContent = label;
+    span.style.cssText = 'padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; user-select:none; font-family:inherit; border:0.5px solid ' +
+      (isSel ? '#6366f1' : 'var(--color-border-tertiary, rgba(255,255,255,0.12))') +
+      '; background:' + (isSel ? 'rgba(99,102,241,0.15)' : 'transparent') +
+      '; color:' + (isSel ? '#a5a8f3' : 'var(--color-text-secondary, rgba(255,255,255,0.6))') + ';';
+    return span;
+  }
+
+  function render() {
+    pillsBox.innerHTML = '';
+    const order = [];
+    suggested.forEach(s => { if (!order.includes(s)) order.push(s); });
+    selected.forEach(s => { if (!order.includes(s)) order.push(s); });
+
+    order.forEach(label => {
+      const p = makePill(label, selected.includes(label));
+      p.onclick = () => {
+        if (selected.includes(label)) selected = selected.filter(x => x !== label);
+        else selected.push(label);
+        compile(); render();
+      };
+      pillsBox.appendChild(p);
+    });
+
+    const addPill = document.createElement('span');
+    addPill.textContent = '＋ 自定义';
+    addPill.style.cssText = 'padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; user-select:none; font-family:inherit; border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));';
+    addPill.onclick = () => {
+      const show = customInput.style.display === 'none';
+      customInput.style.display = show ? 'block' : 'none';
+      if (show) customInput.focus();
+    };
+    pillsBox.appendChild(addPill);
+
+    if (productEl.value.trim() && advEl.value.trim()) {
+      const refresh = document.createElement('span');
+      refresh.innerHTML = '<i class="ti ti-refresh" style="font-size:13px;"></i> 重新推荐';
+      refresh.style.cssText = 'padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; user-select:none; font-family:inherit; display:inline-flex; align-items:center; gap:4px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:#6366f1;';
+      refresh.onclick = () => fetchSuggestions(true);
+      pillsBox.appendChild(refresh);
+    }
+  }
+
+  customInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const val = customInput.value.trim();
+    if (val && !selected.includes(val)) selected.push(val);
+    customInput.value = '';
+    customInput.style.display = 'none';
+    compile(); render();
+  });
+
+  let lastKey = '';
+  let debounceTimer = null;
+
+  async function fetchSuggestions(force) {
+    const product   = productEl.value.trim();
+    const advantage = advEl.value.trim();
+    if (!product || !advantage) return;
+    const key = product + '||' + advantage;
+    if (!force && key === lastKey) return;
+    lastKey = key;
+
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = '<i class="ti ti-loader-2"></i> AI 正在分析目标客户…';
+    try {
+      const r = await fetch('/api/recommend-target-customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getStoredToken() },
+        body: JSON.stringify({ product, advantage }),
+      });
+      const data = await r.json();
+      if (Array.isArray(data.suggestions) && data.suggestions.length) {
+        suggested = data.suggestions;
+        statusEl.style.display = 'none';
+      } else {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'AI 暂无推荐，可点「＋ 自定义」手动添加目标客户。';
+      }
+    } catch (e) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'AI 推荐失败，可点「＋ 自定义」手动添加目标客户。';
+    } finally {
+      render();
+    }
+  }
+
+  function scheduleFetch() {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (!productEl.value.trim() || !advEl.value.trim()) return;
+    debounceTimer = setTimeout(() => fetchSuggestions(false), 800);
+  }
+  productEl.addEventListener('input', scheduleFetch);
+  advEl.addEventListener('input', scheduleFetch);
+
+  render();
+  // Returning user with both fields already filled: fetch fresh recommendations.
+  if (productEl.value.trim() && advEl.value.trim()) fetchSuggestions(false);
 })();
 
 // ── /app AI 分析 panel ────────────────────────────────────────────────────────

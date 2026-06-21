@@ -2897,6 +2897,57 @@ Return ONLY valid JSON, no markdown:
   }
 });
 
+// ── /app 业务信息: recommend target customers ────────────────────────────────
+// Body: { product, advantage }
+// Returns: { suggestions: ["卫浴展厅/门店", ...] } — 6 short Chinese target-customer
+// types inferred from what the user sells + their advantages. Powers the 目标客户
+// pill chooser in the 业务信息 card (public/index.html). Haiku, cheap + fast.
+app.post('/api/recommend-target-customers', requireAuth, async (req, res) => {
+  const { product = '', advantage = '' } = req.body || {};
+  if (!product.trim()) {
+    return res.status(400).json({ error: '缺少产品 / 服务信息' });
+  }
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      messages: [{
+        role: 'user',
+        content: `你在帮一个 B2B 卖家确定「目标客户类型」，用于后续筛选线索和写开发信。
+
+卖家的产品 / 服务："${product}"
+卖家的优势："${advantage}"
+
+请根据上面两条信息，推断出最适合该卖家主动开发的目标客户类型（即谁会采购/经销/使用这些产品）。
+
+规则：
+- 输出 6 个目标客户类型
+- 每个类型用简短的中文名词短语（4-10 个字），是「客户的类型/角色」而不是「产品」
+- 例如：卫浴展厅/门店、室内设计公司、装修公司、建材经销商、地产开发商、工程采购商
+- 由强到弱排序，最相关的放前面
+- 不要解释，不要编号
+
+只返回合法 JSON，不要 markdown：
+{ "suggestions": ["类型1", "类型2", "类型3", "类型4", "类型5", "类型6"] }`
+      }]
+    }), 30000, '/api/recommend-target-customers');
+
+    const text = response.content[0].text;
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    const suggestions = Array.isArray(parsed.suggestions)
+      ? parsed.suggestions.map(s => String(s).trim()).filter(Boolean).slice(0, 6)
+      : [];
+    res.json({ suggestions });
+  } catch(e) {
+    console.error('[RecommendTargets] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── /app preview-first email generation ──────────────────────────────────────
 // Body: { lead, sellerDesc, goal, signatureName, framework, customPrompt }
 // Returns: { emails: [{subject, body}, ...] } — a 5-email sequence so /app
