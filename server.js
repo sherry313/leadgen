@@ -2215,11 +2215,16 @@ async function _runApifyActor(actorId, input) {
 }
 
 app.post('/api/google-search', requireAuth, async (req, res) => {
-  const keyword     = (req.body?.keyword || '').trim();
+  // Accept either a single `keyword` (legacy) or a `keywords` array + optional
+  // `location` — mirrors /api/google-maps-search so the /app gsPanel matches gmPanel.
+  const keywords = Array.isArray(req.body?.keywords)
+    ? req.body.keywords.map(k => String(k).trim()).filter(Boolean)
+    : ((req.body?.keyword || '').trim() ? [String(req.body.keyword).trim()] : []);
+  const location    = (req.body?.location || '').trim();
   const maxResults  = Math.min(500, Math.max(1, parseInt(req.body?.maxResults, 10) || 50));
   const fields      = Array.isArray(req.body?.fields) ? req.body.fields : ['email','phone','website','linkedin'];
 
-  if (!keyword) return res.status(400).json({ success: false, error: 'keyword required' });
+  if (!keywords.length) return res.status(400).json({ success: false, error: 'keyword required' });
 
   res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
   res.flushHeaders();
@@ -2233,16 +2238,21 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
   // the SSE stream. saveLeads at the end is fire-and-forget so the 'done' event
   // is not delayed by the DB write.
   let searchId = null;
-  try { searchId = await saveSearchRun({ query: keyword, location: '', maxResults, totalScraped: 0 }, req.userId); } catch (_) {}
+  try { searchId = await saveSearchRun({ query: keywords.join(', '), location, maxResults, totalScraped: 0 }, req.userId); } catch (_) {}
   const collectedLeads = [];
 
   try {
-    console.log(`[GoogleSearchTool] "${keyword}" max=${maxResults} fields=${fields.join(',')}`);
+    // Location-scope each keyword (same approach as the Maps tool: append the
+    // location to the query rather than send it as a separate field), then run
+    // all queries in one actor call. maxResults is per-keyword.
+    const searchStrings = location ? keywords.map(k => `${k} ${location}`.trim()) : keywords.slice();
+    const totalCap = maxResults * searchStrings.length;
+    console.log(`[GoogleSearchTool] terms=${searchStrings.length} location="${location}" max=${maxResults} fields=${fields.join(',')}`);
     const items = await withTimeout(
       _runApifyActor('nFJndFXA5zjCTuudP', {
-        queries: keyword,
+        queries: searchStrings.join('\n'),
         maxPagesPerQuery: Math.ceil(maxResults / 10) || 1,
-        maximumLeadsEnrichmentRecords: maxResults,
+        maximumLeadsEnrichmentRecords: totalCap,
         includeUnfilteredResults: false,
         mobileResults: false,
       }),
@@ -2256,7 +2266,7 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
     let emitted = 0;
     for (const it of flat) {
       if (aborted) break;
-      if (emitted >= maxResults) break;
+      if (emitted >= totalCap) break;
 
       const url = it.url || it.website || it.link || '';
 
@@ -2336,7 +2346,7 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
       emitted++;
 
       // 500ms spacing between Firecrawl calls to stay under the rate limit.
-      if (url && emitted < maxResults && !aborted) {
+      if (url && emitted < totalCap && !aborted) {
         await new Promise(r => setTimeout(r, 500));
       }
     }

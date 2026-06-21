@@ -2937,8 +2937,22 @@ function appBackToModeSelect() {
         style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
 
       <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">发件人落款</label>
-      <textarea id="biSenderName" placeholder="例：Libby，XX门窗有限公司，外贸经理"
-        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:4px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+      <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.45)); margin-bottom:10px;">分开填写。名字和公司必填，职位选填。</div>
+
+      <!-- Three separate signature fields. Their compiled "名字，公司，职位"
+           string is written to the hidden #biSenderName so fwSenderName,
+           appSignatureName, the AI Sender: context and all other senderName
+           readers keep working unchanged. The hidden value is only populated
+           when BOTH 名字 and 公司 are filled, so the next-step gate enforces them. -->
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <input id="biSenderPersonName" type="text" placeholder="名字（例：Libby）"
+          style="flex:1; min-width:0; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); font-family:inherit; outline:none; box-sizing:border-box;">
+        <input id="biSenderCompany" type="text" placeholder="公司（例：XX门窗有限公司）"
+          style="flex:1.4; min-width:0; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); font-family:inherit; outline:none; box-sizing:border-box;">
+      </div>
+      <input id="biSenderTitle" type="text" placeholder="职位 / 头衔（选填，例：外贸经理）"
+        style="width:100%; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:4px; font-family:inherit; outline:none; box-sizing:border-box;">
+      <input type="hidden" id="biSenderName">
 
       <button id="appBiNextBtn" type="button"
         style="width:100%; margin-top:18px; padding:12px 16px; border:none; border-radius:8px; background:#6366f1; color:#fff; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; transition:opacity 0.15s, background 0.15s;">
@@ -3384,12 +3398,53 @@ function appBackToModeSelect() {
         <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:22px 0">
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
-        <input type="text" id="gsKeyword" placeholder="例：interior designer Sydney" autocomplete="off"
-               style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;margin-bottom:16px;box-sizing:border-box">
+        <div id="gsKeywordsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
+          <input type="text" id="gsKeyword" class="gs-kw-input" placeholder="例：interior designer" autocomplete="off"
+                 style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <button type="button" onclick="addGsKeywordInput()"
+                style="padding:7px 12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#94a3b8;font-family:inherit;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-bottom:20px">
+          <i class="ti ti-plus" style="font-size:14px"></i>添加
+        </button>
+
+        <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">地区（每次只能一个）</label>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+          <select id="gsCountry" onchange="onGsCountryChange()"
+                  style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;appearance:none;-webkit-appearance:none">
+            <option value="" disabled selected style="background:#0b0b0c;color:#94a3b8">请选择国家</option>
+            <option value="Australia"   style="background:#0b0b0c;color:#e5e7eb">🇦🇺 澳大利亚 · Australia</option>
+            <option value="USA"         style="background:#0b0b0c;color:#e5e7eb">🇺🇸 美国 · USA</option>
+            <option value="New Zealand" style="background:#0b0b0c;color:#e5e7eb">🇳🇿 新西兰 · New Zealand</option>
+            <option value="Singapore"            style="background:#0b0b0c;color:#e5e7eb">🇸🇬 新加坡 · Singapore</option>
+            <option value="Malaysia"             style="background:#0b0b0c;color:#e5e7eb">🇲🇾 马来西亚 · Malaysia</option>
+            <option value="Thailand"             style="background:#0b0b0c;color:#e5e7eb">🇹🇭 泰国 · Thailand</option>
+            <option value="Indonesia"            style="background:#0b0b0c;color:#e5e7eb">🇮🇩 印尼 · Indonesia</option>
+            <option value="Philippines"          style="background:#0b0b0c;color:#e5e7eb">🇵🇭 菲律宾 · Philippines</option>
+            <option value="Vietnam"              style="background:#0b0b0c;color:#e5e7eb">🇻🇳 越南 · Vietnam</option>
+            <option value="United Arab Emirates" style="background:#0b0b0c;color:#e5e7eb">🇦🇪 阿联酋 · United Arab Emirates</option>
+            <option value="Saudi Arabia"         style="background:#0b0b0c;color:#e5e7eb">🇸🇦 沙特阿拉伯 · Saudi Arabia</option>
+            <option value="Qatar"                style="background:#0b0b0c;color:#e5e7eb">🇶🇦 卡塔尔 · Qatar</option>
+            <option value="Kuwait"               style="background:#0b0b0c;color:#e5e7eb">🇰🇼 科威特 · Kuwait</option>
+            <option value="Bahrain"              style="background:#0b0b0c;color:#e5e7eb">🇧🇭 巴林 · Bahrain</option>
+            <option value="Oman"                 style="background:#0b0b0c;color:#e5e7eb">🇴🇲 阿曼 · Oman</option>
+            <option value="South Africa"         style="background:#0b0b0c;color:#e5e7eb">🇿🇦 南非 · South Africa</option>
+            <option value="Nigeria"              style="background:#0b0b0c;color:#e5e7eb">🇳🇬 尼日利亚 · Nigeria</option>
+            <option value="Kenya"                style="background:#0b0b0c;color:#e5e7eb">🇰🇪 肯尼亚 · Kenya</option>
+            <option value="Egypt"                style="background:#0b0b0c;color:#e5e7eb">🇪🇬 埃及 · Egypt</option>
+            <option value="Morocco"              style="background:#0b0b0c;color:#e5e7eb">🇲🇦 摩洛哥 · Morocco</option>
+          </select>
+          <select id="gsCity" onchange="onGsCityChange()" disabled
+                  style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;appearance:none;-webkit-appearance:none">
+            <option value="" disabled selected style="background:#0b0b0c;color:#94a3b8">请选择城市</option>
+          </select>
+          <input type="text" id="gsCityManual" oninput="updateGsLocation()" placeholder="输入城市英文名，例：Cairns" autocomplete="off"
+                 style="display:none;width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(99,102,241,0.5);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <input type="hidden" id="gsLocation">
 
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
-          <label for="gsMaxResults" style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin:0">最多结果数</label>
-          <input type="number" id="gsMaxResults" value="50" min="1" max="500"
+          <label for="gsMaxResults" style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin:0">每个关键词最多抓取数量</label>
+          <input type="number" id="gsMaxResults" value="20" min="1" max="500"
                  style="width:70px;padding:8px 10px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box">
         </div>
 
@@ -5608,9 +5663,12 @@ function _ttPickMode(mode) {
 }
 
 async function startGoogleSearch() {
-  const keyword = document.getElementById('gsKeyword')?.value.trim() || '';
-  if (!keyword) { _showToast('请输入搜索关键词'); return; }
-  const maxResults = Math.max(1, parseInt(document.getElementById('gsMaxResults')?.value, 10) || 50);
+  const keywords = Array.from(document.querySelectorAll('#gsKeywordsList .gs-kw-input'))
+    .map(i => i.value.trim())
+    .filter(Boolean);
+  if (!keywords.length) { _showToast('请输入至少一个关键词'); return; }
+  const location   = document.getElementById('gsLocation')?.value.trim() || '';
+  const maxResults = Math.max(1, parseInt(document.getElementById('gsMaxResults')?.value, 10) || 20);
   const fields = Array.from(document.querySelectorAll('#gsFieldPills .gs-pill.on')).map(p => p.dataset.field);
   if (!fields.length) { _showToast('请至少选择一项提取内容'); return; }
 
@@ -5624,14 +5682,14 @@ async function startGoogleSearch() {
   if (status) status.textContent = '正在抓取…';
   if (wrap) wrap.style.display = 'none';
   _toolResults.gs = [];
-  // Remember the search keyword so the AI 筛选 questionnaire can use it as context.
-  window._lastSearchKeyword = keyword || '';
+  // Remember the search keyword(s) so the AI 筛选 questionnaire can use them as context.
+  window._lastSearchKeyword = keywords.join(', ') || '';
 
   try {
     const res = await fetch('/api/google-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ keyword, maxResults, fields }),
+      body: JSON.stringify({ keywords, location, maxResults, fields }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'gs', status);
@@ -5729,6 +5787,72 @@ function updateGmLocation() {
   let city = citySel.value;
   if (city === '__other__') city = document.getElementById('gmCityManual').value.trim();
   document.getElementById('gmLocation').value = (country && city) ? (city + ', ' + country) : '';
+}
+
+// ── Google Search panel: multi-keyword + region (mirrors the Google Maps panel
+// so /app's gsPanel matches gmPanel). Reuses the same _GM_CITIES list. ─────────
+function addGsKeywordInput() {
+  const list = document.getElementById('gsKeywordsList');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'gs-kw-input';
+  input.placeholder = '例：interior designer';
+  input.autocomplete = 'off';
+  input.style.cssText = 'flex:1;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box';
+  const rm = document.createElement('button');
+  rm.type = 'button';
+  rm.innerHTML = '<i class="ti ti-x" style="font-size:14px"></i>';
+  rm.style.cssText = 'padding:8px 10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#94a3b8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center';
+  rm.onclick = () => row.remove();
+  row.appendChild(input);
+  row.appendChild(rm);
+  list.appendChild(row);
+  input.focus();
+}
+function onGsCountryChange() {
+  const country = document.getElementById('gsCountry').value;
+  const citySel = document.getElementById('gsCity');
+  const manual  = document.getElementById('gsCityManual');
+  manual.style.display = 'none';
+  manual.value = '';
+  citySel.innerHTML = '<option value="" disabled selected style="background:#0b0b0c;color:#94a3b8">请选择城市</option>';
+  (_GM_CITIES[country] || []).forEach(([en, zh]) => {
+    const o = document.createElement('option');
+    o.value = en;
+    o.textContent = en + ' ' + zh;
+    o.style.background = '#0b0b0c';
+    o.style.color = '#e5e7eb';
+    citySel.appendChild(o);
+  });
+  const other = document.createElement('option');
+  other.value = '__other__';
+  other.textContent = '其他城市(手动输入)';
+  other.style.background = '#0b0b0c';
+  other.style.color = '#e5e7eb';
+  citySel.appendChild(other);
+  citySel.disabled = !country;
+  updateGsLocation();
+}
+function onGsCityChange() {
+  const manual = document.getElementById('gsCityManual');
+  if (document.getElementById('gsCity').value === '__other__') {
+    manual.style.display = 'block';
+    manual.focus();
+  } else {
+    manual.style.display = 'none';
+    manual.value = '';
+  }
+  updateGsLocation();
+}
+function updateGsLocation() {
+  const country = document.getElementById('gsCountry').value;
+  const citySel = document.getElementById('gsCity');
+  let city = citySel.value;
+  if (city === '__other__') city = document.getElementById('gsCityManual').value.trim();
+  document.getElementById('gsLocation').value = (country && city) ? (city + ', ' + country) : '';
 }
 
 async function startGoogleMapsScrape() {
@@ -10501,6 +10625,47 @@ async function smtpSendAll() {
   render();
   // Returning user with both fields already filled: fetch fresh recommendations.
   if (productEl.value.trim() && advEl.value.trim()) fetchSuggestions(false);
+})();
+
+// ── /app 业务信息: 发件人落款 (split name / company / title) ──────────────────
+// Combines 名字 + 公司 + 职位 into the hidden #biSenderName as "名字，公司，职位"
+// (职位 omitted when blank), keeping the exact combined-string format that
+// fwSenderName / appSignatureName / the AI Sender: context all expect. The
+// hidden value is only set when BOTH 名字 and 公司 are present, so the
+// next-step gate (which checks #biSenderName non-empty) enforces them. On load,
+// a previously saved combined string is split back into the three inputs.
+// /lens early-returns.
+(function mountSenderSignature() {
+  if (location.pathname === '/lens') return;
+  const hidden    = document.getElementById('biSenderName');
+  const nameEl    = document.getElementById('biSenderPersonName');
+  const companyEl = document.getElementById('biSenderCompany');
+  const titleEl   = document.getElementById('biSenderTitle');
+  if (!hidden || !nameEl || !companyEl || !titleEl) return;
+
+  // Hydrate the three inputs from a previously saved combined string
+  // (mountAppBusinessInfo already restored it into the hidden input).
+  if (hidden.value.trim()) {
+    const parts = hidden.value.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+    if (parts[0]) nameEl.value    = parts[0];
+    if (parts[1]) companyEl.value = parts[1];
+    if (parts.length > 2) titleEl.value = parts.slice(2).join('，');
+  }
+
+  function compile() {
+    const name    = nameEl.value.trim();
+    const company = companyEl.value.trim();
+    const title   = titleEl.value.trim();
+    // Require both name and company; otherwise leave empty so the gate blocks.
+    hidden.value = (name && company)
+      ? [name, company, title].filter(Boolean).join('，')
+      : '';
+    hidden.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  [nameEl, companyEl, titleEl].forEach(el => el.addEventListener('input', compile));
+  // Sync once on load so a restored value flows into the gate/save state.
+  compile();
 })();
 
 // ── /app AI 分析 panel ────────────────────────────────────────────────────────
