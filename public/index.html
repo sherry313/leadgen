@@ -5668,6 +5668,7 @@ async function startGoogleSearch() {
     .filter(Boolean);
   if (!keywords.length) { _showToast('请输入至少一个关键词'); return; }
   const location   = document.getElementById('gsLocation')?.value.trim() || '';
+  const countryCode = _GS_COUNTRY_CODES[document.getElementById('gsCountry')?.value || ''] || '';
   const maxResults = Math.max(1, parseInt(document.getElementById('gsMaxResults')?.value, 10) || 20);
   const fields = Array.from(document.querySelectorAll('#gsFieldPills .gs-pill.on')).map(p => p.dataset.field);
   if (!fields.length) { _showToast('请至少选择一项提取内容'); return; }
@@ -5689,7 +5690,7 @@ async function startGoogleSearch() {
     const res = await fetch('/api/google-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ keywords, location, maxResults, fields }),
+      body: JSON.stringify({ keywords, location, countryCode, maxResults, fields }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'gs', status);
@@ -5791,6 +5792,16 @@ function updateGmLocation() {
 
 // ── Google Search panel: multi-keyword + region (mirrors the Google Maps panel
 // so /app's gsPanel matches gmPanel). Reuses the same _GM_CITIES list. ─────────
+// Country name → ISO-3166 alpha-2, sent to /api/google-search as countryCode so
+// the Google Search actor geo-scopes results (e.g. 新西兰 → 'nz') instead of just
+// appending the country name to the query text.
+const _GS_COUNTRY_CODES = {
+  'Australia':'au','USA':'us','New Zealand':'nz','Singapore':'sg','Malaysia':'my',
+  'Thailand':'th','Indonesia':'id','Philippines':'ph','Vietnam':'vn',
+  'United Arab Emirates':'ae','Saudi Arabia':'sa','Qatar':'qa','Kuwait':'kw',
+  'Bahrain':'bh','Oman':'om','South Africa':'za','Nigeria':'ng','Kenya':'ke',
+  'Egypt':'eg','Morocco':'ma',
+};
 function addGsKeywordInput() {
   const list = document.getElementById('gsKeywordsList');
   if (!list) return;

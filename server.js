@@ -2221,6 +2221,7 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
     ? req.body.keywords.map(k => String(k).trim()).filter(Boolean)
     : ((req.body?.keyword || '').trim() ? [String(req.body.keyword).trim()] : []);
   const location    = (req.body?.location || '').trim();
+  const countryCode = (req.body?.countryCode || '').trim().toLowerCase();
   const maxResults  = Math.min(500, Math.max(1, parseInt(req.body?.maxResults, 10) || 50));
   const fields      = Array.isArray(req.body?.fields) ? req.body.fields : ['email','phone','website','linkedin'];
 
@@ -2247,15 +2248,24 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
     // all queries in one actor call. maxResults is per-keyword.
     const searchStrings = location ? keywords.map(k => `${k} ${location}`.trim()) : keywords.slice();
     const totalCap = maxResults * searchStrings.length;
-    console.log(`[GoogleSearchTool] terms=${searchStrings.length} location="${location}" max=${maxResults} fields=${fields.join(',')}`);
+    console.log(`[GoogleSearchTool] terms=${searchStrings.length} location="${location}" country="${countryCode}" max=${maxResults} fields=${fields.join(',')}`);
+    // Use the official apify~google-search-scraper (same actor services/googleSearch.js
+    // trusts for geo-correct results). It honours countryCode so a 新西兰 search no
+    // longer bleeds Australian results. Its output is { organicResults: [...] }, which
+    // the flatten + projection below already handles. Per-URL email/phone/social
+    // enrichment is done by our own HTML scrape, so we don't rely on the actor for it.
+    const actorInput = {
+      queries: searchStrings.join('\n'),
+      maxPagesPerQuery: Math.ceil(maxResults / 10) || 1,
+      resultsPerPage: 10,
+      languageCode: 'en',
+      mobileResults: false,
+    };
+    // Only constrain the Google region when a country was chosen; otherwise search
+    // worldwide (matches the old behaviour for location-less searches).
+    if (countryCode) actorInput.countryCode = countryCode;
     const items = await withTimeout(
-      _runApifyActor('nFJndFXA5zjCTuudP', {
-        queries: searchStrings.join('\n'),
-        maxPagesPerQuery: Math.ceil(maxResults / 10) || 1,
-        maximumLeadsEnrichmentRecords: totalCap,
-        includeUnfilteredResults: false,
-        mobileResults: false,
-      }),
+      _runApifyActor('apify~google-search-scraper', actorInput),
       10 * 60 * 1000,
       '/api/google-search Apify'
     );
@@ -2297,7 +2307,9 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
               email = _findEmail(r2.data || '');
             } catch (_) { /* non-fatal — homepage scrape already succeeded */ }
           }
-          const phoneMatch    = html.match(/(\+61|0)[0-9\s\-\(\)]{8,14}/);
+          // Match an international +<country code> number or a local 0-prefixed
+          // number — not hardcoded to Australia (+61) so NZ (+64) etc. work too.
+          const phoneMatch    = html.match(/(\+\d{1,3}[\d\s\-\(\)]{7,14}|0\d[\d\s\-\(\)]{7,12})/);
           const phone         = phoneMatch ? phoneMatch[0].trim() : '';
           const linkedinMatch  = html.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-_%]+/);
           const linkedin       = linkedinMatch ? 'https://www.' + linkedinMatch[0] : '';
