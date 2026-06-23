@@ -2970,6 +2970,220 @@ app.post('/api/recommend-target-customers', requireAuth, async (req, res) => {
   }
 });
 
+// ── /app 业务信息 → Google Search: recommend search keywords ──────────────────
+// Body: { product, targetCustomer, advantage }
+// Returns: { keywords: ["bathroom vanity distributor", ...] } — English Google
+// search terms that FIND the target customers (not the product). Powers the
+// keyword pill chooser in the Google Search panel. Haiku, cheap + fast.
+app.post('/api/recommend-keywords', requireAuth, async (req, res) => {
+  const product        = String(req.body?.product || '').trim();
+  const targetCustomer = String(req.body?.targetCustomer || '').trim();
+  const advantage      = String(req.body?.advantage || '').trim();
+  if (!product && !targetCustomer) {
+    return res.status(400).json({ error: '缺少产品或目标客户信息' });
+  }
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      messages: [{
+        role: 'user',
+        content: `A B2B seller wants to find potential CUSTOMERS on Google Search.
+
+Seller's product / service: "${product || '(not given)'}"
+Seller's target customer types: "${targetCustomer || '(not given)'}"
+Seller's advantage: "${advantage || '(not given)'}"
+
+Generate Google search keywords that will surface the seller's TARGET CUSTOMERS'
+companies (the businesses they want to sell to) — NOT pages selling the product.
+
+Rules:
+- Output exactly 8 keywords, in ENGLISH (these are searched on local Google sites abroad)
+- Each keyword is a short business-type search phrase a buyer-finder would type
+- Search for the CUSTOMER's business type, e.g. target "装修公司" -> "renovation company",
+  "bathroom renovation contractor"; target "室内设计公司" -> "interior design studio"
+- Do NOT include a country/city (the location is added separately)
+- No numbering, no explanation
+
+Return ONLY valid JSON, no markdown:
+{ "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5", "keyword6", "keyword7", "keyword8"] }`
+      }]
+    }), 30000, '/api/recommend-keywords');
+
+    const text = response.content[0].text;
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    const keywords = Array.isArray(parsed.keywords)
+      ? parsed.keywords.map(s => String(s).trim()).filter(Boolean).slice(0, 8)
+      : [];
+    res.json({ keywords });
+  } catch(e) {
+    console.error('[RecommendKeywords] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Identity code → Chinese label, shared by the advantage / polish endpoints.
+const _IDENTITY_LABEL = { factory: '工厂', trade: '外贸公司', both: '工贸一体' };
+const _IDENTITY_ANGLE = {
+  factory: '强调源头工厂实力:自有产线、产能、OEM/ODM定制、打样快、源头价格、品控与认证',
+  trade:   '强调服务与省心:一站式采购、帮客户解决问题、选品能力、替客户监管工厂与质量、跟单物流、不加价还保质量',
+  both:    '强调产销一体:自有工厂+外贸团队,价格和质量双保障、既能定制又能一站式服务',
+};
+
+// ── /app 业务信息: recommend advantage points (identity-aware) ─────────────────
+// Body: { product, service, identity }
+// Returns: { advantages: ["自有模具,打样快", ...] } — short Chinese advantage
+// points tailored to the seller's identity. Powers the 优势 pill chooser.
+app.post('/api/recommend-advantages', requireAuth, async (req, res) => {
+  const product  = String(req.body?.product || '').trim();
+  const service  = String(req.body?.service || '').trim();
+  const identity = String(req.body?.identity || '').trim();
+  if (!product) return res.status(400).json({ error: '缺少产品信息' });
+  const idLabel = _IDENTITY_LABEL[identity] || '供应商';
+  const idAngle = _IDENTITY_ANGLE[identity] || '';
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      temperature: 1,
+      messages: [{
+        role: 'user',
+        content: `卖家身份:${idLabel}。产品:"${product}"。服务:"${service || '(未填)'}"。
+
+请推荐这个卖家可以主打的"优势点"，用于开发信和筛选。
+
+要求:
+- 输出 6 个优势点，简短中文短语(6-14字)
+- 方向:${idAngle || '突出差异化与专业度'}
+- 关键:写出"和同类${idLabel}相比的区别/差异点"，不要"可以定制""质量好"这种谁都会说的空话，要具体
+  例如同样是工厂:不要写"可定制"，写"支持来图打样、3天出样"；不要写"产能大"，写"自有X条产线、月产能X"
+- 不要编造具体数字时用占位也行(用户后续会改)，重点是给出有差异化的角度
+- 不要解释，不要编号
+
+只返回合法 JSON:
+{ "advantages": ["优势1","优势2","优势3","优势4","优势5","优势6"] }`
+      }]
+    }), 30000, '/api/recommend-advantages');
+
+    const text = response.content[0].text;
+    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+    const advantages = Array.isArray(parsed.advantages)
+      ? parsed.advantages.map(s => String(s).trim()).filter(Boolean).slice(0, 6)
+      : [];
+    res.json({ advantages });
+  } catch(e) {
+    console.error('[RecommendAdvantages] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── /app 业务信息: polish a text field (优势 / 案例 / 信任背书) ──────────────────
+// Body: { text, kind, identity }  kind ∈ 'advantage' | 'case' | 'trust'
+// Returns: { text } — a polished rewrite. High temperature + an explicit "give a
+// different phrasing" instruction so clicking 润色 again yields a fresh version.
+// Does NOT invent facts (no fake client names / numbers) — only rewrites what's given.
+app.post('/api/polish-text', requireAuth, async (req, res) => {
+  const text     = String(req.body?.text || '').trim();
+  const kind     = String(req.body?.kind || 'advantage').trim();
+  const identity = String(req.body?.identity || '').trim();
+  if (!text) return res.status(400).json({ error: '没有要润色的内容' });
+  const idLabel = _IDENTITY_LABEL[identity] || '供应商';
+
+  const KIND_RULES = {
+    advantage: `这是卖家的"优势"。改写成更专业、更有说服力的卖点，突出"和同类${idLabel}相比的区别"，把空话改具体。`,
+    case:      `这是卖家的"真实案例"。润色得更可信、更专业。绝对不要编造新的客户名、数字或事实，只优化表达。`,
+    trust:     `这是卖家的"信任背书"。润色得更专业可信。不要编造新的认证、客户或数字，只优化表达。`,
+  };
+  const rule = KIND_RULES[kind] || KIND_RULES.advantage;
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      temperature: 1,
+      messages: [{
+        role: 'user',
+        content: `卖家身份:${idLabel}。
+
+${rule}
+
+原文:
+"""
+${text}
+"""
+
+要求:
+- 用中文输出，保持原意但表达更好
+- 每次都给一个"不一样"的写法 —— 即使意思相同，措辞也要换新，让用户多点几次能挑不同版本
+- 不编造原文没有的具体客户名、数字、认证等事实
+- 只返回润色后的正文，不要解释、不要引号、不要 markdown`
+      }]
+    }), 30000, '/api/polish-text');
+
+    const out = (response.content[0].text || '').replace(/```/g, '').trim();
+    res.json({ text: out });
+  } catch(e) {
+    console.error('[PolishText] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── /app 业务信息: recommend zero-risk entry offers (by industry) ──────────────
+// Body: { product, service, identity }
+// Returns: { offers: ["免费寄样", ...] } — short Chinese "low-risk entry" offers
+// the seller can make to lower a buyer's risk of starting. Powers the 零风险入口
+// pill chooser.
+app.post('/api/recommend-low-risk-offers', requireAuth, async (req, res) => {
+  const product  = String(req.body?.product || '').trim();
+  const service  = String(req.body?.service || '').trim();
+  const identity = String(req.body?.identity || '').trim();
+  if (!product) return res.status(400).json({ error: '缺少产品信息' });
+  const idLabel = _IDENTITY_LABEL[identity] || '供应商';
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      messages: [{
+        role: 'user',
+        content: `卖家身份:${idLabel}。产品:"${product}"。服务:"${service || '(未填)'}"。
+
+"零风险入口"是指卖家给潜在客户的低风险尝试入口，让客户几乎没有成本就能先试一下，从而更愿意回复开发信。
+
+请根据这个行业推荐 6 个合适的零风险入口选项。
+要求:
+- 简短中文短语(4-12字)，是"卖家能提供的入口动作"
+- 贴合该产品/行业。例如制造业常见:免费寄样、免费报价、免费出设计图、首单免运费、小批量试单、提供认证报告、先验货后付款
+- 不要解释，不要编号
+
+只返回合法 JSON:
+{ "offers": ["选项1","选项2","选项3","选项4","选项5","选项6"] }`
+      }]
+    }), 30000, '/api/recommend-low-risk-offers');
+
+    const text = response.content[0].text;
+    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+    const offers = Array.isArray(parsed.offers)
+      ? parsed.offers.map(s => String(s).trim()).filter(Boolean).slice(0, 6)
+      : [];
+    res.json({ offers });
+  } catch(e) {
+    console.error('[RecommendLowRisk] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── /app preview-first email generation ──────────────────────────────────────
 // Body: { lead, sellerDesc, goal, signatureName, framework, customPrompt }
 // Returns: { emails: [{subject, body}, ...] } — a 5-email sequence so /app

@@ -2902,15 +2902,51 @@ function appBackToModeSelect() {
       </div>
       <div style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); margin-bottom:16px;">填一次就好，AI 筛选和写开发信都会用到这些信息。</div>
 
+      <!-- Identity (mode) selector. Not an input field — it drives what advantages
+           AI recommends and the email/polish tone. The rest of the form stays
+           hidden until one is chosen. biSelectIdentity() lives in mountAppBusinessInfo. -->
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:8px;">你的身份</label>
+      <div id="biIdentityRow" style="display:flex; gap:10px; margin-bottom:18px;">
+        <button type="button" class="bi-identity" data-identity="factory" onclick="biSelectIdentity('factory')"
+          style="flex:1; padding:12px 8px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6)); font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.15s;">🏭 工厂</button>
+        <button type="button" class="bi-identity" data-identity="trade" onclick="biSelectIdentity('trade')"
+          style="flex:1; padding:12px 8px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6)); font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.15s;">🌐 外贸公司</button>
+        <button type="button" class="bi-identity" data-identity="both" onclick="biSelectIdentity('both')"
+          style="flex:1; padding:12px 8px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6)); font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.15s;">🔗 工贸一体</button>
+      </div>
+
+      <div id="biMainFields" style="display:none">
+
       <div style="font-size:12px; font-weight:600; color:#6366f1; letter-spacing:0.04em; margin-bottom:12px;">筛选 + 邮件都会用</div>
 
-      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">产品 / 服务</label>
-      <textarea id="biProduct" placeholder="例：不锈钢浴室柜、淋浴房、卫浴空间定制；可来图定制"
-        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">产品</label>
+      <textarea id="biProduct" placeholder="例：不锈钢浴室柜、淋浴房、马桶浴缸"
+        style="width:100%; height:60px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
 
-      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">我的优势</label>
-      <textarea id="biAdvantage" placeholder="例：自有工厂、产能充足、支持OEM定制、通过澳洲AS2047认证"
-        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">服务 <span style="font-weight:400; color:var(--color-text-secondary, rgba(255,255,255,0.4));">（针对产品能提供什么服务，选填）</span></label>
+      <textarea id="biService" placeholder="例：可定制颜色 / 尺寸、可来图打样、可批量、一体化采购"
+        style="width:100%; height:60px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+
+      <!-- ⭐ 优势 — the most important field for cold emails. AI recommends
+           identity-aware advantage points (tap a pill to insert it into the
+           textarea), user edits freely, then ✨AI润色 rewrites it (varies each
+           click). The textarea #biAdvantage stays the source of truth. -->
+      <div style="border:1px solid rgba(99,102,241,0.35); background:rgba(99,102,241,0.05); border-radius:10px; padding:14px; margin-bottom:14px;">
+        <label style="display:block; font-size:14px; font-weight:600; color:#a5b4fc; margin-bottom:4px;">⭐ 我的优势 <span style="font-size:12px; color:#fca5a5; font-weight:500;">必填 · 开发信主打卖点</span></label>
+        <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.45)); margin-bottom:10px;">填完产品和服务后，AI 会推荐"和同类同行的差异点"，点一下加进来，再让 AI 帮你润色。</div>
+
+        <div id="biAdvStatus" style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.4)); margin-bottom:10px;">先选身份、填好产品，AI 会在这里推荐优势点。</div>
+        <div id="biAdvPills" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;"></div>
+        <input id="biAdvCustomInput" type="text" placeholder="自定义优势，回车加入（例：自有模具、3天出样）" autocomplete="off"
+          style="display:none; width:100%; padding:9px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:12px; font-family:inherit; outline:none; box-sizing:border-box;">
+
+        <textarea id="biAdvantage" placeholder="点上面的优势点加入，或直接在这里写；写完点「✨AI 润色」"
+          style="width:100%; height:90px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:10px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+        <button type="button" id="biAdvPolishBtn" onclick="biPolishField('biAdvantage','advantage',this)"
+          style="padding:8px 14px; border-radius:8px; border:0.5px solid rgba(99,102,241,0.5); background:transparent; color:#a5b4fc; font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+          <i class="ti ti-sparkles" style="font-size:14px;"></i> AI 润色
+        </button>
+      </div>
 
       <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">目标客户</label>
       <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.45)); margin-bottom:8px;">AI 根据上面的产品和优势自动推荐，勾选你的目标客户，也可以自定义添加。</div>
@@ -2928,13 +2964,34 @@ function appBackToModeSelect() {
 
       <div style="font-size:12px; font-weight:600; color:#6366f1; letter-spacing:0.04em; margin-bottom:12px;">写邮件用</div>
 
-      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">真实案例 / 信任背书</label>
-      <textarea id="biCaseStudy" placeholder="例：曾为东南亚某建材进口商批量供货；没有案例可写工厂实力与认证"
-        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">真实案例 <span style="font-weight:400; color:var(--color-text-secondary, rgba(255,255,255,0.4));">（自己填，再让 AI 润色；不会编造客户名）</span></label>
+      <textarea id="biCaseStudy" placeholder="例：曾为东南亚某建材进口商批量供货"
+        style="width:100%; height:64px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:8px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+      <button type="button" id="biCasePolishBtn" onclick="biPolishField('biCaseStudy','case',this)"
+        style="padding:7px 13px; border-radius:8px; border:0.5px solid rgba(99,102,241,0.5); background:transparent; color:#a5b4fc; font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; gap:5px; margin-bottom:16px;">
+        <i class="ti ti-sparkles" style="font-size:14px;"></i> AI 润色
+      </button>
+
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">信任背书 <span style="font-weight:400; color:var(--color-text-secondary, rgba(255,255,255,0.4));">（资质 / 经验 / 认证，选填）</span></label>
+      <textarea id="biTrust" placeholder="例：10年出口经验、通过 AS2047 / ISO9001 认证、年出口 50+ 柜"
+        style="width:100%; height:64px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:8px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+      <button type="button" id="biTrustPolishBtn" onclick="biPolishField('biTrust','trust',this)"
+        style="padding:7px 13px; border-radius:8px; border:0.5px solid rgba(99,102,241,0.5); background:transparent; color:#a5b4fc; font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; gap:5px; margin-bottom:16px;">
+        <i class="ti ti-sparkles" style="font-size:14px;"></i> AI 润色
+      </button>
 
       <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">零风险入口</label>
-      <textarea id="biLowRiskOffer" placeholder="例：可免费寄样品+AS2047认证报告，运费我方承担，先看实物再谈"
-        style="width:100%; height:70px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
+      <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.45)); margin-bottom:8px;">让客户几乎零成本先试一下。AI 按你的行业推荐，勾选即可，也能自定义添加。</div>
+
+      <!-- AI-recommended zero-risk offer pills + custom add. Compiled value goes
+           to the hidden #biLowRiskOffer so the gate, saveAppBusinessInfo and every
+           lowRiskOffer reader keep working unchanged (mirrors the 目标客户 chooser). -->
+      <div id="biLrStatus" style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.4)); margin-bottom:10px;">先选身份、填好产品，AI 会在这里推荐零风险入口。</div>
+      <div id="biLrPills" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;"></div>
+      <input id="biLrCustomInput" type="text" placeholder="自定义零风险入口，回车添加（例：首单免运费）" autocomplete="off"
+        style="display:none; width:100%; padding:9px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:12px; font-family:inherit; outline:none; box-sizing:border-box;">
+      <input type="hidden" id="biLowRiskOffer">
+      <div style="margin-bottom:14px;"></div>
 
       <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">发件人落款</label>
       <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.45)); margin-bottom:10px;">分开填写。名字和公司必填，职位选填。</div>
@@ -2958,6 +3015,7 @@ function appBackToModeSelect() {
         style="width:100%; margin-top:18px; padding:12px 16px; border:none; border-radius:8px; background:#6366f1; color:#fff; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; transition:opacity 0.15s, background 0.15s;">
         填好了，下一步 →
       </button>
+      </div><!-- /biMainFields -->
     </div>
 
     <div id="appMethodChooser">
@@ -3398,14 +3456,11 @@ function appBackToModeSelect() {
         <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:22px 0">
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
-        <div id="gsKeywordsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
-          <input type="text" id="gsKeyword" class="gs-kw-input" placeholder="例：interior designer" autocomplete="off"
-                 style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
-        </div>
-        <button type="button" onclick="addGsKeywordInput()"
-                style="padding:7px 12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#94a3b8;font-family:inherit;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-bottom:20px">
-          <i class="ti ti-plus" style="font-size:14px"></i>添加
-        </button>
+        <div style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.45));margin-bottom:8px">AI 根据你的产品和目标客户推荐搜索词，勾选要用的，也可以自定义添加。</div>
+        <div id="gsKwStatus" style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.4));margin-bottom:10px">填好「业务信息」的产品和目标客户后，AI 会在这里推荐搜索关键词。</div>
+        <div id="gsKwPills" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+        <input id="gsKwCustomInput" type="text" placeholder="自定义关键词，回车添加（例：bathroom showroom）" autocomplete="off"
+               style="display:none;width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;margin-bottom:20px;box-sizing:border-box">
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">地区（每次只能一个）</label>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
@@ -5166,9 +5221,9 @@ function showAppStep3View(view) {
 function _appPrefillEmailFromBusinessInfo() {
   const bi = window._appBusinessInfo || {};
   const set = (id, val) => { const el = document.getElementById(id); if (el && (val || '').trim()) el.value = val.trim(); };
-  set('fwProduct',        bi.product);
+  set('fwProduct',        [bi.product, bi.service].filter(s => (s || '').trim()).join('；可提供服务：'));
   set('fwTargetCustomer', bi.targetCustomer);
-  set('fwCaseStudy',      bi.caseStudy);
+  set('fwCaseStudy',      [bi.caseStudy, bi.trust].filter(s => (s || '').trim()).join('；信任背书：'));
   set('fwLowRiskOffer',   bi.lowRiskOffer);
   set('fwSenderName',     bi.senderName);
   const haveCore = (bi.product || '').trim() && (bi.targetCustomer || '').trim() && (bi.senderName || '').trim();
@@ -5197,6 +5252,7 @@ async function appGenerateQuestions() {
   const bi = window._appBusinessInfo || {};
   const _biParts = [];
   if ((bi.product || '').trim())        _biParts.push('产品：' + bi.product.trim());
+  if ((bi.service || '').trim())        _biParts.push('服务：' + bi.service.trim());
   if ((bi.advantage || '').trim())      _biParts.push('优势：' + bi.advantage.trim());
   if ((bi.pricing || '').trim())        _biParts.push('价格/竞争力：' + bi.pricing.trim());
   if ((bi.targetCustomer || '').trim()) _biParts.push('目标客户：' + bi.targetCustomer.trim());
@@ -5354,6 +5410,7 @@ function buildAppFilterSummary() {
   const bi = window._appBusinessInfo || {};
   const _biParts = [];
   if ((bi.product || '').trim())        _biParts.push('产品：' + bi.product.trim());
+  if ((bi.service || '').trim())        _biParts.push('服务：' + bi.service.trim());
   if ((bi.advantage || '').trim())      _biParts.push('优势：' + bi.advantage.trim());
   if ((bi.pricing || '').trim())        _biParts.push('价格/竞争力：' + bi.pricing.trim());
   if ((bi.targetCustomer || '').trim()) _biParts.push('目标客户：' + bi.targetCustomer.trim());
@@ -5612,6 +5669,8 @@ function selectSource(src) {
   const wsNext2 = document.querySelector('#ws2 .ws-next');
   if (wsNext2) wsNext2.style.display = (!isLens && src === 'google_maps') ? 'none' : '';
   if (gsPanel) gsPanel.style.display = (src === 'google_search') ? 'block' : 'none';
+  // Trigger the AI keyword recommendation when the Google Search panel opens.
+  if (src === 'google_search' && typeof window._gsKwOnShow === 'function') window._gsKwOnShow();
   if (igPanel) igPanel.style.display = (src === 'instagram')     ? 'block' : 'none';
   if (ttPanel) ttPanel.style.display = (src === 'tiktok')        ? 'block' : 'none';
   if (fbPanel) fbPanel.style.display = (src === 'facebook')      ? 'block' : 'none';
@@ -5663,10 +5722,8 @@ function _ttPickMode(mode) {
 }
 
 async function startGoogleSearch() {
-  const keywords = Array.from(document.querySelectorAll('#gsKeywordsList .gs-kw-input'))
-    .map(i => i.value.trim())
-    .filter(Boolean);
-  if (!keywords.length) { _showToast('请输入至少一个关键词'); return; }
+  const keywords = (typeof window.getGsSelectedKeywords === 'function' ? window.getGsSelectedKeywords() : []);
+  if (!keywords.length) { _showToast('请至少勾选或添加一个关键词'); return; }
   const location   = document.getElementById('gsLocation')?.value.trim() || '';
   const countryCode = _GS_COUNTRY_CODES[document.getElementById('gsCountry')?.value || ''] || '';
   const maxResults = Math.max(1, parseInt(document.getElementById('gsMaxResults')?.value, 10) || 20);
@@ -5802,27 +5859,125 @@ const _GS_COUNTRY_CODES = {
   'Bahrain':'bh','Oman':'om','South Africa':'za','Nigeria':'ng','Kenya':'ke',
   'Egypt':'eg','Morocco':'ma',
 };
-function addGsKeywordInput() {
-  const list = document.getElementById('gsKeywordsList');
-  if (!list) return;
-  const row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:6px;align-items:center';
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'gs-kw-input';
-  input.placeholder = '例：interior designer';
-  input.autocomplete = 'off';
-  input.style.cssText = 'flex:1;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box';
-  const rm = document.createElement('button');
-  rm.type = 'button';
-  rm.innerHTML = '<i class="ti ti-x" style="font-size:14px"></i>';
-  rm.style.cssText = 'padding:8px 10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#94a3b8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center';
-  rm.onclick = () => row.remove();
-  row.appendChild(input);
-  row.appendChild(rm);
-  list.appendChild(row);
-  input.focus();
-}
+// ── Google Search panel: AI-recommended search-keyword pill chooser ──────────
+// Reads 业务信息 (产品/目标客户/优势), calls /api/recommend-keywords, and renders
+// the result as multi-select pills + a 自定义 add. startGoogleSearch reads the
+// chosen set via window.getGsSelectedKeywords(). The fetch runs when the Google
+// Search panel is shown (window._gsKwOnShow, called from selectSource). /lens
+// early-returns.
+(function mountGsKeywordChooser() {
+  if (location.pathname === '/lens') return;
+  const pillsBox    = document.getElementById('gsKwPills');
+  const statusEl    = document.getElementById('gsKwStatus');
+  const customInput = document.getElementById('gsKwCustomInput');
+  if (!pillsBox || !statusEl || !customInput) return;
+
+  let selected  = [];   // chosen keywords (search terms)
+  let suggested = [];    // AI-recommended keywords
+  let lastKey   = '';
+
+  window.getGsSelectedKeywords = () => selected.slice();
+
+  function makePill(label, isSel) {
+    const span = document.createElement('span');
+    span.textContent = label;
+    span.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;border:0.5px solid ' +
+      (isSel ? '#6366f1' : 'var(--color-border-tertiary, rgba(255,255,255,0.12))') +
+      ';background:' + (isSel ? 'rgba(99,102,241,0.15)' : 'transparent') +
+      ';color:' + (isSel ? '#a5a8f3' : 'var(--color-text-secondary, rgba(255,255,255,0.6))') + ';';
+    return span;
+  }
+
+  function render() {
+    pillsBox.innerHTML = '';
+    const order = [];
+    suggested.forEach(s => { if (!order.includes(s)) order.push(s); });
+    selected.forEach(s => { if (!order.includes(s)) order.push(s); });
+
+    order.forEach(label => {
+      const p = makePill(label, selected.includes(label));
+      p.onclick = () => {
+        if (selected.includes(label)) selected = selected.filter(x => x !== label);
+        else selected.push(label);
+        render();
+      };
+      pillsBox.appendChild(p);
+    });
+
+    const addPill = document.createElement('span');
+    addPill.textContent = '＋ 自定义';
+    addPill.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3));background:transparent;color:var(--color-text-secondary, rgba(255,255,255,0.6));';
+    addPill.onclick = () => {
+      const show = customInput.style.display === 'none';
+      customInput.style.display = show ? 'block' : 'none';
+      if (show) customInput.focus();
+    };
+    pillsBox.appendChild(addPill);
+
+    const bi = window._appBusinessInfo || {};
+    if ((bi.product || '').trim() || (bi.targetCustomer || '').trim()) {
+      const refresh = document.createElement('span');
+      refresh.innerHTML = '<i class="ti ti-refresh" style="font-size:13px;"></i> 重新推荐';
+      refresh.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;display:inline-flex;align-items:center;gap:4px;border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));background:transparent;color:#6366f1;';
+      refresh.onclick = () => fetchSuggestions(true);
+      pillsBox.appendChild(refresh);
+    }
+  }
+
+  customInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const val = customInput.value.trim();
+    if (val && !selected.includes(val)) selected.push(val);
+    customInput.value = '';
+    customInput.style.display = 'none';
+    render();
+  });
+
+  async function fetchSuggestions(force) {
+    const bi = window._appBusinessInfo || {};
+    const product        = [(bi.product || '').trim(), (bi.service || '').trim()].filter(Boolean).join('；可提供服务：');
+    const targetCustomer = (bi.targetCustomer || '').trim();
+    const advantage      = (bi.advantage || '').trim();
+    if (!product && !targetCustomer) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = '请先在「业务信息」填写产品和目标客户，再回到这里看推荐。';
+      render();
+      return;
+    }
+    const key = product + '||' + targetCustomer;
+    if (!force && key === lastKey && suggested.length) return;
+    lastKey = key;
+
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = '<i class="ti ti-loader-2"></i> AI 正在推荐搜索关键词…';
+    try {
+      const r = await fetch('/api/recommend-keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getStoredToken() },
+        body: JSON.stringify({ product, targetCustomer, advantage }),
+      });
+      const data = await r.json();
+      if (Array.isArray(data.keywords) && data.keywords.length) {
+        suggested = data.keywords;
+        statusEl.style.display = 'none';
+      } else {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'AI 暂无推荐，可点「＋ 自定义」手动添加关键词。';
+      }
+    } catch (e) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'AI 推荐失败，可点「＋ 自定义」手动添加关键词。';
+    } finally {
+      render();
+    }
+  }
+
+  // Called from selectSource when the Google Search panel is opened.
+  window._gsKwOnShow = () => fetchSuggestions(false);
+
+  render();
+})();
 function onGsCountryChange() {
   const country = document.getElementById('gsCountry').value;
   const citySel = document.getElementById('gsCity');
@@ -9963,7 +10118,8 @@ async function startEmailGeneration() {
     const bi = window._appBusinessInfo || {};
     if ((bi.pricing        || '').trim()) companyProfile.pricing        = bi.pricing.trim();
     if ((bi.targetCustomer || '').trim()) companyProfile.targetCustomer = bi.targetCustomer.trim();
-    if ((bi.caseStudy      || '').trim()) companyProfile.caseStudy      = bi.caseStudy.trim();
+    if ((bi.caseStudy || '').trim() || (bi.trust || '').trim())
+      companyProfile.caseStudy = [bi.caseStudy, bi.trust].filter(s => (s || '').trim()).map(s => s.trim()).join('；信任背书：');
     if ((bi.lowRiskOffer   || '').trim()) companyProfile.lowRiskOffer   = bi.lowRiskOffer.trim();
   }
 
@@ -10439,15 +10595,24 @@ async function smtpSendAll() {
   if (!card) return;
   card.style.display = 'block';
 
+  // Text fields persisted to localStorage. Identity is handled separately (button
+  // selection, not a text input) but stored in the same object under `identity`.
   const FIELDS = {
     biProduct:        'product',
+    biService:        'service',
     biAdvantage:      'advantage',
     biTargetCustomer: 'targetCustomer',
     biCaseStudy:      'caseStudy',
+    biTrust:          'trust',
     biLowRiskOffer:   'lowRiskOffer',
     biSenderName:     'senderName',
   };
+  // Must be filled before 下一步 unlocks. service is optional; identity is
+  // required but checked separately (it's not a text input).
+  const REQUIRED = ['biProduct', 'biAdvantage', 'biTargetCustomer', 'biCaseStudy', 'biLowRiskOffer', 'biSenderName'];
   const KEY = 'appBusinessInfo';
+
+  let currentIdentity = '';
 
   function saveAppBusinessInfo() {
     const out = {};
@@ -10455,6 +10620,7 @@ async function smtpSendAll() {
       const el = document.getElementById(id);
       out[key] = el ? el.value : '';
     });
+    out.identity = currentIdentity;
     window._appBusinessInfo = out;
     try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (_) {}
   }
@@ -10467,41 +10633,353 @@ async function smtpSendAll() {
     if (saved && saved[key] != null) el.value = saved[key];
     el.addEventListener('input', saveAppBusinessInfo);
   });
+  currentIdentity = (saved && saved.identity) || '';
   window._appBusinessInfo = saved || {};
 
-  // Progressive disclosure (/app only): hide the method chooser until all 7
-  // business-info fields are filled and the user clicks 下一步. /lens never
-  // reaches here (early return above), so its chooser stays visible as before.
-  const chooser = document.getElementById('appMethodChooser');
-  const nextBtn = document.getElementById('appBiNextBtn');
-  if (chooser && nextBtn) {
-    chooser.style.display = 'none';
+  const chooser    = document.getElementById('appMethodChooser');
+  const nextBtn    = document.getElementById('appBiNextBtn');
+  const mainFields = document.getElementById('biMainFields');
 
-    function allBiFilled() {
-      return Object.keys(FIELDS).every(id => {
-        const el = document.getElementById(id);
-        return el && el.value.trim() !== '';
-      });
-    }
-    function updateNextGate() {
-      const ok = allBiFilled();
-      nextBtn.disabled = !ok;
-      nextBtn.style.background = ok ? '#6366f1' : 'rgba(255,255,255,0.08)';
-      nextBtn.style.color = ok ? '#fff' : 'rgba(255,255,255,0.35)';
-      nextBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
-    }
-    Object.keys(FIELDS).forEach(id => {
+  // Gate: identity chosen + every REQUIRED field non-empty.
+  function allBiFilled() {
+    if (!currentIdentity) return false;
+    return REQUIRED.every(id => {
       const el = document.getElementById(id);
-      if (el) el.addEventListener('input', updateNextGate);
+      return el && el.value.trim() !== '';
     });
-    updateNextGate();
+  }
+  function updateNextGate() {
+    if (!nextBtn) return;
+    const ok = allBiFilled();
+    nextBtn.disabled = !ok;
+    nextBtn.style.background = ok ? '#6366f1' : 'rgba(255,255,255,0.08)';
+    nextBtn.style.color = ok ? '#fff' : 'rgba(255,255,255,0.35)';
+    nextBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
+  }
 
+  // Identity buttons: paint the active one, reveal the rest of the form, and feed
+  // window._appBusinessInfo.identity (used by advantage AI recs + email tone).
+  function paintIdentity() {
+    document.querySelectorAll('#biIdentityRow .bi-identity').forEach(b => {
+      const on = b.dataset.identity === currentIdentity;
+      b.style.borderColor = on ? '#6366f1' : 'var(--color-border-tertiary, rgba(255,255,255,0.12))';
+      b.style.background  = on ? 'rgba(99,102,241,0.15)' : 'transparent';
+      b.style.color       = on ? '#a5a8f3' : 'var(--color-text-secondary, rgba(255,255,255,0.6))';
+    });
+    if (mainFields) mainFields.style.display = currentIdentity ? 'block' : 'none';
+  }
+  window.biSelectIdentity = function (id) {
+    currentIdentity = id;
+    paintIdentity();
+    saveAppBusinessInfo();
+    updateNextGate();
+    // Identity drives advantage + zero-risk recommendations — refresh on change.
+    if (typeof window._biAdvOnIdentity === 'function') window._biAdvOnIdentity();
+    if (typeof window._biLrOnIdentity === 'function') window._biLrOnIdentity();
+  };
+
+  Object.keys(FIELDS).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateNextGate);
+  });
+
+  // Progressive disclosure (/app only): method chooser hidden until 下一步.
+  // /lens early-returns above, so its chooser stays visible as before.
+  if (chooser) chooser.style.display = 'none';
+  paintIdentity();
+  updateNextGate();
+
+  if (chooser && nextBtn) {
     nextBtn.addEventListener('click', function () {
       if (nextBtn.disabled) return;
       chooser.style.display = '';
       chooser.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
+})();
+
+// ── /app 业务信息: reusable AI 润色 for 优势 / 案例 / 信任背书 ──────────────────
+// Reads a textarea, calls /api/polish-text with its current value + kind +
+// identity, and writes the polished result back (dispatching 'input' so
+// saveAppBusinessInfo runs). High temperature server-side → clicking again gives
+// a fresh phrasing. /lens has no such buttons so this is /app-only in practice.
+async function biPolishField(textareaId, kind, btn) {
+  const ta = document.getElementById(textareaId);
+  if (!ta) return;
+  const text = ta.value.trim();
+  if (!text) { _showToast('请先填一点内容，AI 才能润色'); return; }
+  const identity = (window._appBusinessInfo || {}).identity || '';
+  const orig = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2"></i> 润色中…'; }
+  try {
+    const r = await fetch('/api/polish-text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getStoredToken() },
+      body: JSON.stringify({ text, kind, identity }),
+    });
+    const data = await r.json();
+    if (data && data.text) {
+      ta.value = data.text;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+    } else {
+      _showToast('润色失败，请重试');
+    }
+  } catch (e) {
+    _showToast('润色失败：' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+  }
+}
+
+// ── /app 业务信息: 优势 AI-recommended pill chooser ───────────────────────────
+// Reads 身份 + 产品 + 服务, calls /api/recommend-advantages, renders advantage
+// points as pills. Tapping a pill APPENDS it into the #biAdvantage textarea
+// (which stays the source of truth); the user then edits + 润色. /lens early-returns.
+(function mountAdvantageChooser() {
+  if (location.pathname === '/lens') return;
+  const pillsBox    = document.getElementById('biAdvPills');
+  const statusEl    = document.getElementById('biAdvStatus');
+  const customInput = document.getElementById('biAdvCustomInput');
+  const ta          = document.getElementById('biAdvantage');
+  const productEl   = document.getElementById('biProduct');
+  if (!pillsBox || !statusEl || !customInput || !ta || !productEl) return;
+
+  let suggested = [];
+  let lastKey   = '';
+
+  function appendToTextarea(phrase) {
+    const cur = ta.value.trim();
+    // Avoid duplicates.
+    if (cur.includes(phrase)) return;
+    ta.value = cur ? (cur + '、' + phrase) : phrase;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function makePill(label) {
+    const span = document.createElement('span');
+    span.innerHTML = '<i class="ti ti-plus" style="font-size:12px;"></i> ' + label;
+    span.style.cssText = 'display:inline-flex; align-items:center; gap:3px; padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; user-select:none; font-family:inherit; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));';
+    span.onclick = () => { appendToTextarea(label); span.style.opacity = '0.4'; };
+    return span;
+  }
+
+  function render() {
+    pillsBox.innerHTML = '';
+    suggested.forEach(label => pillsBox.appendChild(makePill(label)));
+
+    const addPill = document.createElement('span');
+    addPill.textContent = '＋ 自定义';
+    addPill.style.cssText = 'padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; user-select:none; font-family:inherit; border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));';
+    addPill.onclick = () => {
+      const show = customInput.style.display === 'none';
+      customInput.style.display = show ? 'block' : 'none';
+      if (show) customInput.focus();
+    };
+    pillsBox.appendChild(addPill);
+
+    const bi = window._appBusinessInfo || {};
+    if ((bi.identity || '') && (productEl.value || '').trim()) {
+      const refresh = document.createElement('span');
+      refresh.innerHTML = '<i class="ti ti-refresh" style="font-size:13px;"></i> 重新推荐';
+      refresh.style.cssText = 'padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; user-select:none; font-family:inherit; display:inline-flex; align-items:center; gap:4px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:#6366f1;';
+      refresh.onclick = () => fetchSuggestions(true);
+      pillsBox.appendChild(refresh);
+    }
+  }
+
+  customInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const val = customInput.value.trim();
+    if (val) appendToTextarea(val);
+    customInput.value = '';
+    customInput.style.display = 'none';
+  });
+
+  async function fetchSuggestions(force) {
+    const bi = window._appBusinessInfo || {};
+    const identity = bi.identity || '';
+    const product  = (productEl.value || '').trim();
+    const service  = (document.getElementById('biService')?.value || '').trim();
+    if (!identity || !product) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = '先选身份、填好产品，AI 会在这里推荐优势点。';
+      render();
+      return;
+    }
+    const key = identity + '||' + product + '||' + service;
+    if (!force && key === lastKey && suggested.length) return;
+    lastKey = key;
+
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = '<i class="ti ti-loader-2"></i> AI 正在推荐优势点…';
+    try {
+      const r = await fetch('/api/recommend-advantages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getStoredToken() },
+        body: JSON.stringify({ product, service, identity }),
+      });
+      const data = await r.json();
+      if (Array.isArray(data.advantages) && data.advantages.length) {
+        suggested = data.advantages;
+        statusEl.style.display = 'none';
+      } else {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'AI 暂无推荐，可点「＋ 自定义」或直接在下面写。';
+      }
+    } catch (e) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'AI 推荐失败，可点「＋ 自定义」或直接在下面写。';
+    } finally {
+      render();
+    }
+  }
+
+  // Re-recommend when identity or product/service change (debounced).
+  let t = null;
+  function schedule() {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => fetchSuggestions(false), 800);
+  }
+  productEl.addEventListener('input', schedule);
+  document.getElementById('biService')?.addEventListener('input', schedule);
+  // Identity changes go through biSelectIdentity → expose a hook it can call.
+  window._biAdvOnIdentity = () => fetchSuggestions(false);
+
+  render();
+})();
+
+// ── /app 业务信息: 零风险入口 AI-recommended pill chooser ─────────────────────
+// Multi-select pills (recommended by /api/recommend-low-risk-offers from
+// product/service/identity) compiled into the hidden #biLowRiskOffer, so the
+// gate + saveAppBusinessInfo + downstream lowRiskOffer readers are unchanged.
+(function mountLowRiskChooser() {
+  if (location.pathname === '/lens') return;
+  const pillsBox    = document.getElementById('biLrPills');
+  const statusEl    = document.getElementById('biLrStatus');
+  const customInput = document.getElementById('biLrCustomInput');
+  const hidden      = document.getElementById('biLowRiskOffer');
+  const productEl   = document.getElementById('biProduct');
+  if (!pillsBox || !statusEl || !customInput || !hidden || !productEl) return;
+
+  let selected  = [];
+  let suggested = [];
+  let lastKey   = '';
+
+  if (hidden.value.trim()) {
+    selected = hidden.value.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+  }
+
+  function compile() {
+    hidden.value = selected.join('、');
+    hidden.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function makePill(label, isSel) {
+    const span = document.createElement('span');
+    span.textContent = label;
+    span.style.cssText = 'padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; user-select:none; font-family:inherit; border:0.5px solid ' +
+      (isSel ? '#6366f1' : 'var(--color-border-tertiary, rgba(255,255,255,0.12))') +
+      '; background:' + (isSel ? 'rgba(99,102,241,0.15)' : 'transparent') +
+      '; color:' + (isSel ? '#a5a8f3' : 'var(--color-text-secondary, rgba(255,255,255,0.6))') + ';';
+    return span;
+  }
+
+  function render() {
+    pillsBox.innerHTML = '';
+    const order = [];
+    suggested.forEach(s => { if (!order.includes(s)) order.push(s); });
+    selected.forEach(s => { if (!order.includes(s)) order.push(s); });
+
+    order.forEach(label => {
+      const p = makePill(label, selected.includes(label));
+      p.onclick = () => {
+        if (selected.includes(label)) selected = selected.filter(x => x !== label);
+        else selected.push(label);
+        compile(); render();
+      };
+      pillsBox.appendChild(p);
+    });
+
+    const addPill = document.createElement('span');
+    addPill.textContent = '＋ 自定义';
+    addPill.style.cssText = 'padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; user-select:none; font-family:inherit; border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6));';
+    addPill.onclick = () => {
+      const show = customInput.style.display === 'none';
+      customInput.style.display = show ? 'block' : 'none';
+      if (show) customInput.focus();
+    };
+    pillsBox.appendChild(addPill);
+
+    const bi = window._appBusinessInfo || {};
+    if ((bi.identity || '') && (productEl.value || '').trim()) {
+      const refresh = document.createElement('span');
+      refresh.innerHTML = '<i class="ti ti-refresh" style="font-size:13px;"></i> 重新推荐';
+      refresh.style.cssText = 'padding:6px 12px; border-radius:20px; font-size:13px; cursor:pointer; user-select:none; font-family:inherit; display:inline-flex; align-items:center; gap:4px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:#6366f1;';
+      refresh.onclick = () => fetchSuggestions(true);
+      pillsBox.appendChild(refresh);
+    }
+  }
+
+  customInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const val = customInput.value.trim();
+    if (val && !selected.includes(val)) selected.push(val);
+    customInput.value = '';
+    customInput.style.display = 'none';
+    compile(); render();
+  });
+
+  async function fetchSuggestions(force) {
+    const bi = window._appBusinessInfo || {};
+    const identity = bi.identity || '';
+    const product  = (productEl.value || '').trim();
+    const service  = (document.getElementById('biService')?.value || '').trim();
+    if (!identity || !product) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = '先选身份、填好产品，AI 会在这里推荐零风险入口。';
+      render();
+      return;
+    }
+    const key = identity + '||' + product + '||' + service;
+    if (!force && key === lastKey && suggested.length) return;
+    lastKey = key;
+
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = '<i class="ti ti-loader-2"></i> AI 正在推荐零风险入口…';
+    try {
+      const r = await fetch('/api/recommend-low-risk-offers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getStoredToken() },
+        body: JSON.stringify({ product, service, identity }),
+      });
+      const data = await r.json();
+      if (Array.isArray(data.offers) && data.offers.length) {
+        suggested = data.offers;
+        statusEl.style.display = 'none';
+      } else {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'AI 暂无推荐，可点「＋ 自定义」手动添加。';
+      }
+    } catch (e) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'AI 推荐失败，可点「＋ 自定义」手动添加。';
+    } finally {
+      render();
+    }
+  }
+
+  let t = null;
+  function schedule() {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => fetchSuggestions(false), 800);
+  }
+  productEl.addEventListener('input', schedule);
+  document.getElementById('biService')?.addEventListener('input', schedule);
+  window._biLrOnIdentity = () => fetchSuggestions(false);
+
+  render();
 })();
 
 // ── /app 业务信息: 目标客户 AI-recommended pill chooser ───────────────────────
@@ -10594,7 +11072,7 @@ async function smtpSendAll() {
   let debounceTimer = null;
 
   async function fetchSuggestions(force) {
-    const product   = productEl.value.trim();
+    const product   = [productEl.value.trim(), (document.getElementById('biService')?.value || '').trim()].filter(Boolean).join('；可提供服务：');
     const advantage = advEl.value.trim();
     if (!product || !advantage) return;
     const key = product + '||' + advantage;
@@ -11327,6 +11805,7 @@ async function smtpSendAll() {
     const bi = window._appBusinessInfo || {};
     const parts = [];
     if ((bi.product || '').trim())        parts.push('产品：' + bi.product.trim());
+    if ((bi.service || '').trim())        parts.push('服务：' + bi.service.trim());
     if ((bi.advantage || '').trim())      parts.push('优势：' + bi.advantage.trim());
     if ((bi.pricing || '').trim())        parts.push('价格/竞争力：' + bi.pricing.trim());
     if ((bi.targetCustomer || '').trim()) parts.push('目标客户：' + bi.targetCustomer.trim());
@@ -12865,10 +13344,12 @@ async function appGenerateAll() {
 function appStartEmailGen() {
   const bi = window._appBusinessInfo || {};
   const parts = [];
-  if ((bi.product || '').trim())        parts.push('产品/服务：' + bi.product.trim());
+  if ((bi.product || '').trim())        parts.push('产品：' + bi.product.trim());
+  if ((bi.service || '').trim())        parts.push('服务：' + bi.service.trim());
   if ((bi.advantage || '').trim())      parts.push('优势：' + bi.advantage.trim());
   if ((bi.targetCustomer || '').trim()) parts.push('目标客户：' + bi.targetCustomer.trim());
   if ((bi.caseStudy || '').trim())      parts.push('真实案例：' + bi.caseStudy.trim());
+  if ((bi.trust || '').trim())          parts.push('信任背书：' + bi.trust.trim());
   if ((bi.lowRiskOffer || '').trim())   parts.push('零风险入口：' + bi.lowRiskOffer.trim());
 
   const sd = document.getElementById('appSellerDesc');     if (sd) sd.value = parts.join('；');
