@@ -3059,12 +3059,14 @@ app.post('/api/recommend-advantages', requireAuth, async (req, res) => {
 
 请推荐这个卖家可以主打的"优势点"，用于开发信和筛选。
 
+第一步(很重要):先在心里分析"${product}"这个产品本身 —— 它的材质/工艺特点、买家最在意什么(比如耐用性、合规认证、适用场景、安装维护、外观一致性等)。优势必须**紧扣这个产品**,体现"做这个产品的${idLabel}才会有的强项"。
+
 要求:
 - 输出 6 个优势点，简短中文短语(6-14字)
 - 方向:${idAngle || '突出差异化与专业度'}
-- 关键:写出"和同类${idLabel}相比的区别/差异点"，不要"可以定制""质量好"这种谁都会说的空话，要具体
-  例如同样是工厂:不要写"可定制"，写"支持来图打样、3天出样"；不要写"产能大"，写"自有X条产线、月产能X"
-- 不要编造具体数字时用占位也行(用户后续会改)，重点是给出有差异化的角度
+- 必须贴着"${product}"这个具体产品来,例如卖不锈钢浴室柜就该提"304不锈钢防潮防锈""五金阻尼""表面工艺不褪色"这类产品本身的强项,而不是只说"自有工厂""可定制"这种任何产品都能套的空话
+- 写出"和同类${idLabel}相比的区别/差异点"，要具体。例如不要写"可定制"，写"支持来图打样、3天出样"
+- 不知道具体数字时用占位(如 X)也行，用户后续会改
 - 不要解释，不要编号
 
 只返回合法 JSON:
@@ -3093,15 +3095,18 @@ app.post('/api/polish-text', requireAuth, async (req, res) => {
   const text     = String(req.body?.text || '').trim();
   const kind     = String(req.body?.kind || 'advantage').trim();
   const identity = String(req.body?.identity || '').trim();
+  const product  = String(req.body?.product || '').trim();
+  const service  = String(req.body?.service || '').trim();
   if (!text) return res.status(400).json({ error: '没有要润色的内容' });
   const idLabel = _IDENTITY_LABEL[identity] || '供应商';
 
   const KIND_RULES = {
-    advantage: `这是卖家的"优势"。改写成更专业、更有说服力的卖点，突出"和同类${idLabel}相比的区别"，把空话改具体。`,
-    case:      `这是卖家的"真实案例"。润色得更可信、更专业。绝对不要编造新的客户名、数字或事实，只优化表达。`,
-    trust:     `这是卖家的"信任背书"。润色得更专业可信。不要编造新的认证、客户或数字，只优化表达。`,
+    advantage: `这是卖家的"优势"。改写成更专业、更有说服力的卖点，紧扣上面的产品，突出"和同类${idLabel}相比的区别"，把空话改具体。`,
+    case:      `这是卖家的"真实案例"。结合产品润色得更可信、更专业。绝对不要编造新的客户名、数字或事实，只优化表达。`,
+    trust:     `这是卖家的"信任背书"。结合产品润色得更专业可信。不要编造新的认证、客户或数字，只优化表达。`,
   };
   const rule = KIND_RULES[kind] || KIND_RULES.advantage;
+  const ctx = `卖家身份:${idLabel}。产品:"${product || '(未填)'}"。服务:"${service || '(未填)'}"。`;
   try {
     const Anthropic = require('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -3112,7 +3117,7 @@ app.post('/api/polish-text', requireAuth, async (req, res) => {
       temperature: 1,
       messages: [{
         role: 'user',
-        content: `卖家身份:${idLabel}。
+        content: `${ctx}
 
 ${rule}
 
@@ -3122,7 +3127,7 @@ ${text}
 """
 
 要求:
-- 用中文输出，保持原意但表达更好
+- 用中文输出，保持原意但表达更好，并贴合上面的产品/身份/服务
 - 每次都给一个"不一样"的写法 —— 即使意思相同，措辞也要换新，让用户多点几次能挑不同版本
 - 不编造原文没有的具体客户名、数字、认证等事实
 - 只返回润色后的正文，不要解释、不要引号、不要 markdown`
@@ -3148,6 +3153,12 @@ app.post('/api/recommend-low-risk-offers', requireAuth, async (req, res) => {
   const identity = String(req.body?.identity || '').trim();
   if (!product) return res.status(400).json({ error: '缺少产品信息' });
   const idLabel = _IDENTITY_LABEL[identity] || '供应商';
+  const LR_ANGLE = {
+    factory: '工厂能提供的入口:免费寄实样、免费出3D/CAD图、小批量试单、提供材质/认证检测报告、验厂邀请、先打样后下单',
+    trade:   '外贸公司能提供的入口(注意:贸易公司不强调"自有产线",而是服务):免费帮选品/比价、代验厂代质检、免费整合多供应商报价、寄样协调、一站式打样、先验货后付款',
+    both:    '工贸一体能提供的入口:免费寄样+免费出图、小批量试单、自有工厂验厂邀请、一站式打样到交付',
+  };
+  const lrAngle = LR_ANGLE[identity] || '';
   try {
     const Anthropic = require('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -3155,16 +3166,19 @@ app.post('/api/recommend-low-risk-offers', requireAuth, async (req, res) => {
     const response = await withTimeout(client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 400,
+      temperature: 1,
       messages: [{
         role: 'user',
         content: `卖家身份:${idLabel}。产品:"${product}"。服务:"${service || '(未填)'}"。
 
 "零风险入口"是指卖家给潜在客户的低风险尝试入口，让客户几乎没有成本就能先试一下，从而更愿意回复开发信。
 
-请根据这个行业推荐 6 个合适的零风险入口选项。
+请推荐 6 个合适的零风险入口选项，必须**同时贴合这个具体产品 + 这个身份**。
+方向:${lrAngle || '贴合该产品/行业的低风险入口'}
 要求:
-- 简短中文短语(4-12字)，是"卖家能提供的入口动作"
-- 贴合该产品/行业。例如制造业常见:免费寄样、免费报价、免费出设计图、首单免运费、小批量试单、提供认证报告、先验货后付款
+- 简短中文短语(4-14字)，是"卖家能提供的入口动作"
+- 紧扣"${product}"这个产品(例如卖浴室柜可写"免费寄五金样品/色板""免费出柜体3D效果图")
+- 贴合身份:工厂偏"寄样/出图/试单",外贸公司偏"帮选品/代验厂/整合报价"(贸易公司别写"自有产线"类)
 - 不要解释，不要编号
 
 只返回合法 JSON:

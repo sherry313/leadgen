@@ -2919,7 +2919,7 @@ function appBackToModeSelect() {
 
       <div style="font-size:12px; font-weight:600; color:#6366f1; letter-spacing:0.04em; margin-bottom:12px;">筛选 + 邮件都会用</div>
 
-      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">产品</label>
+      <label id="biProductLabel" style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">产品</label>
       <textarea id="biProduct" placeholder="例：不锈钢浴室柜、淋浴房、马桶浴缸"
         style="width:100%; height:60px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:14px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
 
@@ -2994,21 +2994,18 @@ function appBackToModeSelect() {
       <div style="margin-bottom:14px;"></div>
 
       <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:6px;">发件人落款</label>
-      <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.45)); margin-bottom:10px;">分开填写。名字和公司必填，职位选填。</div>
+      <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.45)); margin-bottom:10px;">分开填写，名字和公司都必填。</div>
 
-      <!-- Three separate signature fields. Their compiled "名字，公司，职位"
-           string is written to the hidden #biSenderName so fwSenderName,
-           appSignatureName, the AI Sender: context and all other senderName
-           readers keep working unchanged. The hidden value is only populated
-           when BOTH 名字 and 公司 are filled, so the next-step gate enforces them. -->
-      <div style="display:flex; gap:10px; margin-bottom:10px;">
+      <!-- Name + company signature fields. Their compiled "名字，公司" string is
+           written to the hidden #biSenderName so fwSenderName, appSignatureName,
+           the AI Sender: context and all other senderName readers keep working.
+           The hidden value is only populated when BOTH are filled (gate enforces). -->
+      <div style="display:flex; gap:10px; margin-bottom:4px;">
         <input id="biSenderPersonName" type="text" placeholder="名字（例：Libby）"
           style="flex:1; min-width:0; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); font-family:inherit; outline:none; box-sizing:border-box;">
         <input id="biSenderCompany" type="text" placeholder="公司（例：XX门窗有限公司）"
           style="flex:1.4; min-width:0; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); font-family:inherit; outline:none; box-sizing:border-box;">
       </div>
-      <input id="biSenderTitle" type="text" placeholder="职位 / 头衔（选填，例：外贸经理）"
-        style="width:100%; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-bottom:4px; font-family:inherit; outline:none; box-sizing:border-box;">
       <input type="hidden" id="biSenderName">
 
       <button id="appBiNextBtn" type="button"
@@ -3366,14 +3363,11 @@ function appBackToModeSelect() {
         </div>
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
-        <div id="gmKeywordsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
-          <input type="text" id="gmKeyword" class="gm-kw-input" placeholder="例：home builder" autocomplete="off"
-                 style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
-        </div>
-        <button type="button" onclick="addGmKeywordInput()"
-                style="padding:7px 12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#94a3b8;font-family:inherit;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-bottom:20px">
-          <i class="ti ti-plus" style="font-size:14px"></i>添加
-        </button>
+        <div style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.45));margin-bottom:8px">AI 根据你的产品和目标客户推荐搜索词，勾选要用的，也可以自定义添加。</div>
+        <div id="gmKwStatus" style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.4));margin-bottom:10px">填好「业务信息」的产品和目标客户后，AI 会在这里推荐搜索关键词。</div>
+        <div id="gmKwPills" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+        <input id="gmKwCustomInput" type="text" placeholder="自定义关键词，回车添加（例：bathroom showroom）" autocomplete="off"
+               style="display:none;width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;margin-bottom:20px;box-sizing:border-box">
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">地区（每次只能一个）</label>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
@@ -5662,6 +5656,8 @@ function selectSource(src) {
   const fbPanel = document.getElementById('fbPanel');
   // gmPanel is /app only — /lens keeps the existing country/city/quantity wizard for Google Maps
   if (gmPanel) gmPanel.style.display = (!isLens && src === 'google_maps') ? 'block' : 'none';
+  // Trigger the AI keyword recommendation when the Google Maps panel opens.
+  if (!isLens && src === 'google_maps' && typeof window._gmKwOnShow === 'function') window._gmKwOnShow();
   // Hide the ws2 "下一步" button so the user can't try to advance into the
   // (now-bypassed) ws3+ chain for /app + google_maps. wizardGo() short-circuits
   // n>2 → 2 as a defence-in-depth. (ws1 is permanently hidden on /app by the
@@ -5758,27 +5754,121 @@ async function startGoogleSearch() {
   }
 }
 
-function addGmKeywordInput() {
-  const list = document.getElementById('gmKeywordsList');
-  if (!list) return;
-  const row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:6px;align-items:center';
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'gm-kw-input';
-  input.placeholder = '例：home builder';
-  input.autocomplete = 'off';
-  input.style.cssText = 'flex:1;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box';
-  const rm = document.createElement('button');
-  rm.type = 'button';
-  rm.innerHTML = '<i class="ti ti-x" style="font-size:14px"></i>';
-  rm.style.cssText = 'padding:8px 10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#94a3b8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center';
-  rm.onclick = () => row.remove();
-  row.appendChild(input);
-  row.appendChild(rm);
-  list.appendChild(row);
-  input.focus();
-}
+// ── Google Maps panel: AI-recommended search-keyword pill chooser ────────────
+// Same as the Google Search chooser (uses /api/recommend-keywords from
+// 业务信息), exposed via window.getGmSelectedKeywords() for startGoogleMapsScrape.
+// Fetch runs when the Maps panel opens (window._gmKwOnShow, from selectSource).
+(function mountGmKeywordChooser() {
+  if (location.pathname === '/lens') return;
+  const pillsBox    = document.getElementById('gmKwPills');
+  const statusEl    = document.getElementById('gmKwStatus');
+  const customInput = document.getElementById('gmKwCustomInput');
+  if (!pillsBox || !statusEl || !customInput) return;
+
+  let selected  = [];
+  let suggested = [];
+  let lastKey   = '';
+
+  window.getGmSelectedKeywords = () => selected.slice();
+
+  function makePill(label, isSel) {
+    const span = document.createElement('span');
+    span.textContent = label;
+    span.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;border:0.5px solid ' +
+      (isSel ? '#6366f1' : 'var(--color-border-tertiary, rgba(255,255,255,0.12))') +
+      ';background:' + (isSel ? 'rgba(99,102,241,0.15)' : 'transparent') +
+      ';color:' + (isSel ? '#a5a8f3' : 'var(--color-text-secondary, rgba(255,255,255,0.6))') + ';';
+    return span;
+  }
+
+  function render() {
+    pillsBox.innerHTML = '';
+    const order = [];
+    suggested.forEach(s => { if (!order.includes(s)) order.push(s); });
+    selected.forEach(s => { if (!order.includes(s)) order.push(s); });
+
+    order.forEach(label => {
+      const p = makePill(label, selected.includes(label));
+      p.onclick = () => {
+        if (selected.includes(label)) selected = selected.filter(x => x !== label);
+        else selected.push(label);
+        render();
+      };
+      pillsBox.appendChild(p);
+    });
+
+    const addPill = document.createElement('span');
+    addPill.textContent = '＋ 自定义';
+    addPill.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3));background:transparent;color:var(--color-text-secondary, rgba(255,255,255,0.6));';
+    addPill.onclick = () => {
+      const show = customInput.style.display === 'none';
+      customInput.style.display = show ? 'block' : 'none';
+      if (show) customInput.focus();
+    };
+    pillsBox.appendChild(addPill);
+
+    const bi = window._appBusinessInfo || {};
+    if ((bi.product || '').trim() || (bi.targetCustomer || '').trim()) {
+      const refresh = document.createElement('span');
+      refresh.innerHTML = '<i class="ti ti-refresh" style="font-size:13px;"></i> 重新推荐';
+      refresh.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;display:inline-flex;align-items:center;gap:4px;border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));background:transparent;color:#6366f1;';
+      refresh.onclick = () => fetchSuggestions(true);
+      pillsBox.appendChild(refresh);
+    }
+  }
+
+  customInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const val = customInput.value.trim();
+    if (val && !selected.includes(val)) selected.push(val);
+    customInput.value = '';
+    customInput.style.display = 'none';
+    render();
+  });
+
+  async function fetchSuggestions(force) {
+    const bi = window._appBusinessInfo || {};
+    const product        = [(bi.product || '').trim(), (bi.service || '').trim()].filter(Boolean).join('；可提供服务：');
+    const targetCustomer = (bi.targetCustomer || '').trim();
+    const advantage      = (bi.advantage || '').trim();
+    if (!product && !targetCustomer) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = '请先在「业务信息」填写产品和目标客户，再回到这里看推荐。';
+      render();
+      return;
+    }
+    const key = product + '||' + targetCustomer;
+    if (!force && key === lastKey && suggested.length) return;
+    lastKey = key;
+
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = '<i class="ti ti-loader-2"></i> AI 正在推荐搜索关键词…';
+    try {
+      const r = await fetch('/api/recommend-keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getStoredToken() },
+        body: JSON.stringify({ product, targetCustomer, advantage }),
+      });
+      const data = await r.json();
+      if (Array.isArray(data.keywords) && data.keywords.length) {
+        suggested = data.keywords;
+        statusEl.style.display = 'none';
+      } else {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'AI 暂无推荐，可点「＋ 自定义」手动添加关键词。';
+      }
+    } catch (e) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'AI 推荐失败，可点「＋ 自定义」手动添加关键词。';
+    } finally {
+      render();
+    }
+  }
+
+  window._gmKwOnShow = () => fetchSuggestions(false);
+  render();
+})();
 
 // /app manual region: dependent Country → City dropdowns feed the hidden #gmLocation.
 // The assembled value stays in the old "City, Country" English format the server expects.
@@ -6022,10 +6112,8 @@ function updateGsLocation() {
 }
 
 async function startGoogleMapsScrape() {
-  const keywords = Array.from(document.querySelectorAll('#gmKeywordsList .gm-kw-input'))
-    .map(i => i.value.trim())
-    .filter(Boolean);
-  if (!keywords.length) { _showToast('请输入至少一个关键词'); return; }
+  const keywords = (typeof window.getGmSelectedKeywords === 'function' ? window.getGmSelectedKeywords() : []);
+  if (!keywords.length) { _showToast('请至少勾选或添加一个关键词'); return; }
   const location   = document.getElementById('gmLocation')?.value.trim() || '';
   const maxResults = Math.max(1, parseInt(document.getElementById('gmMaxResults')?.value, 10) || 20);
   const fields = Array.from(document.querySelectorAll('#gmFieldPills .gm-pill.on')).map(p => p.dataset.field);
@@ -10667,6 +10755,13 @@ async function smtpSendAll() {
       b.style.color       = on ? '#a5a8f3' : 'var(--color-text-secondary, rgba(255,255,255,0.6))';
     });
     if (mainFields) mainFields.style.display = currentIdentity ? 'block' : 'none';
+    // 外贸公司没有固定产品 → 产品框改叫"主营品类 / 这次想推的产品"。
+    const pLabel = document.getElementById('biProductLabel');
+    const pInput = document.getElementById('biProduct');
+    if (pLabel) pLabel.textContent = (currentIdentity === 'trade') ? '主营品类 / 这次想推的产品' : '产品';
+    if (pInput) pInput.placeholder = (currentIdentity === 'trade')
+      ? '例：卫浴五金、浴室柜（填一个品类或这次主推的产品）'
+      : '例：不锈钢浴室柜、淋浴房、马桶浴缸';
   }
   window.biSelectIdentity = function (id) {
     currentIdentity = id;
@@ -10708,14 +10803,17 @@ async function biPolishField(textareaId, kind, btn) {
   if (!ta) return;
   const text = ta.value.trim();
   if (!text) { _showToast('请先填一点内容，AI 才能润色'); return; }
-  const identity = (window._appBusinessInfo || {}).identity || '';
+  const bi = window._appBusinessInfo || {};
+  const identity = bi.identity || '';
+  const product  = (bi.product || '').trim();
+  const service  = (bi.service || '').trim();
   const orig = btn ? btn.innerHTML : '';
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader-2"></i> 润色中…'; }
   try {
     const r = await fetch('/api/polish-text', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getStoredToken() },
-      body: JSON.stringify({ text, kind, identity }),
+      body: JSON.stringify({ text, kind, identity, product, service }),
     });
     const data = await r.json();
     if (data && data.text) {
@@ -11129,30 +11227,26 @@ async function biPolishField(textareaId, kind, btn) {
   const hidden    = document.getElementById('biSenderName');
   const nameEl    = document.getElementById('biSenderPersonName');
   const companyEl = document.getElementById('biSenderCompany');
-  const titleEl   = document.getElementById('biSenderTitle');
-  if (!hidden || !nameEl || !companyEl || !titleEl) return;
+  if (!hidden || !nameEl || !companyEl) return;
 
-  // Hydrate the three inputs from a previously saved combined string
-  // (mountAppBusinessInfo already restored it into the hidden input).
+  // Hydrate the two inputs from a previously saved combined string
+  // (mountAppBusinessInfo already restored it into the hidden input). A legacy
+  // value may have a 3rd part (title) — fold it into company so nothing is lost.
   if (hidden.value.trim()) {
     const parts = hidden.value.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
     if (parts[0]) nameEl.value    = parts[0];
-    if (parts[1]) companyEl.value = parts[1];
-    if (parts.length > 2) titleEl.value = parts.slice(2).join('，');
+    if (parts[1]) companyEl.value = parts.slice(1).join('，');
   }
 
   function compile() {
     const name    = nameEl.value.trim();
     const company = companyEl.value.trim();
-    const title   = titleEl.value.trim();
     // Require both name and company; otherwise leave empty so the gate blocks.
-    hidden.value = (name && company)
-      ? [name, company, title].filter(Boolean).join('，')
-      : '';
+    hidden.value = (name && company) ? (name + '，' + company) : '';
     hidden.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  [nameEl, companyEl, titleEl].forEach(el => el.addEventListener('input', compile));
+  [nameEl, companyEl].forEach(el => el.addEventListener('input', compile));
   // Sync once on load so a restored value flows into the gate/save state.
   compile();
 })();
