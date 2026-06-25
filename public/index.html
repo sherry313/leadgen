@@ -3022,6 +3022,19 @@ function appBackToModeSelect() {
       <textarea id="appFwCustomBox" placeholder="写你自己的邮件框架/写作规则。例：第1封 钩子+一个问题；第2封 给一个具体案例；第3封 化解疑虑+零风险入口。语气口语化，每句不超过12词。"
         style="display:none; width:100%; height:96px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-top:10px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
 
+      <!-- 框架示例弹窗 — opened by 看示例 on each framework card (showAppFwExample). -->
+      <div id="appFwExModal" onclick="if(event.target===this)closeAppFwExample()" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.65); align-items:center; justify-content:center; padding:20px;">
+        <div style="max-width:480px; width:100%; max-height:82vh; overflow:auto; background:#111114; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:20px; box-shadow:0 12px 40px rgba(0,0,0,0.6);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px;">
+            <div id="appFwExTitle" style="font-size:16px; font-weight:700; color:#e5e7eb;"></div>
+            <i class="ti ti-x" onclick="closeAppFwExample()" style="font-size:20px; color:#94a3b8; cursor:pointer; flex-shrink:0;"></i>
+          </div>
+          <div id="appFwExSimple" style="font-size:13px; color:#a5b4fc; background:rgba(99,102,241,0.1); border-radius:8px; padding:10px 12px; margin-bottom:14px; line-height:1.6;"></div>
+          <div style="font-size:12px; color:#64748b; margin-bottom:6px;">这种邮件长这样（用中文标出每段在干嘛；实际发送是英文）：</div>
+          <pre id="appFwExBody" style="white-space:pre-wrap; font-family:inherit; font-size:13px; color:#cbd5e1; line-height:1.7; background:#0b0b0c; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px; margin:0;"></pre>
+        </div>
+      </div>
+
       <button id="appBiNextBtn" type="button"
         style="width:100%; margin-top:18px; padding:12px 16px; border:none; border-radius:8px; background:#6366f1; color:#fff; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; transition:opacity 0.15s, background 0.15s;">
         填好了，下一步 →
@@ -10745,6 +10758,117 @@ async function smtpSendAll() {
   }
 })();
 
+// ── 框架「看示例」: plain-Chinese explanation + an annotated sample email per
+// framework, so a non-marketer instantly gets what each one does. Shown in the
+// #appFwExModal popup (opened from each card). custom has no example (user writes it).
+const FW_EXAMPLES = {
+  peter_kang_3part: {
+    title: '🎯 Peter Kang 三段式',
+    simple: '先提一句客户做的事（让他知道你研究过他），再亮你的身份实力，最后给个零压力的小邀请。显得专业又不死缠，适合高价值客户。',
+    example: `【主题】关于你的下个定制项目
+
+Hi James,
+【① 提到他】看到你们刚做的别墅项目，那个弧形外立面很棒。
+【② 戳一下】万一供应商中途掉链子，你客户要多等几天？
+【③ 亮身份】我们是做这行20年的工厂。
+【④ 小邀请】下次来中国，顺路看半天厂？多个备选，不强求。`,
+  },
+  cold_5_step: {
+    title: '📊 Cold 5 步',
+    simple: '5封一套节奏：勾兴趣 → 给一个价值点 → 摆案例 → 化解顾虑 → 礼貌告别。慢工出细活，适合正式、决策慢的大客户。',
+    example: `一套5封，每隔几天发一封：
+
+【第1封·钩子】供应紧张时你们怎么排期？
+【第2封·价值】顺带一提：我们海运到澳洲6-8周。
+【第3封·案例】帮某澳洲客户省了18%成本。
+【第4封·化解顾虑】担心质量？可先验货再付款。
+【第5封·告别】这次先不打扰，需要随时找我。`,
+  },
+  cold_7_step: {
+    title: '🏗️ Cold 7 步',
+    simple: '最长的一套，7封，适合需要慢慢养的客户。从打招呼、给干货、摆资质、换角度、轻提醒、最后给价值，到礼貌收尾。',
+    example: `一套7封，跨约4周：
+
+【1 介绍】打招呼 + 你做什么
+【2 给干货】分享对他有用的信息，不推销
+【3 摆资质】认证/案例证明你靠谱
+【4 换角度】从定制、工期等新角度切入
+【5 轻提醒】两三句简短跟进
+【6 最后价值】发出看厂/寄样邀请
+【7 收尾】给三个回复选项，礼貌告别`,
+  },
+  aida: {
+    title: '🎯 AIDA',
+    simple: '经典4步：抓注意 → 引兴趣 → 建渴望 → 请行动。每封都按这个套路，适合第一次接触陌生客户。',
+    example: `【主题】一个关于你们采购的想法
+
+【① 抓注意】Hi James，看到你们最近的项目，规模不小。
+【② 引兴趣】这块的供应你们现在怎么解决？
+【③ 建渴望】我们工厂直供，工期能压到4周。
+【④ 请行动】方便聊10分钟看看合不合适吗？`,
+  },
+  bab: {
+    title: '🌉 BAB 现状-未来-桥梁',
+    simple: '先说他现在的烦恼，再画出"问题解决后"的好日子，最后给到达那一步的桥（你的方案）。适合有明显痛点的客户。',
+    example: `【主题】别再为供应商提心吊胆
+
+Hi James,
+【① 现状】靠照片和报价单选供应商，心里没底吧？
+【② 未来】要是能亲眼看过产线，心就踏实了。
+【③ 桥梁】先免费寄样，或来厂看半天——你来定。`,
+  },
+  pas: {
+    title: '⚡ PAS 痛点驱动',
+    simple: '点痛点 → 放大痛点 → 给方案。先戳中他的难处，讲清不解决的后果，再亮你的办法。适合现供应商有问题的客户。',
+    example: `【主题】供应商拖期很烧钱
+
+Hi James,
+【① 痛点】很多同行都被供应商拖过工期。
+【② 放大】一拖就是窝工、客户投诉，几万块没了。
+【③ 方案】我们3周交货，先免费寄样，你看实物再谈。`,
+  },
+  byaf: {
+    title: '🕊️ BYAF 自由选择',
+    simple: '发出邀请的同时，明明白白说"不方便也完全没关系"。心理学验证：给对方退路，回复率反而更高。适合高姿态、被推销烦了的客户。',
+    example: `【主题】一个小请求
+
+Hi James,
+【① 请求】我们是工厂，想免费给你寄套样品看看。
+【② 给自由】当然，最近不方便完全没关系，看到就好。`,
+  },
+  sch: {
+    title: '⭐ SCH 大想法+论据',
+    simple: '抛一个大观点 → 用一串事实/数据撑住 → 请行动。适合看数据、讲逻辑的采购总监、老板。',
+    example: `【主题】关于采购的一个判断
+
+【① 大想法】选海外供应商，亲眼看过产线最稳。
+【② 论据】我们X万㎡工厂、20年、行业认证齐全。
+【③ 行动】下次来中国，值得花半天看看。`,
+  },
+  three_ps: {
+    title: '💝 3P 真诚共情',
+    simple: '具体夸他的作品 → 描绘你能帮上的场景 → 发出邀请。重点是"夸得具体"（提到他真实的项目），适合设计师、建筑师。',
+    example: `【主题】很喜欢你们的项目
+
+Hi James,
+【① 真诚夸】你们那套住宅的细节做得真讲究。
+【② 描绘场景】这种标准，我们的定制正好对得上。
+【③ 邀请】要不寄套样品给你看看手感？`,
+  },
+};
+function showAppFwExample(key) {
+  const ex = FW_EXAMPLES[key];
+  if (!ex) return;
+  document.getElementById('appFwExTitle').textContent = ex.title;
+  document.getElementById('appFwExSimple').textContent = ex.simple;
+  document.getElementById('appFwExBody').textContent = ex.example;
+  document.getElementById('appFwExModal').style.display = 'flex';
+}
+function closeAppFwExample() {
+  const m = document.getElementById('appFwExModal');
+  if (m) m.style.display = 'none';
+}
+
 // ── /app 业务信息: 邮件框架 picker (cards) ────────────────────────────────────
 // Lists the frameworks from /api/frameworks as cards in the business-info step.
 // The chosen key → canonical hidden #appFrameworkSelect (every email-gen caller
@@ -10801,7 +10925,10 @@ async function smtpSendAll() {
           (sel ? ' <i class="ti ti-circle-check-filled" style="color:#6366f1;font-size:15px;float:right"></i>' : '') + '</div>' +
         '<div style="font-size:13px;font-weight:600;color:#e5e7eb;margin-bottom:2px">' + esc(fw.name || fw.en_name) + '</div>' +
         '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;line-height:1.35">' + esc(struct || fw.description || '') + '</div>' +
-        '<div style="font-size:11px;color:' + (sel ? '#a5b4fc' : '#64748b') + ';line-height:1.35">适合：' + esc(fw.best_for || '通用') + '</div>';
+        '<div style="font-size:11px;color:' + (sel ? '#a5b4fc' : '#64748b') + ';line-height:1.35;margin-bottom:' + (FW_EXAMPLES[fw.key] ? '8px' : '0') + '">适合：' + esc(fw.best_for || '通用') + '</div>' +
+        (FW_EXAMPLES[fw.key]
+          ? '<span onclick="event.stopPropagation();showAppFwExample(\'' + fw.key + '\')" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#6366f1;cursor:pointer"><i class="ti ti-eye" style="font-size:13px"></i> 看示例</span>'
+          : '');
       card.onclick = () => {
         chosen = fw.key;
         syncHidden();
