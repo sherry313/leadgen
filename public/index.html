@@ -3008,6 +3008,16 @@ function appBackToModeSelect() {
       </div>
       <input type="hidden" id="biSenderName">
 
+      <!-- 邮件框架选择 (cards). Chosen key is written to the canonical hidden
+           #appFrameworkSelect (read by every email-gen caller) + localStorage, so
+           the AI writes emails with the framework the user picked here. Rendered by
+           mountAppFrameworkPicker from /api/frameworks. Default = cold_7_step. -->
+      <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin:18px 0 4px;">选择邮件框架 <span style="font-weight:400; color:var(--color-text-secondary, rgba(255,255,255,0.4));">（AI 按你选的模板写开发信）</span></label>
+      <div style="font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.45)); margin-bottom:10px;">不同模板适合不同客户，挑一个最贴合你的。</div>
+      <div id="appFwGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:6px;">
+        <div style="grid-column:1/-1; font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.4));">加载模板中…</div>
+      </div>
+
       <button id="appBiNextBtn" type="button"
         style="width:100%; margin-top:18px; padding:12px 16px; border:none; border-radius:8px; background:#6366f1; color:#fff; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; transition:opacity 0.15s, background 0.15s;">
         填好了，下一步 →
@@ -10731,6 +10741,66 @@ async function smtpSendAll() {
   }
 })();
 
+// ── /app 业务信息: 邮件框架 picker (cards) ────────────────────────────────────
+// Lists the frameworks from /api/frameworks as cards in the business-info step.
+// The chosen key → canonical hidden #appFrameworkSelect (every email-gen caller
+// reads it) + localStorage('appFramework'). /lens early-returns (own flow).
+(function mountAppFrameworkPicker() {
+  if (location.pathname === '/lens') return;
+  const grid   = document.getElementById('appFwGrid');
+  const hidden = document.getElementById('appFrameworkSelect');
+  if (!grid || !hidden) return;
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+  let chosen = '';
+  try { chosen = localStorage.getItem('appFramework') || ''; } catch (_) {}
+  if (!chosen) chosen = hidden.value || 'cold_7_step';
+  hidden.value = chosen;
+
+  let frameworks = [];
+
+  function render() {
+    grid.innerHTML = '';
+    const list = frameworks.filter(fw => !fw.is_custom);
+    if (!list.length) { grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:rgba(255,255,255,0.4)">暂无模板</div>'; return; }
+    list.forEach(fw => {
+      const sel = fw.key === chosen;
+      const card = document.createElement('div');
+      card.style.cssText = 'border:1px solid ' + (sel ? '#6366f1' : 'rgba(255,255,255,0.1)') +
+        ';background:' + (sel ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.02)') +
+        ';border-radius:10px;padding:12px;cursor:pointer;transition:all 0.15s';
+      const struct = (fw.structure || []).map(s => s.stage).filter(Boolean).join(' → ');
+      card.innerHTML =
+        '<div style="font-size:18px;margin-bottom:4px">' + (fw.icon || '📋') +
+          (sel ? ' <i class="ti ti-circle-check-filled" style="color:#6366f1;font-size:15px;float:right"></i>' : '') + '</div>' +
+        '<div style="font-size:13px;font-weight:600;color:#e5e7eb;margin-bottom:2px">' + esc(fw.name || fw.en_name) + '</div>' +
+        '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;line-height:1.35">' + esc(struct || fw.description || '') + '</div>' +
+        '<div style="font-size:11px;color:' + (sel ? '#a5b4fc' : '#64748b') + ';line-height:1.35">适合：' + esc(fw.best_for || '通用') + '</div>';
+      card.onclick = () => {
+        chosen = fw.key;
+        hidden.value = chosen;
+        try { localStorage.setItem('appFramework', chosen); } catch (_) {}
+        render();
+      };
+      grid.appendChild(card);
+    });
+  }
+
+  async function load() {
+    const token = getStoredToken();
+    if (!token) { grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:rgba(255,255,255,0.4)">登录后自动加载模板…</div>'; return; }
+    try {
+      const r = await fetch('/api/frameworks', { headers: { Authorization: 'Bearer ' + token } });
+      const d = await r.json();
+      frameworks = (d && d.frameworks) || [];
+      render();
+    } catch (e) {
+      grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:rgba(255,255,255,0.4)">模板加载失败，刷新重试</div>';
+    }
+  }
+  load();
+})();
+
 // ── /app 业务信息: reusable AI 润色 for 优势 / 案例 / 信任背书 ──────────────────
 // Reads a textarea, calls /api/polish-text with its current value + kind +
 // identity, and writes the polished result back (dispatching 'input' so
@@ -12828,21 +12898,27 @@ function fwProceedToPreview() {
     .map(e => `Email ${e.emailNumber} (Day ${e.day}): ${e.subject} - ${e.description}`)
     .join('\n');
 
-  window._appFrameworkContext =
-`Product/Service: ${merged.product}
+  // Respect the framework the user picked in 业务信息. The 7-email sequence plan
+  // (seqLines) only fits cold_7_step; for other frameworks pass no plan and let
+  // app-generate-preview use that framework's own sequence_prompt + SELLER block.
+  const _fwSelEl = document.getElementById('appFrameworkSelect');
+  const chosenFw = (_fwSelEl && _fwSelEl.value) || 'cold_7_step';
+  window._appFrameworkContext = (chosenFw === 'cold_7_step')
+    ? `Product/Service: ${merged.product}
 Target customer: ${merged.targetCustomer}
 Real customer case: ${merged.caseStudy || '(none provided)'}
 Zero-risk entry offer: ${merged.lowRiskOffer || '(none provided)'}
 Sender: ${merged.senderName}
 
 Confirmed 7-email sequence plan to follow:
-${seqLines}`;
+${seqLines}`
+    : '';
 
   // Populate the hidden fields the existing preview/send flow reads, then hand off.
   document.getElementById('appSellerDesc').value =
     merged.product + (merged.targetCustomer ? (' targeting ' + merged.targetCustomer) : '');
   document.getElementById('appSignatureName').value = signature;
-  document.getElementById('appFrameworkSelect').value = 'cold_7_step';
+  if (_fwSelEl && !_fwSelEl.value) _fwSelEl.value = 'cold_7_step';
   _appSelectedGoal = '找买家';
 
   appPreviewFirst();
@@ -13022,21 +13098,27 @@ async function fwAutoRunFromStepB(inp) {
   }
 
   autoSetStepState('step-emails', 'active', '开始生成邮件...');
-  var framework;
-  try {
-    const fwResp = await fetch('/api/generate-framework-preview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
-      body: JSON.stringify(Object.assign({}, inp, { fixes: {} }))
-    });
-    framework = await fwResp.json();
-  } catch(e) {
-    autoSetStepState('step-emails', 'error', '生成框架失败');
-    return;
+  // Use the framework the user picked in 业务信息 (canonical: #appFrameworkSelect).
+  const chosenFw = (document.getElementById('appFrameworkSelect') && document.getElementById('appFrameworkSelect').value) || 'cold_7_step';
+  // generate-framework-preview designs a 7-EMAIL plan, so it only fits cold_7_step.
+  // For other frameworks, skip it — app-generate-preview uses the chosen framework's
+  // own sequence_prompt (correct email count) + the businessInfo SELLER block.
+  var ctx = '';
+  if (chosenFw === 'cold_7_step') {
+    try {
+      const fwResp = await fetch('/api/generate-framework-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
+        body: JSON.stringify(Object.assign({}, inp, { fixes: {} }))
+      });
+      const framework = await fwResp.json();
+      window._fwAutoFramework = framework;
+      ctx = JSON.stringify(framework) + '\n\nCase study: ' + (inp.caseStudy || 'none') + '. Zero-risk offer: ' + (inp.lowRiskOffer || 'none') + '. Sender: ' + (inp.senderName || '');
+    } catch(e) {
+      autoSetStepState('step-emails', 'error', '生成框架失败');
+      return;
+    }
   }
-  window._fwAutoFramework = framework;
-
-  const ctx = JSON.stringify(framework) + '\n\nCase study: ' + (inp.caseStudy || 'none') + '. Zero-risk offer: ' + (inp.lowRiskOffer || 'none') + '. Sender: ' + (inp.senderName || '');
   var results = [];
   for (var j = 0; j < filteredLeads.length; j++) {
     autoSetStepState('step-emails', 'active', '生成第 ' + (j+1) + ' / ' + filteredLeads.length + ' 封: ' + (filteredLeads[j].name || ''));
@@ -13050,7 +13132,7 @@ async function fwAutoRunFromStepB(inp) {
           caseStudy: inp.caseStudy, lowRiskOffer: inp.lowRiskOffer,
           senderName: inp.senderName, sellerDesc: inp.product,
           goal: '找买家', signatureName: inp.senderName,
-          framework: 'cold_7_step', customPrompt: '',
+          framework: chosenFw, customPrompt: '',
           frameworkContext: ctx,
           businessInfo: window._appBusinessInfo || {}
         })
@@ -13063,7 +13145,7 @@ async function fwAutoRunFromStepB(inp) {
         to: filteredLeads[j].email || filteredLeads[j].name || '',
         subject: sequence[0] ? sequence[0].subject : '',
         body: sequence[0] ? sequence[0].body : '',
-        framework: 'cold_7_step',
+        framework: chosenFw,
         sequence: sequence
       });
     } catch(e) {
