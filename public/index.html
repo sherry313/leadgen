@@ -9450,7 +9450,10 @@ setTimeout(function _restoreAppState() {
   const presets = {
     sellerName: 'Lens 朗斯家居',
     products:   'Aluminium windows and doors, curtain walls',
-    advantage:  '300,000m² factory in Zhongshan, 20 years experience, AS2047 certified',
+    // advantage now also carries Lens's proof + low-risk offer, because the email
+    // frameworks are generic (no hardcoded Lens facts) — every fact, including the
+    // factory-visit call-to-action, must flow in via the seller's business info.
+    advantage:  '300,000m² factory in Zhongshan, 20 years experience, AS2047 certified. Currently supplying a Sydney designer on a residential project. Low-risk offer: invite buyers to visit the factory (we cover Guangzhou airport pickup, meals, factory tour and QC lab walkthrough; they cover flights and hotel), or send a factory walkthrough video first.',
     icp:        'Custom home builders, renovation contractors, interior designers, property developers in Australia who need premium aluminium windows and doors',
   };
 
@@ -13113,7 +13116,8 @@ async function fwAutoRunFromStepB(inp) {
           senderName: inp.senderName, sellerDesc: inp.product,
           goal: '找买家', signatureName: inp.senderName,
           framework: 'cold_7_step', customPrompt: '',
-          frameworkContext: ctx
+          frameworkContext: ctx,
+          businessInfo: window._appBusinessInfo || {}
         })
       });
       const emailData = await emailResp.json();
@@ -13270,7 +13274,8 @@ async function appPreviewFirst() {
         signatureName,
         framework,
         customPrompt: framework === 'custom' ? customPrompt : '',
-        frameworkContext: window._appFrameworkContext || ''
+        frameworkContext: window._appFrameworkContext || '',
+        businessInfo: window._appBusinessInfo || {}
       })
     });
     const data = await resp.json();
@@ -13393,6 +13398,7 @@ async function appGenerateAll() {
         framework: cfg.framework,
         customPrompt: cfg.framework === 'custom' ? (cfg.customPrompt || '') : '',
         frameworkContext: window._appFrameworkContext || '',
+        businessInfo: window._appBusinessInfo || {},
       }),
     });
     const data = await resp.json();

@@ -3203,11 +3203,32 @@ app.post('/api/recommend-low-risk-offers', requireAuth, async (req, res) => {
 // Returns: { emails: [{subject, body}, ...] } — a 5-email sequence so /app
 // users can preview before kicking off the full bulk generation.
 app.post('/api/app-generate-preview', requireAuth, async (req, res) => {
-  const { lead, sellerDesc, goal, signatureName, framework, customPrompt, frameworkContext } = req.body;
+  const { lead, sellerDesc, goal, signatureName, framework, customPrompt, frameworkContext, businessInfo } = req.body;
 
   const companyName = lead.name || lead.title || lead.username || 'the company';
   const website = lead.website || lead.url || '';
   const description = lead.description || lead.bio || '';
+
+  // Build the SELLER block from the user's 业务信息 (window._appBusinessInfo). This
+  // is the single source of truth — the generic frameworks read all facts from here.
+  const bi = businessInfo || {};
+  const _sv = v => (typeof v === 'string' ? v.trim() : '');
+  const _product   = _sv(bi.product) || _sv(req.body.product);
+  const _service   = _sv(bi.service);
+  const _advantage = _sv(bi.advantage);
+  const _target    = _sv(bi.targetCustomer) || _sv(req.body.targetCustomer);
+  const _case      = _sv(bi.caseStudy)      || _sv(req.body.caseStudy);
+  const _trust     = _sv(bi.trust);
+  const _offer     = _sv(bi.lowRiskOffer)   || _sv(req.body.lowRiskOffer);
+  const _signer    = _sv(bi.senderName) || _sv(req.body.senderName) || _sv(signatureName);
+  const _sellerLines = [];
+  if (_product)   _sellerLines.push(`- Product / service: ${_product}${_service ? '；服务：' + _service : ''}`);
+  if (_advantage) _sellerLines.push(`- Key advantage / differentiators: ${_advantage}`);
+  if (_target)    _sellerLines.push(`- Target customer: ${_target}`);
+  if (_case)      _sellerLines.push(`- Real case / proof (use as social proof — exact details only, never invent new ones): ${_case}`);
+  if (_trust)     _sellerLines.push(`- Trust / credentials: ${_trust}`);
+  if (_offer)     _sellerLines.push(`- Low-risk offer (USE THIS as the call-to-action): ${_offer}`);
+  const sellerBlock = _sellerLines.length ? _sellerLines.join('\n') : `- What they do: ${_sv(sellerDesc)}`;
 
   const frameworkObj = emailFrameworks && emailFrameworks[framework];
   const sequencePrompt = frameworkObj ? frameworkObj.sequence_prompt : null;
@@ -3220,12 +3241,12 @@ app.post('/api/app-generate-preview', requireAuth, async (req, res) => {
   const websiteContext = lead && (lead.websiteText || lead.raw?.websiteText) ? `\nLEAD WEBSITE CONTENT (use this to write a personalized opening for Email 1):\n${(lead.websiteText || lead.raw?.websiteText).substring(0, 800)}` : '';
 
   const systemPrompt = `You are an expert B2B cold email copywriter.
-Write a sequence of ${emailCount} cold emails for the sender.
+Write a sequence of ${emailCount} cold emails for the seller.
 
-SENDER INFO:
-- What they do: ${sellerDesc}
-- Goal: ${goal}
-- Signature: ${signatureName}
+=== SELLER (source of truth — use ONLY these facts) ===
+${sellerBlock}
+- Goal: ${goal || '找买家 / get a reply'}
+- Sign-off name: ${_signer}
 
 EMAIL RULES:
 - Write in English only
@@ -3234,8 +3255,8 @@ EMAIL RULES:
 - Every sentence max 12 words. Short. Direct.
 - NO em dashes, NO semicolons
 - No fake urgency, no hollow claims
-- Each email ends with one clear low-commitment question
-- Sign off with exactly: ${signatureName}
+- Each email ends with one clear low-commitment question. When the seller gave a "Low-risk offer" above, use it as the call-to-action.
+- Sign off with exactly: ${_signer}
 - Plain text only, no bullet points, no bold
 ${websiteContext}
 
@@ -3243,7 +3264,7 @@ EMAIL 1 PERSONALIZATION: For Email 1: use the LEAD WEBSITE CONTENT above to writ
 
 FRAMEWORK: ${frameworkInstructions}
 
-CRITICAL OVERRIDE: SENDER INFO above is the ONLY source of truth for who the sender is, what they sell, and their advantages. If the FRAMEWORK section names any specific company, factory, location, product, or certification, IGNORE it and use ONLY the sender's real details from SENDER INFO. Never state a fact that is not in SENDER INFO.
+CRITICAL OVERRIDE: The SELLER block above is the ONLY source of truth for who the seller is, what they sell, and their advantages. If the FRAMEWORK section names any specific company, factory, location, product, or certification, IGNORE it and use ONLY the seller's real details from the SELLER block. Never state a fact that is not in the SELLER block.
 
 PROSPECT:
 - Company: ${companyName}

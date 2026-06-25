@@ -310,6 +310,8 @@ Write a ${emailCount}-email cold outreach sequence following this framework:
 
 ${frameworkInstructions}
 
+CRITICAL OVERRIDE: The SELLER section in the user message is the ONLY source of truth for who the seller is, what they sell, their advantage, case/proof, and offer. If the framework names any specific company, factory, location, product, certification, or call-to-action, IGNORE it and use ONLY the seller's real details from the SELLER section. Never state a fact that is not in the SELLER section.
+
 SUBJECT LINE IRON RULES (apply to ALL frameworks):
 1. The Snippet: the first few words must create curiosity — make the reader want to open
 2. The Experiment: you may use emoji or write "[No Subject]" if it feels right
