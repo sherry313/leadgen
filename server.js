@@ -2245,9 +2245,10 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
   try {
     // Location-scope each keyword (same approach as the Maps tool: append the
     // location to the query rather than send it as a separate field), then run
-    // all queries in one actor call. maxResults is per-keyword.
+    // all queries in one actor call. maxResults is a TOTAL across all keywords
+    // (what users expect: "填 N 就最多 N 条").
     const searchStrings = location ? keywords.map(k => `${k} ${location}`.trim()) : keywords.slice();
-    const totalCap = maxResults * searchStrings.length;
+    const totalCap = maxResults;
     console.log(`[GoogleSearchTool] terms=${searchStrings.length} location="${location}" country="${countryCode}" max=${maxResults} fields=${fields.join(',')}`);
     // Use the official apify~google-search-scraper (same actor services/googleSearch.js
     // trusts for geo-correct results). It honours countryCode so a 新西兰 search no
@@ -2437,11 +2438,12 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
     );
 
     // The Apify actor's maxCrawledPlacesPerSearch can overshoot (especially with
-    // automatic zoom-out), so enforce our own hard cap = maxResults × keywords.
-    // Slicing BEFORE the enrichment loop also avoids scraping websites we'd drop.
-    const _cap = maxResults * Math.max(1, searchStringsArray.length);
+    // automatic zoom-out), so enforce our own hard cap. maxResults is a TOTAL across
+    // all keywords (what users expect: "填 12 就最多 12 条"). Slicing BEFORE the
+    // enrichment loop also avoids scraping websites we'd drop.
+    const _cap = maxResults;
     const _items = (items || []).slice(0, _cap);
-    console.log(`[GoogleMapsTool] actor returned ${(items || []).length}, capped to ${_items.length} (max ${maxResults} × ${searchStringsArray.length} terms)`);
+    console.log(`[GoogleMapsTool] actor returned ${(items || []).length}, capped to ${_items.length} (total max ${maxResults})`);
 
     let emitted = 0;
     for (const it of _items) {
