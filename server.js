@@ -2984,9 +2984,10 @@ app.post('/api/recommend-target-customers', requireAuth, async (req, res) => {
 
 // ── /app 业务信息 → Google Search: recommend search keywords ──────────────────
 // Body: { product, targetCustomer, advantage }
-// Returns: { keywords: ["bathroom vanity distributor", ...] } — English Google
-// search terms that FIND the target customers (not the product). Powers the
-// keyword pill chooser in the Google Search panel. Haiku, cheap + fast.
+// Returns: { keywords: [{ en, zh }, ...] } — English Google search terms that FIND
+// the target customers (not the product), each with a short Chinese gloss so a
+// non-English-speaking factory owner understands what they're picking. The `en`
+// is what actually gets searched; `zh` is display-only. Haiku, cheap + fast.
 app.post('/api/recommend-keywords', requireAuth, async (req, res) => {
   const product        = String(req.body?.product || '').trim();
   const targetCustomer = String(req.body?.targetCustomer || '').trim();
@@ -3000,7 +3001,7 @@ app.post('/api/recommend-keywords', requireAuth, async (req, res) => {
 
     const response = await withTimeout(client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
+      max_tokens: 600,
       messages: [{
         role: 'user',
         content: `A B2B seller wants to find potential CUSTOMERS on Google Search.
@@ -3013,15 +3014,17 @@ Generate Google search keywords that will surface the seller's TARGET CUSTOMERS'
 companies (the businesses they want to sell to) — NOT pages selling the product.
 
 Rules:
-- Output exactly 8 keywords, in ENGLISH (these are searched on local Google sites abroad)
-- Each keyword is a short business-type search phrase a buyer-finder would type
-- Search for the CUSTOMER's business type, e.g. target "装修公司" -> "renovation company",
-  "bathroom renovation contractor"; target "室内设计公司" -> "interior design studio"
-- Do NOT include a country/city (the location is added separately)
+- Output exactly 8 keywords. Each has:
+  - "en": a short business-type search phrase in ENGLISH (searched on local Google sites abroad)
+  - "zh": a short, natural Chinese translation/meaning of that phrase, so a Chinese
+    factory owner understands what it targets (e.g. en "renovation company" -> zh "装修公司")
+- Search for the CUSTOMER's business type, e.g. target "装修公司" -> en "renovation company";
+  target "室内设计公司" -> en "interior design studio"
+- Do NOT include a country/city in "en" (the location is added separately)
 - No numbering, no explanation
 
 Return ONLY valid JSON, no markdown:
-{ "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5", "keyword6", "keyword7", "keyword8"] }`
+{ "keywords": [{ "en": "...", "zh": "..." }, { "en": "...", "zh": "..." }] }`
       }]
     }), 30000, '/api/recommend-keywords');
 
@@ -3029,7 +3032,12 @@ Return ONLY valid JSON, no markdown:
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
     const keywords = Array.isArray(parsed.keywords)
-      ? parsed.keywords.map(s => String(s).trim()).filter(Boolean).slice(0, 8)
+      ? parsed.keywords
+          .map(k => (typeof k === 'string'
+            ? { en: k.trim(), zh: '' }
+            : { en: String(k.en || '').trim(), zh: String(k.zh || '').trim() }))
+          .filter(k => k.en)
+          .slice(0, 8)
       : [];
     res.json({ keywords });
   } catch(e) {

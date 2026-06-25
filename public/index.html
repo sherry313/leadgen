@@ -3365,9 +3365,22 @@ function appBackToModeSelect() {
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
         <div style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.45));margin-bottom:8px">AI 根据你的产品和目标客户推荐搜索词，勾选要用的，也可以自定义添加。</div>
         <div id="gmKwStatus" style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.4));margin-bottom:10px">填好「业务信息」的产品和目标客户后，AI 会在这里推荐搜索关键词。</div>
-        <div id="gmKwPills" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
-        <input id="gmKwCustomInput" type="text" placeholder="自定义关键词，回车添加（例：bathroom showroom）" autocomplete="off"
-               style="display:none;width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;margin-bottom:20px;box-sizing:border-box">
+        <div style="position:relative;margin-bottom:10px">
+          <button type="button" id="gmKwToggle"
+                  style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;cursor:pointer;text-align:left;box-sizing:border-box">
+            <span id="gmKwToggleText" style="color:#94a3b8">点击选择搜索关键词</span>
+            <i class="ti ti-chevron-down" style="font-size:16px;flex-shrink:0"></i>
+          </button>
+          <div id="gmKwPanel" style="display:none;position:absolute;z-index:30;left:0;right:0;margin-top:6px;background:#111114;border:1px solid rgba(255,255,255,0.12);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);max-height:300px;overflow:auto">
+            <div id="gmKwList"></div>
+            <div style="border-top:1px solid rgba(255,255,255,0.08);padding:10px">
+              <input id="gmKwCustomInput" type="text" placeholder="自定义关键词（英文），回车添加" autocomplete="off"
+                     style="width:100%;padding:9px 12px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e5e7eb;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:8px">
+              <span id="gmKwRefresh" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#6366f1;cursor:pointer"><i class="ti ti-refresh" style="font-size:13px"></i> 重新推荐</span>
+            </div>
+          </div>
+        </div>
+        <div id="gmKwSelected" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">地区（每次只能一个）</label>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
@@ -3452,9 +3465,22 @@ function appBackToModeSelect() {
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
         <div style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.45));margin-bottom:8px">AI 根据你的产品和目标客户推荐搜索词，勾选要用的，也可以自定义添加。</div>
         <div id="gsKwStatus" style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.4));margin-bottom:10px">填好「业务信息」的产品和目标客户后，AI 会在这里推荐搜索关键词。</div>
-        <div id="gsKwPills" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
-        <input id="gsKwCustomInput" type="text" placeholder="自定义关键词，回车添加（例：bathroom showroom）" autocomplete="off"
-               style="display:none;width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;margin-bottom:20px;box-sizing:border-box">
+        <div style="position:relative;margin-bottom:10px">
+          <button type="button" id="gsKwToggle"
+                  style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;cursor:pointer;text-align:left;box-sizing:border-box">
+            <span id="gsKwToggleText" style="color:#94a3b8">点击选择搜索关键词</span>
+            <i class="ti ti-chevron-down" style="font-size:16px;flex-shrink:0"></i>
+          </button>
+          <div id="gsKwPanel" style="display:none;position:absolute;z-index:30;left:0;right:0;margin-top:6px;background:#111114;border:1px solid rgba(255,255,255,0.12);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);max-height:300px;overflow:auto">
+            <div id="gsKwList"></div>
+            <div style="border-top:1px solid rgba(255,255,255,0.08);padding:10px">
+              <input id="gsKwCustomInput" type="text" placeholder="自定义关键词（英文），回车添加" autocomplete="off"
+                     style="width:100%;padding:9px 12px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e5e7eb;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:8px">
+              <span id="gsKwRefresh" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#6366f1;cursor:pointer"><i class="ti ti-refresh" style="font-size:13px"></i> 重新推荐</span>
+            </div>
+          </div>
+        </div>
+        <div id="gsKwSelected" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">地区（每次只能一个）</label>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
@@ -5758,74 +5784,91 @@ async function startGoogleSearch() {
 // Same as the Google Search chooser (uses /api/recommend-keywords from
 // 业务信息), exposed via window.getGmSelectedKeywords() for startGoogleMapsScrape.
 // Fetch runs when the Maps panel opens (window._gmKwOnShow, from selectSource).
-(function mountGmKeywordChooser() {
+// ── Keyword dropdown (Google Maps + Google Search) ───────────────────────────
+// AI recommends ENGLISH search keywords (each with a 中文 gloss so a non-English-
+// speaking owner understands what they pick) via /api/recommend-keywords. Shown
+// as a dropdown, multi-select. The value SEARCHED is the English `en`; `zh` is
+// display-only. Exposes window.get{Gm,Gs}SelectedKeywords() (returns English
+// strings) + window._{gm,gs}KwOnShow() (fetch trigger). /lens early-returns.
+function mountKwDropdown(p) {
   if (location.pathname === '/lens') return;
-  const pillsBox    = document.getElementById('gmKwPills');
-  const statusEl    = document.getElementById('gmKwStatus');
-  const customInput = document.getElementById('gmKwCustomInput');
-  if (!pillsBox || !statusEl || !customInput) return;
+  const $ = s => document.getElementById(p + s);
+  const statusEl = $('KwStatus'), toggle = $('KwToggle'), toggleText = $('KwToggleText'),
+        panel = $('KwPanel'), listEl = $('KwList'), customInput = $('KwCustomInput'),
+        refreshEl = $('KwRefresh'), selectedBox = $('KwSelected');
+  if (!statusEl || !toggle || !panel || !listEl || !customInput || !selectedBox) return;
 
-  let selected  = [];
-  let suggested = [];
+  let suggested = [];   // [{en, zh}]
+  let selected  = [];   // [{en, zh}]
   let lastKey   = '';
 
-  window.getGmSelectedKeywords = () => selected.slice();
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+  const Prefix = (p === 'gm') ? 'Gm' : 'Gs';
+  window['get' + Prefix + 'SelectedKeywords'] = () => selected.map(s => s.en);
 
-  function makePill(label, isSel) {
-    const span = document.createElement('span');
-    span.textContent = label;
-    span.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;border:0.5px solid ' +
-      (isSel ? '#6366f1' : 'var(--color-border-tertiary, rgba(255,255,255,0.12))') +
-      ';background:' + (isSel ? 'rgba(99,102,241,0.15)' : 'transparent') +
-      ';color:' + (isSel ? '#a5a8f3' : 'var(--color-text-secondary, rgba(255,255,255,0.6))') + ';';
-    return span;
+  function updateToggleText() {
+    toggleText.textContent = selected.length ? ('已选 ' + selected.length + ' 个关键词') : '点击选择搜索关键词';
+    toggleText.style.color = selected.length ? '#e5e7eb' : '#94a3b8';
   }
 
-  function render() {
-    pillsBox.innerHTML = '';
-    const order = [];
-    suggested.forEach(s => { if (!order.includes(s)) order.push(s); });
-    selected.forEach(s => { if (!order.includes(s)) order.push(s); });
-
-    order.forEach(label => {
-      const p = makePill(label, selected.includes(label));
-      p.onclick = () => {
-        if (selected.includes(label)) selected = selected.filter(x => x !== label);
-        else selected.push(label);
-        render();
-      };
-      pillsBox.appendChild(p);
+  function renderSelected() {
+    selectedBox.innerHTML = '';
+    selected.forEach(kw => {
+      const chip = document.createElement('span');
+      chip.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;font-size:13px;background:rgba(99,102,241,0.15);border:0.5px solid #6366f1;color:#c7c9f5';
+      chip.innerHTML = '<span>' + esc(kw.en) + (kw.zh ? ' <span style="color:#9aa0c9">· ' + esc(kw.zh) + '</span>' : '') + '</span>';
+      const x = document.createElement('i');
+      x.className = 'ti ti-x';
+      x.style.cssText = 'font-size:13px;cursor:pointer';
+      x.onclick = () => { selected = selected.filter(s => s.en !== kw.en); renderAll(); };
+      chip.appendChild(x);
+      selectedBox.appendChild(chip);
     });
-
-    const addPill = document.createElement('span');
-    addPill.textContent = '＋ 自定义';
-    addPill.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3));background:transparent;color:var(--color-text-secondary, rgba(255,255,255,0.6));';
-    addPill.onclick = () => {
-      const show = customInput.style.display === 'none';
-      customInput.style.display = show ? 'block' : 'none';
-      if (show) customInput.focus();
-    };
-    pillsBox.appendChild(addPill);
-
-    const bi = window._appBusinessInfo || {};
-    if ((bi.product || '').trim() || (bi.targetCustomer || '').trim()) {
-      const refresh = document.createElement('span');
-      refresh.innerHTML = '<i class="ti ti-refresh" style="font-size:13px;"></i> 重新推荐';
-      refresh.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;display:inline-flex;align-items:center;gap:4px;border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));background:transparent;color:#6366f1;';
-      refresh.onclick = () => fetchSuggestions(true);
-      pillsBox.appendChild(refresh);
-    }
   }
+
+  function renderList() {
+    listEl.innerHTML = '';
+    if (!suggested.length) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding:12px;font-size:13px;color:#94a3b8';
+      empty.textContent = '暂无推荐，可在下面自定义添加。';
+      listEl.appendChild(empty);
+      return;
+    }
+    suggested.forEach(kw => {
+      const on = selected.some(s => s.en === kw.en);
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05)' + (on ? ';background:rgba(99,102,241,0.12)' : '');
+      row.innerHTML =
+        '<i class="ti ' + (on ? 'ti-square-check-filled' : 'ti-square') + '" style="font-size:18px;color:' + (on ? '#6366f1' : '#64748b') + ';flex-shrink:0"></i>' +
+        '<div style="min-width:0"><div style="font-size:14px;color:#e5e7eb">' + esc(kw.en) + '</div>' +
+        (kw.zh ? '<div style="font-size:12px;color:#94a3b8;margin-top:2px">' + esc(kw.zh) + '</div>' : '') + '</div>';
+      row.onclick = () => {
+        if (selected.some(s => s.en === kw.en)) selected = selected.filter(s => s.en !== kw.en);
+        else selected.push(kw);
+        renderAll();
+      };
+      listEl.appendChild(row);
+    });
+  }
+
+  function renderAll() { renderList(); renderSelected(); updateToggleText(); }
+
+  toggle.onclick = () => { panel.style.display = (panel.style.display === 'none') ? 'block' : 'none'; };
+  document.addEventListener('click', (e) => {
+    if (panel.style.display === 'none') return;
+    if (!toggle.contains(e.target) && !panel.contains(e.target)) panel.style.display = 'none';
+  });
 
   customInput.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     const val = customInput.value.trim();
-    if (val && !selected.includes(val)) selected.push(val);
+    if (val && !selected.some(s => s.en === val)) selected.push({ en: val, zh: '自定义' });
     customInput.value = '';
-    customInput.style.display = 'none';
-    render();
+    renderAll();
   });
+  if (refreshEl) refreshEl.onclick = () => fetchSuggestions(true);
 
   async function fetchSuggestions(force) {
     const bi = window._appBusinessInfo || {};
@@ -5835,7 +5878,7 @@ async function startGoogleSearch() {
     if (!product && !targetCustomer) {
       statusEl.style.display = 'block';
       statusEl.textContent = '请先在「业务信息」填写产品和目标客户，再回到这里看推荐。';
-      render();
+      renderAll();
       return;
     }
     const key = product + '||' + targetCustomer;
@@ -5851,24 +5894,28 @@ async function startGoogleSearch() {
         body: JSON.stringify({ product, targetCustomer, advantage }),
       });
       const data = await r.json();
-      if (Array.isArray(data.keywords) && data.keywords.length) {
-        suggested = data.keywords;
+      const list = Array.isArray(data.keywords)
+        ? data.keywords.map(k => (typeof k === 'string' ? { en: k, zh: '' } : { en: (k.en || '').trim(), zh: (k.zh || '').trim() })).filter(k => k.en)
+        : [];
+      if (list.length) {
+        suggested = list;
         statusEl.style.display = 'none';
       } else {
         statusEl.style.display = 'block';
-        statusEl.textContent = 'AI 暂无推荐，可点「＋ 自定义」手动添加关键词。';
+        statusEl.textContent = 'AI 暂无推荐，可展开下拉里「自定义」手动添加。';
       }
     } catch (e) {
       statusEl.style.display = 'block';
-      statusEl.textContent = 'AI 推荐失败，可点「＋ 自定义」手动添加关键词。';
+      statusEl.textContent = 'AI 推荐失败，可展开下拉里「自定义」手动添加。';
     } finally {
-      render();
+      renderAll();
     }
   }
 
-  window._gmKwOnShow = () => fetchSuggestions(false);
-  render();
-})();
+  window['_' + p + 'KwOnShow'] = () => fetchSuggestions(false);
+  renderAll();
+}
+mountKwDropdown('gm');
 
 // /app manual region: dependent Country → City dropdowns feed the hidden #gmLocation.
 // The assembled value stays in the old "City, Country" English format the server expects.
@@ -5955,119 +6002,7 @@ const _GS_COUNTRY_CODES = {
 // chosen set via window.getGsSelectedKeywords(). The fetch runs when the Google
 // Search panel is shown (window._gsKwOnShow, called from selectSource). /lens
 // early-returns.
-(function mountGsKeywordChooser() {
-  if (location.pathname === '/lens') return;
-  const pillsBox    = document.getElementById('gsKwPills');
-  const statusEl    = document.getElementById('gsKwStatus');
-  const customInput = document.getElementById('gsKwCustomInput');
-  if (!pillsBox || !statusEl || !customInput) return;
-
-  let selected  = [];   // chosen keywords (search terms)
-  let suggested = [];    // AI-recommended keywords
-  let lastKey   = '';
-
-  window.getGsSelectedKeywords = () => selected.slice();
-
-  function makePill(label, isSel) {
-    const span = document.createElement('span');
-    span.textContent = label;
-    span.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;border:0.5px solid ' +
-      (isSel ? '#6366f1' : 'var(--color-border-tertiary, rgba(255,255,255,0.12))') +
-      ';background:' + (isSel ? 'rgba(99,102,241,0.15)' : 'transparent') +
-      ';color:' + (isSel ? '#a5a8f3' : 'var(--color-text-secondary, rgba(255,255,255,0.6))') + ';';
-    return span;
-  }
-
-  function render() {
-    pillsBox.innerHTML = '';
-    const order = [];
-    suggested.forEach(s => { if (!order.includes(s)) order.push(s); });
-    selected.forEach(s => { if (!order.includes(s)) order.push(s); });
-
-    order.forEach(label => {
-      const p = makePill(label, selected.includes(label));
-      p.onclick = () => {
-        if (selected.includes(label)) selected = selected.filter(x => x !== label);
-        else selected.push(label);
-        render();
-      };
-      pillsBox.appendChild(p);
-    });
-
-    const addPill = document.createElement('span');
-    addPill.textContent = '＋ 自定义';
-    addPill.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;border:1px dashed var(--color-border-tertiary, rgba(255,255,255,0.3));background:transparent;color:var(--color-text-secondary, rgba(255,255,255,0.6));';
-    addPill.onclick = () => {
-      const show = customInput.style.display === 'none';
-      customInput.style.display = show ? 'block' : 'none';
-      if (show) customInput.focus();
-    };
-    pillsBox.appendChild(addPill);
-
-    const bi = window._appBusinessInfo || {};
-    if ((bi.product || '').trim() || (bi.targetCustomer || '').trim()) {
-      const refresh = document.createElement('span');
-      refresh.innerHTML = '<i class="ti ti-refresh" style="font-size:13px;"></i> 重新推荐';
-      refresh.style.cssText = 'padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none;font-family:inherit;display:inline-flex;align-items:center;gap:4px;border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12));background:transparent;color:#6366f1;';
-      refresh.onclick = () => fetchSuggestions(true);
-      pillsBox.appendChild(refresh);
-    }
-  }
-
-  customInput.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    const val = customInput.value.trim();
-    if (val && !selected.includes(val)) selected.push(val);
-    customInput.value = '';
-    customInput.style.display = 'none';
-    render();
-  });
-
-  async function fetchSuggestions(force) {
-    const bi = window._appBusinessInfo || {};
-    const product        = [(bi.product || '').trim(), (bi.service || '').trim()].filter(Boolean).join('；可提供服务：');
-    const targetCustomer = (bi.targetCustomer || '').trim();
-    const advantage      = (bi.advantage || '').trim();
-    if (!product && !targetCustomer) {
-      statusEl.style.display = 'block';
-      statusEl.textContent = '请先在「业务信息」填写产品和目标客户，再回到这里看推荐。';
-      render();
-      return;
-    }
-    const key = product + '||' + targetCustomer;
-    if (!force && key === lastKey && suggested.length) return;
-    lastKey = key;
-
-    statusEl.style.display = 'block';
-    statusEl.innerHTML = '<i class="ti ti-loader-2"></i> AI 正在推荐搜索关键词…';
-    try {
-      const r = await fetch('/api/recommend-keywords', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getStoredToken() },
-        body: JSON.stringify({ product, targetCustomer, advantage }),
-      });
-      const data = await r.json();
-      if (Array.isArray(data.keywords) && data.keywords.length) {
-        suggested = data.keywords;
-        statusEl.style.display = 'none';
-      } else {
-        statusEl.style.display = 'block';
-        statusEl.textContent = 'AI 暂无推荐，可点「＋ 自定义」手动添加关键词。';
-      }
-    } catch (e) {
-      statusEl.style.display = 'block';
-      statusEl.textContent = 'AI 推荐失败，可点「＋ 自定义」手动添加关键词。';
-    } finally {
-      render();
-    }
-  }
-
-  // Called from selectSource when the Google Search panel is opened.
-  window._gsKwOnShow = () => fetchSuggestions(false);
-
-  render();
-})();
+mountKwDropdown('gs');
 function onGsCountryChange() {
   const country = document.getElementById('gsCountry').value;
   const citySel = document.getElementById('gsCity');
