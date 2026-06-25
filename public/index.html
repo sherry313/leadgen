@@ -10748,14 +10748,17 @@ async function smtpSendAll() {
 (function mountAppFrameworkPicker() {
   if (location.pathname === '/lens') return;
   const grid   = document.getElementById('appFwGrid');
-  const hidden = document.getElementById('appFrameworkSelect');
-  if (!grid || !hidden) return;
+  if (!grid) return;
+  // #appFrameworkSelect lives further down the document, so it may not exist yet
+  // when this inline script runs. Query it lazily instead of requiring it here.
+  const getHidden = () => document.getElementById('appFrameworkSelect');
 
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
   let chosen = '';
   try { chosen = localStorage.getItem('appFramework') || ''; } catch (_) {}
-  if (!chosen) chosen = hidden.value || 'cold_7_step';
-  hidden.value = chosen;
+  if (!chosen) { const he = getHidden(); chosen = (he && he.value) || 'cold_7_step'; }
+  function syncHidden() { const he = getHidden(); if (he) he.value = chosen; }
+  syncHidden();
 
   let frameworks = [];
 
@@ -10778,7 +10781,7 @@ async function smtpSendAll() {
         '<div style="font-size:11px;color:' + (sel ? '#a5b4fc' : '#64748b') + ';line-height:1.35">适合：' + esc(fw.best_for || '通用') + '</div>';
       card.onclick = () => {
         chosen = fw.key;
-        hidden.value = chosen;
+        syncHidden();
         try { localStorage.setItem('appFramework', chosen); } catch (_) {}
         render();
       };
@@ -10794,11 +10797,15 @@ async function smtpSendAll() {
       const d = await r.json();
       frameworks = (d && d.frameworks) || [];
       render();
+      syncHidden();
     } catch (e) {
       grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:rgba(255,255,255,0.4)">模板加载失败，刷新重试</div>';
     }
   }
   load();
+  // #appFrameworkSelect is parsed later in the document — sync the restored choice
+  // into it once this parse tick finishes (and again after load() renders).
+  setTimeout(syncHidden, 0);
 })();
 
 // ── /app 业务信息: reusable AI 润色 for 优势 / 案例 / 信任背书 ──────────────────
