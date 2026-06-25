@@ -2436,8 +2436,15 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       '/api/google-maps-search Apify'
     );
 
+    // The Apify actor's maxCrawledPlacesPerSearch can overshoot (especially with
+    // automatic zoom-out), so enforce our own hard cap = maxResults × keywords.
+    // Slicing BEFORE the enrichment loop also avoids scraping websites we'd drop.
+    const _cap = maxResults * Math.max(1, searchStringsArray.length);
+    const _items = (items || []).slice(0, _cap);
+    console.log(`[GoogleMapsTool] actor returned ${(items || []).length}, capped to ${_items.length} (max ${maxResults} × ${searchStringsArray.length} terms)`);
+
     let emitted = 0;
-    for (const it of (items || [])) {
+    for (const it of _items) {
       if (aborted) break;
       const emails = Array.isArray(it.emails) ? it.emails : (it.email ? [it.email] : []);
       const bizEmail = emails.find(e => !/(gmail|hotmail|yahoo|outlook)\./i.test(e)) || emails[0] || '';
@@ -2570,6 +2577,9 @@ app.post('/api/auto-search', requireAuth, async (req, res) => {
 
     console.log('[auto-search] sample item fields:', JSON.stringify(Object.keys(items[0] || {})));
     console.log('[auto-search] sample item:', JSON.stringify(items[0] || {}, null, 2).substring(0, 500));
+
+    // The actor can overshoot maxCrawledPlacesPerSearch — hard-cap to maxResults.
+    items = (items || []).slice(0, maxResults);
 
     const leads = items.map(item => ({
       name: item.title || item.name || '',
