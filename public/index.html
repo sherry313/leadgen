@@ -3017,6 +3017,10 @@ function appBackToModeSelect() {
       <div id="appFwGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:6px;">
         <div style="grid-column:1/-1; font-size:12px; color:var(--color-text-secondary, rgba(255,255,255,0.4));">加载模板中…</div>
       </div>
+      <!-- Shown only when 自定义框架 is selected. Synced to the canonical #appCustomPrompt
+           (read by the email-gen callers) + localStorage by mountAppFrameworkPicker. -->
+      <textarea id="appFwCustomBox" placeholder="写你自己的邮件框架/写作规则。例：第1封 钩子+一个问题；第2封 给一个具体案例；第3封 化解疑虑+零风险入口。语气口语化，每句不超过12词。"
+        style="display:none; width:100%; height:96px; resize:vertical; padding:10px 12px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); font-size:14px; color:var(--color-text-primary, #e5e7eb); background:var(--color-background-primary, #0b0b0c); margin-top:10px; font-family:inherit; outline:none; box-sizing:border-box;"></textarea>
 
       <button id="appBiNextBtn" type="button"
         style="width:100%; margin-top:18px; padding:12px 16px; border:none; border-radius:8px; background:#6366f1; color:#fff; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; transition:opacity 0.15s, background 0.15s;">
@@ -10760,11 +10764,30 @@ async function smtpSendAll() {
   function syncHidden() { const he = getHidden(); if (he) he.value = chosen; }
   syncHidden();
 
+  // 自定义框架: a textarea (#appFwCustomBox) holds the user's own rules; it's synced
+  // to the canonical hidden #appCustomPrompt (read by the email-gen callers) +
+  // localStorage, and only shown when 自定义 is the chosen framework.
+  const customBox = document.getElementById('appFwCustomBox');
+  const getCustomHidden = () => document.getElementById('appCustomPrompt');
+  if (customBox) {
+    try { customBox.value = localStorage.getItem('appFrameworkCustom') || ''; } catch (_) {}
+    const ch = getCustomHidden(); if (ch) ch.value = customBox.value;
+    customBox.addEventListener('input', () => {
+      const c = getCustomHidden(); if (c) c.value = customBox.value;
+      try { localStorage.setItem('appFrameworkCustom', customBox.value); } catch (_) {}
+    });
+  }
+  function updateCustomBox() {
+    if (!customBox) return;
+    customBox.style.display = (chosen === 'custom') ? 'block' : 'none';
+    const c = getCustomHidden(); if (c) c.value = customBox.value;
+  }
+
   let frameworks = [];
 
   function render() {
     grid.innerHTML = '';
-    const list = frameworks.filter(fw => !fw.is_custom);
+    const list = frameworks.slice(); // include 自定义框架 (is_custom)
     if (!list.length) { grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:rgba(255,255,255,0.4)">暂无模板</div>'; return; }
     list.forEach(fw => {
       const sel = fw.key === chosen;
@@ -10784,6 +10807,7 @@ async function smtpSendAll() {
         syncHidden();
         try { localStorage.setItem('appFramework', chosen); } catch (_) {}
         render();
+        updateCustomBox();
       };
       grid.appendChild(card);
     });
@@ -10798,14 +10822,15 @@ async function smtpSendAll() {
       frameworks = (d && d.frameworks) || [];
       render();
       syncHidden();
+      updateCustomBox();
     } catch (e) {
       grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:rgba(255,255,255,0.4)">模板加载失败，刷新重试</div>';
     }
   }
   load();
-  // #appFrameworkSelect is parsed later in the document — sync the restored choice
-  // into it once this parse tick finishes (and again after load() renders).
-  setTimeout(syncHidden, 0);
+  // #appFrameworkSelect / #appCustomPrompt are parsed later in the document — sync
+  // the restored choice into them once this parse tick finishes.
+  setTimeout(() => { syncHidden(); updateCustomBox(); }, 0);
 })();
 
 // ── /app 业务信息: reusable AI 润色 for 优势 / 案例 / 信任背书 ──────────────────
@@ -13139,7 +13164,8 @@ async function fwAutoRunFromStepB(inp) {
           caseStudy: inp.caseStudy, lowRiskOffer: inp.lowRiskOffer,
           senderName: inp.senderName, sellerDesc: inp.product,
           goal: '找买家', signatureName: inp.senderName,
-          framework: chosenFw, customPrompt: '',
+          framework: chosenFw,
+          customPrompt: chosenFw === 'custom' ? ((document.getElementById('appFwCustomBox') && document.getElementById('appFwCustomBox').value.trim()) || '') : '',
           frameworkContext: ctx,
           businessInfo: window._appBusinessInfo || {}
         })
