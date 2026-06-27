@@ -2567,6 +2567,23 @@
   </style>
 </head>
 <body>
+<script>
+  // Login guard: /app and /lens require a logged-in user. No stored token → bounce
+  // to the login page (remembering where they were headed). login.html does the
+  // reverse (redirects in when a token exists), so there's no loop. Runs first so
+  // an unauthenticated visitor never sees the app shell.
+  (function () {
+    var p = location.pathname;
+    if (p !== '/app' && p !== '/lens') return;
+    var hasToken = false;
+    try {
+      var s = localStorage.getItem('leadgen_supabase_session');
+      if (s) { var o = JSON.parse(s); hasToken = !!(o && o.access_token); }
+      if (!hasToken) { var t = localStorage.getItem('leadgen_accessToken'); hasToken = !!(t && t.trim()); }
+    } catch (e) {}
+    if (!hasToken) location.replace('/login.html?redirect=' + encodeURIComponent(p));
+  })();
+</script>
 
 <nav id="navbar" class="nav-mini">
   <a href="index.html" class="nav-mini-brand">⚡ 智拓客</a>
@@ -6474,7 +6491,7 @@ function closeUserMenu() {
 function logout() {
   localStorage.removeItem('leadgen_accessToken');
   localStorage.removeItem('leadgen_supabase_session');
-  location.href = 'landing.html';
+  location.href = '/login.html';
 }
 function getStoredToken() {
   // Try fresh session first
