@@ -10779,8 +10779,8 @@ const FW_EXAMPLES = {
 Hi James,
 【① 提到他】看到你们刚做的别墅项目，那个弧形外立面很棒。
 【② 戳一下】万一供应商中途掉链子，你客户要多等几天？
-【③ 亮身份】我们是做这行20年的工厂。
-【④ 小邀请】下次来中国，顺路看半天厂？多个备选，不强求。`,
+【③ 亮身份】[[me]]。
+【④ 小邀请】[[offer]]，多个备选，不强求。`,
   },
   cold_5_step: {
     title: '📊 Cold 5 步',
@@ -10813,7 +10813,7 @@ Hi James,
 
 【① 抓注意】Hi James，看到你们最近的项目，规模不小。
 【② 引兴趣】这块的供应你们现在怎么解决？
-【③ 建渴望】我们工厂直供，工期能压到4周。
+【③ 建渴望】[[me]]，工期/质量更稳。
 【④ 请行动】方便聊10分钟看看合不合适吗？`,
   },
   bab: {
@@ -10823,8 +10823,8 @@ Hi James,
 
 Hi James,
 【① 现状】靠照片和报价单选供应商，心里没底吧？
-【② 未来】要是能亲眼看过产线，心就踏实了。
-【③ 桥梁】先免费寄样，或来厂看半天——你来定。`,
+【② 未来】要是有人帮你把好关，心就踏实了。
+【③ 桥梁】[[me]]，[[offer]]。`,
   },
   pas: {
     title: '⚡ PAS 痛点驱动',
@@ -10834,7 +10834,7 @@ Hi James,
 Hi James,
 【① 痛点】很多同行都被供应商拖过工期。
 【② 放大】一拖就是窝工、客户投诉，几万块没了。
-【③ 方案】我们3周交货，先免费寄样，你看实物再谈。`,
+【③ 方案】[[me]]，[[offer]]。`,
   },
   byaf: {
     title: '🕊️ BYAF 自由选择',
@@ -10842,7 +10842,7 @@ Hi James,
     example: `【主题】一个小请求
 
 Hi James,
-【① 请求】我们是工厂，想免费给你寄套样品看看。
+【① 请求】[[me]]，[[offer]]。
 【② 给自由】当然，最近不方便完全没关系，看到就好。`,
   },
   sch: {
@@ -10851,7 +10851,7 @@ Hi James,
     example: `【主题】关于采购的一个判断
 
 【① 大想法】选海外供应商，亲眼看过产线最稳。
-【② 论据】我们X万㎡工厂、20年、行业认证齐全。
+【② 论据】[[me]]，行业认证齐全、多年经验。
 【③ 行动】下次来中国，值得花半天看看。`,
   },
   three_ps: {
@@ -10861,16 +10861,35 @@ Hi James,
 
 Hi James,
 【① 真诚夸】你们那套住宅的细节做得真讲究。
-【② 描绘场景】这种标准，我们的定制正好对得上。
-【③ 邀请】要不寄套样品给你看看手感？`,
+【② 描绘场景】[[me]]，这种标准正好对得上。
+【③ 邀请】[[offer]]？`,
   },
 };
+// Examples adapt to the chosen 身份: [[me]] = how the seller introduces itself,
+// [[offer]] = the low-risk action. So 外贸公司/工贸一体 don't read like a 工厂.
+const FW_IDENTITY_ME = {
+  factory: '我们是做这行20年的工厂',
+  trade:   '我们是外贸公司，帮你选品、对接靠谱工厂、把控质量',
+  both:    '我们工贸一体，自有工厂又能一站采购',
+  '':      '我们是这行的供应商',
+};
+const FW_IDENTITY_OFFER = {
+  factory: '先免费寄样、或来厂看半天，你定',
+  trade:   '先免费帮你选品比价、协调寄样',
+  both:    '先免费寄样、或安排看厂，你定',
+  '':      '先免费寄样，你看了再说',
+};
+const FW_IDENTITY_LABEL = { factory: '工厂', trade: '外贸公司', both: '工贸一体', '': '未选身份' };
 function showAppFwExample(key) {
   const ex = FW_EXAMPLES[key];
   if (!ex) return;
-  document.getElementById('appFwExTitle').textContent = ex.title;
+  const id = (window._appBusinessInfo || {}).identity || '';
+  const me = FW_IDENTITY_ME[id] || FW_IDENTITY_ME[''];
+  const offer = FW_IDENTITY_OFFER[id] || FW_IDENTITY_OFFER[''];
+  const body = ex.example.replace(/\[\[me\]\]/g, me).replace(/\[\[offer\]\]/g, offer);
+  document.getElementById('appFwExTitle').textContent = ex.title + '（按【' + (FW_IDENTITY_LABEL[id] || '未选身份') + '】举例）';
   document.getElementById('appFwExSimple').textContent = ex.simple;
-  document.getElementById('appFwExBody').textContent = ex.example;
+  document.getElementById('appFwExBody').textContent = body;
   document.getElementById('appFwExModal').style.display = 'flex';
 }
 function closeAppFwExample() {
