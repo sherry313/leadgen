@@ -147,6 +147,34 @@
       margin-bottom: 28px;
     }
 
+    /* ── AUTH TABS (登录 / 注册) ── */
+    .auth-tabs {
+      display: flex;
+      gap: 6px;
+      background: rgba(15,23,42,0.6);
+      border: 1px solid rgba(148,163,184,0.18);
+      border-radius: 12px;
+      padding: 5px;
+      margin-bottom: 24px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 9px 0;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .auth-tab.active {
+      background: #2563eb;
+      color: #fff;
+    }
+
     /* ── FORM ── */
     .form-group {
       margin-bottom: 16px;
@@ -250,6 +278,16 @@
     }
     .error-msg.visible { display: block; }
 
+    .ok-msg {
+      display: none;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #34d399;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .ok-msg.visible { display: block; }
+
     /* ── HELPER TEXT ── */
     .helper-text {
       margin-top: 16px;
@@ -322,7 +360,10 @@
       <div class="card-logo-sub">建材外贸客户开发助手</div>
     </div>
 
-    <div class="card-heading">登录 / 申请试用</div>
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab active" id="tabLogin" onclick="setMode('login')">登录</button>
+      <button type="button" class="auth-tab" id="tabRegister" onclick="setMode('register')">注册</button>
+    </div>
 
     <div class="form-group">
       <label for="loginEmail">邮箱</label>
@@ -331,7 +372,12 @@
 
     <div class="form-group">
       <label for="loginPassword">密码</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" oninput="onFieldInput()">
+      <input type="password" id="loginPassword" placeholder="••••••••（至少 6 位）" autocomplete="current-password" oninput="onFieldInput()">
+    </div>
+
+    <div class="form-group" id="confirmPwdGroup" style="display:none">
+      <label for="loginPasswordConfirm">确认密码</label>
+      <input type="password" id="loginPasswordConfirm" placeholder="再输一次密码" autocomplete="new-password" oninput="onFieldInput()">
     </div>
 
     <div class="consent-block">
@@ -346,13 +392,13 @@
       </label>
     </div>
 
-    <button class="btn-login" id="loginBtn" disabled onclick="doLogin()">登录 / 进入应用</button>
+    <button class="btn-login" id="loginBtn" disabled onclick="doSubmit()">登录 / 进入应用</button>
 
     <div class="error-msg" id="errorMsg">请填写邮箱和密码并同意用户协议</div>
+    <div class="ok-msg" id="okMsg"></div>
 
-    <p class="helper-text">
-      没有账号？请联系管理员申请：<br>
-      zhuolu34@gmail.com
+    <p class="helper-text" id="helperText">
+      没有账号？点上面「注册」，几秒就能开通。
     </p>
   </div>
 </main>
@@ -389,12 +435,13 @@
   })();
 
   /* Supabase client init — fetch public credentials from /api/config so the
-     anon key isn't hardcoded in source. doLogin() awaits this promise.
+     anon key isn't hardcoded in source. doSubmit() awaits this promise.
      Local variable is `_sbClient` (not `supabase`) because the
      @supabase/supabase-js UMD bundle defines a global `supabase` in script
      scope; a top-level `let supabase` would throw
      "Identifier 'supabase' has already been declared". */
   let _sbClient = null;
+  let _authMode = 'login'; // 'login' | 'register'
   const _supabaseReady = (async () => {
     try {
       const r = await fetch('/api/config');
@@ -418,12 +465,45 @@
     const email   = document.getElementById('loginEmail').value.trim();
     const pwd     = document.getElementById('loginPassword').value;
     const agreed  = document.getElementById('agreeTerms').checked;
-    document.getElementById('loginBtn').disabled = !(email && pwd && agreed);
+    let ok = !!(email && pwd && agreed);
+    if (_authMode === 'register') {
+      ok = ok && !!document.getElementById('loginPasswordConfirm').value;
+    }
+    document.getElementById('loginBtn').disabled = !ok;
+  }
+
+  function _showOk(msg) {
+    const el = document.getElementById('okMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+  function _regError(m) {
+    m = m || '';
+    if (/already registered|already exists|User already/i.test(m)) return '该邮箱已注册，请直接登录。';
+    if (/password/i.test(m) && /6/.test(m)) return '密码至少 6 位。';
+    if (/valid email|invalid email/i.test(m)) return '邮箱格式不对。';
+    return '注册失败：' + m;
+  }
+  function setMode(mode) {
+    _authMode = mode;
+    document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+    document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
+    document.getElementById('confirmPwdGroup').style.display = mode === 'register' ? 'block' : 'none';
+    document.getElementById('loginBtn').textContent = mode === 'register' ? '注册并进入' : '登录 / 进入应用';
+    document.getElementById('loginPassword').setAttribute('autocomplete', mode === 'register' ? 'new-password' : 'current-password');
+    document.getElementById('helperText').textContent = mode === 'register'
+      ? '注册后如提示「请确认邮箱」，去邮箱点一下确认链接再回来登录。'
+      : '没有账号？点上面「注册」，几秒就能开通。';
+    document.getElementById('errorMsg').classList.remove('visible');
+    document.getElementById('okMsg').classList.remove('visible');
+    updateButtonState();
   }
 
   function onFieldInput() {
     updateButtonState();
     document.getElementById('errorMsg').classList.remove('visible');
+    document.getElementById('okMsg').classList.remove('visible');
   }
 
   function onConsentChange() {
@@ -431,7 +511,7 @@
     document.getElementById('errorMsg').classList.remove('visible');
   }
 
-  async function doLogin() {
+  async function doSubmit() {
     const email  = document.getElementById('loginEmail').value.trim();
     const pwd    = document.getElementById('loginPassword').value;
     const agreed = document.getElementById('agreeTerms').checked;
@@ -439,29 +519,52 @@
       _showError('请填写邮箱和密码并同意用户协议');
       return;
     }
+    if (_authMode === 'register') {
+      const confirm = document.getElementById('loginPasswordConfirm').value;
+      if (pwd.length < 6) { _showError('密码至少 6 位'); return; }
+      if (pwd !== confirm) { _showError('两次输入的密码不一致'); return; }
+    }
 
     const btn = document.getElementById('loginBtn');
     const origText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '登录中…';
+    btn.textContent = _authMode === 'register' ? '注册中…' : '登录中…';
 
     try {
       await _supabaseReady;
       if (!_sbClient) {
-        _showError('登录服务暂不可用，请稍后再试');
+        _showError('服务暂不可用，请稍后再试');
         return;
       }
+
+      if (_authMode === 'register') {
+        const { data, error } = await _sbClient.auth.signUp({ email, password: pwd });
+        if (error) { _showError(_regError(error.message)); return; }
+        // Email-confirmation OFF in Supabase → a session is returned, log in directly.
+        if (data?.session?.access_token) {
+          localStorage.setItem('leadgen_accessToken', data.session.access_token);
+          localStorage.setItem('leadgen_supabase_session', JSON.stringify(data.session));
+          window.location.href = _redirectTarget();
+          return;
+        }
+        // Otherwise email confirmation is required.
+        _showOk('注册成功！请到邮箱点确认链接，然后回来登录。');
+        setMode('login');
+        return;
+      }
+
+      // login
       const { data, error } = await _sbClient.auth.signInWithPassword({ email, password: pwd });
       if (error || !data?.session?.access_token) {
-        _showError('邮箱或密码错误，请重试');
+        _showError('邮箱或密码错误（或邮箱还没确认）');
         return;
       }
       localStorage.setItem('leadgen_accessToken', data.session.access_token);
       localStorage.setItem('leadgen_supabase_session', JSON.stringify(data.session));
       window.location.href = _redirectTarget();
     } catch (e) {
-      console.error('[login] error:', e);
-      _showError('登录失败：' + (e.message || '请稍后再试'));
+      console.error('[auth] error:', e);
+      _showError('操作失败：' + (e.message || '请稍后再试'));
     } finally {
       btn.disabled = false;
       btn.textContent = origText;
@@ -470,9 +573,9 @@
   }
 
   /* Allow Enter key to submit from either field. */
-  ['loginEmail', 'loginPassword'].forEach(id => {
+  ['loginEmail', 'loginPassword', 'loginPasswordConfirm'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') doLogin();
+      if (e.key === 'Enter') doSubmit();
     });
   });
 
