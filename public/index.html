@@ -1639,11 +1639,14 @@
       color: #94a3b8; text-decoration: none; transition: color 0.15s;
     }
     nav#navbar.nav-mini .nav-mini-links a:hover { color: #e2e8f0; }
-    nav#navbar.nav-mini #navUser {
-      font-size: 13px; color: #94a3b8; cursor: pointer;
-      position: relative; user-select: none;
+    nav#navbar.nav-mini .nav-account {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: #94a3b8; text-decoration: none;
+      padding: 5px 12px; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; transition: color 0.15s, border-color 0.15s;
     }
-    nav#navbar.nav-mini #navUser:hover { color: #e2e8f0; }
+    nav#navbar.nav-mini .nav-account i { font-size: 15px; color: #6366f1; }
+    nav#navbar.nav-mini .nav-account:hover { color: #e2e8f0; border-color: rgba(99,102,241,0.4); }
     @media(max-width:560px) {
       nav#navbar.nav-mini .nav-mini-links { gap: 10px; font-size: 12px; }
     }
@@ -2591,12 +2594,9 @@
     <a href="/tools/">免费工具</a>
     <a href="/pricing.html">定价</a>
   </div>
-  <div class="nav-dropdown" id="navUserMenu" style="position:relative">
-    <div id="navUser" onclick="toggleUserMenu()" title="账户菜单">👤 用户 ▾</div>
-    <div class="nav-dropdown-menu" id="userDropdown">
-      <button class="nav-dd-item danger" onclick="logout()">🚪 退出</button>
-    </div>
-  </div>
+  <a id="navAccount" href="/account" class="nav-account" title="个人中心" style="display:none">
+    <i class="ti ti-user-circle" aria-hidden="true"></i><span>个人中心</span>
+  </a>
 
   <!-- Legacy nav stubs (kept for JS compatibility — hidden) -->
   <ul class="nav-links" id="navMkt" style="display:none"></ul>
@@ -6478,15 +6478,17 @@ function updateLoginStatus() {
     if (mkt) mkt.style.display = 'none';
     if (app) app.style.display = 'none';
   }
-  // New minimal nav: update user indicator
-  const navUser = document.getElementById('navUser');
-  if (navUser) navUser.textContent = token ? '👤 用户 ▾' : '👤 未登录';
+  // New minimal nav: show the 个人中心 entry only when logged in.
+  const navAccount = document.getElementById('navAccount');
+  if (navAccount) navAccount.style.display = token ? 'inline-flex' : 'none';
 }
+// Legacy no-ops — the old account dropdown was replaced by the 个人中心 link.
+// Kept null-safe because document-level click/Escape handlers still call them.
 function toggleUserMenu() {
-  document.getElementById('userDropdown').classList.toggle('open');
+  document.getElementById('userDropdown')?.classList.toggle('open');
 }
 function closeUserMenu() {
-  document.getElementById('userDropdown').classList.remove('open');
+  document.getElementById('userDropdown')?.classList.remove('open');
 }
 function logout() {
   localStorage.removeItem('leadgen_accessToken');
@@ -7966,8 +7968,8 @@ async function checkAdminAndShow() {
   } catch { _isAdmin = false; }
   const enrichBtn = document.getElementById('btnEnrich');
   if (enrichBtn) enrichBtn.innerHTML = _deepAnalysisLabel();
-  const navUser = document.getElementById('navUser');
-  if (navUser) navUser.textContent = _isAdmin ? '👤 管理员 ▾' : '👤 用户 ▾';
+  const navAccount = document.getElementById('navAccount');
+  if (navAccount) navAccount.style.display = 'inline-flex';
 }
 
 function restoreIcp() {

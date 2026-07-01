@@ -34,6 +34,7 @@ const sendHtml = (res, ...parts) => {
 app.get('/',            (req, res) => sendHtml(res, 'home.html'));
 app.get('/app',         (req, res) => sendHtml(res, 'index.html'));
 app.get('/lens',        (req, res) => sendHtml(res, 'index.html'));
+app.get('/account',     (req, res) => sendHtml(res, 'account.html'));
 app.get('/landing',     (req, res) => sendHtml(res, 'landing.html'));
 app.get('/landing.html',(req, res) => sendHtml(res, 'landing.html'));
 app.get(['/tools', '/tools/'], (req, res) => sendHtml(res, 'tools', 'index.html'));
@@ -1809,7 +1810,12 @@ app.post('/api/export/docx', requireAuth, async (req, res) => {
 
 // ── Auth identity ─────────────────────────────────────────────────────────────
 app.get('/api/me', requireAuth, (req, res) => {
-  res.json({ success: true, isAdmin: req.isAdmin });
+  res.json({
+    success:   true,
+    isAdmin:   req.isAdmin,
+    email:     req.user?.email || null,
+    createdAt: req.user?.created_at || null,
+  });
 });
 
 // ── Admin: cost summary ───────────────────────────────────────────────────────
