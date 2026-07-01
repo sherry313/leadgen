@@ -3168,6 +3168,86 @@ ${text}
   }
 });
 
+// ── /app 业务信息 (progressive): per-step completeness check + rewrite suggestion ─
+// Body: { kind, text, identity, product, service }
+//   kind ∈ 'product' | 'service' | 'advantage' | 'case' | 'trust'
+// Returns: { complete: bool, hint: string, suggestion: string }
+//   complete   — is the field usable/specific enough to advance to the next step
+//   hint       — when NOT complete: a short, friendly Chinese nudge on what to add
+//   suggestion — when complete: a polished rewrite the user may adopt or ignore
+// Powers the one-field-at-a-time guided flow. Haiku, cheap. Never invents facts.
+app.post('/api/app-field-check', requireAuth, async (req, res) => {
+  const text     = String(req.body?.text || '').trim();
+  const kind     = String(req.body?.kind || 'product').trim();
+  const identity = String(req.body?.identity || '').trim();
+  const product  = String(req.body?.product || '').trim();
+  const service  = String(req.body?.service || '').trim();
+  const idLabel  = _IDENTITY_LABEL[identity] || '供应商';
+
+  // Empty is always incomplete — short-circuit without spending a token.
+  if (!text) {
+    return res.json({ complete: false, hint: '这一项还没填，先写一点内容再继续。', suggestion: '' });
+  }
+
+  const KIND_RULES = {
+    product:   `这是卖家的"产品/主营品类"。完整的标准:能让人明确知道卖的是什么具体东西(品类或具体产品)，不能只是"建材""东西"这种太宽泛的词。`,
+    service:   `这是卖家"针对产品能提供的服务"。完整的标准:说清能提供什么服务(如定制、打样、批量、一体化采购等)，不能只是"服务好"这种空话。`,
+    advantage: `这是卖家的"优势/主打卖点"，开发信最重要的部分。完整的标准:是具体的、和同类${idLabel}有区别的差异点(如自有模具、3天出样、某认证)，不能只是"质量好""价格优"这种谁都会说的空话。`,
+    case:      `这是卖家的"真实案例"。完整的标准:能体现真实的合作/供货经历，具体一点更好。不要求客户全名。`,
+    trust:     `这是卖家的"信任背书"(资质/经验/认证)。完整的标准:有具体的资质、经验年限或认证，不能只是"很专业"这种空话。`,
+  };
+  const rule = KIND_RULES[kind] || KIND_RULES.product;
+  const ctx  = `卖家身份:${idLabel}。产品:"${product || '(未填)'}"。服务:"${service || '(未填)'}"。`;
+
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      temperature: 0.7,
+      messages: [{
+        role: 'user',
+        content: `${ctx}
+
+${rule}
+
+用户填写的内容:
+"""
+${text}
+"""
+
+请判断这段内容作为开发信素材是否"够用、够完整"，并给出一个润色后的更专业写法。
+
+只返回合法 JSON，不要 markdown、不要解释:
+{
+  "complete": true 或 false,
+  "hint": "如果 complete=false，用一句友好的中文告诉用户具体该补充什么(例:'再写清楚是什么产品，比如具体品类')；如果 complete=true 就留空字符串",
+  "suggestion": "如果 complete=true，给一个润色后的中文改写版本(保持原意、更专业、贴合产品/身份，不编造新的客户名/数字/认证)；如果 complete=false 就留空字符串"
+}`
+      }]
+    }), 30000, '/api/app-field-check');
+
+    const raw = (response.content[0].text || '').replace(/```json|```/g, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { parsed = null; }
+    if (!parsed) {
+      // On unparseable output, don't block the user — treat as complete, no suggestion.
+      return res.json({ complete: true, hint: '', suggestion: '' });
+    }
+    res.json({
+      complete:   !!parsed.complete,
+      hint:       String(parsed.hint || '').trim(),
+      suggestion: String(parsed.suggestion || '').trim(),
+    });
+  } catch(e) {
+    console.error('[AppFieldCheck] error:', e.message);
+    // Fail open — an AI hiccup must not trap the user on a step.
+    res.json({ complete: true, hint: '', suggestion: '' });
+  }
+});
+
 // ── /app 业务信息: recommend zero-risk entry offers (by industry) ──────────────
 // Body: { product, service, identity }
 // Returns: { offers: ["免费寄样", ...] } — short Chinese "low-risk entry" offers
