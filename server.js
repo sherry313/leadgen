@@ -1491,7 +1491,7 @@ app.get('/api/raw/:searchId', requireAuth, async (req, res) => {
 });
 
 app.delete('/api/history/:id', requireAuth, async (req, res) => {
-  const ok = await deleteSearchRun(req.params.id);
+  const ok = await deleteSearchRun(req.params.id, req.userId);
   if (!ok) return res.status(500).json({ success: false, error: '删除失败' });
   console.log(`[History] Deleted search run ${req.params.id}`);
   res.json({ success: true });

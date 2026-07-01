@@ -331,13 +331,21 @@ async function getEmailsSentCount(userId) {
   }
 }
 
-async function deleteSearchRun(searchId) {
+async function deleteSearchRun(searchId, userId) {
   const db = getClient();
   if (!db || !searchId) return false;
   try {
-    const { error: leadsErr } = await db.from('leads').delete().eq('search_id', searchId);
+    let leadsQ = db.from('leads').delete().eq('search_id', searchId);
+    let histQ  = db.from('search_history').delete().eq('id', searchId);
+    // Scope deletes to the owner so one user can't delete another's run by id.
+    // Legacy token keeps its pre-migration cross-user behavior.
+    if (userId && userId !== 'legacy') {
+      leadsQ = leadsQ.eq('user_id', userId);
+      histQ  = histQ.eq('user_id', userId);
+    }
+    const { error: leadsErr } = await leadsQ;
     if (leadsErr) throw leadsErr;
-    const { error: histErr } = await db.from('search_history').delete().eq('id', searchId);
+    const { error: histErr } = await histQ;
     if (histErr) throw histErr;
     console.log(`[Supabase] Deleted search run ${searchId} + its leads`);
     return true;
