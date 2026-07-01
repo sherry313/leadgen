@@ -30,7 +30,10 @@ async function requireAuth(req, res, next) {
     const valid = [process.env.ACCESS_TOKEN_SECRET,
                    process.env.ADMIN_TOKEN].filter(Boolean);
     if (valid.includes(token)) {
-      console.log(`[Auth] OK (legacy token) ${req.method} ${req.path}`);
+      // LEGACY-TOKEN backdoor still in use — grep docker logs for this line.
+      // If it never appears over your observation window, it's safe to delete
+      // this whole fallback block (and the two vars from the VPS .env).
+      console.warn(`[Auth] LEGACY-TOKEN used ${req.method} ${req.path} | ip=${req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '?'}`);
       req.user = { id: 'legacy', email: 'legacy' };
       req.userId = 'legacy';
       return next();
