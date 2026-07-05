@@ -35,6 +35,7 @@ app.get('/',            (req, res) => sendHtml(res, 'home.html'));
 app.get('/app',         (req, res) => sendHtml(res, 'index.html'));
 app.get('/lens',        (req, res) => sendHtml(res, 'index.html'));
 app.get('/account',     (req, res) => sendHtml(res, 'account.html'));
+app.get('/notes',       (req, res) => sendHtml(res, 'notes.html'));
 app.get('/landing',     (req, res) => sendHtml(res, 'landing.html'));
 app.get('/landing.html',(req, res) => sendHtml(res, 'landing.html'));
 app.get(['/tools', '/tools/'], (req, res) => sendHtml(res, 'tools', 'index.html'));
