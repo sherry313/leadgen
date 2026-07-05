@@ -2413,113 +2413,124 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <!-- /app mode-selection screen styles -->
   <style>
-    @keyframes floatA {0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-    @keyframes floatB {0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-
+    /* ── 选择运行模式 (modernized: black #030303 + indigo #6366f1, no float jank) ── */
     #appModeSelect {
-      background: #0a0f1a;
+      background: #030303;
       min-height: 100vh;
-      padding: 2.5rem 1.5rem;
-      padding-top: 80px;
-      font-family: var(--font-mono, monospace);
+      padding: 96px 1.5rem 2.5rem;
     }
 
     #appModeSelect .mode-sys-label {
-      font-size: 10px; color: #378ADD; letter-spacing: 0.15em;
-      text-transform: uppercase; margin-bottom: 6px;
+      font-size: 11px; color: #818cf8; letter-spacing: 0.18em;
+      text-transform: uppercase; margin-bottom: 8px; font-family: var(--font-mono, monospace);
     }
 
     #appModeSelect .mode-title {
-      font-size: 22px; font-weight: 500; color: #e8f4fd;
-      margin-bottom: 4px; letter-spacing: -0.02em;
+      font-size: 26px; font-weight: 700; color: #f8fafc;
+      margin-bottom: 6px; letter-spacing: -0.02em;
     }
 
     #appModeSelect .mode-sub {
-      font-size: 12px; color: #5a8aad; margin-bottom: 2rem; letter-spacing: 0.02em;
+      font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 2rem;
     }
 
     #appModeSelect .mode-cards {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem;
       position: relative; z-index: 1;
     }
 
     #appModeSelect .mode-card {
-      border: 1px solid #1e3a5f; border-radius: 8px; padding: 1.25rem;
-      cursor: pointer; pointer-events: auto; background: #0d1626; position: relative; overflow: hidden;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      --mx: 50%; --my: 50%; isolation: isolate;
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.5rem;
+      cursor: pointer; background: rgba(255,255,255,0.03); position: relative; overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.2s;
     }
 
-    #appModeSelect .mode-card.card-rec { animation: floatA 3s ease-in-out infinite; pointer-events: auto; }
-    #appModeSelect .mode-card.card-adv { animation: floatB 3.4s ease-in-out infinite 0.4s; pointer-events: auto; }
-    #appModeSelect .mode-card:hover { border-color: #378ADD; box-shadow: 0 0 24px rgba(55,138,221,0.2); animation-play-state: paused; }
-    #appModeSelect .mode-card.selected { border-color: #378ADD; box-shadow: 0 0 24px rgba(55,138,221,0.25); }
+    #appModeSelect .mode-card:hover { border-color: rgba(99,102,241,0.5); background: rgba(255,255,255,0.05); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.45); }
+    #appModeSelect .mode-card.selected { border-color: #6366f1; box-shadow: 0 0 0 1px #6366f1, 0 12px 36px rgba(99,102,241,0.22); background: rgba(99,102,241,0.06); }
+    #appModeSelect .mode-card.card-rec { border-color: rgba(99,102,241,0.35); background: rgba(99,102,241,0.05); }
 
     #appModeSelect .mode-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, #185FA5, #85B7EB);
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, rgba(99,102,241,0.5), rgba(129,140,248,0.2));
+      opacity: 0; transition: opacity 0.2s;
     }
-    #appModeSelect .mode-card.card-rec::before {
-      background: linear-gradient(90deg, #378ADD, #85B7EB, #378ADD);
-    }
+    #appModeSelect .mode-card.card-rec::before { opacity: 1; background: linear-gradient(90deg, #6366f1, #a5b4fc, #6366f1); }
+    #appModeSelect .mode-card.selected::before { opacity: 1; }
 
-    #appModeSelect .card-glow {
-      position: absolute; top: -40px; right: -40px; width: 120px; height: 120px;
-      border-radius: 50%; background: rgba(55,138,221,0.06); pointer-events: none;
+    /* Cursor spotlight: a soft glow + a border highlight that follow the pointer. */
+    #appModeSelect .mode-card .spotlight,
+    #appModeSelect .mode-card .spot-border {
+      position: absolute; inset: 0; border-radius: 16px; opacity: 0;
+      transition: opacity 0.3s; pointer-events: none; z-index: -1;
     }
+    #appModeSelect .mode-card .spotlight {
+      background: radial-gradient(240px circle at var(--mx) var(--my), rgba(99,102,241,0.22), transparent 65%);
+    }
+    #appModeSelect .mode-card .spot-border {
+      padding: 1.5px;
+      background: radial-gradient(200px circle at var(--mx) var(--my), #818cf8, transparent 60%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+    }
+    #appModeSelect .mode-card:hover .spotlight,
+    #appModeSelect .mode-card:hover .spot-border { opacity: 1; }
 
-    #appModeSelect .card-mode-id { font-size: 10px; color: #378ADD; letter-spacing: 0.12em; margin-bottom: 12px; }
-    #appModeSelect .card-mode-id.dim { color: #2a4a6a; }
+    #appModeSelect .card-mode-id { font-size: 10px; color: #818cf8; letter-spacing: 0.14em; margin-bottom: 14px; font-family: var(--font-mono, monospace); }
+    #appModeSelect .card-mode-id.dim { color: rgba(255,255,255,0.3); }
 
     #appModeSelect .card-icon-box {
-      width: 42px; height: 42px; border: 1px solid #1e3a5f; border-radius: 6px;
+      width: 46px; height: 46px; border: 1px solid rgba(99,102,241,0.3); border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 12px; background: #0a0f1a;
+      margin-bottom: 14px; background: rgba(99,102,241,0.12);
     }
-    #appModeSelect .card-icon-box i { color: #378ADD; font-size: 20px; }
+    #appModeSelect .card-icon-box i { color: #a5b4fc; font-size: 22px; }
 
-    #appModeSelect .card-mode-name { font-size: 15px; font-weight: 500; color: #e8f4fd; margin-bottom: 4px; }
-    #appModeSelect .card-mode-tag { font-size: 10px; color: #378ADD; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
-    #appModeSelect .card-mode-tag.dim { color: #2a4a6a; }
+    #appModeSelect .card-mode-name { font-size: 17px; font-weight: 600; color: #f8fafc; margin-bottom: 6px; }
+    #appModeSelect .card-mode-tag { display: inline-block; font-size: 10px; color: #a5b4fc; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px; padding: 2px 8px; border-radius: 99px; background: rgba(99,102,241,0.14); border: 1px solid rgba(99,102,241,0.25); }
+    #appModeSelect .card-mode-tag.dim { color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
 
     #appModeSelect .card-mode-desc {
-      font-size: 12px; color: #7ba8c8; line-height: 1.65; margin-bottom: 12px;
-      border-left: 2px solid #1e3a5f; padding-left: 8px;
+      font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.6; margin-bottom: 14px;
+      border-left: 2px solid rgba(99,102,241,0.4); padding-left: 10px;
     }
 
-    #appModeSelect .card-spec { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #5a8aad; margin-bottom: 4px; }
-    #appModeSelect .card-spec-dot { width: 4px; height: 4px; border-radius: 50%; background: #378ADD; flex-shrink: 0; }
-    #appModeSelect .card-spec.dim { color: #2a4a6a; }
-    #appModeSelect .card-spec.dim .card-spec-dot { background: #2a4a6a; }
+    #appModeSelect .card-spec { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 6px; }
+    #appModeSelect .card-spec-dot { width: 5px; height: 5px; border-radius: 50%; background: #6366f1; flex-shrink: 0; }
+    #appModeSelect .card-spec.dim { color: rgba(255,255,255,0.4); }
+    #appModeSelect .card-spec.dim .card-spec-dot { background: rgba(255,255,255,0.3); }
 
     #appModeSelect .card-mode-btn {
-      width: 100%; margin-top: 14px; padding: 8px; font-size: 11px;
-      letter-spacing: 0.08em; text-transform: uppercase; border-radius: 4px;
-      cursor: pointer; border: 1px solid #1e3a5f; background: transparent;
-      color: #5a8aad; font-family: var(--font-mono, monospace); transition: all 0.15s;
+      width: 100%; margin-top: 16px; padding: 10px; font-size: 12px;
+      letter-spacing: 0.06em; text-transform: uppercase; border-radius: 9px; font-weight: 600;
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.12); background: transparent;
+      color: rgba(255,255,255,0.6); font-family: inherit; transition: all 0.15s;
     }
-    #appModeSelect .mode-card.card-rec .card-mode-btn { background: #185FA5; color: #E6F1FB; border-color: #185FA5; }
-    #appModeSelect .mode-card.selected .card-mode-btn { background: #185FA5; color: #E6F1FB; border-color: #185FA5; }
+    #appModeSelect .card-mode-btn:hover { border-color: rgba(99,102,241,0.5); color: #fff; }
+    #appModeSelect .mode-card.card-rec .card-mode-btn { background: #6366f1; color: #fff; border-color: #6366f1; }
+    #appModeSelect .mode-card.selected .card-mode-btn { background: #6366f1; color: #fff; border-color: #6366f1; }
 
     #modeAutoFlow {
-      border: 1px solid #1e3a5f; border-radius: 4px; padding: 1.25rem;
-      background: #0d1626; position: relative; margin-bottom: 1rem;
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.5rem 1.25rem;
+      background: rgba(255,255,255,0.03); position: relative; margin-bottom: 1rem;
     }
     #modeAutoFlow::before {
-      content: 'PROCESS // AUTO_MODE'; position: absolute; top: -8px; left: 12px;
-      background: #0a0f1a; font-size: 10px; color: #378ADD; letter-spacing: 0.1em; padding: 0 6px;
+      content: 'PROCESS // AUTO_MODE'; position: absolute; top: -8px; left: 14px;
+      background: #030303; font-size: 10px; color: #818cf8; letter-spacing: 0.1em; padding: 0 6px; font-family: var(--font-mono, monospace);
     }
-    #modeAutoFlow .flow-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px dashed #1e3a5f; }
+    #modeAutoFlow .flow-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.08); }
     #modeAutoFlow .flow-row:last-child { border-bottom: none; }
-    #modeAutoFlow .flow-num { font-size: 10px; font-weight: 500; color: #378ADD; letter-spacing: 0.05em; width: 24px; flex-shrink: 0; padding-top: 2px; }
-    #modeAutoFlow .flow-name { font-size: 13px; font-weight: 500; color: #85B7EB; margin-bottom: 2px; }
-    #modeAutoFlow .flow-note { font-size: 11px; color: #5a8aad; }
+    #modeAutoFlow .flow-num { font-size: 11px; font-weight: 600; color: #818cf8; letter-spacing: 0.05em; width: 24px; flex-shrink: 0; padding-top: 2px; font-family: var(--font-mono, monospace); }
+    #modeAutoFlow .flow-name { font-size: 13px; font-weight: 600; color: #c7d2fe; margin-bottom: 2px; }
+    #modeAutoFlow .flow-note { font-size: 12px; color: rgba(255,255,255,0.45); }
 
     #modeConfirmBtn {
-      width: 100%; padding: 12px; background: #185FA5; color: #E6F1FB; border: none;
-      border-radius: 4px; font-size: 12px; font-weight: 500; letter-spacing: 0.1em;
-      text-transform: uppercase; cursor: pointer; font-family: var(--font-mono, monospace);
-      position: relative; overflow: hidden;
+      width: 100%; padding: 13px; background: #6366f1; color: #fff; border: none;
+      border-radius: 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; cursor: pointer; font-family: inherit;
+      position: relative; overflow: hidden; transition: background 0.15s;
     }
+    #modeConfirmBtn:hover { background: #4f52d4; }
     #modeConfirmBtn::after {
       content: ''; position: absolute; top: 0; left: -100%; width: 60px; height: 100%;
       background: rgba(255,255,255,0.12); transform: skewX(-20deg); transition: left 0.5s;
@@ -2606,37 +2617,40 @@
 
 <!-- ════════ /app MODE SELECTION (shown first; .container stays hidden until a mode is chosen) ════════ -->
 <div id="appModeSelect">
-  <div style="margin-bottom:8px; font-size:10px; color:#378ADD; letter-spacing:0.15em; text-transform:uppercase;">sys // cold outreach engine v2</div>
+  <div style="margin-bottom:8px; font-size:10px; color:#818cf8; letter-spacing:0.15em; text-transform:uppercase;">sys · cold outreach engine v2</div>
   <div style="font-size:22px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:4px;">选择运行模式</div>
-  <div style="font-size:12px; color:var(--color-text-tertiary, rgba(255,255,255,0.35)); margin-bottom:24px;">// 选好之后填一次信息，剩下的交给系统</div>
+  <div style="font-size:12px; color:var(--color-text-tertiary, rgba(255,255,255,0.35)); margin-bottom:24px;">选好之后填一次信息，剩下的交给系统</div>
 
   <div class="mode-cards">
 
     <!-- CARD 1 — 自动模式 -->
     <div class="mode-card card-rec" id="modeCardAuto" onclick="appSelectMode('auto')">
-      <div class="card-glow"></div>
+      <div class="spotlight"></div>
+      <div class="spot-border"></div>
       <div class="card-mode-id">MODE_01</div>
       <div class="card-icon-box"><i class="ti ti-bolt" aria-hidden="true"></i></div>
       <p class="card-mode-name">自动模式</p>
-      <p class="card-mode-tag">// recommended</p>
+      <p class="card-mode-tag">recommended</p>
       <p class="card-mode-desc">填一次信息，系统全自动跑完所有流程，直接出可发送的邮件。</p>
       <div class="card-spec"><div class="card-spec-dot"></div>AI 审核 + 自动搜索</div>
       <div class="card-spec"><div class="card-spec-dot"></div>自动筛选目标客户</div>
       <div class="card-spec"><div class="card-spec-dot"></div>批量生成 7 封序列</div>
-      <button class="card-mode-btn" id="btnModeAuto">// 选择此模式</button>
+      <button class="card-mode-btn" id="btnModeAuto">选择此模式</button>
     </div>
 
     <!-- CARD 2 — 手动模式 -->
     <div class="mode-card card-adv" id="modeCardManual" onclick="appSelectMode('manual')">
+      <div class="spotlight"></div>
+      <div class="spot-border"></div>
       <div class="card-mode-id dim">MODE_02</div>
       <div class="card-icon-box"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i></div>
       <p class="card-mode-name">手动模式</p>
-      <p class="card-mode-tag dim">// advanced</p>
+      <p class="card-mode-tag dim">advanced</p>
       <p class="card-mode-desc">每一步自己控制，可以在中间调整筛选标准和邮件框架。</p>
       <div class="card-spec dim"><div class="card-spec-dot"></div>搜索 → 查看结果</div>
       <div class="card-spec dim"><div class="card-spec-dot"></div>筛选 → 确认框架</div>
       <div class="card-spec dim"><div class="card-spec-dot"></div>逐步生成 + 发送</div>
-      <button class="card-mode-btn" id="btnModeManual">// 选择此模式</button>
+      <button class="card-mode-btn" id="btnModeManual">选择此模式</button>
     </div>
 
   </div>
@@ -2653,8 +2667,8 @@
 
   <!-- confirm (hidden until a mode is selected) -->
   <button type="button" id="modeConfirmBtn" onclick="appConfirmMode()"
-    style="display:none; width:100%; margin-top:16px; padding:12px; background:#185FA5; color:#E6F1FB; border:none; border-radius:4px; font-size:14px; font-weight:500; cursor:pointer;">
-    // 确认并开始 →
+    style="display:none; width:100%; margin-top:16px;">
+    确认并开始 →
   </button>
 </div>
 
@@ -2849,14 +2863,14 @@ function appSelectMode(mode) {
   if (manual) manual.classList.toggle('selected', mode === 'manual');
   const btnAuto   = document.getElementById('btnModeAuto');
   const btnManual = document.getElementById('btnModeManual');
-  if (btnAuto)   btnAuto.textContent   = (mode === 'auto')   ? '// 已选择 ✓' : '// 选择此模式';
-  if (btnManual) btnManual.textContent = (mode === 'manual') ? '// 已选择 ✓' : '// 选择此模式';
+  if (btnAuto)   btnAuto.textContent   = (mode === 'auto')   ? '已选择 ✓' : '选择此模式';
+  if (btnManual) btnManual.textContent = (mode === 'manual') ? '已选择 ✓' : '选择此模式';
   const flow = document.getElementById('modeAutoFlow');
   if (flow) flow.style.display = (mode === 'auto') ? 'block' : 'none';
   const btn = document.getElementById('modeConfirmBtn');
   if (btn) {
     btn.style.display = 'block';
-    btn.textContent = '// 确认并开始 →';
+    btn.textContent = '确认并开始 →';
   }
 }
 
@@ -2893,6 +2907,16 @@ function appBackToModeSelect() {
   const btn = document.getElementById('modeConfirmBtn');
   if (btn) btn.style.display = 'none';
 }
+
+// Cursor spotlight for the mode cards — track the pointer and expose it as CSS
+// vars (--mx / --my) that the .spotlight + .spot-border gradients read.
+document.querySelectorAll('#appModeSelect .mode-card').forEach(function (card) {
+  card.addEventListener('pointermove', function (e) {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  });
+});
 </script>
 
 <div class="container" style="display:none">
