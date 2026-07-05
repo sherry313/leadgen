@@ -2605,7 +2605,7 @@
 </nav>
 
 <!-- ════════ /app MODE SELECTION (shown first; .container stays hidden until a mode is chosen) ════════ -->
-<div id="appModeSelect" style="display:none">
+<div id="appModeSelect">
   <div style="margin-bottom:8px; font-size:10px; color:#378ADD; letter-spacing:0.15em; text-transform:uppercase;">sys // cold outreach engine v2</div>
   <div style="font-size:22px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:4px;">选择运行模式</div>
   <div style="font-size:12px; color:var(--color-text-tertiary, rgba(255,255,255,0.35)); margin-bottom:24px;">// 选好之后填一次信息，剩下的交给系统</div>
@@ -2870,19 +2870,6 @@ function appBackToModeSelect() {
   const btn = document.getElementById('modeConfirmBtn');
   if (btn) btn.style.display = 'none';
 }
-
-// Only 手动模式 remains, so the 选择运行模式 screen is a pointless extra click —
-// skip it on load and drop straight into the flow (选择方式 / Find leads).
-document.addEventListener('DOMContentLoaded', function () {
-  window._appMode = 'manual';
-  const modeSel   = document.getElementById('appModeSelect');
-  const autoPanel = document.getElementById('appAutoPanel');
-  const container = document.querySelector('.container');
-  if (modeSel)   modeSel.style.display = 'none';
-  if (autoPanel) autoPanel.style.display = 'none';
-  if (container) container.style.display = '';
-  if (typeof goToStep === 'function') goToStep(1);
-});
 </script>
 
 <div class="container" style="display:none">
