@@ -2439,7 +2439,7 @@
     }
 
     #appModeSelect .mode-cards {
-      display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 1.5rem;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem;
       position: relative; z-index: 1;
     }
 
@@ -2612,20 +2612,43 @@
 
   <div class="mode-cards">
 
-    <!-- 手动模式 (only mode; 自动模式 card removed) -->
-    <div class="mode-card card-rec" id="modeCardManual" onclick="appSelectMode('manual')">
+    <!-- CARD 1 — 自动模式 -->
+    <div class="mode-card card-rec" id="modeCardAuto" onclick="appSelectMode('auto')">
       <div class="card-glow"></div>
       <div class="card-mode-id">MODE_01</div>
+      <div class="card-icon-box"><i class="ti ti-bolt" aria-hidden="true"></i></div>
+      <p class="card-mode-name">自动模式</p>
+      <p class="card-mode-tag">// recommended</p>
+      <p class="card-mode-desc">填一次信息，系统全自动跑完所有流程，直接出可发送的邮件。</p>
+      <div class="card-spec"><div class="card-spec-dot"></div>AI 审核 + 自动搜索</div>
+      <div class="card-spec"><div class="card-spec-dot"></div>自动筛选目标客户</div>
+      <div class="card-spec"><div class="card-spec-dot"></div>批量生成 7 封序列</div>
+      <button class="card-mode-btn" id="btnModeAuto">// 选择此模式</button>
+    </div>
+
+    <!-- CARD 2 — 手动模式 -->
+    <div class="mode-card card-adv" id="modeCardManual" onclick="appSelectMode('manual')">
+      <div class="card-mode-id dim">MODE_02</div>
       <div class="card-icon-box"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i></div>
       <p class="card-mode-name">手动模式</p>
-      <p class="card-mode-tag">// advanced</p>
+      <p class="card-mode-tag dim">// advanced</p>
       <p class="card-mode-desc">每一步自己控制，可以在中间调整筛选标准和邮件框架。</p>
-      <div class="card-spec"><div class="card-spec-dot"></div>搜索 → 查看结果</div>
-      <div class="card-spec"><div class="card-spec-dot"></div>筛选 → 确认框架</div>
-      <div class="card-spec"><div class="card-spec-dot"></div>逐步生成 + 发送</div>
+      <div class="card-spec dim"><div class="card-spec-dot"></div>搜索 → 查看结果</div>
+      <div class="card-spec dim"><div class="card-spec-dot"></div>筛选 → 确认框架</div>
+      <div class="card-spec dim"><div class="card-spec-dot"></div>逐步生成 + 发送</div>
       <button class="card-mode-btn" id="btnModeManual">// 选择此模式</button>
     </div>
 
+  </div>
+
+  <!-- collapsible auto-mode flow (shown only when 自动模式 selected) -->
+  <div id="modeAutoFlow" style="display:none;">
+    <div class="flow-row"><span class="flow-num">01</span><div><div class="flow-name">填写信息</div><div class="flow-note">关键词、地区、产品、目标客户、筛选标准、发件人</div></div></div>
+    <div class="flow-row"><span class="flow-num">02</span><div><div class="flow-name">AI 审核输入质量</div><div class="flow-note">信息不够具体会被拦截，补充清楚再继续</div></div></div>
+    <div class="flow-row"><span class="flow-num">03</span><div><div class="flow-name">自动搜索目标客户</div><div class="flow-note">根据关键词 + 地区抓取，无需手动操作</div></div></div>
+    <div class="flow-row"><span class="flow-num">04</span><div><div class="flow-name">AI 自动筛选</div><div class="flow-note">根据你填的标准过滤不符合的公司</div></div></div>
+    <div class="flow-row"><span class="flow-num">05</span><div><div class="flow-name">批量生成邮件序列</div><div class="flow-note">每个客户 7 封，全部基于你填的信息</div></div></div>
+    <div class="flow-row"><span class="flow-num">06</span><div><div class="flow-name">进入发送界面</div><div class="flow-note">SMTP 或 Instantly，一键推送</div></div></div>
   </div>
 
   <!-- confirm (hidden until a mode is selected) -->
