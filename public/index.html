@@ -2537,47 +2537,46 @@
     }
     #modeConfirmBtn:hover::after { left: 130%; }
 
-    /* /app auto-mode form */
+    /* /app auto-mode form — themed to match the app (black #030303 + indigo #6366f1) */
     #appAutoPanel {
-      background: #0a0f1a;
+      background: #030303;
       min-height: 100vh;
-      padding: 80px 1.5rem 2rem;
-      font-family: var(--font-mono, monospace);
-      color: #e8f4fd;
+      padding: 96px 1.5rem 2rem;
+      color: #e5e7eb;
     }
     .auto-top-bar { display:flex; align-items:center; gap:12px; margin-bottom:2rem; }
-    .auto-back-btn { font-size:11px; color:#5a8aad; letter-spacing:0.08em; background:transparent; border:1px solid #1e3a5f; border-radius:3px; padding:5px 10px; cursor:pointer; font-family:var(--font-mono,monospace); }
-    .auto-back-btn:hover { border-color:#378ADD; color:#378ADD; }
-    .auto-mode-label { font-size:10px; color:#378ADD; letter-spacing:0.15em; text-transform:uppercase; }
-    .auto-page-title { font-size:20px; font-weight:500; color:#e8f4fd; margin-bottom:4px; letter-spacing:-0.02em; }
-    .auto-page-sub { font-size:12px; color:#5a8aad; margin-bottom:2rem; }
-    .auto-section { border:1px solid #1e3a5f; border-radius:6px; padding:1.25rem; margin-bottom:1.25rem; position:relative; }
-    .auto-section::before { content:attr(data-label); position:absolute; top:-8px; left:12px; background:#0a0f1a; font-size:10px; color:#378ADD; letter-spacing:0.1em; padding:0 6px; }
+    .auto-back-btn { font-size:11px; color:rgba(255,255,255,0.5); letter-spacing:0.06em; background:transparent; border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:6px 12px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+    .auto-back-btn:hover { border-color:rgba(99,102,241,0.5); color:#fff; }
+    .auto-mode-label { font-size:10px; color:#818cf8; letter-spacing:0.15em; text-transform:uppercase; font-family:var(--font-mono,monospace); }
+    .auto-page-title { font-size:22px; font-weight:700; color:#f8fafc; margin-bottom:4px; letter-spacing:-0.02em; }
+    .auto-page-sub { font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:2rem; }
+    .auto-section { border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1.5rem 1.25rem; margin-bottom:1.25rem; position:relative; background:rgba(255,255,255,0.03); }
+    .auto-section::before { content:attr(data-label); position:absolute; top:-8px; left:14px; background:#030303; font-size:10px; color:#818cf8; letter-spacing:0.1em; padding:0 6px; font-family:var(--font-mono,monospace); }
     .auto-field { margin-bottom:1.25rem; }
     .auto-field:last-child { margin-bottom:0; }
-    .auto-field-label { font-size:11px; color:#378ADD; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px; display:block; }
-    .auto-field-hint { font-size:11px; color:#2a4a6a; margin-bottom:6px; display:block; }
-    .auto-input { width:100%; background:#0f1f35; border:1px solid #2a4f7a; border-radius:3px; padding:8px 10px; font-size:13px; color:#e8f4fd; font-family:var(--font-mono,monospace); outline:none; }
-    .auto-input:focus { border-color:#378ADD; background:#0d1e33; }
-    .auto-textarea { width:100%; background:#0f1f35; border:1px solid #2a4f7a; border-radius:3px; padding:8px 10px; font-size:13px; color:#e8f4fd; font-family:var(--font-mono,monospace); outline:none; resize:vertical; min-height:60px; }
-    .auto-textarea:focus { border-color:#378ADD; background:#0d1e33; }
-    .auto-input::placeholder, .auto-textarea::placeholder { color:#2a4a6a; }
+    .auto-field-label { font-size:11px; color:#a5b4fc; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; display:block; font-weight:600; }
+    .auto-field-hint { font-size:11px; color:rgba(255,255,255,0.35); margin-bottom:6px; display:block; }
+    .auto-input { width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:9px 12px; font-size:13px; color:#e5e7eb; font-family:inherit; outline:none; transition:border-color 0.15s; }
+    .auto-input:focus { border-color:rgba(99,102,241,0.5); background:rgba(255,255,255,0.03); }
+    .auto-textarea { width:100%; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:9px 12px; font-size:13px; color:#e5e7eb; font-family:inherit; outline:none; resize:vertical; min-height:60px; transition:border-color 0.15s; }
+    .auto-textarea:focus { border-color:rgba(99,102,241,0.5); background:rgba(255,255,255,0.03); }
+    .auto-input::placeholder, .auto-textarea::placeholder { color:rgba(255,255,255,0.3); }
     .auto-pills { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px; }
-    .auto-pill { font-size:11px; padding:4px 10px; border-radius:20px; border:1px solid #1e3a5f; background:transparent; color:#5a8aad; cursor:pointer; font-family:var(--font-mono,monospace); transition:all 0.12s; }
-    .auto-pill:hover { border-color:#378ADD; color:#378ADD; }
-    .auto-pill.on { background:#185FA5; color:#E6F1FB; border-color:#185FA5; }
+    .auto-pill { font-size:12px; padding:5px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.12); background:transparent; color:rgba(255,255,255,0.6); cursor:pointer; font-family:inherit; transition:all 0.15s; }
+    .auto-pill:hover { border-color:rgba(99,102,241,0.5); color:#fff; }
+    .auto-pill.on { background:rgba(99,102,241,0.15); color:#c7d2fe; border-color:#6366f1; }
     .auto-pill-dashed { border-style:dashed !important; }
-    .auto-compiled { font-size:11px; color:#378ADD; min-height:14px; margin-top:4px; }
+    .auto-compiled { font-size:11px; color:#a5b4fc; min-height:14px; margin-top:4px; }
     .auto-sources { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-    .auto-source { background:#0f1f35; border:1px solid #2a4f7a; border-radius:4px; padding:8px 10px; display:flex; align-items:center; gap:8px; cursor:pointer; transition:all 0.12s; }
-    .auto-source:hover { border-color:#378ADD; }
-    .auto-source.on { border-color:#378ADD; background:#0d2440; }
-    .auto-source i { font-size:16px; color:#5a8aad; }
-    .auto-source.on i { color:#378ADD; }
-    .auto-source span { font-size:12px; color:#5a8aad; }
-    .auto-source.on span { color:#85B7EB; }
-    .auto-submit-btn { width:100%; padding:12px; background:#185FA5; color:#E6F1FB; border:none; border-radius:4px; font-size:12px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; font-family:var(--font-mono,monospace); pointer-events:auto; position:relative; z-index:10; }
-    .auto-submit-btn:hover { background:#0C447C; }
+    .auto-source { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:9px 11px; display:flex; align-items:center; gap:8px; cursor:pointer; transition:all 0.15s; }
+    .auto-source:hover { border-color:rgba(99,102,241,0.4); }
+    .auto-source.on { border-color:#6366f1; background:rgba(99,102,241,0.12); }
+    .auto-source i { font-size:16px; color:rgba(255,255,255,0.5); }
+    .auto-source.on i { color:#a5b4fc; }
+    .auto-source span { font-size:12px; color:rgba(255,255,255,0.55); }
+    .auto-source.on span { color:#c7d2fe; }
+    .auto-submit-btn { width:100%; padding:13px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; font-family:inherit; pointer-events:auto; position:relative; z-index:10; transition:background 0.15s; }
+    .auto-submit-btn:hover { background:#4f52d4; }
   </style>
 </head>
 <body>
@@ -2796,60 +2795,60 @@
   </div>
 </div>
 
-<div id="appAutoSendPanel" style="display:none; background:#0a0f1a; min-height:100vh; padding:80px 1.5rem 2rem; font-family:var(--font-mono,monospace); color:#E2EEF9;">
+<div id="appAutoSendPanel" style="display:none; background:#030303; min-height:100vh; padding:80px 1.5rem 2rem; font-family:var(--font-mono,monospace); color:#e5e7eb;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:2rem">
-    <button onclick="appBackToAutoForm()" style="font-size:11px;color:#5a8aad;background:transparent;border:1px solid #1e3a5f;border-radius:3px;padding:5px 10px;cursor:pointer;font-family:var(--font-mono,monospace)">← 返回</button>
-    <span style="font-size:10px;color:#378ADD;letter-spacing:0.15em;text-transform:uppercase">// AUTO_MODE // 邮件已生成</span>
+    <button onclick="appBackToAutoForm()" style="font-size:11px;color:rgba(255,255,255,0.5);background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:5px 10px;cursor:pointer;font-family:var(--font-mono,monospace)">← 返回</button>
+    <span style="font-size:10px;color:#a5b4fc;letter-spacing:0.15em;text-transform:uppercase">// AUTO_MODE // 邮件已生成</span>
   </div>
   <p style="font-size:18px;font-weight:500;margin-bottom:4px">邮件已生成完毕</p>
-  <p style="font-size:12px;color:#5a8aad;margin-bottom:2rem" id="autoSendSummary">共生成 0 家客户的邮件序列</p>
+  <p style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:2rem" id="autoSendSummary">共生成 0 家客户的邮件序列</p>
 
-  <div style="border:1px solid #1e3a5f;border-radius:6px;padding:1.25rem;margin-bottom:1.25rem;background:#0d1626">
-    <div style="font-size:10px;color:#378ADD;letter-spacing:0.1em;margin-bottom:1rem">SEND_METHOD // 发送方式</div>
+  <div style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.25rem;margin-bottom:1.25rem;background:rgba(255,255,255,0.03)">
+    <div style="font-size:10px;color:#a5b4fc;letter-spacing:0.1em;margin-bottom:1rem">SEND_METHOD // 发送方式</div>
     <div style="display:flex;gap:10px;margin-bottom:1rem">
-      <button id="autoSendMethodSMTP" onclick="autoSelectSendMethod('smtp')" style="flex:1;padding:10px;background:#1A4B8C;color:#C8E0F8;border:1px solid #378ADD;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-mono,monospace)">📧 SMTP 发送</button>
-      <button id="autoSendMethodInstantly" onclick="autoSelectSendMethod('instantly')" style="flex:1;padding:10px;background:transparent;color:#5a8aad;border:1px solid #1e3a5f;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-mono,monospace)">⚡ Instantly</button>
+      <button id="autoSendMethodSMTP" onclick="autoSelectSendMethod('smtp')" style="flex:1;padding:10px;background:rgba(99,102,241,0.18);color:#c7d2fe;border:1px solid #a5b4fc;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-mono,monospace)">📧 SMTP 发送</button>
+      <button id="autoSendMethodInstantly" onclick="autoSelectSendMethod('instantly')" style="flex:1;padding:10px;background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.08);border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-mono,monospace)">⚡ Instantly</button>
     </div>
 
     <div id="autoSmtpPanel">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         <div>
-          <div style="font-size:11px;color:#378ADD;margin-bottom:4px">HOST</div>
-          <input id="autoSmtpHost" type="text" placeholder="smtp.gmail.com" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+          <div style="font-size:11px;color:#a5b4fc;margin-bottom:4px">HOST</div>
+          <input id="autoSmtpHost" type="text" placeholder="smtp.gmail.com" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:8px;font-size:12px;color:#e5e7eb;font-family:var(--font-mono,monospace);outline:none">
         </div>
         <div>
-          <div style="font-size:11px;color:#378ADD;margin-bottom:4px">PORT</div>
-          <input id="autoSmtpPort" type="text" placeholder="587" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+          <div style="font-size:11px;color:#a5b4fc;margin-bottom:4px">PORT</div>
+          <input id="autoSmtpPort" type="text" placeholder="587" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:8px;font-size:12px;color:#e5e7eb;font-family:var(--font-mono,monospace);outline:none">
         </div>
       </div>
       <div style="margin-bottom:8px">
-        <div style="font-size:11px;color:#378ADD;margin-bottom:4px">邮箱账号</div>
-        <input id="autoSmtpUser" type="text" placeholder="your@email.com" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+        <div style="font-size:11px;color:#a5b4fc;margin-bottom:4px">邮箱账号</div>
+        <input id="autoSmtpUser" type="text" placeholder="your@email.com" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:8px;font-size:12px;color:#e5e7eb;font-family:var(--font-mono,monospace);outline:none">
       </div>
       <div style="margin-bottom:1rem">
-        <div style="font-size:11px;color:#378ADD;margin-bottom:4px">密码 / 应用专用密码</div>
-        <input id="autoSmtpPass" type="password" placeholder="••••••••" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+        <div style="font-size:11px;color:#a5b4fc;margin-bottom:4px">密码 / 应用专用密码</div>
+        <input id="autoSmtpPass" type="password" placeholder="••••••••" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:8px;font-size:12px;color:#e5e7eb;font-family:var(--font-mono,monospace);outline:none">
       </div>
-      <button onclick="autoStartSmtpSend()" style="width:100%;padding:10px;background:#185FA5;color:#E6F1FB;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">// 开始发送</button>
+      <button onclick="autoStartSmtpSend()" style="width:100%;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">// 开始发送</button>
     </div>
 
     <div id="autoInstantlyPanel" style="display:none">
       <div style="margin-bottom:1rem">
-        <div style="font-size:11px;color:#378ADD;margin-bottom:4px">Campaign ID</div>
-        <input id="autoInstantlyCampaign" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="width:100%;box-sizing:border-box;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px;font-size:12px;color:#E2EEF9;font-family:var(--font-mono,monospace);outline:none">
+        <div style="font-size:11px;color:#a5b4fc;margin-bottom:4px">Campaign ID</div>
+        <input id="autoInstantlyCampaign" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:8px;font-size:12px;color:#e5e7eb;font-family:var(--font-mono,monospace);outline:none">
       </div>
-      <button onclick="autoStartInstantlySend()" style="width:100%;padding:10px;background:#185FA5;color:#E6F1FB;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">// 推送到 Instantly</button>
+      <button onclick="autoStartInstantlySend()" style="width:100%;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">// 推送到 Instantly</button>
     </div>
   </div>
 
-  <div style="border:1px solid #1e3a5f;border-radius:6px;background:#0d1626;overflow:hidden">
-    <div style="font-size:10px;color:#378ADD;letter-spacing:0.1em;padding:1rem 1.25rem 0.5rem">LEADS // 已生成邮件列表</div>
+  <div style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;background:rgba(255,255,255,0.03);overflow:hidden">
+    <div style="font-size:10px;color:#a5b4fc;letter-spacing:0.1em;padding:1rem 1.25rem 0.5rem">LEADS // 已生成邮件列表</div>
     <div id="autoLeadsList" style="max-height:400px;overflow-y:auto"></div>
   </div>
 
-  <div id="autoSendProgress" style="display:none;margin-top:1rem;border:1px solid #1e3a5f;border-radius:6px;padding:1.25rem;background:#0d1626">
-    <div style="font-size:11px;color:#378ADD;margin-bottom:8px">// 发送进度</div>
-    <div id="autoSendProgressText" style="font-size:13px;color:#E2EEF9"></div>
+  <div id="autoSendProgress" style="display:none;margin-top:1rem;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.25rem;background:rgba(255,255,255,0.03)">
+    <div style="font-size:11px;color:#a5b4fc;margin-bottom:8px">// 发送进度</div>
+    <div id="autoSendProgressText" style="font-size:13px;color:#e5e7eb"></div>
   </div>
 </div>
 
@@ -11877,8 +11876,8 @@ async function biPolishField(textareaId, kind, btn) {
         <!-- Field 3 — 真实客户案例 -->
         <div style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:var(--border-radius-lg, 12px); background:var(--color-background-primary, #0b0b0c); overflow:hidden; margin-bottom:1.25rem;">
           <div style="display:flex; align-items:center; gap:8px; padding:10px 14px 0;">
-            <div style="width:26px; height:26px; border-radius:6px; background:#E6F1FB; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-              <i class="ti ti-trophy" style="color:#185FA5; font-size:15px;"></i>
+            <div style="width:26px; height:26px; border-radius:6px; background:#ffffff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <i class="ti ti-trophy" style="color:#6366f1; font-size:15px;"></i>
             </div>
             <span style="font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb);">真实客户案例 <span style="font-size:11px; font-weight:400; color:var(--color-text-tertiary, rgba(255,255,255,0.35));">（没有就勾选暂无）</span></span>
           </div>
@@ -13094,10 +13093,10 @@ function autoShowSendPanel() {
   var list = document.getElementById('autoLeadsList');
   list.innerHTML = '';
   emails.forEach(function(e, i) {
-    var row = '<div style="padding:10px 1.25rem;border-bottom:1px solid #1e3a5f;display:flex;align-items:center;justify-content:space-between">';
-    row += '<div><div style="font-size:13px;color:#E2EEF9">' + (e.recipient || e.to || 'Unknown') + '</div>';
-    row += '<div style="font-size:11px;color:#5a8aad">' + (e.email || '无邮箱') + '</div></div>';
-    row += '<div style="font-size:11px;color:#378ADD">' + (e.sequence ? e.sequence.length : 1) + ' 封</div>';
+    var row = '<div style="padding:10px 1.25rem;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between">';
+    row += '<div><div style="font-size:13px;color:#e5e7eb">' + (e.recipient || e.to || 'Unknown') + '</div>';
+    row += '<div style="font-size:11px;color:rgba(255,255,255,0.5)">' + (e.email || '无邮箱') + '</div></div>';
+    row += '<div style="font-size:11px;color:#a5b4fc">' + (e.sequence ? e.sequence.length : 1) + ' 封</div>';
     row += '</div>';
     list.innerHTML += row;
   });
@@ -13366,18 +13365,18 @@ async function fwAutoRun(providedInputs) {
     var existingReview = document.getElementById('autoReviewPanel');
     if (existingReview) existingReview.remove();
     var reviewHtml = '<div id="autoReviewPanel" style="margin-top:1.5rem">';
-    reviewHtml += '<p style="font-size:13px;color:#E2EEF9;font-weight:500;margin-bottom:1rem">// AI 审核结果 — 请修正以下字段</p>';
+    reviewHtml += '<p style="font-size:13px;color:#e5e7eb;font-weight:500;margin-bottom:1rem">// AI 审核结果 — 请修正以下字段</p>';
     _fwReview.forEach(function(r) {
       if (!r.passed) {
-        reviewHtml += '<div style="background:#0A1628;border:1px solid #2A5580;border-radius:6px;padding:12px;margin-bottom:10px">';
+        reviewHtml += '<div style="background:#0A1628;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:12px;margin-bottom:10px">';
         reviewHtml += '<div style="font-size:11px;color:#F59E0B;font-weight:500;margin-bottom:4px">⚠ ' + r.field + '</div>';
         reviewHtml += '<div style="font-size:12px;color:#7EB8F0;margin-bottom:8px">' + r.reason + '</div>';
-        reviewHtml += '<div style="font-size:12px;color:#E2EEF9;margin-bottom:6px">' + r.followUpQuestion + '</div>';
-        reviewHtml += '<input type="text" data-fix-field="' + r.field + '" placeholder="补充更具体的信息..." style="width:100%;background:#112038;border:1px solid #2A5580;border-radius:4px;padding:8px 10px;font-size:13px;color:#E2EEF9;outline:none;box-sizing:border-box">';
+        reviewHtml += '<div style="font-size:12px;color:#e5e7eb;margin-bottom:6px">' + r.followUpQuestion + '</div>';
+        reviewHtml += '<input type="text" data-fix-field="' + r.field + '" placeholder="补充更具体的信息..." style="width:100%;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:8px 10px;font-size:13px;color:#e5e7eb;outline:none;box-sizing:border-box">';
         reviewHtml += '</div>';
       }
     });
-    reviewHtml += '<button onclick="autoResubmit()" style="width:100%;margin-top:1rem;padding:10px;background:#185FA5;color:#E6F1FB;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">// 重新提交 →</button>';
+    reviewHtml += '<button onclick="autoResubmit()" style="width:100%;margin-top:1rem;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">// 重新提交 →</button>';
     reviewHtml += '</div>';
     var autoPanel = document.getElementById('appAutoPanel');
     autoPanel.insertAdjacentHTML('beforeend', reviewHtml);
@@ -13389,10 +13388,10 @@ async function fwAutoRun(providedInputs) {
   // Show confirmation before proceeding
   var existingConfirm = document.getElementById('autoConfirmPanel');
   if (existingConfirm) existingConfirm.remove();
-  var confirmHtml = '<div id="autoConfirmPanel" style="margin-top:1.5rem;background:#0A1628;border:1px solid #2A5580;border-radius:6px;padding:1.25rem">';
-  confirmHtml += '<p style="font-size:13px;color:#5BA3E0;margin-bottom:4px">// 审核通过 ✓</p>';
+  var confirmHtml = '<div id="autoConfirmPanel" style="margin-top:1.5rem;background:#0A1628;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:1.25rem">';
+  confirmHtml += '<p style="font-size:13px;color:#4ade80;margin-bottom:4px">// 审核通过 ✓</p>';
   confirmHtml += '<p style="font-size:12px;color:#7EB8F0;margin-bottom:1rem">所有信息已通过审核。点击下方按钮开始自动搜索、筛选并生成邮件。</p>';
-  confirmHtml += '<button onclick="autoConfirmRun()" style="width:100%;padding:10px;background:#185FA5;color:#E6F1FB;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">⚡ 确认 — 开始搜索 + 筛选 + 生成邮件</button>';
+  confirmHtml += '<button onclick="autoConfirmRun()" style="width:100%;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">⚡ 确认 — 开始搜索 + 筛选 + 生成邮件</button>';
   confirmHtml += '</div>';
   document.getElementById('appAutoPanel').insertAdjacentHTML('beforeend', confirmHtml);
   document.getElementById('appAutoPanel').scrollTop = document.getElementById('appAutoPanel').scrollHeight;
