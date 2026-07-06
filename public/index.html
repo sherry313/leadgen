@@ -2515,7 +2515,7 @@
       background: rgba(255,255,255,0.03); position: relative; margin-bottom: 1rem;
     }
     #modeAutoFlow::before {
-      content: 'PROCESS // AUTO_MODE'; position: absolute; top: -8px; left: 14px;
+      content: 'AUTO_MODE 流程'; position: absolute; top: -8px; left: 14px;
       background: #030303; font-size: 10px; color: #818cf8; letter-spacing: 0.1em; padding: 0 6px; font-family: var(--font-mono, monospace);
     }
     #modeAutoFlow .flow-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.08); }
@@ -2675,12 +2675,12 @@
 <div id="appAutoPanel" style="display:none">
   <div class="auto-top-bar">
     <button onclick="appBackToModeSelect()" class="auto-back-btn">← 返回模式选择</button>
-    <span class="auto-mode-label">// AUTO_MODE</span>
+    <span class="auto-mode-label">AUTO_MODE</span>
   </div>
   <p class="auto-page-title">填写信息</p>
-  <p class="auto-page-sub">// 填一次，AI 全跑完。垃圾进，垃圾出。</p>
+  <p class="auto-page-sub">填一次，AI 全跑完。垃圾进，垃圾出。</p>
 
-  <div class="auto-section" data-label="SEARCH_CONFIG // 搜索配置">
+  <div class="auto-section" data-label="搜索配置">
     <div class="auto-field">
       <span class="auto-field-label">关键词</span>
       <span class="auto-field-hint">你要找什么类型的客户</span>
@@ -2721,7 +2721,7 @@
     </div>
   </div>
 
-  <div class="auto-section" data-label="EMAIL_CONFIG // 邮件配置">
+  <div class="auto-section" data-label="邮件配置">
     <div class="auto-field">
       <span class="auto-field-label">产品 / 服务</span>
       <div class="auto-pills" id="auto-pp-p">
@@ -2805,7 +2805,7 @@
   <p style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:2rem" id="autoSendSummary">共生成 0 家客户的邮件序列</p>
 
   <div style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.25rem;margin-bottom:1.25rem;background:rgba(255,255,255,0.03)">
-    <div style="font-size:10px;color:#a5b4fc;letter-spacing:0.1em;margin-bottom:1rem">SEND_METHOD // 发送方式</div>
+    <div style="font-size:10px;color:#a5b4fc;letter-spacing:0.1em;margin-bottom:1rem">发送方式</div>
     <div style="display:flex;gap:10px;margin-bottom:1rem">
       <button id="autoSendMethodSMTP" onclick="autoSelectSendMethod('smtp')" style="flex:1;padding:10px;background:rgba(99,102,241,0.18);color:#c7d2fe;border:1px solid #a5b4fc;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-mono,monospace)">📧 SMTP 发送</button>
       <button id="autoSendMethodInstantly" onclick="autoSelectSendMethod('instantly')" style="flex:1;padding:10px;background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.08);border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-mono,monospace)">⚡ Instantly</button>
@@ -2843,7 +2843,7 @@
   </div>
 
   <div style="border:1px solid rgba(255,255,255,0.08);border-radius:6px;background:rgba(255,255,255,0.03);overflow:hidden">
-    <div style="font-size:10px;color:#a5b4fc;letter-spacing:0.1em;padding:1rem 1.25rem 0.5rem">LEADS // 已生成邮件列表</div>
+    <div style="font-size:10px;color:#a5b4fc;letter-spacing:0.1em;padding:1rem 1.25rem 0.5rem">已生成邮件列表</div>
     <div id="autoLeadsList" style="max-height:400px;overflow-y:auto"></div>
   </div>
 
