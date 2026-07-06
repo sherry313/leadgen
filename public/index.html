@@ -2782,7 +2782,8 @@
     </div>
   </div>
 
-  <button class="auto-submit-btn" onclick="autoSubmitForm()" style="position:relative; z-index:10;">// Step 1：AI 审核输入质量 →</button>
+  <div id="autoGateHint" style="text-align:center; font-size:12px; color:rgba(255,255,255,0.4); padding:14px 0;">把上面的信息都填完，这里会出现「AI 审核」按钮</div>
+  <button id="autoSubmitBtn" class="auto-submit-btn" onclick="autoSubmitForm()" style="display:none; position:relative; z-index:10;">Step 1：AI 审核输入质量 →</button>
 </div>
 
 <div id="appAutoProgressPanel" style="display:none; padding:80px 1.5rem 2rem; font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif; min-height:100vh">
@@ -2798,7 +2799,7 @@
 <div id="appAutoSendPanel" style="display:none; background:#030303; min-height:100vh; padding:80px 1.5rem 2rem; font-family:var(--font-mono,monospace); color:#e5e7eb;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:2rem">
     <button onclick="appBackToAutoForm()" style="font-size:11px;color:rgba(255,255,255,0.5);background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:5px 10px;cursor:pointer;font-family:var(--font-mono,monospace)">← 返回</button>
-    <span style="font-size:10px;color:#a5b4fc;letter-spacing:0.15em;text-transform:uppercase">// AUTO_MODE // 邮件已生成</span>
+    <span style="font-size:10px;color:#a5b4fc;letter-spacing:0.15em;text-transform:uppercase">AUTO_MODE · 邮件已生成</span>
   </div>
   <p style="font-size:18px;font-weight:500;margin-bottom:4px">邮件已生成完毕</p>
   <p style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:2rem" id="autoSendSummary">共生成 0 家客户的邮件序列</p>
@@ -2829,7 +2830,7 @@
         <div style="font-size:11px;color:#a5b4fc;margin-bottom:4px">密码 / 应用专用密码</div>
         <input id="autoSmtpPass" type="password" placeholder="••••••••" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:8px;font-size:12px;color:#e5e7eb;font-family:var(--font-mono,monospace);outline:none">
       </div>
-      <button onclick="autoStartSmtpSend()" style="width:100%;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">// 开始发送</button>
+      <button onclick="autoStartSmtpSend()" style="width:100%;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">开始发送</button>
     </div>
 
     <div id="autoInstantlyPanel" style="display:none">
@@ -2837,7 +2838,7 @@
         <div style="font-size:11px;color:#a5b4fc;margin-bottom:4px">Campaign ID</div>
         <input id="autoInstantlyCampaign" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:8px;font-size:12px;color:#e5e7eb;font-family:var(--font-mono,monospace);outline:none">
       </div>
-      <button onclick="autoStartInstantlySend()" style="width:100%;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">// 推送到 Instantly</button>
+      <button onclick="autoStartInstantlySend()" style="width:100%;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;font-family:var(--font-mono,monospace)">推送到 Instantly</button>
     </div>
   </div>
 
@@ -2847,7 +2848,7 @@
   </div>
 
   <div id="autoSendProgress" style="display:none;margin-top:1rem;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.25rem;background:rgba(255,255,255,0.03)">
-    <div style="font-size:11px;color:#a5b4fc;margin-bottom:8px">// 发送进度</div>
+    <div style="font-size:11px;color:#a5b4fc;margin-bottom:8px">发送进度</div>
     <div id="autoSendProgressText" style="font-size:13px;color:#e5e7eb"></div>
   </div>
 </div>
@@ -12992,7 +12993,34 @@ function autoLoadForm() {
     var el = document.getElementById(id);
     if (el && map[id] != null) el.value = map[id];
   });
+  autoUpdateGate();
 }
+
+// Progressive gate: the 「AI 审核」button only appears once EVERY required auto
+// field is filled (case study optional when 暂无案例 is toggled). Mirrors the
+// manual-mode step gate so users can't submit a half-empty form.
+function autoUpdateGate() {
+  var btn  = document.getElementById('autoSubmitBtn');
+  var hint = document.getElementById('autoGateHint');
+  if (!btn) return;
+  var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  var noCase = !!(document.getElementById('autoNoCaseBtn') && document.getElementById('autoNoCaseBtn').classList.contains('on'));
+  var cv = document.getElementById('auto-cv-o');
+  var lowRisk = v('autoLowRiskOffer') || (cv && cv.textContent.trim());
+  var ok = v('autoKeyword') && v('autoLocation') && v('autoProduct') &&
+           v('autoTargetCustomer') && v('autoCriteria') && v('autoSenderName') &&
+           lowRisk && (noCase || v('autoCaseStudy'));
+  btn.style.display  = ok ? '' : 'none';
+  if (hint) hint.style.display = ok ? 'none' : '';
+}
+(function wireAutoGate() {
+  var panel = document.getElementById('appAutoPanel');
+  if (!panel) return;
+  panel.addEventListener('input', autoUpdateGate);
+  // pills / 暂无案例 toggle update state on click — re-check after their handler runs
+  panel.addEventListener('click', function () { setTimeout(autoUpdateGate, 0); });
+  autoUpdateGate();
+})();
 
 function autoResubmit() {
   var fixes = {};
@@ -13365,7 +13393,7 @@ async function fwAutoRun(providedInputs) {
     var existingReview = document.getElementById('autoReviewPanel');
     if (existingReview) existingReview.remove();
     var reviewHtml = '<div id="autoReviewPanel" style="margin-top:1.5rem">';
-    reviewHtml += '<p style="font-size:13px;color:#e5e7eb;font-weight:500;margin-bottom:1rem">// AI 审核结果 — 请修正以下字段</p>';
+    reviewHtml += '<p style="font-size:13px;color:#e5e7eb;font-weight:500;margin-bottom:1rem">AI 审核结果 — 请修正以下字段</p>';
     _fwReview.forEach(function(r) {
       if (!r.passed) {
         reviewHtml += '<div style="background:#0A1628;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:12px;margin-bottom:10px">';
@@ -13376,7 +13404,7 @@ async function fwAutoRun(providedInputs) {
         reviewHtml += '</div>';
       }
     });
-    reviewHtml += '<button onclick="autoResubmit()" style="width:100%;margin-top:1rem;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">// 重新提交 →</button>';
+    reviewHtml += '<button onclick="autoResubmit()" style="width:100%;margin-top:1rem;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">重新提交 →</button>';
     reviewHtml += '</div>';
     var autoPanel = document.getElementById('appAutoPanel');
     autoPanel.insertAdjacentHTML('beforeend', reviewHtml);
@@ -13389,7 +13417,7 @@ async function fwAutoRun(providedInputs) {
   var existingConfirm = document.getElementById('autoConfirmPanel');
   if (existingConfirm) existingConfirm.remove();
   var confirmHtml = '<div id="autoConfirmPanel" style="margin-top:1.5rem;background:#0A1628;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:1.25rem">';
-  confirmHtml += '<p style="font-size:13px;color:#4ade80;margin-bottom:4px">// 审核通过 ✓</p>';
+  confirmHtml += '<p style="font-size:13px;color:#4ade80;margin-bottom:4px">审核通过 ✓</p>';
   confirmHtml += '<p style="font-size:12px;color:#7EB8F0;margin-bottom:1rem">所有信息已通过审核。点击下方按钮开始自动搜索、筛选并生成邮件。</p>';
   confirmHtml += '<button onclick="autoConfirmRun()" style="width:100%;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">⚡ 确认 — 开始搜索 + 筛选 + 生成邮件</button>';
   confirmHtml += '</div>';
