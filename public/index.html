@@ -12482,6 +12482,13 @@ async function biPolishField(textareaId, kind, btn) {
     }
   };
 
+  // Email-format gate shared by the send panel and both push loops. Mirrors what
+  // Instantly's POST /leads accepts (ASCII local + domain + ≥2-char alpha TLD),
+  // so we skip malformed scraped addresses before they earn a 400.
+  window.appIsValidEmail = function (s) {
+    return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test((s || '').toString().trim());
+  };
+
   // Build (or rebuild) the send-config drawer underneath the email preview.
   // SMTP credentials live in their own inputs inside the drawer (not the
   // legacy /lens SMTP panel) so /app users have a self-contained send flow.
@@ -12491,8 +12498,12 @@ async function biPolishField(textareaId, kind, btn) {
     const generated = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
     if (!generated.length) { alert('请先生成邮件'); return; }
 
-    const withRecipient = generated.filter(e => (e.email || e.to || '').toString().trim());
-    const skipped = generated.length - withRecipient.length;
+    const rawEmail = e => (e.email || e.to || '').toString().trim();
+    const withEmailField = generated.filter(e => rawEmail(e));           // has *some* address string
+    const withRecipient  = withEmailField.filter(e => appIsValidEmail(rawEmail(e))); // valid format only
+    const noEmail        = generated.length - withEmailField.length;     // blank / missing
+    const badEmail       = withEmailField.length - withRecipient.length; // present but malformed
+    const skipped        = noEmail + badEmail;
 
     // Pre-populate from localStorage so returning users don't retype.
     const lsGet = (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
@@ -12512,8 +12523,11 @@ async function biPolishField(textareaId, kind, btn) {
     }
 
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-    const skipNote = skipped
-      ? `<div style="font-size:12px;color:#fbbf24;margin-top:4px">⚠ ${skipped} 封因缺少收件邮箱将被跳过</div>`
+    const skipParts = [];
+    if (noEmail)  skipParts.push(`${noEmail} 封无收件邮箱`);
+    if (badEmail) skipParts.push(`${badEmail} 封邮箱格式无效`);
+    const skipNote = skipParts.length
+      ? `<div style="font-size:12px;color:#fbbf24;margin-top:4px">⚠ ${skipParts.join('、')}，将被跳过</div>`
       : '';
     const canSend = withRecipient.length > 0;  // SMTP completeness checked at submit
 
@@ -12643,8 +12657,24 @@ async function biPolishField(textareaId, kind, btn) {
   // many the framework produced — 7 for cold_7_step, 5 for the 5-email frameworks).
   window.startAppInstantlySend = async function () {
     const all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
-    const toSend = all.filter(e => (e.email || e.to || '').toString().trim());
-    if (!toSend.length) return;
+    const rawEmail = e => (e.email || e.to || '').toString().trim();
+    // Instantly's POST /leads hard-rejects malformed addresses with 400
+    // "Invalid email address". Scraped emails are frequently junk (info@,
+    // missing TLD, embedded spaces), so validate format up front and skip the
+    // bad ones instead of firing doomed requests that show up as failures.
+    const withField = all.filter(e => rawEmail(e));
+    const toSend    = withField.filter(e => appIsValidEmail(rawEmail(e)));
+    const skipped   = withField.length - toSend.length; // present-but-invalid
+    if (!toSend.length) {
+      const statusEl0 = panel.querySelector('#appInstantlyStatus');
+      if (statusEl0) {
+        statusEl0.style.display = 'block';
+        statusEl0.style.color = '#fca5a5';
+        statusEl0.style.background = 'rgba(239,68,68,0.08)';
+        statusEl0.textContent = skipped ? `没有可推送的邮箱：${skipped} 封格式无效已跳过` : '没有可推送的收件邮箱';
+      }
+      return;
+    }
 
     const campaignId = (panel.querySelector('#appInstantlyCampaignId')?.value || '').trim();
     const statusEl = panel.querySelector('#appInstantlyStatus');
@@ -12696,7 +12726,8 @@ async function biPolishField(textareaId, kind, btn) {
     }
 
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.textContent = origText; }
-    showStatus(`完成：成功 ${ok}，失败 ${fail}`,
+    const skipNote = skipped ? `，跳过 ${skipped}（邮箱格式无效）` : '';
+    showStatus(`完成：成功 ${ok}，失败 ${fail}${skipNote}`,
       ok > 0 ? '#86efac' : '#fca5a5',
       ok > 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)');
   };
@@ -12741,7 +12772,8 @@ async function biPolishField(textareaId, kind, btn) {
   // sent/failed counts. Matches the reader pattern used elsewhere in the file.
   window.startAppSmtpSend = async function () {
     const all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
-    const toSend = all.filter(e => (e.email || e.to || '').toString().trim());
+    const rawEmail = e => (e.email || e.to || '').toString().trim();
+    const toSend = all.filter(e => appIsValidEmail(rawEmail(e)));
     if (!toSend.length) return;
 
     const senderName = (panel.querySelector('#smtpSenderName')?.value || '').trim();

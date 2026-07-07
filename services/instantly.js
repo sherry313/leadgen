@@ -71,6 +71,15 @@ async function addLeadToCampaign(lead, campaignIdOverride = null) {
     return { success: false, reason: 'No email address' };
   }
 
+  // Defensive: Instantly's POST /leads hard-rejects malformed addresses with a
+  // 400 "Invalid email address". Catch obvious junk here so a bulk push doesn't
+  // waste a round-trip per bad scraped email. Mirrors the frontend's gate.
+  const emailRe = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/;
+  if (!emailRe.test(lead.email.trim())) {
+    console.warn(`[Instantly] Invalid email format "${lead.email}" for "${lead.companyName}". Skipping.`);
+    return { success: false, reason: 'Invalid email format' };
+  }
+
   await ensureSequenceInstalled(campaignId);
 
   // Defensive: Instantly's lead emails are case-sensitive in some workspaces.
