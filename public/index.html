@@ -2739,14 +2739,20 @@
   <button id="autoSubmitBtn" class="auto-submit-btn" onclick="autoSubmitForm()" style="display:none; position:relative; z-index:10;">Step 1：AI 审核输入质量 →</button>
 </div>
 
-<div id="appAutoProgressPanel" style="display:none; padding:80px 1.5rem 2rem; font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif; min-height:100vh">
-  <p style="font-size:18px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px">自动运行中</p>
-  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 2rem">请勿关闭页面，完成后自动跳转到发送界面</p>
+<div id="appAutoProgressPanel" style="display:none; padding:80px 1.5rem 2rem; font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif; min-height:100vh; background:#030303; color:#e5e7eb;">
+  <p style="font-size:18px;font-weight:500;color:#f8fafc;margin:0 0 4px">自动运行中</p>
+  <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 2rem">请勿关闭页面，完成后自动跳转到发送界面</p>
   <div id="autoStepList" style="display:flex;flex-direction:column;gap:0"></div>
-  <div id="autoFilterResults" style="display:none;margin-top:1.5rem;background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1rem">
-    <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:10px">筛选结果（实时更新）</div>
+  <div id="autoFilterResults" style="display:none;margin-top:1.5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1rem">
+    <div style="font-size:12px;font-weight:500;color:rgba(255,255,255,0.5);margin-bottom:10px">筛选结果（实时更新）</div>
     <div id="autoFilterResultsList"></div>
   </div>
+  <!-- Error recovery: shown by autoSetStepState when any step fails, so a failed
+       run isn't a dead end — back to the auto form to adjust and retry. -->
+  <button id="autoProgressBackBtn" onclick="autoProgressBack()"
+    style="display:none; width:100%; margin-top:1.5rem; padding:11px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;">
+    ← 返回修改信息，重新运行
+  </button>
 </div>
 
 <div id="appAutoSendPanel" style="display:none; background:#030303; min-height:100vh; padding:80px 1.5rem 2rem; font-family:var(--font-mono,monospace); color:#e5e7eb;">
@@ -2849,6 +2855,10 @@ function _appPlaceBusinessInfoCard(mode) {
 function appConfirmMode() {
   const mode = window._appMode;
   if (!mode) return;
+  // Remember the confirmed mode: a refresh mid-auto-run used to dump the user
+  // back into the manual wizard (_restoreStep) — the late-init block below
+  // re-enters auto mode instead when this key says 'auto'.
+  try { localStorage.setItem('leadgen_app_mode', mode); } catch (_) {}
   const modeSel   = document.getElementById('appModeSelect');
   const container = document.querySelector('.container');
   const autoPanel = document.getElementById('appAutoPanel');
@@ -2867,6 +2877,7 @@ function appConfirmMode() {
 
 function appBackToModeSelect() {
   window._appMode = null;
+  try { localStorage.removeItem('leadgen_app_mode'); } catch (_) {}
   const modeSel   = document.getElementById('appModeSelect');
   const container = document.querySelector('.container');
   const autoPanel = document.getElementById('appAutoPanel');
@@ -9383,6 +9394,17 @@ if (agreeBox) agreeBox.checked = true;
 updateLoginStatus();
 checkAdminAndShow();
 setTimeout(_restoreStep, 0);     // deferred: restores in-progress session after init
+// /app: re-enter auto mode after a refresh (runs AFTER _restoreStep so the auto
+// panel wins over any manual-wizard restore). Manual keeps today's behavior.
+setTimeout(function () {
+  if (location.pathname !== '/app') return;
+  var savedMode = null;
+  try { savedMode = localStorage.getItem('leadgen_app_mode'); } catch (_) {}
+  if (savedMode === 'auto' && typeof appSelectMode === 'function' && typeof appConfirmMode === 'function') {
+    appSelectMode('auto');
+    appConfirmMode();
+  }
+}, 0);
 setTimeout(() => _updateStepper(currentStep), 0);  // initial sync so static HTML reflects actual step
 setTimeout(onSellerInput, 0);    // set initial disabled state for step2 next btn
 
@@ -13117,8 +13139,24 @@ function autoSetStepState(stepId, state, detail) {
     iconEl.style.borderColor = 'var(--color-border-danger)';
     iconEl.innerHTML = '<i class="ti ti-circle-x" style="font-size:16px;color:var(--color-text-danger)" aria-hidden="true"></i>';
     nameEl.style.color = 'var(--color-text-danger)';
+    // A failed step ends the run — surface the way back so it's not a dead end.
+    var backBtn = document.getElementById('autoProgressBackBtn');
+    if (backBtn) backBtn.style.display = 'block';
   }
   if (detail && detailEl) detailEl.textContent = detail;
+}
+
+// Leave a failed auto run: back to the (still-filled) auto form to adjust + rerun.
+function autoProgressBack() {
+  document.getElementById('appAutoProgressPanel').style.display = 'none';
+  var backBtn = document.getElementById('autoProgressBackBtn');
+  if (backBtn) backBtn.style.display = 'none';
+  var list = document.getElementById('autoFilterResultsList');
+  if (list) list.innerHTML = '';
+  var fr = document.getElementById('autoFilterResults');
+  if (fr) fr.style.display = 'none';
+  document.getElementById('appAutoPanel').style.display = 'block';
+  window.scrollTo(0, 0);
 }
 
 function autoAddFilterResult(name, status, reason) {
@@ -13170,12 +13208,16 @@ function autoShowSendPanel() {
 function autoSelectSendMethod(method) {
   document.getElementById('autoSmtpPanel').style.display = method === 'smtp' ? 'block' : 'none';
   document.getElementById('autoInstantlyPanel').style.display = method === 'instantly' ? 'block' : 'none';
-  document.getElementById('autoSendMethodSMTP').style.background = method === 'smtp' ? '#1A4B8C' : 'transparent';
-  document.getElementById('autoSendMethodSMTP').style.borderColor = method === 'smtp' ? '#378ADD' : '#1e3a5f';
-  document.getElementById('autoSendMethodSMTP').style.color = method === 'smtp' ? '#C8E0F8' : '#5a8aad';
-  document.getElementById('autoSendMethodInstantly').style.background = method === 'instantly' ? '#1A4B8C' : 'transparent';
-  document.getElementById('autoSendMethodInstantly').style.borderColor = method === 'instantly' ? '#378ADD' : '#1e3a5f';
-  document.getElementById('autoSendMethodInstantly').style.color = method === 'instantly' ? '#C8E0F8' : '#5a8aad';
+  // App theme: indigo selected state, muted idle state (matches the manual hub).
+  var paint = function (id, on) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.background  = on ? 'rgba(99,102,241,0.18)' : 'transparent';
+    el.style.borderColor = on ? '#a5b4fc' : 'rgba(255,255,255,0.08)';
+    el.style.color       = on ? '#c7d2fe' : 'rgba(255,255,255,0.5)';
+  };
+  paint('autoSendMethodSMTP',      method === 'smtp');
+  paint('autoSendMethodInstantly', method === 'instantly');
 }
 
 function appBackToAutoForm() {
@@ -13524,9 +13566,9 @@ async function fwAutoRun(providedInputs) {
     reviewHtml += '<p style="font-size:13px;color:#e5e7eb;font-weight:500;margin-bottom:1rem">AI 审核结果 — 请修正以下字段</p>';
     _fwReview.forEach(function(r) {
       if (!r.passed) {
-        reviewHtml += '<div style="background:#0A1628;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:12px;margin-bottom:10px">';
-        reviewHtml += '<div style="font-size:11px;color:#F59E0B;font-weight:500;margin-bottom:4px">⚠ ' + r.field + '</div>';
-        reviewHtml += '<div style="font-size:12px;color:#7EB8F0;margin-bottom:8px">' + r.reason + '</div>';
+        reviewHtml += '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:12px;margin-bottom:10px">';
+        reviewHtml += '<div style="font-size:11px;color:#fbbf24;font-weight:500;margin-bottom:4px">⚠ ' + r.field + '</div>';
+        reviewHtml += '<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px">' + r.reason + '</div>';
         reviewHtml += '<div style="font-size:12px;color:#e5e7eb;margin-bottom:6px">' + r.followUpQuestion + '</div>';
         reviewHtml += '<input type="text" data-fix-field="' + r.field + '" placeholder="补充更具体的信息..." style="width:100%;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:8px 10px;font-size:13px;color:#e5e7eb;outline:none;box-sizing:border-box">';
         reviewHtml += '</div>';
@@ -13544,9 +13586,14 @@ async function fwAutoRun(providedInputs) {
   // Show confirmation before proceeding
   var existingConfirm = document.getElementById('autoConfirmPanel');
   if (existingConfirm) existingConfirm.remove();
-  var confirmHtml = '<div id="autoConfirmPanel" style="margin-top:1.5rem;background:#0A1628;border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:1.25rem">';
+  // Surface the pre-chosen email framework (picked in 业务信息's last step) so the
+  // user confirms the template BEFORE the run — switching it is a click away.
+  var _fwKey = (document.getElementById('appFrameworkSelect') || {}).value || 'cold_7_step';
+  var _fwTitle = (typeof FW_EXAMPLES === 'object' && FW_EXAMPLES[_fwKey] && FW_EXAMPLES[_fwKey].title) ? FW_EXAMPLES[_fwKey].title : _fwKey;
+  var confirmHtml = '<div id="autoConfirmPanel" style="margin-top:1.5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(99,102,241,0.35);border-radius:10px;padding:1.25rem">';
   confirmHtml += '<p style="font-size:13px;color:#4ade80;margin-bottom:4px">审核通过 ✓</p>';
-  confirmHtml += '<p style="font-size:12px;color:#7EB8F0;margin-bottom:1rem">所有信息已通过审核。点击下方按钮开始自动搜索、筛选并生成邮件。</p>';
+  confirmHtml += '<p style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px">所有信息已通过审核。点击下方按钮开始自动搜索、筛选并生成邮件。</p>';
+  confirmHtml += '<p style="font-size:12px;color:#a5b4fc;margin-bottom:1rem">邮件模板：' + _fwTitle + '<span style="color:rgba(255,255,255,0.4)">（要换模板？在上面「选择邮件框架」里换，再重新点 AI 审核）</span></p>';
   confirmHtml += '<button onclick="autoConfirmRun()" style="width:100%;padding:10px;background:#6366f1;color:#ffffff;border:none;border-radius:4px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">⚡ 确认 — 开始搜索 + 筛选 + 生成邮件</button>';
   confirmHtml += '</div>';
   document.getElementById('appAutoPanel').insertAdjacentHTML('beforeend', confirmHtml);
@@ -13563,7 +13610,7 @@ async function fwAutoRunFromStepB(inp) {
 
   autoShowProgressPanel();
 
-  autoSetStepState('step-validate', 'done', '5 个字段全部通过');
+  autoSetStepState('step-validate', 'done', '输入质量审核通过');
 
   autoSetStepState('step-search', 'active', '正在搜索...');
   let searchLeads = [];
