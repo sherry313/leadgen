@@ -13121,14 +13121,16 @@ function autoShowProgressPanel() {
     { id: 'step-emails', icon: 'ti-mail', name: '生成邮件序列', detail: '等待筛选完成' },
     { id: 'step-done', icon: 'ti-send', name: '准备发送', detail: '等待邮件生成' }
   ];
+  // Concrete colors only — the --color-* vars referenced before are NOT defined
+  // on this page, which made the active spinner invisible (run looked stuck).
   var html = '';
   steps.forEach(function(s) {
-    html += '<div id="' + s.id + '" style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:0.5px solid var(--color-border-tertiary)">';
-    html += '<div class="auto-step-icon wait" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)">';
-    html += '<i class="ti ' + s.icon + '" style="font-size:16px;color:var(--color-text-tertiary)" aria-hidden="true"></i></div>';
+    html += '<div id="' + s.id + '" style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:0.5px solid rgba(255,255,255,0.08)">';
+    html += '<div class="auto-step-icon wait" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04)">';
+    html += '<i class="ti ' + s.icon + '" style="font-size:16px;color:rgba(255,255,255,0.35)" aria-hidden="true"></i></div>';
     html += '<div style="flex:1;padding-top:4px">';
-    html += '<p style="font-size:14px;font-weight:500;color:var(--color-text-tertiary);margin:0 0 2px" class="step-name">' + s.name + '</p>';
-    html += '<p style="font-size:12px;color:var(--color-text-tertiary);margin:0" class="step-detail">' + s.detail + '</p>';
+    html += '<p style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.45);margin:0 0 2px" class="step-name">' + s.name + '</p>';
+    html += '<p style="font-size:12px;color:rgba(255,255,255,0.35);margin:0" class="step-detail">' + s.detail + '</p>';
     html += '</div></div>';
   });
   document.getElementById('autoStepList').innerHTML = html;
@@ -13141,20 +13143,20 @@ function autoSetStepState(stepId, state, detail) {
   var nameEl = el.querySelector('.step-name');
   var detailEl = el.querySelector('.step-detail');
   if (state === 'active') {
-    iconEl.style.background = 'var(--color-background-info)';
-    iconEl.style.borderColor = 'var(--color-border-info)';
-    iconEl.innerHTML = '<div style="width:14px;height:14px;border:1.5px solid var(--color-border-info);border-top-color:var(--color-text-info);border-radius:50%;animation:spin 0.8s linear infinite"></div>';
-    nameEl.style.color = 'var(--color-text-primary)';
+    iconEl.style.background = 'rgba(99,102,241,0.15)';
+    iconEl.style.borderColor = 'rgba(99,102,241,0.5)';
+    iconEl.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(99,102,241,0.3);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite"></div>';
+    nameEl.style.color = '#f8fafc';
   } else if (state === 'done') {
-    iconEl.style.background = 'var(--color-background-success)';
-    iconEl.style.borderColor = 'var(--color-border-success)';
-    iconEl.innerHTML = '<i class="ti ti-circle-check" style="font-size:16px;color:var(--color-text-success)" aria-hidden="true"></i>';
-    nameEl.style.color = 'var(--color-text-primary)';
+    iconEl.style.background = 'rgba(34,197,94,0.15)';
+    iconEl.style.borderColor = 'rgba(34,197,94,0.4)';
+    iconEl.innerHTML = '<i class="ti ti-circle-check" style="font-size:16px;color:#4ade80" aria-hidden="true"></i>';
+    nameEl.style.color = '#f8fafc';
   } else if (state === 'error') {
-    iconEl.style.background = 'var(--color-background-danger)';
-    iconEl.style.borderColor = 'var(--color-border-danger)';
-    iconEl.innerHTML = '<i class="ti ti-circle-x" style="font-size:16px;color:var(--color-text-danger)" aria-hidden="true"></i>';
-    nameEl.style.color = 'var(--color-text-danger)';
+    iconEl.style.background = 'rgba(239,68,68,0.15)';
+    iconEl.style.borderColor = 'rgba(239,68,68,0.4)';
+    iconEl.innerHTML = '<i class="ti ti-circle-x" style="font-size:16px;color:#f87171" aria-hidden="true"></i>';
+    nameEl.style.color = '#f87171';
     // A failed step ends the run — surface the way back so it's not a dead end.
     var backBtn = document.getElementById('autoProgressBackBtn');
     if (backBtn) backBtn.style.display = 'block';
@@ -13179,10 +13181,10 @@ function autoAddFilterResult(name, status, reason) {
   document.getElementById('autoFilterResults').style.display = 'block';
   var list = document.getElementById('autoFilterResultsList');
   var badge = status === 'pass'
-    ? '<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-success);color:var(--color-text-success)">符合标准</span>'
-    : '<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-secondary);color:var(--color-text-tertiary)">不符合</span>';
-  var row = '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:13px">';
-  row += '<span style="color:var(--color-text-primary)">' + name + '</span>' + badge + '</div>';
+    ? '<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(34,197,94,0.12);color:#4ade80">符合标准</span>'
+    : '<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4)">不符合</span>';
+  var row = '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid rgba(255,255,255,0.08);font-size:13px">';
+  row += '<span style="color:#e5e7eb">' + name + '</span>' + badge + '</div>';
   list.innerHTML += row;
 }
 
@@ -13628,7 +13630,7 @@ async function fwAutoRunFromStepB(inp) {
 
   autoSetStepState('step-validate', 'done', '输入质量审核通过');
 
-  autoSetStepState('step-search', 'active', '正在搜索...');
+  autoSetStepState('step-search', 'active', '正在搜索…（约 1-3 分钟，请耐心等待）');
   let searchLeads = [];
   try {
     const searchResp = await fetch('/api/auto-search', {
