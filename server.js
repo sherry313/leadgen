@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -1496,6 +1496,47 @@ app.delete('/api/history/:id', requireAuth, async (req, res) => {
   const ok = await deleteSearchRun(req.params.id, req.userId);
   if (!ok) return res.status(500).json({ success: false, error: '删除失败' });
   console.log(`[History] Deleted search run ${req.params.id}`);
+  res.json({ success: true });
+});
+
+// ── Product profiles (saved 业务信息 presets, per user) ───────────────────────
+// Lets a user save each product's business-info as a named preset and switch
+// between them without re-typing. All routes are user-scoped via req.userId.
+app.get('/api/products', requireAuth, async (req, res) => {
+  const profiles = await listProductProfiles(req.userId);
+  res.json({ success: true, profiles });
+});
+
+app.post('/api/products', requireAuth, async (req, res) => {
+  const name = (req.body?.name || '').toString().trim();
+  const data = req.body?.data;
+  if (!name) return res.status(400).json({ success: false, error: '缺少品类名称' });
+  if (!data || typeof data !== 'object') return res.status(400).json({ success: false, error: '缺少业务信息数据' });
+  const profile = await createProductProfile(req.userId, name.slice(0, 120), data);
+  if (!profile) return res.status(500).json({ success: false, error: '保存失败' });
+  res.json({ success: true, profile });
+});
+
+app.patch('/api/products/:id', requireAuth, async (req, res) => {
+  const fields = {};
+  if (req.body?.name != null) {
+    const n = req.body.name.toString().trim();
+    if (!n) return res.status(400).json({ success: false, error: '名称不能为空' });
+    fields.name = n.slice(0, 120);
+  }
+  if (req.body?.data != null) {
+    if (typeof req.body.data !== 'object') return res.status(400).json({ success: false, error: '业务信息数据格式错误' });
+    fields.data = req.body.data;
+  }
+  if (!Object.keys(fields).length) return res.status(400).json({ success: false, error: '无更新内容' });
+  const profile = await updateProductProfile(req.params.id, req.userId, fields);
+  if (!profile) return res.status(500).json({ success: false, error: '更新失败' });
+  res.json({ success: true, profile });
+});
+
+app.delete('/api/products/:id', requireAuth, async (req, res) => {
+  const ok = await deleteProductProfile(req.params.id, req.userId);
+  if (!ok) return res.status(500).json({ success: false, error: '删除失败' });
   res.json({ success: true });
 });
 

@@ -355,4 +355,92 @@ async function deleteSearchRun(searchId, userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun };
+// ── Product profiles (saved 业务信息 presets, per user) ───────────────────────
+// A "product profile" is one whole /app 业务信息 object saved under a name so the
+// user can switch products without re-typing. Scoped by user_id like history.
+// Requires table (run once in Supabase SQL editor):
+//   create table if not exists product_profiles (
+//     id uuid primary key default gen_random_uuid(),
+//     user_id text not null,
+//     name text not null,
+//     data jsonb not null default '{}'::jsonb,
+//     created_at timestamptz not null default now(),
+//     updated_at timestamptz not null default now()
+//   );
+//   create index if not exists product_profiles_user_id_idx on product_profiles(user_id);
+async function listProductProfiles(userId) {
+  const db = getClient();
+  if (!db) return [];
+  try {
+    const { data, error } = await db
+      .from('product_profiles')
+      .select('*')
+      .eq('user_id', userId || 'legacy')
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.warn('[Supabase] listProductProfiles failed:', err.message);
+    return [];
+  }
+}
+
+async function createProductProfile(userId, name, data) {
+  const db = getClient();
+  if (!db) return null;
+  try {
+    const { data: row, error } = await db
+      .from('product_profiles')
+      .insert({ user_id: userId || 'legacy', name, data: data || {} })
+      .select('*')
+      .single();
+    if (error) throw error;
+    console.log(`[Supabase] Product profile created: "${name}" (user=${userId})`);
+    return row;
+  } catch (err) {
+    console.error('[Supabase] createProductProfile FAILED:', err.message, err.details ?? '', err.hint ?? '');
+    return null;
+  }
+}
+
+async function updateProductProfile(id, userId, fields) {
+  const db = getClient();
+  if (!db || !id) return null;
+  try {
+    const patch = { updated_at: new Date().toISOString() };
+    if (fields.name != null) patch.name = fields.name;
+    if (fields.data != null) patch.data = fields.data;
+    const { data: row, error } = await db
+      .from('product_profiles')
+      .update(patch)
+      .eq('id', id)
+      .eq('user_id', userId || 'legacy')   // scope to owner — no cross-user edits
+      .select('*')
+      .single();
+    if (error) throw error;
+    return row;
+  } catch (err) {
+    console.warn('[Supabase] updateProductProfile failed:', err.message);
+    return null;
+  }
+}
+
+async function deleteProductProfile(id, userId) {
+  const db = getClient();
+  if (!db || !id) return false;
+  try {
+    const { error } = await db
+      .from('product_profiles')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId || 'legacy');  // scope to owner — no cross-user deletes
+    if (error) throw error;
+    console.log(`[Supabase] Product profile deleted: ${id}`);
+    return true;
+  } catch (err) {
+    console.warn('[Supabase] deleteProductProfile failed:', err.message);
+    return false;
+  }
+}
+
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };
