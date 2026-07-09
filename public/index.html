@@ -12321,6 +12321,11 @@ async function biPolishField(textareaId, kind, btn) {
     const resultsEl = document.getElementById('appAiFilterResults');
     if (resultsEl && resultsEl.style.display !== 'none' && resultsEl.innerHTML.trim()) {
       if (running) running.style.display = 'none';
+      // Re-show the "下一步 → 邮件发送" button. Leaving to another sub-view hides it
+      // (showAppStep3View), and this early-return skips the render that would restore
+      // it — so on tab revisit the button vanished even though results are on screen.
+      const toEmailBtn = document.getElementById('appToEmailBtn');
+      if (toEmailBtn) toEmailBtn.style.display = 'block';
       return;
     }
 
