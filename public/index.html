@@ -11406,15 +11406,23 @@ async function biPolishField(textareaId, kind, btn) {
     }
   }
 
-  customInput.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    const val = customInput.value.trim();
-    if (val && !selected.includes(val)) selected.push(val);
+  // Commit the custom input into pills. Splits a pasted multi-value string
+  // ("a、b，c") into separate pills, and runs on both Enter AND blur — so a user
+  // who types (or pastes) then clicks 继续 without pressing Enter isn't left with
+  // an uncommitted box and a locked step gate (the reported bug).
+  function commitCustom() {
+    customInput.value.trim().split(/[,，、]/).map(s => s.trim()).filter(Boolean)
+      .forEach(v => { if (!selected.includes(v)) selected.push(v); });
     customInput.value = '';
     customInput.style.display = 'none';
     compile(); render();
+  }
+  customInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    commitCustom();
   });
+  customInput.addEventListener('blur', commitCustom);
 
   async function fetchSuggestions(force) {
     const bi = window._appBusinessInfo || {};
@@ -11543,15 +11551,23 @@ async function biPolishField(textareaId, kind, btn) {
     }
   }
 
-  customInput.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    const val = customInput.value.trim();
-    if (val && !selected.includes(val)) selected.push(val);
+  // Commit the custom input into pills. Splits a pasted multi-value string
+  // ("a、b，c") into separate pills, and runs on both Enter AND blur — so a user
+  // who types (or pastes) then clicks 继续 without pressing Enter isn't left with
+  // an uncommitted box and a locked step gate (the reported bug).
+  function commitCustom() {
+    customInput.value.trim().split(/[,，、]/).map(s => s.trim()).filter(Boolean)
+      .forEach(v => { if (!selected.includes(v)) selected.push(v); });
     customInput.value = '';
     customInput.style.display = 'none';
     compile(); render();
+  }
+  customInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    commitCustom();
   });
+  customInput.addEventListener('blur', commitCustom);
 
   let lastKey = '';
   let debounceTimer = null;
