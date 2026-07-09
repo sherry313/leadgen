@@ -13046,7 +13046,8 @@ function autoLoadForm() {
 
 // Progressive gate: the 「AI 审核」button only appears once 搜索配置 is filled AND
 // the shared 业务信息 card is complete (identity + every required field — the same
-// requirement the manual mode's 下一步 gate enforces).
+// requirement the manual mode's 下一步 gate enforces). The hint NAMES the missing
+// fields so a blocked gate is never a mystery.
 function autoUpdateGate() {
   var btn  = document.getElementById('autoSubmitBtn');
   var hint = document.getElementById('autoGateHint');
@@ -13054,12 +13055,27 @@ function autoUpdateGate() {
   var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
   var bi = window._appBusinessInfo || {};
   var t = function (s) { return (s || '').trim(); };
-  var biOk = t(bi.identity) && t(bi.product) && t(bi.service) && t(bi.advantage) &&
-             t(bi.targetCustomer) && t(bi.caseStudy) && t(bi.trust) &&
-             t(bi.lowRiskOffer) && t(bi.senderName);
-  var ok = v('autoKeyword') && v('autoLocation') && biOk;
+  var missing = [];
+  if (!v('autoKeyword'))      missing.push('关键词');
+  if (!v('autoLocation'))     missing.push('地区');
+  if (!t(bi.identity))        missing.push('你的身份');
+  if (!t(bi.product))         missing.push('产品');
+  if (!t(bi.service))         missing.push('服务');
+  if (!t(bi.advantage))       missing.push('我的优势');
+  if (!t(bi.targetCustomer))  missing.push('目标客户');
+  if (!t(bi.caseStudy))       missing.push('真实案例');
+  if (!t(bi.trust))           missing.push('信任背书');
+  if (!t(bi.lowRiskOffer))    missing.push('零风险入口');
+  if (!t(bi.senderName))      missing.push('发件人落款（名字和公司都要填）');
+  var ok = missing.length === 0;
   btn.style.display  = ok ? '' : 'none';
-  if (hint) hint.style.display = ok ? 'none' : '';
+  if (hint) {
+    hint.style.display = ok ? 'none' : '';
+    if (!ok) {
+      hint.style.color = '#fbbf24';
+      hint.textContent = '还差：' + missing.join('、') + ' — 补完这里会出现「AI 审核」按钮';
+    }
+  }
 }
 (function wireAutoGate() {
   var panel = document.getElementById('appAutoPanel');
