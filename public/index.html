@@ -2544,6 +2544,11 @@
       padding: 96px 1.5rem 2rem;
       color: #e5e7eb;
     }
+    /* Auto mode hosts the SHARED #appBusinessInfoCard (moved in by appConfirmMode).
+       Flatten the card's own chrome inside the .auto-section frame, and hide its
+       manual-only "填好了，下一步 →" button — auto mode's gate/submit replaces it. */
+    #appAutoPanel #appBusinessInfoCard { border: none !important; background: transparent !important; padding: 0 !important; margin-bottom: 0 !important; }
+    #appAutoPanel #appBiNextBtn { display: none !important; }
     .auto-top-bar { display:flex; align-items:center; gap:12px; margin-bottom:2rem; }
     .auto-back-btn { font-size:11px; color:rgba(255,255,255,0.5); letter-spacing:0.06em; background:transparent; border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:6px 12px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
     .auto-back-btn:hover { border-color:rgba(99,102,241,0.5); color:#fff; }
@@ -2656,7 +2661,7 @@
 
   <!-- collapsible auto-mode flow (shown only when 自动模式 selected) -->
   <div id="modeAutoFlow" style="display:none;">
-    <div class="flow-row"><span class="flow-num">01</span><div><div class="flow-name">填写信息</div><div class="flow-note">关键词、地区、产品、目标客户、筛选标准、发件人</div></div></div>
+    <div class="flow-row"><span class="flow-num">01</span><div><div class="flow-name">填写信息</div><div class="flow-note">关键词、地区 + 业务信息（和手动模式同一套，AI 推荐 + 逐步把关）</div></div></div>
     <div class="flow-row"><span class="flow-num">02</span><div><div class="flow-name">AI 审核输入质量</div><div class="flow-note">信息不够具体会被拦截，补充清楚再继续</div></div></div>
     <div class="flow-row"><span class="flow-num">03</span><div><div class="flow-name">自动搜索目标客户</div><div class="flow-note">根据关键词 + 地区抓取，无需手动操作</div></div></div>
     <div class="flow-row"><span class="flow-num">04</span><div><div class="flow-name">AI 自动筛选</div><div class="flow-note">根据你填的标准过滤不符合的公司</div></div></div>
@@ -2721,65 +2726,13 @@
     </div>
   </div>
 
-  <div class="auto-section" data-label="邮件配置">
-    <div class="auto-field">
-      <span class="auto-field-label">产品 / 服务</span>
-      <div class="auto-pills" id="auto-pp-p">
-        <button class="auto-pill" onclick="autoTP(this,'p')">铝合金门窗</button>
-        <button class="auto-pill" onclick="autoTP(this,'p')">卫浴配件</button>
-        <button class="auto-pill" onclick="autoTP(this,'p')">二手奢侈品包包</button>
-        <button class="auto-pill" onclick="autoTP(this,'p')">建材</button>
-        <button class="auto-pill" onclick="autoTP(this,'p')">服装 / 饰品</button>
-        <button class="auto-pill" onclick="autoTP(this,'p')">软件 / SaaS</button>
-      </div>
-      <div class="auto-compiled" id="auto-cv-p"></div>
-      <textarea class="auto-textarea" id="autoProduct" oninput="autoSaveForm()" style="margin-top:6px" placeholder="例：二手奢侈品包包批发，主要品牌 LV、Gucci、Chanel，成色 9成新 / 8成新，附鉴定证书，月库存 50 件"></textarea>
-    </div>
-
-    <div class="auto-field">
-      <span class="auto-field-label">目标客户</span>
-      <div class="auto-pills" id="auto-pp-t">
-        <button class="auto-pill" onclick="autoTP(this,'t')">室内设计师</button>
-        <button class="auto-pill" onclick="autoTP(this,'t')">建筑商</button>
-        <button class="auto-pill" onclick="autoTP(this,'t')">买手店 / 精品店</button>
-        <button class="auto-pill" onclick="autoTP(this,'t')">线下零售门店</button>
-        <button class="auto-pill" onclick="autoTP(this,'t')">批发商</button>
-      </div>
-      <div class="auto-compiled" id="auto-cv-t"></div>
-      <textarea class="auto-textarea" id="autoTargetCustomer" oninput="autoSaveForm()" style="margin-top:6px" placeholder="例：欧美线下独立精品店、买手店，专售二手奢侈品包包，客群为注重性价比的中产消费者"></textarea>
-    </div>
-
-    <div class="auto-field">
-      <span class="auto-field-label">筛选标准</span>
-      <span class="auto-field-hint">AI 筛选时用这个标准过滤不符合的公司</span>
-      <textarea class="auto-textarea" id="autoCriteria" oninput="autoSaveForm()" placeholder="例：专门卖包包的线下精品店，目标客群是中产阶级，不要综合类寄售店、线上店、服装店"></textarea>
-    </div>
-
-    <div class="auto-field">
-      <span class="auto-field-label">真实客户案例</span>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <button class="auto-pill auto-pill-dashed" id="autoNoCaseBtn" onclick="autoToggleNoCase()">暂无案例</button>
-        <span class="auto-field-hint" style="margin:0">勾选后 AI 会绕开 social proof</span>
-      </div>
-      <textarea class="auto-textarea" id="autoCaseStudy" oninput="autoSaveForm()" placeholder="例：纽约 SoHo 一家买手店，合作 3 个月，月供货 10 件 LV 和 Gucci 包，复购率 100%，零退货"></textarea>
-    </div>
-
-    <div class="auto-field">
-      <span class="auto-field-label">零风险入口</span>
-      <div class="auto-pills" id="auto-pp-o">
-        <button class="auto-pill" onclick="autoTP(this,'o')">免费寄样品</button>
-        <button class="auto-pill" onclick="autoTP(this,'o')">小批量起订</button>
-        <button class="auto-pill" onclick="autoTP(this,'o')">样品目录 + 报价单</button>
-        <button class="auto-pill" onclick="autoTP(this,'o')">免费咨询</button>
-      </div>
-      <div class="auto-compiled" id="auto-cv-o"></div>
-      <textarea class="auto-textarea" id="autoLowRiskOffer" oninput="autoSaveForm()" style="margin-top:6px" placeholder="例：最小起订 5 件，平均单价 $300-800，7 天无理由退换，先看货后付款"></textarea>
-    </div>
-
-    <div class="auto-field">
-      <span class="auto-field-label">发件人</span>
-      <input class="auto-input" type="text" id="autoSenderName" oninput="autoSaveForm()" placeholder="例：Libby Li，Sourcing Director，LuxeSupply Co.">
-    </div>
+  <!-- 业务信息 = the SAME shared #appBusinessInfoCard manual mode uses (identity /
+       产品 / 服务 / ⭐优势 / 目标客户 / 案例 / 信任背书 / 零风险 / 落款 / 邮件框架,
+       with the same AI recommendations + per-step gates). appConfirmMode moves the
+       card into this host when auto mode is entered, and back before #appMethodChooser
+       when manual mode is entered. 筛选标准 is auto-derived from it (no separate field). -->
+  <div class="auto-section" data-label="业务信息">
+    <div id="autoBiHost"></div>
   </div>
 
   <div id="autoGateHint" style="text-align:center; font-size:12px; color:rgba(255,255,255,0.4); padding:14px 0;">把上面的信息都填完，这里会出现「AI 审核」按钮</div>
@@ -2874,6 +2827,25 @@ function appSelectMode(mode) {
   }
 }
 
+// The 业务信息 card (#appBusinessInfoCard) is SHARED between the two modes: manual
+// shows it in wizard-step-1 (its original home, right before #appMethodChooser);
+// auto shows the very same DOM node inside #autoBiHost. Moving the node keeps all
+// its listeners (progressive stepper, AI recommendations, per-step gates) intact,
+// and both modes read/write the same window._appBusinessInfo + localStorage.
+function _appPlaceBusinessInfoCard(mode) {
+  const card = document.getElementById('appBusinessInfoCard');
+  if (!card) return;
+  if (mode === 'auto') {
+    const host = document.getElementById('autoBiHost');
+    if (host && card.parentNode !== host) host.appendChild(card);
+  } else {
+    const chooser = document.getElementById('appMethodChooser');
+    if (chooser && card.nextElementSibling !== chooser) {
+      chooser.parentNode.insertBefore(card, chooser);
+    }
+  }
+}
+
 function appConfirmMode() {
   const mode = window._appMode;
   if (!mode) return;
@@ -2881,6 +2853,7 @@ function appConfirmMode() {
   const container = document.querySelector('.container');
   const autoPanel = document.getElementById('appAutoPanel');
   if (modeSel) modeSel.style.display = 'none';
+  _appPlaceBusinessInfoCard(mode);
   if (mode === 'manual') {
     if (autoPanel) autoPanel.style.display = 'none';
     if (container) container.style.display = '';
@@ -12997,72 +12970,72 @@ function autoToggleNoCase() {
   else { ta.disabled = false; ta.style.opacity = '1'; }
 }
 
+// Compose the auto-run inputs from 搜索配置 + the SHARED business info
+// (window._appBusinessInfo — kept in sync by the card's saveAppBusinessInfo).
+// Joins mirror the manual flow exactly: product+service and caseStudy+trust use
+// _appPrefillEmailFromBusinessInfo's format; criteria is auto-derived the same
+// way appAutoRunScreening builds it (产品/服务/优势/目标客户) — no separate field.
 function autoSubmitForm() {
   console.log('autoSubmitForm fired');
+  var bi = window._appBusinessInfo || {};
+  var t = function (s) { return (s || '').trim(); };
+  var criteriaParts = [];
+  if (t(bi.product))        criteriaParts.push('产品：' + t(bi.product));
+  if (t(bi.service))        criteriaParts.push('服务：' + t(bi.service));
+  if (t(bi.advantage))      criteriaParts.push('优势：' + t(bi.advantage));
+  if (t(bi.targetCustomer)) criteriaParts.push('目标客户：' + t(bi.targetCustomer));
   var inputs = {
     keyword: document.getElementById('autoKeyword').value.trim(),
     location: document.getElementById('autoLocation').value.trim(),
     maxResults: parseInt(document.getElementById('autoMaxResults').value) || 10,
     sources: Array.from(document.querySelectorAll('.auto-source.on')).map(function(el){ return el.dataset.source; }),
-    product: document.getElementById('autoProduct').value.trim(),
-    targetCustomer: document.getElementById('autoTargetCustomer').value.trim(),
-    criteria: document.getElementById('autoCriteria').value.trim(),
-    caseStudy: document.getElementById('autoCaseStudy').value.trim(),
-    lowRiskOffer: (document.getElementById('auto-cv-o').textContent.replace('已选：','').trim() + ' ' + document.getElementById('autoLowRiskOffer').value.trim()).trim(),
-    senderName: document.getElementById('autoSenderName').value.trim()
+    product: [t(bi.product), t(bi.service)].filter(Boolean).join('；可提供服务：'),
+    targetCustomer: t(bi.targetCustomer),
+    criteria: criteriaParts.join('；'),
+    caseStudy: [t(bi.caseStudy), t(bi.trust)].filter(Boolean).join('；信任背书：'),
+    lowRiskOffer: t(bi.lowRiskOffer),
+    senderName: t(bi.senderName)
   };
   window._autoInputs = inputs;
   fwAutoRun(inputs);
 }
 
+// Only 搜索配置 needs its own persistence — the business info card saves itself
+// (localStorage 'appBusinessInfo' via saveAppBusinessInfo).
 function autoSaveForm() {
   localStorage.setItem('autoForm', JSON.stringify({
     keyword: document.getElementById('autoKeyword').value,
-    location: document.getElementById('autoLocation').value,
-    product: document.getElementById('autoProduct').value,
-    targetCustomer: document.getElementById('autoTargetCustomer').value,
-    criteria: document.getElementById('autoCriteria').value,
-    caseStudy: document.getElementById('autoCaseStudy').value,
-    lowRiskOffer: document.getElementById('autoLowRiskOffer').value,
-    senderName: document.getElementById('autoSenderName').value
+    location: document.getElementById('autoLocation').value
   }));
 }
 
 function autoLoadForm() {
   var saved;
   try { saved = JSON.parse(localStorage.getItem('autoForm')); } catch (e) { saved = null; }
-  if (!saved) return;
-  var map = {
-    autoKeyword: saved.keyword,
-    autoLocation: saved.location,
-    autoProduct: saved.product,
-    autoTargetCustomer: saved.targetCustomer,
-    autoCriteria: saved.criteria,
-    autoCaseStudy: saved.caseStudy,
-    autoLowRiskOffer: saved.lowRiskOffer,
-    autoSenderName: saved.senderName
-  };
-  Object.keys(map).forEach(function (id) {
-    var el = document.getElementById(id);
-    if (el && map[id] != null) el.value = map[id];
-  });
+  if (saved) {
+    var map = { autoKeyword: saved.keyword, autoLocation: saved.location };
+    Object.keys(map).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && map[id] != null) el.value = map[id];
+    });
+  }
   autoUpdateGate();
 }
 
-// Progressive gate: the 「AI 审核」button only appears once EVERY required auto
-// field is filled (case study optional when 暂无案例 is toggled). Mirrors the
-// manual-mode step gate so users can't submit a half-empty form.
+// Progressive gate: the 「AI 审核」button only appears once 搜索配置 is filled AND
+// the shared 业务信息 card is complete (identity + every required field — the same
+// requirement the manual mode's 下一步 gate enforces).
 function autoUpdateGate() {
   var btn  = document.getElementById('autoSubmitBtn');
   var hint = document.getElementById('autoGateHint');
   if (!btn) return;
   var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
-  var noCase = !!(document.getElementById('autoNoCaseBtn') && document.getElementById('autoNoCaseBtn').classList.contains('on'));
-  var cv = document.getElementById('auto-cv-o');
-  var lowRisk = v('autoLowRiskOffer') || (cv && cv.textContent.trim());
-  var ok = v('autoKeyword') && v('autoLocation') && v('autoProduct') &&
-           v('autoTargetCustomer') && v('autoCriteria') && v('autoSenderName') &&
-           lowRisk && (noCase || v('autoCaseStudy'));
+  var bi = window._appBusinessInfo || {};
+  var t = function (s) { return (s || '').trim(); };
+  var biOk = t(bi.identity) && t(bi.product) && t(bi.service) && t(bi.advantage) &&
+             t(bi.targetCustomer) && t(bi.caseStudy) && t(bi.trust) &&
+             t(bi.lowRiskOffer) && t(bi.senderName);
+  var ok = v('autoKeyword') && v('autoLocation') && biOk;
   btn.style.display  = ok ? '' : 'none';
   if (hint) hint.style.display = ok ? 'none' : '';
 }
@@ -13183,6 +13156,14 @@ function autoShowSendPanel() {
   });
   document.getElementById('appAutoPanel').style.display = 'none';
   document.getElementById('appAutoSendPanel').style.display = 'block';
+  // Prefill send config from the same localStorage keys the manual hub uses,
+  // so credentials entered in either mode carry over.
+  var lsGet = function (k) { try { return localStorage.getItem(k) || ''; } catch (_) { return ''; } };
+  var pre = { autoSmtpHost: lsGet('leadgen_smtpHost'), autoSmtpPort: lsGet('leadgen_smtpPort'), autoSmtpUser: lsGet('leadgen_smtpUser'), autoSmtpPass: lsGet('leadgen_smtpPass'), autoInstantlyCampaign: lsGet('leadgen_app_instantly_campaign') };
+  Object.keys(pre).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el && !el.value && pre[id]) el.value = pre[id];
+  });
   window.scrollTo(0, 0);
 }
 
@@ -13203,12 +13184,106 @@ function appBackToAutoForm() {
   window.scrollTo(0, 0);
 }
 
-function autoStartSmtpSend() {
-  alert('SMTP 发送功能开发中');
+// Real senders for the auto-mode send panel — mirror the manual hub's
+// startAppSmtpSend / startAppInstantlySend (same endpoints, same skip-invalid
+// rule, same DUPLICATE_LEAD soft-success), but read the auto panel's own inputs
+// and report into #autoSendProgress.
+function _autoSendStatus(msg, color) {
+  var box = document.getElementById('autoSendProgress');
+  var txt = document.getElementById('autoSendProgressText');
+  if (box) box.style.display = 'block';
+  if (txt) { txt.textContent = msg; txt.style.color = color || '#e5e7eb'; }
 }
 
-function autoStartInstantlySend() {
-  alert('Instantly 推送功能开发中');
+async function autoStartSmtpSend() {
+  var all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
+  var rawEmail = function (e) { return (e.email || e.to || '').toString().trim(); };
+  var toSend = all.filter(function (e) { return appIsValidEmail(rawEmail(e)); });
+  if (!toSend.length) { _autoSendStatus('没有可发送的有效收件邮箱', '#fca5a5'); return; }
+
+  var host    = (document.getElementById('autoSmtpHost')?.value || '').trim();
+  var portStr = (document.getElementById('autoSmtpPort')?.value || '').trim();
+  var user    = (document.getElementById('autoSmtpUser')?.value || '').trim();
+  var pass    =  document.getElementById('autoSmtpPass')?.value || '';
+  if (!host || !portStr || !user || !pass) { _autoSendStatus('请填写完整的 SMTP 配置（Host / Port / 账号 / 密码）', '#fca5a5'); return; }
+  var port = parseInt(portStr, 10);
+  if (!port || port < 1 || port > 65535) { _autoSendStatus('SMTP Port 无效（如 587 或 465）', '#fca5a5'); return; }
+  try {
+    localStorage.setItem('leadgen_smtpHost', host);
+    localStorage.setItem('leadgen_smtpPort', String(port));
+    localStorage.setItem('leadgen_smtpUser', user);
+    localStorage.setItem('leadgen_smtpPass', pass);
+  } catch (_) {}
+  // Sender display name = the 名字 half of the shared 落款 ("名字，公司").
+  var senderName = ((window._appBusinessInfo || {}).senderName || '').split(/[,，]/)[0].trim();
+
+  _autoSendStatus('正在准备发送...', '#a5b4fc');
+  try {
+    var token = (typeof getStoredToken === 'function') ? getStoredToken() : '';
+    var res = await fetch('/api/smtp-send-batch', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'Authorization': 'Bearer ' + token } : {}),
+      body: JSON.stringify({ emails: toSend, smtpConfig: { host: host, port: port, user: user, pass: pass, senderName: senderName } }),
+    });
+    if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+    var reader = res.body.getReader(), dec = new TextDecoder(), buf = '', finalEvt = null, serverError = null, stop = false;
+    while (!stop) {
+      var r = await reader.read();
+      if (r.done) break;
+      buf += dec.decode(r.value, { stream: true });
+      var idx;
+      while ((idx = buf.indexOf('\n\n')) !== -1) {
+        var chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        var line = chunk.split('\n').find(function (l) { return l.startsWith('data:'); });
+        if (!line) continue;
+        var evt; try { evt = JSON.parse(line.slice(5).trim()); } catch (_) { continue; }
+        if (evt.type === 'progress') _autoSendStatus('正在发送 ' + evt.current + '/' + evt.total + (evt.recipient ? ' — ' + evt.recipient : ''), '#a5b4fc');
+        else if (evt.type === 'done') { finalEvt = evt; stop = true; break; }
+        else if (evt.type === 'error') { serverError = evt.error || '未知错误'; stop = true; break; }
+      }
+    }
+    if (serverError) throw new Error(serverError);
+    var sent = (finalEvt && finalEvt.sent) || 0, failed = (finalEvt && finalEvt.failed) || 0;
+    _autoSendStatus('已发送 ' + sent + ' 封，失败 ' + failed + ' 封', failed === 0 ? '#86efac' : '#fbbf24');
+  } catch (err) {
+    _autoSendStatus('发送失败：' + (err.message || '未知错误'), '#fca5a5');
+  }
+}
+
+async function autoStartInstantlySend() {
+  var all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
+  var rawEmail = function (e) { return (e.email || e.to || '').toString().trim(); };
+  var withField = all.filter(function (e) { return rawEmail(e); });
+  var toSend    = withField.filter(function (e) { return appIsValidEmail(rawEmail(e)); });
+  var skipped   = withField.length - toSend.length;
+  if (!toSend.length) { _autoSendStatus(skipped ? '没有可推送的邮箱：' + skipped + ' 封格式无效已跳过' : '没有可推送的收件邮箱', '#fca5a5'); return; }
+
+  var campaignId = (document.getElementById('autoInstantlyCampaign')?.value || '').trim();
+  if (!campaignId) { _autoSendStatus('请填写 Instantly Campaign ID', '#fca5a5'); return; }
+  try { localStorage.setItem('leadgen_app_instantly_campaign', campaignId); } catch (_) {}
+
+  var token = (typeof getStoredToken === 'function') ? getStoredToken() : '';
+  var ok = 0, fail = 0;
+  for (var i = 0; i < toSend.length; i++) {
+    var e = toSend[i];
+    _autoSendStatus('正在推送 ' + (i + 1) + '/' + toSend.length + '...', '#a5b4fc');
+    try {
+      var seq = Array.isArray(e.sequence) ? e.sequence : [];
+      var emails = seq.map(function (s) { return { subject: (s && s.subject) || '', body: (s && s.body) || '' }; });
+      var res = await fetch('/api/instantly/add-lead', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'Authorization': 'Bearer ' + token } : {}),
+        body: JSON.stringify({
+          campaignId: campaignId,
+          lead: { email: e.email || e.to || '', companyName: e.recipient || '', website: e.website || '', phone: e.phone || '', emails: emails },
+        }),
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if ((data && data.success) || (data && data.error_code === 'DUPLICATE_LEAD')) ok++; else fail++;
+    } catch (_) { fail++; }
+  }
+  var skipNote = skipped ? '，跳过 ' + skipped + '（邮箱格式无效）' : '';
+  _autoSendStatus('完成：成功 ' + ok + '，失败 ' + fail + skipNote, ok > 0 ? '#86efac' : '#fca5a5');
 }
 
 function fwGetInputs() {
