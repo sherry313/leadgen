@@ -272,6 +272,21 @@ async function markLeadEmailedByEmail(email, userId, searchId) {
   }
 }
 
+// Zero a search's qualified counter before a re-filter re-accumulates it —
+// without this every re-run of AI 筛选 doubles total_qualified.
+async function resetSearchQualified(searchId, userId) {
+  const db = getClient();
+  if (!db || !searchId) return;
+  try {
+    let q = db.from('search_history').update({ total_qualified: 0 }).eq('id', searchId);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { error } = await q;
+    if (error) throw error;
+  } catch (err) {
+    console.warn('[Supabase] resetSearchQualified failed:', err.message);
+  }
+}
+
 // Per-search sent-lead counts for the history cards: { search_id: n }.
 async function getSentCountsBySearch(userId) {
   const db = getClient();
@@ -519,4 +534,4 @@ async function deleteProductProfile(id, userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };

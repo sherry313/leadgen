@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -2613,8 +2613,25 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
     // all keywords (what users expect: "填 12 就最多 12 条"). Slicing BEFORE the
     // enrichment loop also avoids scraping websites we'd drop.
     const _cap = maxResults;
-    const _items = (items || []).slice(0, _cap);
-    console.log(`[GoogleMapsTool] actor returned ${(items || []).length}, capped to ${_items.length} (total max ${maxResults})`);
+    const _itemsRaw = (items || []).slice(0, _cap);
+    console.log(`[GoogleMapsTool] actor returned ${(items || []).length}, capped to ${_itemsRaw.length} (total max ${maxResults})`);
+
+    // Dedup against the user's existing leads BEFORE enrichment — same key set
+    // as /api/scrape-raw. Re-searching the same keywords must not re-insert
+    // (or spend 20s/site re-enriching) companies already in the database.
+    // Email can't be checked here (it's only known after enrichment).
+    const { placeIds: _exPids, phones: _exPhones, domains: _exDomains } = await getExistingLeadKeys(req.userId);
+    const _domainOf = (url) => { try { return new URL(url).hostname.replace('www.', ''); } catch { return ''; } };
+    const _items = _itemsRaw.filter(it => {
+      if (it.placeId && _exPids.has(it.placeId)) return false;
+      const ph = String(it.phone || it.phoneUnformatted || '').replace(/\D/g, '');
+      if (ph && _exPhones.has(ph)) return false;
+      const dom = it.website ? _domainOf(it.website) : '';
+      if (dom && _exDomains.has(dom)) return false;
+      return true;
+    });
+    const _dupSkipped = _itemsRaw.length - _items.length;
+    if (_dupSkipped) console.log(`[GoogleMapsTool] dedup skipped ${_dupSkipped} already-known places`);
 
     let emitted = 0;
     for (const it of _items) {
@@ -2676,6 +2693,7 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
 
       const full = {
         name:      it.title || '',
+        placeId:   it.placeId || '',
         website,
         phone:     it.phone || it.phoneUnformatted || '',
         email:     scraped.email || bizEmail,
@@ -2710,6 +2728,7 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
         website:      r.website || '',
         city:         r.address || '',
         googleRating: r.rating ?? null,
+        placeId:      r.placeId || '', // enables place-id dedup on future searches
       })), req.userId).catch(() => {});
     }
     // Backfill the run's scraped count + Apify cost (row was inserted with 0s
@@ -2719,7 +2738,7 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       updateSearchRunCosts(searchId, { apifyCostUsd, anthropicCostUsd: 0, totalCostUsd: apifyCostUsd, totalQualified: 0, totalScraped: emitted }).catch(() => {});
     }
     // searchId lets the frontend attribute later AI-filter / email-gen costs to this run.
-    send({ type: 'done', success: true, total: emitted, searchId });
+    send({ type: 'done', success: true, total: emitted, dupSkipped: _dupSkipped, searchId });
   } catch (err) {
     console.error('[GoogleMapsTool] error:', err.message);
     send({ type: 'error', error: err.message || 'Google Maps 抓取失败' });
@@ -3012,9 +3031,12 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
 // Node caches the SDK require and `new Anthropic()` is cheap, so per-request
 // instantiation is fine for this small call.
 app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
-  const { lead, criteria, searchId } = req.body || {};
+  const { lead, criteria, searchId, resetQualified } = req.body || {};
   if (!lead) return res.status(400).json({ recommended: false, reason: 'lead required' });
   if (!(await requireQuota(req, res))) return;
+  // First request of a (re-)filter batch: restart the qualified counter so a
+  // re-run replaces the old count instead of stacking on top of it.
+  if (resetQualified && searchId) await resetSearchQualified(searchId, req.userId);
 
   const companyName = lead.name        || lead.title || lead.username || '';
   const website     = lead.website     || lead.url   || '';
