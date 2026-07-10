@@ -1471,9 +1471,20 @@ app.post('/api/apify/resume', requireAuth, async (req, res) => {
 });
 
 // ── Search history ────────────────────────────────────────────────────────────
+// User-facing price markup: the DB stores REAL cost; everything a user sees is
+// real × COST_MARKUP (default 5). Override with COST_MARKUP in .env if pricing
+// changes — no code edit needed.
+const COST_MARKUP = parseFloat(process.env.COST_MARKUP || '5');
+
 app.get('/api/history', requireAuth, async (req, res) => {
   const [history, emailsSent] = await Promise.all([getSearchHistory(30, req.userId), getEmailsSentCount(req.userId)]);
-  res.json({ success: true, history, emailsSent });
+  const marked = (history || []).map(r => ({
+    ...r,
+    apify_cost_usd:     r.apify_cost_usd     != null ? parseFloat((r.apify_cost_usd     * COST_MARKUP).toFixed(4)) : r.apify_cost_usd,
+    anthropic_cost_usd: r.anthropic_cost_usd != null ? parseFloat((r.anthropic_cost_usd * COST_MARKUP).toFixed(4)) : r.anthropic_cost_usd,
+    total_cost_usd:     r.total_cost_usd     != null ? parseFloat((r.total_cost_usd     * COST_MARKUP).toFixed(4)) : r.total_cost_usd,
+  }));
+  res.json({ success: true, history: marked, emailsSent });
 });
 
 app.get('/api/history/:id', requireAuth, async (req, res) => {

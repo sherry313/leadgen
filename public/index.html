@@ -6436,7 +6436,8 @@ function buildRunSummary() {
 
 function updateFieldCost() {
   const hasEmail = document.getElementById('optEmail')?.checked;
-  const cost = hasEmail ? '~$0.006/条' : '~$0.004/条';
+  // User-facing price = real cost × 5 (matches the server's COST_MARKUP).
+  const cost = hasEmail ? '~$0.03/条' : '~$0.02/条';
   const el = document.getElementById('fieldCostEst');
   if (el) el.textContent = `预计费用：${cost}`;
 }
@@ -6466,7 +6467,7 @@ function onCustomDepthInput(input) {
   const meta = document.getElementById('customDepthMeta');
   if (val >= 1 && val <= 500) {
     const mins = Math.round(val * 0.2);
-    const cost = (val * 0.006).toFixed(2);
+    const cost = (val * 0.03).toFixed(2); // user-facing = real × 5 (COST_MARKUP)
     meta.textContent = `约${mins}分钟 · ~$${cost}`;
     document.getElementById('maxResults').value = val;
     localStorage.setItem('leadgen_maxResults', val);
@@ -9293,7 +9294,7 @@ if (savedMax) {
       const inp = document.getElementById('customDepthInput');
       inp.value = v;
       const mins = Math.round(v * 0.2);
-      const cost = (v * 0.006).toFixed(2);
+      const cost = (v * 0.03).toFixed(2); // user-facing = real × 5 (COST_MARKUP)
       document.getElementById('customDepthMeta').textContent = `约${mins}分钟 · ~$${cost}`;
     }
   }
