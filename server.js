@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -1048,7 +1048,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
         const lead = pushable[i];
         try {
           const result = await withTimeout(addLeadToCampaign(lead, campaignId), 30000, 'Instantly push');
-          if (result.success) pushed++;
+          if (result.success) { pushed++; await markLeadEmailedByEmail(lead.email, req.userId); }
           else { pushFailed++; console.warn(`[Auto/Push] ${lead.companyName}: ${result.reason}`); }
         } catch (err) {
           pushFailed++;
@@ -1376,7 +1376,7 @@ app.post('/api/auto/run-from-dataset', requireAuth, async (req, res) => {
         const lead = pushable[i];
         try {
           const result = await withTimeout(addLeadToCampaign(lead, campaignId), 30000, 'Instantly push');
-          if (result.success) pushed++;
+          if (result.success) { pushed++; await markLeadEmailedByEmail(lead.email, req.userId); }
           else { pushFailed++; console.warn(`[AutoDataset/Push] ${lead.companyName}: ${result.reason}`); }
         } catch (err) {
           pushFailed++;
@@ -1519,9 +1519,14 @@ async function requireQuota(req, res) {
 }
 
 app.get('/api/history', requireAuth, async (req, res) => {
-  const [history, emailsSent] = await Promise.all([getSearchHistory(30, req.userId), getEmailsSentCount(req.userId)]);
+  const [history, emailsSent, sentCounts] = await Promise.all([
+    getSearchHistory(30, req.userId),
+    getEmailsSentCount(req.userId),
+    getSentCountsBySearch(req.userId),
+  ]);
   const marked = (history || []).map(r => ({
     ...r,
+    sent_count:         sentCounts[r.id] || 0,
     apify_cost_usd:     r.apify_cost_usd     != null ? parseFloat((r.apify_cost_usd     * COST_MARKUP).toFixed(4)) : r.apify_cost_usd,
     anthropic_cost_usd: r.anthropic_cost_usd != null ? parseFloat((r.anthropic_cost_usd * COST_MARKUP).toFixed(4)) : r.anthropic_cost_usd,
     total_cost_usd:     r.total_cost_usd     != null ? parseFloat((r.total_cost_usd     * COST_MARKUP).toFixed(4)) : r.total_cost_usd,
@@ -1742,6 +1747,7 @@ app.post('/api/instantly/add-lead', requireAuth, async (req, res) => {
   }
 
   console.log(`[Instantly] Lead added to campaign: ${lead.email} (${lead.companyName || '?'})`);
+  await markLeadEmailedByEmail(lead.email, req.userId);
   res.json({ success: true });
 });
 

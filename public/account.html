@@ -122,6 +122,7 @@
     .h-meta { font-size: 0.76rem; color: var(--sub); display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
     .h-dot { color: rgba(255,255,255,0.2); }
     .cost-badge { color: #fbbf24; font-weight: 600; }
+    .sent-badge { color: #4ade80; font-weight: 600; }
     .h-actions { display: flex; gap: 6px; flex-shrink: 0; }
     .h-btn { padding: 6px 11px; border-radius: 7px; font-size: 0.76rem; font-weight: 600; cursor: pointer; font-family: inherit; border: 1px solid; transition: all 0.15s; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; background: transparent; }
     .h-btn.primary { background: var(--accent-soft); border-color: rgba(99,102,241,0.4); color: #a5b4fc; }
@@ -286,6 +287,7 @@
   let _allHistory = [];
   let _filtered   = [];
   let _page       = 1;
+  let _emailsSent = 0;
 
   // Session-first token retrieval — identical to /app's getStoredToken().
   function getStoredToken() {
@@ -353,12 +355,16 @@
       const r = await fetch('/api/history', { headers: authHeaders() });
       const d = await r.json();
       _allHistory = d.history || [];
+      // 预先算好中文标题/地点，渲染和过滤共用
+      _allHistory.forEach(x => { x._zhTitle = zhProduct(x.query); x._zhLoc = zhLocation(x.location); });
+      _emailsSent = d.emailsSent || 0;
 
       const sum = (k) => _allHistory.reduce((s, x) => s + (x[k] || 0), 0);
       document.getElementById('statSearches').textContent  = _allHistory.length;
       document.getElementById('statScraped').textContent   = sum('total_scraped');
-      document.getElementById('statQualified').textContent = sum('total_qualified');
-      document.getElementById('statEmailsSent').textContent = d.emailsSent ?? '—';
+      // 合格线索 = 发过邮件的线索 —— 与「已发邮件」同一口径，数字一致
+      document.getElementById('statQualified').textContent  = _emailsSent;
+      document.getElementById('statEmailsSent').textContent = _emailsSent;
       document.getElementById('statCost').textContent      = '$' + sum('total_cost_usd').toFixed(2);
 
       // Free-quota card (server sends user-facing figures; hidden for legacy).
@@ -385,9 +391,83 @@
   function applyFilter(q) {
     const v = q.trim().toLowerCase();
     _filtered = v
-      ? _allHistory.filter(x => (x.query || '').toLowerCase().includes(v) || (x.location || '').toLowerCase().includes(v))
+      ? _allHistory.filter(x =>
+          (x.query || '').toLowerCase().includes(v) || (x.location || '').toLowerCase().includes(v) ||
+          (x._zhTitle || '').includes(q.trim()) || (x._zhLoc || '').includes(q.trim()))
       : _allHistory.slice();
     renderPage(1);
+  }
+
+  // ── 中文显示：搜索词/地点翻译 ──
+  // 标题只显示搜索词第一段（产品名）。逐词贪心匹配词典（最长短语优先）；
+  // 只要有一个词翻不出来就整段保留英文，避免出现中英混杂的半吊子翻译。
+  const TERM_ZH = {
+    'whole house': '全屋', 'building materials': '建材', 'building material': '建材',
+    'interior design': '室内设计', 'curtain wall': '幕墙', 'real estate': '房地产',
+    'fit out': '装修', 'gold coast': '黄金海岸',
+    'general contractor': '总承包商', 'home improvement': '家装', 'bathroom vanity': '浴室柜',
+    'turnkey': '整包', 'renovation': '翻新', 'renovations': '翻新', 'remodeling': '改造',
+    'company': '公司', 'companies': '公司', 'contractor': '承包商', 'contractors': '承包商',
+    'builder': '建筑商', 'builders': '建筑商', 'building': '建筑', 'construction': '建筑',
+    'distributor': '经销商', 'distributors': '经销商', 'supplier': '供应商', 'suppliers': '供应商',
+    'wholesaler': '批发商', 'wholesalers': '批发商', 'retailer': '零售商', 'retailers': '零售商',
+    'manufacturer': '制造商', 'manufacturers': '制造商', 'importer': '进口商', 'importers': '进口商',
+    'store': '门店', 'stores': '门店', 'shop': '门店', 'shops': '门店', 'showroom': '展厅',
+    'home': '住宅', 'house': '房屋', 'houses': '房屋', 'full': '全', 'complete': '整',
+    'custom': '定制', 'customization': '定制', 'customized': '定制',
+    'kitchen': '厨房', 'bathroom': '卫浴', 'bathrooms': '卫浴',
+    'cabinet': '橱柜', 'cabinets': '橱柜', 'cabinetry': '橱柜', 'wardrobe': '衣柜', 'wardrobes': '衣柜',
+    'flooring': '地板', 'floor': '地板', 'tile': '瓷砖', 'tiles': '瓷砖', 'tiling': '瓷砖',
+    'door': '门', 'doors': '门', 'window': '窗', 'windows': '窗', 'and': '及',
+    'furniture': '家具', 'joinery': '细木工', 'carpentry': '木工', 'glazing': '玻璃', 'glass': '玻璃',
+    'interior': '室内', 'design': '设计', 'designer': '设计师', 'designers': '设计师',
+    'architect': '建筑师', 'architects': '建筑师', 'developer': '开发商', 'developers': '开发商',
+    'agency': '机构', 'agencies': '机构', 'service': '服务', 'services': '服务',
+    'commercial': '商业', 'residential': '住宅', 'luxury': '高端', 'modern': '现代',
+    'wholesale': '批发', 'retail': '零售', 'trading': '贸易', 'factory': '工厂',
+    'hardware': '五金', 'lighting': '灯具', 'paint': '油漆', 'plumbing': '水暖',
+    'roofing': '屋顶工程', 'landscaping': '园林景观', 'decoration': '装饰', 'decorating': '装饰',
+    'supply': '供应', 'supplies': '用品',
+    'fixtures': '洁具', 'fixture': '洁具', 'vanity': '浴室柜', 'vanities': '浴室柜',
+    'furnishing': '家居用品', 'furnishings': '家居用品', 'improvement': '装修',
+    'general': '综合',
+  };
+  function zhProduct(query) {
+    const seg = (query || '').split(',')[0].trim();
+    if (!seg) return '';
+    const words = seg.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+    let out = '', i = 0;
+    outer: while (i < words.length) {
+      for (let len = Math.min(3, words.length - i); len >= 1; len--) {
+        const zh = TERM_ZH[words.slice(i, i + len).join(' ')];
+        if (zh != null) { out += zh; i += len; continue outer; }
+      }
+      return seg; // 有词翻不出来 → 整段保留英文
+    }
+    return out || seg;
+  }
+
+  const CITY_ZH = {
+    'sydney': '悉尼', 'melbourne': '墨尔本', 'brisbane': '布里斯班', 'perth': '珀斯',
+    'adelaide': '阿德莱德', 'gold coast': '黄金海岸', 'canberra': '堪培拉', 'newcastle': '纽卡斯尔',
+    'wollongong': '卧龙岗', 'hobart': '霍巴特', 'darwin': '达尔文', 'sunshine coast': '阳光海岸',
+    'geelong': '吉朗', 'townsville': '汤斯维尔', 'cairns': '凯恩斯',
+    'auckland': '奥克兰', 'wellington': '惠灵顿', 'christchurch': '基督城',
+    'hamilton': '汉密尔顿', 'tauranga': '陶朗加', 'dunedin': '但尼丁',
+  };
+  const COUNTRY_ZH = {
+    'australia': '澳大利亚', 'new zealand': '新西兰', 'united states': '美国', 'usa': '美国',
+    'united kingdom': '英国', 'uk': '英国', 'canada': '加拿大', 'singapore': '新加坡', 'malaysia': '马来西亚',
+  };
+  function zhLocation(loc) {
+    if (!loc) return '';
+    const parts = loc.split(',').map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      const city    = parts[0];
+      const country = parts[parts.length - 1];
+      return (COUNTRY_ZH[country.toLowerCase()] || country) + '·' + (CITY_ZH[city.toLowerCase()] || city);
+    }
+    return CITY_ZH[loc.toLowerCase()] || COUNTRY_ZH[loc.toLowerCase()] || loc;
   }
 
   function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -416,13 +496,13 @@
       return '<div class="h-card" data-id="' + r.id + '">' +
         '<div class="h-main">' +
           '<div class="h-top"><i class="ti ti-search"></i>' +
-            '<div class="h-query" title="' + esc(r.query) + '">' + (esc(r.query) || '(无关键词)') + '</div>' +
+            '<div class="h-query" title="' + esc(r.query) + '">' + (esc(r._zhTitle) || esc(r.query) || '(无关键词)') + '</div>' +
             '<div class="h-time">' + timeAgo(r.created_at) + '</div>' +
           '</div>' +
           '<div class="h-meta">' +
-            '<span><i class="ti ti-map-pin" style="font-size:0.8rem"></i> ' + (esc(r.location) || '—') + '</span>' +
+            '<span><i class="ti ti-map-pin" style="font-size:0.8rem"></i> ' + (esc(r._zhLoc) || esc(r.location) || '—') + '</span>' +
             '<span class="h-dot">·</span><span>抓取 ' + (r.total_scraped || 0) + ' 条</span>' +
-            '<span class="h-dot">·</span><span>合格 ' + (r.total_qualified || 0) + ' 条</span>' +
+            '<span class="h-dot">·</span><span class="sent-badge">已发 ' + (r.sent_count || 0) + ' 条</span>' +
             '<span class="h-dot">·</span><span class="cost-badge">$' + cost + '</span>' +
           '</div>' +
         '</div>' +
@@ -452,14 +532,17 @@
       const r = await fetch('/api/history/' + id, { method: 'DELETE', headers: authHeaders() });
       const d = await r.json();
       if (!d.success) throw new Error(d.error || '删除失败');
+      const removed = _allHistory.find(x => x.id === id);
       _allHistory = _allHistory.filter(x => x.id !== id);
       _filtered   = _filtered.filter(x => x.id !== id);
-      // Recompute stats + re-render current page
+      // Recompute stats + re-render current page（删除的搜索连带其已发数一起扣）
+      _emailsSent = Math.max(0, _emailsSent - (removed?.sent_count || 0));
       const sum = (k) => _allHistory.reduce((s, x) => s + (x[k] || 0), 0);
-      document.getElementById('statSearches').textContent  = _allHistory.length;
-      document.getElementById('statScraped').textContent   = sum('total_scraped');
-      document.getElementById('statQualified').textContent = sum('total_qualified');
-      document.getElementById('statCost').textContent      = '$' + sum('total_cost_usd').toFixed(2);
+      document.getElementById('statSearches').textContent   = _allHistory.length;
+      document.getElementById('statScraped').textContent    = sum('total_scraped');
+      document.getElementById('statQualified').textContent  = _emailsSent;
+      document.getElementById('statEmailsSent').textContent = _emailsSent;
+      document.getElementById('statCost').textContent       = '$' + sum('total_cost_usd').toFixed(2);
       renderPage(Math.min(_page, Math.max(1, Math.ceil(_filtered.length / PAGE_SIZE))));
     } catch (e) {
       alert('删除失败：' + e.message);

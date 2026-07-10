@@ -233,17 +233,61 @@ async function getLeadById(id, userId) {
   }
 }
 
+// NOTE: only email_sent_at exists on leads — an email_sent_number column was
+// never added, and including it made this whole UPDATE fail silently
+// (the "已发邮件 always 0" bug). emailNumber is kept for logging only.
 async function updateEmailSent(id, emailNumber) {
   const db = getClient();
   if (!db || !id) return;
   try {
     const { error } = await db.from('leads')
-      .update({ email_sent_at: new Date().toISOString(), email_sent_number: emailNumber })
+      .update({ email_sent_at: new Date().toISOString() })
       .eq('id', id);
     if (error) throw error;
     console.log(`[Supabase] Lead ${id} marked email_sent: #${emailNumber}`);
   } catch (err) {
     console.warn('[Supabase] updateEmailSent failed:', err.message);
+  }
+}
+
+// Mark a lead as emailed right after a successful Instantly push — matched by
+// email because the push paths don't always carry the DB id. Never overwrites
+// an existing timestamp (first send wins).
+async function markLeadEmailedByEmail(email, userId) {
+  const db = getClient();
+  if (!db || !email?.trim()) return;
+  try {
+    let q = db.from('leads')
+      .update({ email_sent_at: new Date().toISOString() })
+      .eq('email', email.trim())
+      .is('email_sent_at', null);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { error } = await q;
+    if (error) throw error;
+  } catch (err) {
+    console.warn('[Supabase] markLeadEmailedByEmail failed:', err.message);
+  }
+}
+
+// Per-search sent-lead counts for the history cards: { search_id: n }.
+async function getSentCountsBySearch(userId) {
+  const db = getClient();
+  if (!db) return {};
+  try {
+    let q = db.from('leads')
+      .select('search_id')
+      .not('email_sent_at', 'is', null);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data, error } = await q;
+    if (error) throw error;
+    const counts = {};
+    for (const r of data || []) {
+      if (r.search_id) counts[r.search_id] = (counts[r.search_id] || 0) + 1;
+    }
+    return counts;
+  } catch (err) {
+    console.warn('[Supabase] getSentCountsBySearch failed:', err.message);
+    return {};
   }
 }
 
@@ -472,4 +516,4 @@ async function deleteProductProfile(id, userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };
