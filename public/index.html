@@ -5830,6 +5830,7 @@ async function startGoogleSearch() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ keywords, location, countryCode, maxResults, fields }),
     });
+    if (res.status === 402) { const j = await res.json().catch(() => ({})); throw new Error(j.error || '免费额度已用完，请联系客服提升额度'); }
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'gs', status);
   } catch (err) {
@@ -6132,6 +6133,7 @@ async function startGoogleMapsScrape() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ keywords, location, maxResults, fields }),
     });
+    if (res.status === 402) { const j = await res.json().catch(() => ({})); throw new Error(j.error || '免费额度已用完，请联系客服提升额度'); }
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'gm', status);
   } catch (err) {
@@ -12271,6 +12273,14 @@ async function biPolishField(textareaId, kind, btn) {
             searchId: (typeof _currentSearchId !== 'undefined' && _currentSearchId) || null,
           }),
         });
+        if (resp.status === 402) {
+          const j = await resp.json().catch(() => ({}));
+          const msg = j.error || '免费额度已用完，请联系客服提升额度';
+          progress.style.display = 'block';
+          progress.textContent = msg;
+          if (typeof _showToast === 'function') _showToast(msg);
+          break;
+        }
         const data = await resp.json();
         filtered.push({ ...lead, _aiRecommended: !!data.recommended, _aiReason: data.reason || '' });
       } catch (_) {
@@ -13770,6 +13780,7 @@ async function fwAutoRunPipeline(inp) {
       headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'Authorization': 'Bearer ' + token } : {}),
       body: JSON.stringify({ keywords: [inp.keyword], location: inp.location, maxResults: inp.maxResults || 20 }),
     });
+    if (res.status === 402) { var qj = await res.json().catch(function () { return {}; }); throw new Error(qj.error || '免费额度已用完，请联系客服提升额度'); }
     if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
     var reader = res.body.getReader(), dec = new TextDecoder(), buf = '', sseError = null, finished = false;
     while (!finished) {
@@ -14258,6 +14269,12 @@ async function appGenerateAll() {
         searchId: (typeof _currentSearchId !== 'undefined' && _currentSearchId) || null,
       }),
     });
+    if (resp.status === 402) {
+      const j = await resp.json().catch(() => ({}));
+      const err = new Error(j.error || '免费额度已用完，请联系客服提升额度');
+      err.quotaExceeded = true;
+      throw err;
+    }
     const data = await resp.json();
     return toEntry(lead, data.emails);
   };
@@ -14271,12 +14288,14 @@ async function appGenerateAll() {
     && Array.isArray(_appPreviewEmails) && _appPreviewEmails.length;
 
   const results = [];
+  let quotaHit = null; // set when the server says QUOTA_EXCEEDED — stop the loop
   for (let i = 0; i < leads.length; i++) {
     if (statusEl) statusEl.textContent = `正在生成 ${i + 1}/${leads.length} 封邮件...`;
     try {
       if (i === 0 && reuseFirst) results.push(toEntry(leads[0], _appPreviewEmails));
       else                       results.push(await genFor(leads[i]));
     } catch (e) {
+      if (e.quotaExceeded) { quotaHit = e.message; break; }
       console.warn('[appGenerateAll] generation failed for', leads[i]?.name || '', e.message);
     }
   }
@@ -14284,10 +14303,17 @@ async function appGenerateAll() {
   window._generatedEmails = results;
 
   if (statusEl) {
-    statusEl.style.background = 'rgba(34,197,94,0.08)';
-    statusEl.style.color = '#86efac';
-    statusEl.textContent = `已生成 ${results.length} 封邮件`;
+    if (quotaHit) {
+      statusEl.style.background = 'rgba(239,68,68,0.08)';
+      statusEl.style.color = '#fca5a5';
+      statusEl.textContent = `${quotaHit}（已生成 ${results.length} 封）`;
+    } else {
+      statusEl.style.background = 'rgba(34,197,94,0.08)';
+      statusEl.style.color = '#86efac';
+      statusEl.textContent = `已生成 ${results.length} 封邮件`;
+    }
   }
+  if (quotaHit && !results.length) return; // nothing generated — stay put
 
   // Navigate to the SMTP send panel now that emails exist.
   if (typeof showAppSendPanel === 'function') showAppSendPanel();

@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -1476,6 +1476,48 @@ app.post('/api/apify/resume', requireAuth, async (req, res) => {
 // changes — no code edit needed.
 const COST_MARKUP = parseFloat(process.env.COST_MARKUP || '5');
 
+// ── Free-quota gate ───────────────────────────────────────────────────────────
+// Every registered user gets a free spend quota (user-facing USD; default $5,
+// per-user override via the user_quotas table). Over quota → 402 QUOTA_EXCEEDED
+// and the user contacts support; support raises quota_usd for that user.
+// Legacy-token traffic (owner / lens) is exempt. Spend is cached 60s per user
+// so per-lead endpoints don't hammer Supabase.
+const _quotaCache = new Map(); // userId → { spentUsd, quotaUsd, expires }
+async function getQuotaState(userId) {
+  const now = Date.now();
+  const hit = _quotaCache.get(userId);
+  if (hit && hit.expires > now) return hit;
+  const [summary, quotaUsd] = await Promise.all([getCostSummary(userId), getUserQuotaUsd(userId)]);
+  const state = {
+    spentUsd: parseFloat(((summary?.totalCostUsd || 0) * COST_MARKUP).toFixed(2)),
+    quotaUsd,
+    expires: now + 60_000,
+  };
+  _quotaCache.set(userId, state);
+  return state;
+}
+// Returns true when the request may proceed; otherwise responds 402 and returns
+// false. Fail-open on errors — a quota outage must never break the product.
+async function requireQuota(req, res) {
+  if (!req.userId || req.userId === 'legacy') return true;
+  try {
+    const q = await getQuotaState(req.userId);
+    if (q.spentUsd >= q.quotaUsd) {
+      res.status(402).json({
+        success: false,
+        error_code: 'QUOTA_EXCEEDED',
+        quotaUsd: q.quotaUsd,
+        spentUsd: q.spentUsd,
+        error: `免费额度 $${q.quotaUsd} 已用完，请联系客服提升额度`,
+      });
+      return false;
+    }
+  } catch (e) {
+    console.warn('[Quota] check failed (fail-open):', e.message);
+  }
+  return true;
+}
+
 app.get('/api/history', requireAuth, async (req, res) => {
   const [history, emailsSent] = await Promise.all([getSearchHistory(30, req.userId), getEmailsSentCount(req.userId)]);
   const marked = (history || []).map(r => ({
@@ -1484,7 +1526,12 @@ app.get('/api/history', requireAuth, async (req, res) => {
     anthropic_cost_usd: r.anthropic_cost_usd != null ? parseFloat((r.anthropic_cost_usd * COST_MARKUP).toFixed(4)) : r.anthropic_cost_usd,
     total_cost_usd:     r.total_cost_usd     != null ? parseFloat((r.total_cost_usd     * COST_MARKUP).toFixed(4)) : r.total_cost_usd,
   }));
-  res.json({ success: true, history: marked, emailsSent });
+  // Quota info for the personal-center 额度卡 (null for legacy-token users).
+  let quotaUsd = null, spentUsd = null;
+  if (req.userId && req.userId !== 'legacy') {
+    try { const q = await getQuotaState(req.userId); quotaUsd = q.quotaUsd; spentUsd = q.spentUsd; } catch (_) {}
+  }
+  res.json({ success: true, history: marked, emailsSent, quotaUsd, spentUsd });
 });
 
 app.get('/api/history/:id', requireAuth, async (req, res) => {
@@ -2285,6 +2332,7 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
   const fields      = Array.isArray(req.body?.fields) ? req.body.fields : ['email','phone','website','linkedin'];
 
   if (!keywords.length) return res.status(400).json({ success: false, error: 'keyword required' });
+  if (!(await requireQuota(req, res))) return;
 
   res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
   res.flushHeaders();
@@ -2462,6 +2510,7 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
     : ['name', 'phone', 'website', 'address', 'rating', 'reviews'];
 
   if (!keywords.length) return res.status(400).json({ success: false, error: 'keywords required' });
+  if (!(await requireQuota(req, res))) return;
 
   res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
   res.flushHeaders();
@@ -2630,6 +2679,7 @@ app.post('/api/auto-search', requireAuth, async (req, res) => {
   const maxResults = Math.min(parseInt(req.body.maxResults) || 20, 100);
 
   if (!keyword) return res.status(400).json({ success: false, error: 'keyword required' });
+  if (!(await requireQuota(req, res))) return;
 
   try {
     console.log('[auto-search] calling Apify with:', { keyword, location, maxResults });
@@ -2873,6 +2923,7 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
 app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
   const { lead, criteria, searchId } = req.body || {};
   if (!lead) return res.status(400).json({ recommended: false, reason: 'lead required' });
+  if (!(await requireQuota(req, res))) return;
 
   const companyName = lead.name        || lead.title || lead.username || '';
   const website     = lead.website     || lead.url   || '';
@@ -3382,6 +3433,7 @@ app.post('/api/recommend-low-risk-offers', requireAuth, async (req, res) => {
 // users can preview before kicking off the full bulk generation.
 app.post('/api/app-generate-preview', requireAuth, async (req, res) => {
   const { lead, sellerDesc, goal, signatureName, framework, customPrompt, frameworkContext, businessInfo } = req.body;
+  if (!(await requireQuota(req, res))) return;
 
   const companyName = lead.name || lead.title || lead.username || 'the company';
   const website = lead.website || lead.url || '';

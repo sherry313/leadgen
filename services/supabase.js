@@ -322,6 +322,26 @@ async function appendSearchRunCosts(id, { sonnetCostUsd = 0, firecrawlCostUsd = 
   }
 }
 
+// Per-user free-quota (user-facing USD, i.e. real × COST_MARKUP). No row in
+// user_quotas → default $5. Fail-open to the default on DB errors so a missing
+// table or outage never locks users out.
+async function getUserQuotaUsd(userId) {
+  const db = getClient();
+  if (!db || !userId) return 5;
+  try {
+    const { data, error } = await db
+      .from('user_quotas')
+      .select('quota_usd')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.quota_usd != null ? Number(data.quota_usd) : 5;
+  } catch (err) {
+    console.error('[Supabase] getUserQuotaUsd FAILED (default $5):', err.message);
+    return 5;
+  }
+}
+
 async function getEmailsSentCount(userId) {
   const db = getClient();
   if (!db) return 0;
@@ -452,4 +472,4 @@ async function deleteProductProfile(id, userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, getCostSummary, getEmailsSentCount, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };
