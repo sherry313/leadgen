@@ -337,6 +337,20 @@
     } catch (e) { return '—'; }
   }
 
+  // Absolute local-time label next to the relative one — "3小时前" is easy to
+  // misjudge; "今天 21:55" can be checked against memory at a glance.
+  function fmtWhen(iso) {
+    const d = parseUTC(iso);
+    if (isNaN(d)) return '';
+    const pad = n => String(n).padStart(2, '0');
+    const hm = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    const now = new Date();
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    if (d.getTime() >= dayStart) return '今天 ' + hm;
+    if (d.getTime() >= dayStart - 86400000) return '昨天 ' + hm;
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + hm;
+  }
+
   // ── Account header (email + join date) ──
   async function loadMe() {
     try {
@@ -497,7 +511,7 @@
         '<div class="h-main">' +
           '<div class="h-top"><i class="ti ti-search"></i>' +
             '<div class="h-query" title="' + esc(r.query) + '">' + (esc(r._zhTitle) || esc(r.query) || '(无关键词)') + '</div>' +
-            '<div class="h-time">' + timeAgo(r.created_at) + '</div>' +
+            '<div class="h-time">' + timeAgo(r.created_at) + ' · ' + fmtWhen(r.created_at) + '</div>' +
           '</div>' +
           '<div class="h-meta">' +
             '<span><i class="ti ti-map-pin" style="font-size:0.8rem"></i> ' + (esc(r._zhLoc) || esc(r.location) || '—') + '</span>' +
