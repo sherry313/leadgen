@@ -504,8 +504,14 @@
   })();
 
   // ── Time-ago helper ──
+  // Supabase timestamps come back without a timezone suffix but ARE UTC —
+  // append Z so the browser doesn't misread them as local time (+8h drift).
+  function parseUTC(iso) {
+    if (typeof iso === 'string' && !/[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso)) iso += 'Z';
+    return new Date(iso);
+  }
   function timeAgo(iso) {
-    const diff = Date.now() - new Date(iso).getTime();
+    const diff = Date.now() - parseUTC(iso).getTime();
     const m = Math.floor(diff / 60000);
     if (m < 60) return m <= 1 ? '刚刚' : m + '分钟前';
     const h = Math.floor(m / 60);
