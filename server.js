@@ -2356,15 +2356,24 @@ function _pickBestEmail(html, siteUrl) {
   const seen = new Set();
   const candidates = [...mailtos, ...inline]
     .map(e => String(e).trim().replace(/^(%20)+/i, ''))
-    .filter(e => { const k = e.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
-    .filter(_isRealEmail);
-  if (!candidates.length) return '';
+    .filter(e => { const k = e.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
   let siteDomain = '';
   try { siteDomain = new URL(siteUrl).hostname.replace(/^www\./, '').toLowerCase(); } catch (_) {}
-  const sameDomain = siteDomain
-    ? candidates.find(e => e.toLowerCase().split('@')[1] === siteDomain || e.toLowerCase().endsWith('.' + siteDomain))
-    : '';
-  return sameDomain || candidates[0];
+  const real = candidates.filter(_isRealEmail);
+  if (real.length) {
+    const sameDomain = siteDomain
+      ? real.find(e => e.toLowerCase().split('@')[1] === siteDomain || e.toLowerCase().endsWith('.' + siteDomain))
+      : '';
+    return sameDomain || real[0];
+  }
+  // Placeholder-style local part on the site's OWN domain is likely a real
+  // address (e.g. email@kennedynolan.com.au) — accept it as a last resort.
+  if (siteDomain) {
+    const loose = candidates.find(e =>
+      EMAIL_SHAPE.test(e) && !FILE_EXT_TLD.test(e) && e.toLowerCase().split('@')[1] === siteDomain);
+    if (loose) return loose;
+  }
+  return '';
 }
 
 app.post('/api/google-search', requireAuth, async (req, res) => {
