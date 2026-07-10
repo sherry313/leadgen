@@ -6326,6 +6326,12 @@ async function _consumeToolSse(res, kind, statusEl) {
         if (statusEl) statusEl.textContent = `已抓取 ${_toolResults[kind].length} 条…`;
       } else if (evt.type === 'done') {
         if (statusEl) statusEl.textContent = `完成：共 ${_toolResults[kind].length} 条`;
+        // Remember the run's searchId so downstream AI-filter / email-gen calls
+        // can book their token costs onto this search (personal-center 累计花费).
+        if (evt.searchId) {
+          _currentSearchId = evt.searchId;
+          try { localStorage.setItem('leadgen_searchId', evt.searchId); } catch (_) {}
+        }
         _renderToolResults(kind);
         try {
           localStorage.setItem(LEAD_PREFIX + 'toolResults', JSON.stringify(_toolResults));
@@ -12261,6 +12267,7 @@ async function biPolishField(textareaId, kind, btn) {
           body: JSON.stringify({
             lead: { ...lead, websiteText: lead.websiteText || lead.raw?.websiteText || '' },
             criteria,
+            searchId: (typeof _currentSearchId !== 'undefined' && _currentSearchId) || null,
           }),
         });
         const data = await resp.json();
@@ -13782,7 +13789,14 @@ async function fwAutoRunPipeline(inp) {
           if (typeof window.appSelectAllLeads === 'function') window.appSelectAllLeads();
           _autoBarSet('自动运行中 · 1/4 搜索', '已找到 ' + leads.length + ' 家 · ' + (row.name || ''), 'run');
         } else if (evt.type === 'error') { sseError = evt.error || '搜索失败'; finished = true; break; }
-        else if (evt.type === 'done') { finished = true; break; }
+        else if (evt.type === 'done') {
+          // Book downstream AI costs onto this run (personal-center 累计花费).
+          if (evt.searchId) {
+            _currentSearchId = evt.searchId;
+            try { localStorage.setItem('leadgen_searchId', evt.searchId); } catch (_) {}
+          }
+          finished = true; break;
+        }
       }
     }
     if (sseError) throw new Error(sseError);
@@ -14240,6 +14254,7 @@ async function appGenerateAll() {
         customPrompt: cfg.framework === 'custom' ? (cfg.customPrompt || '') : '',
         frameworkContext: window._appFrameworkContext || '',
         businessInfo: window._appBusinessInfo || {},
+        searchId: (typeof _currentSearchId !== 'undefined' && _currentSearchId) || null,
       }),
     });
     const data = await resp.json();

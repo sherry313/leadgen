@@ -2419,7 +2419,12 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
         website:      r.website || r.url || '',
       })), req.userId).catch(() => {});
     }
-    send({ type: 'done', success: true, total: emitted });
+    // Backfill scraped count + Apify cost estimate (mirrors /api/google-maps-search).
+    if (searchId) {
+      const apifyCostUsd = emitted * 0.002;
+      updateSearchRunCosts(searchId, { apifyCostUsd, anthropicCostUsd: 0, totalCostUsd: apifyCostUsd, totalQualified: 0, totalScraped: emitted }).catch(() => {});
+    }
+    send({ type: 'done', success: true, total: emitted, searchId });
   } catch (err) {
     console.error('[GoogleSearchTool] error:', err.message);
     send({ type: 'error', error: err.message || 'Google Search 抓取失败' });
@@ -2591,7 +2596,14 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
         googleRating: r.rating ?? null,
       })), req.userId).catch(() => {});
     }
-    send({ type: 'done', success: true, total: emitted });
+    // Backfill the run's scraped count + Apify cost (row was inserted with 0s
+    // before the scrape) so the personal-center dashboard reflects real spend.
+    if (searchId) {
+      const apifyCostUsd = (items || []).length * 0.002; // same per-place estimate as the legacy pipelines
+      updateSearchRunCosts(searchId, { apifyCostUsd, anthropicCostUsd: 0, totalCostUsd: apifyCostUsd, totalQualified: 0, totalScraped: emitted }).catch(() => {});
+    }
+    // searchId lets the frontend attribute later AI-filter / email-gen costs to this run.
+    send({ type: 'done', success: true, total: emitted, searchId });
   } catch (err) {
     console.error('[GoogleMapsTool] error:', err.message);
     send({ type: 'error', error: err.message || 'Google Maps 抓取失败' });
@@ -2848,7 +2860,7 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
 // Node caches the SDK require and `new Anthropic()` is cheap, so per-request
 // instantiation is fine for this small call.
 app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
-  const { lead, criteria } = req.body || {};
+  const { lead, criteria, searchId } = req.body || {};
   if (!lead) return res.status(400).json({ recommended: false, reason: 'lead required' });
 
   const companyName = lead.name        || lead.title || lead.username || '';
@@ -2902,6 +2914,13 @@ Reply in JSON only:
       return res.json({ recommended: false, reason: '不符合筛选标准' });
     }
     console.log('[ai-filter] result:', JSON.stringify(parsed));
+    // Book the real Haiku token cost (and bump total_qualified when the lead
+    // passes) onto the originating search run — fire-and-forget, non-fatal.
+    if (searchId) {
+      const u = response.usage || {};
+      const haikuCost = ((u.input_tokens || 0) / 1_000_000 * 0.80) + ((u.output_tokens || 0) / 1_000_000 * 4.00);
+      appendSearchRunCosts(searchId, { sonnetCostUsd: haikuCost, firecrawlCostUsd: 0, qualifiedDelta: parsed.recommended ? 1 : 0 }, req.userId).catch(() => {});
+    }
     res.json({ recommended: parsed.recommended, reason: parsed.reason });
   } catch (e) {
     console.warn('[AI Filter]', e.message);
@@ -3439,6 +3458,12 @@ ${emailSlots}
     const text = response.content[0].text;
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
+    // Book the real Sonnet token cost onto the originating search run.
+    if (req.body.searchId) {
+      const u = response.usage || {};
+      const sonnetCost = ((u.input_tokens || 0) / 1_000_000 * 3) + ((u.output_tokens || 0) / 1_000_000 * 15);
+      appendSearchRunCosts(req.body.searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: 0 }, req.userId).catch(() => {});
+    }
     res.json(parsed);
   } catch(e) {
     console.error('[AppPreview] error:', e.message);

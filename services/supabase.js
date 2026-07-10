@@ -57,18 +57,22 @@ async function saveSearchRun({ query, location, maxResults, totalScraped }, user
 }
 
 // Step 2: UPDATE the run row with costs and qualified count (called after processing)
-async function updateSearchRunCosts(id, { apifyCostUsd, anthropicCostUsd, totalCostUsd, totalQualified }) {
+// Optional totalScraped backfills total_scraped for flows that insert the row
+// BEFORE scraping (the /app SSE tools save with totalScraped: 0 up front).
+async function updateSearchRunCosts(id, { apifyCostUsd, anthropicCostUsd, totalCostUsd, totalQualified, totalScraped }) {
   const db = getClient();
   if (!db || !id) return;
   try {
+    const patch = {
+      total_qualified:    totalQualified,
+      apify_cost_usd:     parseFloat(apifyCostUsd.toFixed(4)),
+      anthropic_cost_usd: parseFloat(anthropicCostUsd.toFixed(4)),
+      total_cost_usd:     parseFloat(totalCostUsd.toFixed(4)),
+    };
+    if (totalScraped != null) patch.total_scraped = totalScraped;
     const { error } = await db
       .from('search_history')
-      .update({
-        total_qualified:    totalQualified,
-        apify_cost_usd:     parseFloat(apifyCostUsd.toFixed(4)),
-        anthropic_cost_usd: parseFloat(anthropicCostUsd.toFixed(4)),
-        total_cost_usd:     parseFloat(totalCostUsd.toFixed(4)),
-      })
+      .update(patch)
       .eq('id', id);
     if (error) throw error;
     console.log(`[Supabase] Costs updated for id=${id}: apify=$${apifyCostUsd.toFixed(4)}  anthropic=$${anthropicCostUsd.toFixed(4)}  total=$${totalCostUsd.toFixed(4)}`);
@@ -281,14 +285,16 @@ async function getLeadsForSearch(searchId, userId) {
   }
 }
 
-// Append step-2 costs to an existing search_history row
-async function appendSearchRunCosts(id, { sonnetCostUsd, firecrawlCostUsd }, userId) {
+// Append step-2 costs to an existing search_history row. `sonnetCostUsd` is any
+// Anthropic cost (Haiku included — historical name). Optional qualifiedDelta
+// increments total_qualified (the /app per-lead AI filter bumps it as leads pass).
+async function appendSearchRunCosts(id, { sonnetCostUsd = 0, firecrawlCostUsd = 0, qualifiedDelta = 0 }, userId) {
   const db = getClient();
   if (!db || !id) return;
   try {
     let _readQ = db
       .from('search_history')
-      .select('anthropic_cost_usd, total_cost_usd')
+      .select('anthropic_cost_usd, total_cost_usd, total_qualified')
       .eq('id', id);
     if (userId && userId !== 'legacy') _readQ = _readQ.eq('user_id', userId);
     const { data, error: readErr } = await _readQ.single();
@@ -298,12 +304,15 @@ async function appendSearchRunCosts(id, { sonnetCostUsd, firecrawlCostUsd }, use
     const prevAnthropic  = data?.anthropic_cost_usd || 0;
     const prevTotal      = data?.total_cost_usd     || 0;
 
+    const patch = {
+      anthropic_cost_usd: parseFloat((prevAnthropic + sonnetCostUsd).toFixed(4)),
+      total_cost_usd:     parseFloat((prevTotal + step2Total).toFixed(4)),
+    };
+    if (qualifiedDelta) patch.total_qualified = (data?.total_qualified || 0) + qualifiedDelta;
+
     const { error: updateErr } = await db
       .from('search_history')
-      .update({
-        anthropic_cost_usd: parseFloat((prevAnthropic + sonnetCostUsd).toFixed(4)),
-        total_cost_usd:     parseFloat((prevTotal + step2Total).toFixed(4)),
-      })
+      .update(patch)
       .eq('id', id);
     if (updateErr) throw updateErr;
 
