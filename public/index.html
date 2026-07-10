@@ -7937,6 +7937,28 @@ async function loadSearchById(searchId) {
       setStatus('未找到该搜索记录或暂无线索', 'done');
       return;
     }
+    // /app: restore the batch into the runnable pipeline (筛选结果 lead list)
+    // instead of the legacy read-only view, so an interrupted run (quota ran
+    // out / page closed) can continue through AI 筛选 → 邮件 → 推送 without
+    // re-scraping. _currentSearchId is restored so downstream AI-filter costs
+    // and push markers attach to THIS search.
+    if (location.pathname !== '/lens' && typeof window.setAppLeads === 'function') {
+      _currentSearchId = searchId;
+      try { localStorage.setItem('leadgen_searchId', searchId); } catch (_) {}
+      const appLeads = data.leads.map(r => ({
+        source:  'gm',
+        name:    r.company_name || '',
+        email:   r.email   || '',
+        website: r.website || '',
+        phone:   r.phone   || '',
+        raw:     r,
+      }));
+      window.setAppLeads(appLeads);
+      if (typeof showAppStep3View === 'function') showAppStep3View('analysis');
+      setStatus(`已恢复 ${appLeads.length} 条历史线索 — 勾选后可继续 AI 筛选和发送`, 'success');
+      return;
+    }
+
     const mapped = data.leads.map(_normalizeLeadRow);
     renderResults(mapped);
     document.getElementById('resultsSection').style.display   = 'block';
