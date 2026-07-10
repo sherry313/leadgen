@@ -252,8 +252,10 @@ async function updateEmailSent(id, emailNumber) {
 
 // Mark a lead as emailed right after a successful Instantly push — matched by
 // email because the push paths don't always carry the DB id. Never overwrites
-// an existing timestamp (first send wins).
-async function markLeadEmailedByEmail(email, userId) {
+// an existing timestamp (first send wins). Scope to searchId whenever the
+// caller has one: the same company re-scraped in a later search must NOT
+// inherit the sent flag, or that search's 已发 count lies.
+async function markLeadEmailedByEmail(email, userId, searchId) {
   const db = getClient();
   if (!db || !email?.trim()) return;
   try {
@@ -261,6 +263,7 @@ async function markLeadEmailedByEmail(email, userId) {
       .update({ email_sent_at: new Date().toISOString() })
       .eq('email', email.trim())
       .is('email_sent_at', null);
+    if (searchId) q = q.eq('search_id', searchId);
     if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
     const { error } = await q;
     if (error) throw error;

@@ -1048,7 +1048,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
         const lead = pushable[i];
         try {
           const result = await withTimeout(addLeadToCampaign(lead, campaignId), 30000, 'Instantly push');
-          if (result.success) { pushed++; await markLeadEmailedByEmail(lead.email, req.userId); }
+          if (result.success) { pushed++; await markLeadEmailedByEmail(lead.email, req.userId, searchId); }
           else { pushFailed++; console.warn(`[Auto/Push] ${lead.companyName}: ${result.reason}`); }
         } catch (err) {
           pushFailed++;
@@ -1376,7 +1376,7 @@ app.post('/api/auto/run-from-dataset', requireAuth, async (req, res) => {
         const lead = pushable[i];
         try {
           const result = await withTimeout(addLeadToCampaign(lead, campaignId), 30000, 'Instantly push');
-          if (result.success) { pushed++; await markLeadEmailedByEmail(lead.email, req.userId); }
+          if (result.success) { pushed++; await markLeadEmailedByEmail(lead.email, req.userId, searchId); }
           else { pushFailed++; console.warn(`[AutoDataset/Push] ${lead.companyName}: ${result.reason}`); }
         } catch (err) {
           pushFailed++;
@@ -1693,7 +1693,7 @@ async function _cachedCampaignStatus(id) {
 }
 
 app.post('/api/instantly/add-lead', requireAuth, async (req, res) => {
-  const { lead, campaignId: campaignIdOverride } = req.body;
+  const { lead, campaignId: campaignIdOverride, searchId } = req.body;
   if (!lead?.email?.trim()) {
     return res.status(400).json({ success: false, error_code: 'BAD_INPUT', error: 'lead.email is required' });
   }
@@ -1747,7 +1747,7 @@ app.post('/api/instantly/add-lead', requireAuth, async (req, res) => {
   }
 
   console.log(`[Instantly] Lead added to campaign: ${lead.email} (${lead.companyName || '?'})`);
-  await markLeadEmailedByEmail(lead.email, req.userId);
+  await markLeadEmailedByEmail(lead.email, req.userId, searchId || null);
   res.json({ success: true });
 });
 
