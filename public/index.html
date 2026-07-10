@@ -12556,7 +12556,9 @@ async function biPolishField(textareaId, kind, btn) {
     const generated = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
     if (!generated.length) { alert('请先生成邮件'); return; }
 
-    const rawEmail = e => (e.email || e.to || '').toString().trim();
+    // `to` falls back to the company name server-side when the lead has no
+    // email — only trust it as an address if it actually contains an @.
+    const rawEmail = e => { const v = (e.email || '').toString().trim(); if (v) return v; const t = (e.to || '').toString().trim(); return t.includes('@') ? t : ''; };
     const withEmailField = generated.filter(e => rawEmail(e));           // has *some* address string
     const withRecipient  = withEmailField.filter(e => appIsValidEmail(rawEmail(e))); // valid format only
     const noEmail        = generated.length - withEmailField.length;     // blank / missing
@@ -12715,21 +12717,26 @@ async function biPolishField(textareaId, kind, btn) {
   // many the framework produced — 7 for cold_7_step, 5 for the 5-email frameworks).
   window.startAppInstantlySend = async function () {
     const all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
-    const rawEmail = e => (e.email || e.to || '').toString().trim();
+    // `to` falls back to the company name server-side when the lead has no
+    // email — only trust it as an address if it actually contains an @.
+    const rawEmail = e => { const v = (e.email || '').toString().trim(); if (v) return v; const t = (e.to || '').toString().trim(); return t.includes('@') ? t : ''; };
     // Instantly's POST /leads hard-rejects malformed addresses with 400
     // "Invalid email address". Scraped emails are frequently junk (info@,
     // missing TLD, embedded spaces), so validate format up front and skip the
     // bad ones instead of firing doomed requests that show up as failures.
     const withField = all.filter(e => rawEmail(e));
     const toSend    = withField.filter(e => appIsValidEmail(rawEmail(e)));
-    const skipped   = withField.length - toSend.length; // present-but-invalid
+    const noEmail   = all.length - withField.length;      // no address at all
+    const badEmail  = withField.length - toSend.length;   // present-but-invalid
+    const skipped   = noEmail + badEmail;
+    const skipDetail = [noEmail ? `${noEmail} 无邮箱` : '', badEmail ? `${badEmail} 格式无效` : ''].filter(Boolean).join('、');
     if (!toSend.length) {
       const statusEl0 = panel.querySelector('#appInstantlyStatus');
       if (statusEl0) {
         statusEl0.style.display = 'block';
         statusEl0.style.color = '#fca5a5';
         statusEl0.style.background = 'rgba(239,68,68,0.08)';
-        statusEl0.textContent = skipped ? `没有可推送的邮箱：${skipped} 封格式无效已跳过` : '没有可推送的收件邮箱';
+        statusEl0.textContent = skipped ? `没有可推送的邮箱：跳过 ${skipped}（${skipDetail}）` : '没有可推送的收件邮箱';
       }
       return;
     }
@@ -12784,7 +12791,7 @@ async function biPolishField(textareaId, kind, btn) {
     }
 
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.textContent = origText; }
-    const skipNote = skipped ? `，跳过 ${skipped}（邮箱格式无效）` : '';
+    const skipNote = skipped ? `，跳过 ${skipped}（${skipDetail}）` : '';
     showStatus(`完成：成功 ${ok}，失败 ${fail}${skipNote}`,
       ok > 0 ? '#86efac' : '#fca5a5',
       ok > 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)');
@@ -12830,7 +12837,9 @@ async function biPolishField(textareaId, kind, btn) {
   // sent/failed counts. Matches the reader pattern used elsewhere in the file.
   window.startAppSmtpSend = async function () {
     const all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
-    const rawEmail = e => (e.email || e.to || '').toString().trim();
+    // `to` falls back to the company name server-side when the lead has no
+    // email — only trust it as an address if it actually contains an @.
+    const rawEmail = e => { const v = (e.email || '').toString().trim(); if (v) return v; const t = (e.to || '').toString().trim(); return t.includes('@') ? t : ''; };
     const toSend = all.filter(e => appIsValidEmail(rawEmail(e)));
     if (!toSend.length) return;
 
@@ -13299,7 +13308,9 @@ function _autoSendStatus(msg, color) {
 
 async function autoStartSmtpSend() {
   var all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
-  var rawEmail = function (e) { return (e.email || e.to || '').toString().trim(); };
+  // `to` falls back to the company name server-side when the lead has no
+  // email — only trust it as an address if it actually contains an @.
+  var rawEmail = function (e) { var v = (e.email || '').toString().trim(); if (v) return v; var t = (e.to || '').toString().trim(); return t.indexOf('@') !== -1 ? t : ''; };
   var toSend = all.filter(function (e) { return appIsValidEmail(rawEmail(e)); });
   if (!toSend.length) { _autoSendStatus('没有可发送的有效收件邮箱', '#fca5a5'); return; }
 
@@ -13354,11 +13365,16 @@ async function autoStartSmtpSend() {
 
 async function autoStartInstantlySend() {
   var all = Array.isArray(window._generatedEmails) ? window._generatedEmails : [];
-  var rawEmail = function (e) { return (e.email || e.to || '').toString().trim(); };
+  // `to` falls back to the company name server-side when the lead has no
+  // email — only trust it as an address if it actually contains an @.
+  var rawEmail = function (e) { var v = (e.email || '').toString().trim(); if (v) return v; var t = (e.to || '').toString().trim(); return t.indexOf('@') !== -1 ? t : ''; };
   var withField = all.filter(function (e) { return rawEmail(e); });
   var toSend    = withField.filter(function (e) { return appIsValidEmail(rawEmail(e)); });
-  var skipped   = withField.length - toSend.length;
-  if (!toSend.length) { _autoSendStatus(skipped ? '没有可推送的邮箱：' + skipped + ' 封格式无效已跳过' : '没有可推送的收件邮箱', '#fca5a5'); return; }
+  var noEmail   = all.length - withField.length;
+  var badEmail  = withField.length - toSend.length;
+  var skipped   = noEmail + badEmail;
+  var skipDetail = [noEmail ? noEmail + ' 无邮箱' : '', badEmail ? badEmail + ' 格式无效' : ''].filter(Boolean).join('、');
+  if (!toSend.length) { _autoSendStatus(skipped ? '没有可推送的邮箱：跳过 ' + skipped + '（' + skipDetail + '）' : '没有可推送的收件邮箱', '#fca5a5'); return; }
 
   var campaignId = (document.getElementById('autoInstantlyCampaign')?.value || '').trim();
   if (!campaignId) { _autoSendStatus('请填写 Instantly Campaign ID', '#fca5a5'); return; }
@@ -13384,7 +13400,7 @@ async function autoStartInstantlySend() {
       if ((data && data.success) || (data && data.error_code === 'DUPLICATE_LEAD')) ok++; else fail++;
     } catch (_) { fail++; }
   }
-  var skipNote = skipped ? '，跳过 ' + skipped + '（邮箱格式无效）' : '';
+  var skipNote = skipped ? '，跳过 ' + skipped + '（' + skipDetail + '）' : '';
   _autoSendStatus('完成：成功 ' + ok + '，失败 ' + fail + skipNote, ok > 0 ? '#86efac' : '#fca5a5');
 }
 

@@ -2320,6 +2320,53 @@ async function _runApifyActor(actorId, input) {
   return items.data || [];
 }
 
+// ── Scraped-email quality helpers (shared by the search/scrape routes) ────────
+// Page HTML is full of strings that LOOK like emails but are not contactable:
+// Wix/Sentry telemetry IDs (…@sentry-next.wixpress.com), retina image filenames
+// (logo@2x.png), JS template placeholders (user@domain.com, yourfriend@email.com),
+// URL-encoded mailto fragments (%20sales@…). They pass a bare format regex, get
+// stored as the lead's email, then bounce at Instantly/SMTP — and worse, when a
+// page has both junk (usually in <head> scripts) and a real contact address,
+// "first match wins" picked the junk. Filter junk and prefer mailto:/same-domain.
+const EMAIL_SHAPE       = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/;
+const JUNK_EMAIL_DOMAIN = /(^|\.)(example\.(com|org|net)|test\.com|domain\.com|email\.com|yourdomain\.[a-z]+|mysite\.com|website\.com|company\.com|wixpress\.com|sentry\.io)$/i;
+const JUNK_EMAIL_LOCAL  = /^(user|username|yourname|yourfriend|youremail|name|email|someone|test|example|firstname|lastname|noreply|no-reply)$/i;
+const FILE_EXT_TLD      = /\.(png|jpe?g|gif|webp|avif|svg|ico|css|js|json|woff2?|ttf|eot|mp4|webm|pdf|zip)$/i;
+
+function _isRealEmail(raw) {
+  const e = String(raw || '').trim().replace(/^(%20)+/i, '');
+  if (!EMAIL_SHAPE.test(e)) return false;
+  if (FILE_EXT_TLD.test(e)) return false;                 // logo@2x.png, flags@2x.webp …
+  const [local, domain] = e.split('@');
+  if (JUNK_EMAIL_LOCAL.test(local)) return false;         // user@…, yourfriend@…
+  if (JUNK_EMAIL_DOMAIN.test(domain)) return false;       // …@domain.com, …@wixpress.com
+  if (/^[0-9a-f]{16,}$/i.test(local.replace(/[._\-]/g, ''))) return false; // hex telemetry ids
+  return true;
+}
+
+// Best contact email in a page: mailto: links first (explicit intent), then any
+// inline match; among the survivors prefer an address on the site's own domain
+// so a testimonial/partner email doesn't shadow the real one.
+function _pickBestEmail(html, siteUrl) {
+  const h = String(html || '');
+  const mailtos = (h.match(/mailto:[^"'?\s<>]+/gi) || []).map(m => {
+    try { return decodeURIComponent(m.slice(7)); } catch (_) { return m.slice(7); }
+  });
+  const inline = h.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g) || [];
+  const seen = new Set();
+  const candidates = [...mailtos, ...inline]
+    .map(e => String(e).trim().replace(/^(%20)+/i, ''))
+    .filter(e => { const k = e.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
+    .filter(_isRealEmail);
+  if (!candidates.length) return '';
+  let siteDomain = '';
+  try { siteDomain = new URL(siteUrl).hostname.replace(/^www\./, '').toLowerCase(); } catch (_) {}
+  const sameDomain = siteDomain
+    ? candidates.find(e => e.toLowerCase().split('@')[1] === siteDomain || e.toLowerCase().endsWith('.' + siteDomain))
+    : '';
+  return sameDomain || candidates[0];
+}
+
 app.post('/api/google-search', requireAuth, async (req, res) => {
   // Accept either a single `keyword` (legacy) or a `keywords` array + optional
   // `location` — mirrors /api/google-maps-search so the /app gsPanel matches gmPanel.
@@ -2401,11 +2448,7 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
           const htmlResp = await axios.get(url, _axiosOpts);
           const html = htmlResp.data || '';
 
-          const _findEmail = (h) => {
-            const all = (h || '').match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g) || [];
-            const uniq = Array.from(new Set(all)).filter(e => !e.includes('example') && !e.includes('test'));
-            return uniq[0] || '';
-          };
+          const _findEmail = (h) => _pickBestEmail(h, url);
           let email = _findEmail(html);
           // Retry on /contact if homepage yielded no email — one extra fetch.
           if (!email) {
@@ -2561,7 +2604,9 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
     let emitted = 0;
     for (const it of _items) {
       if (aborted) break;
-      const emails = Array.isArray(it.emails) ? it.emails : (it.email ? [it.email] : []);
+      // Apify's contact scrape returns unvetted strings (image filenames, Maps
+      // URLs, telemetry ids) — keep only real addresses before picking one.
+      const emails = (Array.isArray(it.emails) ? it.emails : (it.email ? [it.email] : [])).filter(_isRealEmail);
       const bizEmail = emails.find(e => !/(gmail|hotmail|yahoo|outlook)\./i.test(e)) || emails[0] || '';
       const website = it.website || '';
 
@@ -2579,11 +2624,7 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
           };
           const htmlResp = await axios.get(website, _axiosOpts);
           const html = htmlResp.data || '';
-          const _findEmail = (h) => {
-            const all = (h || '').match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g) || [];
-            const uniq = Array.from(new Set(all)).filter(e => !e.includes('example') && !e.includes('test'));
-            return uniq[0] || '';
-          };
+          const _findEmail = (h) => _pickBestEmail(h, website);
           const linkedinMatch  = html.match(/linkedin\.com\/(?:in|company)\/[a-zA-Z0-9\-_%]+/);
           const tiktokMatch    = html.match(/tiktok\.com\/@[a-zA-Z0-9._]+/);
           const instagramMatch = html.match(/instagram\.com\/[a-zA-Z0-9._]+/);
@@ -2709,7 +2750,7 @@ app.post('/api/auto-search', requireAuth, async (req, res) => {
       website: item.website || item.url || '',
       phone: item.phone || item.phoneUnformatted || '',
       address: item.address || item.street || '',
-      email: item.email || (item.emails && item.emails[0]) || '',
+      email: [item.email, ...(Array.isArray(item.emails) ? item.emails : [])].find(_isRealEmail) || '',
       description: item.description || item.categoryName || item.category || '',
       websiteText: item.description || item.categoryName || '',
     }));
@@ -2743,9 +2784,7 @@ app.post('/api/scrape-website', requireAuth, async (req, res) => {
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 1500);
-    const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
-    const emails = (html.match(emailRegex) || []).filter(e => !e.includes('example') && !e.includes('sentry') && !e.includes('wix'));
-    const email = emails[0] || '';
+    const email = _pickBestEmail(html, url);
     res.json({ text, email });
   } catch (e) {
     console.error('[scrape-website] error:', e.message);
