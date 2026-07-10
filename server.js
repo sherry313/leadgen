@@ -2764,7 +2764,29 @@ app.post('/api/auto-search', requireAuth, async (req, res) => {
       websiteText: item.description || item.categoryName || '',
     }));
 
-    return res.json({ success: true, leads });
+    // Record the run in search history (mirrors /api/google-maps-search) so
+    // every search path shows up in the personal-center 历史搜索记录. Fire-and-
+    // forget for the lead insert; the history row itself is awaited so the
+    // response can carry searchId for downstream cost attribution.
+    let searchId = null;
+    try {
+      searchId = await saveSearchRun({ query: keyword, location, maxResults, totalScraped: leads.length }, req.userId);
+      if (searchId) {
+        if (leads.length) {
+          saveLeads(searchId, leads.map(r => ({
+            companyName: r.name || '',
+            email:       r.email || '',
+            phone:       r.phone || '',
+            website:     r.website || '',
+            city:        r.address || '',
+          })), req.userId).catch(() => {});
+        }
+        const apifyCostUsd = items.length * 0.002; // same per-place estimate as the other pipelines
+        updateSearchRunCosts(searchId, { apifyCostUsd, anthropicCostUsd: 0, totalCostUsd: apifyCostUsd, totalQualified: 0, totalScraped: leads.length }).catch(() => {});
+      }
+    } catch (_) { /* history is best-effort — never fail the search over it */ }
+
+    return res.json({ success: true, leads, searchId });
   } catch (e) {
     console.error('[auto-search] error:', e.message);
     return res.status(500).json({ success: false, error: e.message });
