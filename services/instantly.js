@@ -116,7 +116,7 @@ async function addLeadToCampaign(lead, campaignIdOverride = null) {
           email_5_body:    sub(lead.EMAIL_5_BODY),
         },
       },
-      { headers: authHeaders() }
+      { headers: authHeaders(), timeout: 30000 }
     );
     console.log(`[Instantly] Lead added:`, JSON.stringify(res.data));
     return { success: true };
@@ -152,7 +152,7 @@ async function queueEmail({ toEmail, companyName, subject, body, emailNumber = 1
           [`email_${emailNumber}_body`]:    sub(body),
         },
       },
-      { headers: authHeaders() }
+      { headers: authHeaders(), timeout: 30000 }
     );
     console.log(`[Instantly] Email queued:`, JSON.stringify(res.data));
     return { success: true };

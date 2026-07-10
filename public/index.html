@@ -6529,6 +6529,61 @@ function getStoredToken() {
   return '';
 }
 
+// ── Supabase session auto-refresh ─────────────────────────────────────────────
+// Access tokens expire after ~1h. The stored session has always carried a
+// refresh_token that nothing used, so long sessions started 401-ing mid-flow
+// (and the AI-filter loop then mis-read the error as "不推荐" for every lead).
+// _refreshStoredSession() swaps it for a fresh session via Supabase's REST
+// endpoint; _ensureFreshSession() runs on load + every 5 minutes and renews
+// whenever less than 10 minutes of validity remain, so a long manual run never
+// crosses expiry mid-batch.
+let _sbCfgCache = null;
+async function _refreshStoredSession() {
+  try {
+    const raw = localStorage.getItem('leadgen_supabase_session');
+    if (!raw) return false;
+    const sess = JSON.parse(raw);
+    if (!sess?.refresh_token) return false;
+    if (!_sbCfgCache) {
+      const r = await fetch('/api/config');
+      _sbCfgCache = await r.json();
+    }
+    if (!_sbCfgCache?.supabaseUrl || !_sbCfgCache?.supabaseAnonKey) return false;
+    const resp = await fetch(_sbCfgCache.supabaseUrl + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: _sbCfgCache.supabaseAnonKey },
+      body: JSON.stringify({ refresh_token: sess.refresh_token }),
+    });
+    if (!resp.ok) return false;
+    const fresh = await resp.json();
+    if (!fresh?.access_token) return false;
+    // Refresh tokens are single-use (rotated) — persist the whole new session.
+    localStorage.setItem('leadgen_supabase_session', JSON.stringify(fresh));
+    localStorage.setItem('leadgen_accessToken', fresh.access_token);
+    return true;
+  } catch (_) { return false; }
+}
+async function _ensureFreshSession() {
+  try {
+    const raw = localStorage.getItem('leadgen_supabase_session');
+    if (!raw) return;
+    const sess = JSON.parse(raw);
+    const expMs = (sess?.expires_at || 0) * 1000;
+    if (expMs && expMs - Date.now() < 10 * 60 * 1000) await _refreshStoredSession();
+  } catch (_) {}
+}
+_ensureFreshSession();
+setInterval(_ensureFreshSession, 5 * 60 * 1000);
+
+// Mid-flow 401: try one refresh; if the session is truly dead, say so and send
+// the user to login instead of silently mis-reading the error body.
+async function _handle401() {
+  if (await _refreshStoredSession()) return true;
+  alert('登录已过期，请重新登录后继续。');
+  location.href = '/login.html?redirect=' + encodeURIComponent(location.pathname);
+  return false;
+}
+
 // ── ICP collapsible toggle ────────────────────────────────────────────────────
 function toggleIcp() {
   const open = document.getElementById('icpBody').classList.toggle('open');
@@ -11835,7 +11890,7 @@ async function biPolishField(textareaId, kind, btn) {
 
     <div id="appAiFilterResults" style="display:none; margin-bottom:1rem; max-height:380px; overflow-y:auto;"></div>
 
-    <button id="appToEmailBtn" onclick="window._filteredLeads = getAppFilteredLeads(); showAppStep3View('email')" style="display:none; width:100%; margin-top:1rem; padding:10px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:500; cursor:pointer;">
+    <button id="appToEmailBtn" onclick="appProceedToEmail()" style="display:none; width:100%; margin-top:1rem; padding:10px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:500; cursor:pointer;">
       下一步 → 邮件发送
     </button>
 
@@ -12233,6 +12288,9 @@ async function biPolishField(textareaId, kind, btn) {
 
   window.setAppLeads = function (leads) {
     window._appLeads = Array.isArray(leads) ? leads.slice() : [];
+    // New batch → the previous search's filter selection is meaningless; keep
+    // it around and the generators would email last search's companies.
+    window._filteredLeads = null;
     selected.clear();
     renderLeadList();
     // The AI 筛选标准 panel is now a separate stepper sub-view, revealed only via
@@ -12285,7 +12343,8 @@ async function biPolishField(textareaId, kind, btn) {
     const filtered = [];
     for (const lead of leads) {
       try {
-        const resp = await fetch('/api/ai-filter-lead', {
+        // Token read at call time so a mid-loop session refresh takes effect.
+        const doReq = () => fetch('/api/ai-filter-lead', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
           // _appLeads keeps the scraped page text under raw (showAiAnalysisPanel
@@ -12297,6 +12356,13 @@ async function biPolishField(textareaId, kind, btn) {
             searchId: (typeof _currentSearchId !== 'undefined' && _currentSearchId) || null,
           }),
         });
+        let resp = await doReq();
+        // Expired session must NOT be read as "不推荐" for every lead — refresh
+        // and retry once; a dead session redirects to login.
+        if (resp.status === 401) {
+          if (!(await _handle401())) return;
+          resp = await doReq();
+        }
         if (resp.status === 402) {
           const j = await resp.json().catch(() => ({}));
           const msg = j.error || '免费额度已用完，请联系客服提升额度';
@@ -12305,6 +12371,7 @@ async function biPolishField(textareaId, kind, btn) {
           if (typeof showQuotaModal === 'function') showQuotaModal(msg);
           break;
         }
+        if (!resp.ok) throw new Error('HTTP ' + resp.status); // server error ≠ 不推荐
         const data = await resp.json();
         filtered.push({ ...lead, _aiRecommended: !!data.recommended, _aiReason: data.reason || '' });
       } catch (_) {
@@ -12439,6 +12506,15 @@ async function biPolishField(textareaId, kind, btn) {
     return leads.filter(l => checkedEmails.has(l.email || l.raw?.email || ''));
   };
 
+  // "下一步 → 邮件发送" gate: zero checked leads must stop here, so the empty
+  // selection can never reach the generators and trigger any all-leads path.
+  window.appProceedToEmail = function () {
+    const picked = window.getAppFilteredLeads();
+    if (!picked.length) { alert('请先在筛选结果里勾选至少一家客户，再进入邮件发送。'); return; }
+    window._filteredLeads = picked;
+    showAppStep3View('email');
+  };
+
   window.startAppEmailGeneration = async function () {
     const leads = window._appLeads || [];
     const pickedAll = [...selected].sort((a, b) => a - b).map(i => leads[i]).filter(Boolean);
@@ -12485,7 +12561,7 @@ async function biPolishField(textareaId, kind, btn) {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
         },
-        body: JSON.stringify({ leads: picked, framework }),
+        body: JSON.stringify({ leads: picked, framework, searchId: (typeof _currentSearchId !== 'undefined' && _currentSearchId) || null }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -14293,10 +14369,15 @@ function appEditConfig() {
 }
 
 async function appGenerateAll() {
-  // Use the AI-filter selection when present, otherwise all leads.
-  const allLeads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
-    ? window._filteredLeads
-    : (window._appLeads || []);
+  // The AI-filter selection is authoritative once the filter has run: an empty
+  // selection means "send to nobody", NEVER "fall back to every scraped lead" —
+  // that would email the exact companies the AI just rejected.
+  const _filtered = window._filteredLeads;
+  if (Array.isArray(_filtered) && !_filtered.length) {
+    alert('AI 筛选后没有选中任何客户。请回到「AI 筛选」勾选至少一家，再生成邮件。');
+    return;
+  }
+  const allLeads = Array.isArray(_filtered) ? _filtered : (window._appLeads || []);
   if (!allLeads.length) return;
 
   // Leads without a sendable address can't be emailed — don't spend AI tokens
@@ -14348,7 +14429,8 @@ async function appGenerateAll() {
   // Generate the full sequence for one lead via the SAME config-aware endpoint the
   // preview uses, so every lead respects sellerDesc/goal/signature.
   const genFor = async (lead) => {
-    const resp = await fetch('/api/app-generate-preview', {
+    // Token read at call time so a mid-loop session refresh takes effect.
+    const doReq = () => fetch('/api/app-generate-preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getStoredToken() },
       body: JSON.stringify({
@@ -14363,12 +14445,18 @@ async function appGenerateAll() {
         searchId: (typeof _currentSearchId !== 'undefined' && _currentSearchId) || null,
       }),
     });
+    let resp = await doReq();
+    if (resp.status === 401) {
+      if (!(await _handle401())) { const err = new Error('登录已过期'); err.authExpired = true; throw err; }
+      resp = await doReq();
+    }
     if (resp.status === 402) {
       const j = await resp.json().catch(() => ({}));
       const err = new Error(j.error || '免费额度已用完，请联系客服提升额度');
       err.quotaExceeded = true;
       throw err;
     }
+    if (!resp.ok) throw new Error('HTTP ' + resp.status); // don't turn a server error into a blank email
     const data = await resp.json();
     return toEntry(lead, data.emails);
   };
@@ -14390,6 +14478,7 @@ async function appGenerateAll() {
       else                       results.push(await genFor(leads[i]));
     } catch (e) {
       if (e.quotaExceeded) { quotaHit = e.message; break; }
+      if (e.authExpired) break; // login redirect已触发，别继续打后面的请求
       console.warn('[appGenerateAll] generation failed for', leads[i]?.name || '', e.message);
     }
   }
@@ -14435,8 +14524,11 @@ function appStartEmailGen() {
   const fw = document.getElementById('appFrameworkSelect'); if (fw && !fw.value) fw.value = 'cold_7_step';
   if (!_appSelectedGoal) _appSelectedGoal = '找买家';
 
-  const leads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
-    ? window._filteredLeads : (window._appLeads || []);
+  // Same rule as appGenerateAll: a run-but-empty filter selection blocks, it
+  // does not fall back to the full scraped list.
+  const _fl = window._filteredLeads;
+  if (Array.isArray(_fl) && !_fl.length) { alert('AI 筛选后没有选中任何客户，请回到「AI 筛选」勾选至少一家'); return; }
+  const leads = Array.isArray(_fl) ? _fl : (window._appLeads || []);
   if (!leads.length) { alert('还没有客户线索，请先完成搜索和 AI 筛选'); return; }
 
   // Returned so the auto-run driver can await generation; the manual button

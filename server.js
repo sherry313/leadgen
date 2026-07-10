@@ -2838,8 +2838,13 @@ app.post('/api/scrape-website', requireAuth, async (req, res) => {
 app.post('/api/generate-emails', requireAuth, async (req, res) => {
   const inputLeads = Array.isArray(req.body?.leads) ? req.body.leads : [];
   const framework  = (req.body?.framework || 'cold_7_step').toString().trim() || 'cold_7_step';
+  const searchId   = (req.body?.searchId || '').toString().trim() || null;
 
   if (!inputLeads.length) return res.status(400).json({ success: false, error: 'leads required' });
+  // This endpoint spends Haiku + Sonnet per lead — it must sit behind the same
+  // quota gate as every other AI-spending manual endpoint (it never did, so an
+  // over-quota user could generate for free and the spend was never metered).
+  if (!(await requireQuota(req, res))) return;
 
   res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
   res.flushHeaders();
@@ -2866,6 +2871,7 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
   const sellerProfile  = {};
   const companyProfile = { companyName: '', products: '', advantages: '', icp: '' };
 
+  let _giHaikuIn = 0, _giHaikuOut = 0, _giSonnetIn = 0, _giSonnetOut = 0;
   const runPipeline = async () => {
     const emails = [];
     for (let i = 0; i < inputLeads.length; i++) {
@@ -2912,6 +2918,7 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
       // 2. Haiku pre-filter — skip when level=='skip'.
       try {
         const filt = await withTimeout(preFilterLead(company, companyProfile), 60 * 1000, 'Haiku pre-filter');
+        if (filt?.usage) { _giHaikuIn += filt.usage.input_tokens || 0; _giHaikuOut += filt.usage.output_tokens || 0; }
         if (filt && filt.level === 'skip') {
           console.log(`[GenerateEmails] skip ${companyName}: ${filt.reason || ''}`);
           continue;
@@ -2930,6 +2937,9 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
           120 * 1000,
           'Sonnet emails'
         );
+        if (gen?.usage) { _giSonnetIn += gen.usage.input_tokens || 0; _giSonnetOut += gen.usage.output_tokens || 0; }
+        // Persist so a reload / resume-from-history keeps the paid-for emails.
+        if (searchId && companyName) updateLeadEmails(searchId, companyName, gen, framework, null);
 
         // Substitute template placeholders for all 5 emails before emitting.
         // {first_name} is best-effort: the first whitespace-delimited token of
@@ -2978,6 +2988,11 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
   try {
     console.log(`[GenerateEmails] leads=${inputLeads.length} framework="${framework}"`);
     const emails = await withTimeout(runPipeline(), 10 * 60 * 1000, '/api/generate-emails pipeline');
+    // Book the real Anthropic spend onto the originating search run (previously
+    // this endpoint recorded nothing — invisible in history and quota).
+    const _giCost = (_giHaikuIn / 1_000_000 * 0.80) + (_giHaikuOut / 1_000_000 * 4.00)
+                  + (_giSonnetIn / 1_000_000 * 3)   + (_giSonnetOut / 1_000_000 * 15);
+    if (searchId && _giCost > 0) appendSearchRunCosts(searchId, { sonnetCostUsd: _giCost, firecrawlCostUsd: 0 }, req.userId).catch(() => {});
     if (!aborted) send({ type: 'done', emails });
   } catch (err) {
     console.error('[GenerateEmails] error:', err.message);
@@ -3020,7 +3035,7 @@ app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
 
     console.log('[ai-filter] companyName:', companyName, '| description:', description.substring(0, 100), '| websiteText length:', (lead.websiteText || '').length, '| criteria:', criteria.substring(0, 100));
 
-    const response = await client.messages.create({
+    const response = await withTimeout(client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 400,
       system: "You are a strict lead qualifier working for a B2B seller. Only recommend a lead when you have clear evidence it matches the criteria. IMPORTANT: judge by whether the company could PURCHASE or RESELL the seller's product category — NOT by who the company itself sells to. A company that sells to end consumers (a B2C retailer, store, or showroom) is NOT disqualified for that reason alone; such businesses still buy wholesale from suppliers like the seller. Do not reject a lead merely for being a retailer or selling to consumers. If information is thin or ambiguous, return recommended: false and explain what's missing. Reply in valid JSON only, no markdown, no extra text.",
@@ -3039,7 +3054,7 @@ ${websiteContent}
 Reply in JSON only:
 {"recommended": true/false, "reason": "one sentence in Chinese"}`,
       }],
-    });
+    }), 30000, 'AI filter Haiku');
 
     const content = response.content[0].text;
     let parsed;
@@ -3588,11 +3603,11 @@ ${emailSlots}
     const Anthropic = require('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const response = await client.messages.create({
+    const response = await withTimeout(client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       messages: [{ role: 'user', content: systemPrompt }]
-    });
+    }), 60000, 'AppPreview Sonnet');
 
     const text = response.content[0].text;
     const clean = text.replace(/```json|```/g, '').trim();
@@ -3602,6 +3617,18 @@ ${emailSlots}
       const u = response.usage || {};
       const sonnetCost = ((u.input_tokens || 0) / 1_000_000 * 3) + ((u.output_tokens || 0) / 1_000_000 * 15);
       appendSearchRunCosts(req.body.searchId, { sonnetCostUsd: sonnetCost, firecrawlCostUsd: 0 }, req.userId).catch(() => {});
+    }
+    // Persist the sequence to the lead row so a reload / resume-from-history
+    // doesn't lose paid-for emails (auto mode always did this; the manual
+    // path silently didn't). Schema holds 5 slots — email 6/7 of 7-step
+    // frameworks stay client-side only.
+    if (req.body.searchId && Array.isArray(parsed.emails) && companyName !== 'the company') {
+      const emailCols = {};
+      parsed.emails.slice(0, 5).forEach((e, i) => {
+        emailCols[`EMAIL_${i + 1}_SUBJECT`] = e.subject || '';
+        emailCols[`EMAIL_${i + 1}_BODY`]    = e.body || '';
+      });
+      updateLeadEmails(req.body.searchId, companyName, emailCols, framework || null, null);
     }
     res.json(parsed);
   } catch(e) {
