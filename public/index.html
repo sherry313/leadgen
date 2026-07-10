@@ -2863,6 +2863,9 @@ function appConfirmMode() {
   const container = document.querySelector('.container');
   const autoPanel = document.getElementById('appAutoPanel');
   if (modeSel) modeSel.style.display = 'none';
+  // Entering a mode fresh: clear any auto-run status bar from a previous run.
+  const staleBar = document.getElementById('autoRunBar');
+  if (staleBar) staleBar.style.display = 'none';
   _appPlaceBusinessInfoCard(mode);
   if (mode === 'manual') {
     if (autoPanel) autoPanel.style.display = 'none';
@@ -2878,6 +2881,9 @@ function appConfirmMode() {
 function appBackToModeSelect() {
   window._appMode = null;
   try { localStorage.removeItem('leadgen_app_mode'); } catch (_) {}
+  window._autoRunAborted = true; // stop any in-flight auto run
+  const staleBar = document.getElementById('autoRunBar');
+  if (staleBar) staleBar.style.display = 'none';
   const modeSel   = document.getElementById('appModeSelect');
   const container = document.querySelector('.container');
   const autoPanel = document.getElementById('appAutoPanel');
@@ -12209,6 +12215,15 @@ async function biPolishField(textareaId, kind, btn) {
     } catch (_) {} // QuotaExceeded / private-mode — non-fatal.
   };
 
+  // Auto-run helper: check every lead (setAppLeads clears the selection). The
+  // auto driver calls this after each streamed row so the list mirrors manual
+  // mode with everything selected, ready for the AI filter.
+  window.appSelectAllLeads = function () {
+    selected.clear();
+    (window._appLeads || []).forEach((l, i) => selected.add(i));
+    renderLeadList();
+  };
+
   // AI lead-qualification filter. Calls /api/ai-filter-lead per lead in
   // sequence (one Haiku request per lead). Spec'd as global; reads from
   // window._appLeads (not _toolResults, which is an object keyed by source).
@@ -12294,7 +12309,7 @@ async function biPolishField(textareaId, kind, btn) {
   // 业务信息 and run the filter automatically, showing a "正在筛选" waiting state.
   // Falls back to the original manual input + question flow when business info is
   // empty. Lives inside this IIFE so it can read the closure-scoped `selected` set.
-  window.appAutoRunScreening = async function () {
+  const _appAutoRunScreeningInner = async function () {
     const running = document.getElementById('appScreeningRunning');
     const bi = window._appBusinessInfo || {};
     const parts = [];
@@ -12358,6 +12373,15 @@ async function biPolishField(textareaId, kind, btn) {
     } finally {
       if (running) running.style.display = 'none';
     }
+  };
+  // In-flight dedup: showAppStep3View('filter') fires this on view entry AND the
+  // auto-run driver awaits it — both must share ONE run, not start two.
+  window._appScreeningBusy = null;
+  window.appAutoRunScreening = function () {
+    if (window._appScreeningBusy) return window._appScreeningBusy;
+    window._appScreeningBusy = Promise.resolve(_appAutoRunScreeningInner())
+      .finally(() => { window._appScreeningBusy = null; });
+    return window._appScreeningBusy;
   };
 
   // Collect the leads whose checkbox is currently ticked in the AI 筛选 results.
@@ -13103,8 +13127,8 @@ function autoConfirmRun() {
   if (panel) panel.remove();
   var reviewPanel = document.getElementById('autoReviewPanel');
   if (reviewPanel) reviewPanel.remove();
-  // Skip step A (already passed), go straight to step B
-  fwAutoRunFromStepB(window._autoInputs);
+  // Skip step A (already passed), run the pipeline on the manual-mode UI
+  fwAutoRunPipeline(window._autoInputs);
 }
 
 function autoShowProgressPanel() {
@@ -13619,6 +13643,165 @@ async function fwAutoRun(providedInputs) {
   return;
 }
 
+// ── Auto-run status bar ───────────────────────────────────────────────────────
+// Auto mode drives the SAME manual-mode panels (lead list, AI-filter cards,
+// email generation + preview, send hub) — per the 2026-07 mockup the user
+// confirmed. This slim bar on top is the only auto-specific UI: current stage,
+// live status, and a 中止 button that hands control back to the user (every
+// manual control underneath keeps working after an abort).
+function _autoBarEnsure() {
+  var container = document.querySelector('.container');
+  if (!container) return null;
+  var bar = document.getElementById('autoRunBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'autoRunBar';
+    bar.style.cssText = 'display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:9px 14px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.35);border-radius:10px;';
+    bar.innerHTML =
+      '<span id="autoRunBarPill" style="display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#c7d2fe;white-space:nowrap;">' +
+        '<span id="autoRunBarSpin" style="width:11px;height:11px;border:2px solid rgba(99,102,241,0.3);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;"></span>' +
+        '<span id="autoRunBarStage">自动运行中</span></span>' +
+      '<span id="autoRunBarText" style="font-size:12px;color:rgba(255,255,255,0.55);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>' +
+      '<button type="button" id="autoRunBarBtn" onclick="autoRunAbort()" style="font-size:11px;color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.15);background:transparent;border-radius:8px;padding:5px 12px;cursor:pointer;font-family:inherit;flex-shrink:0;">中止</button>';
+    container.insertBefore(bar, container.firstChild);
+  }
+  bar.style.display = 'flex';
+  return bar;
+}
+function _autoBarSet(stage, text, state) {
+  var bar = _autoBarEnsure(); if (!bar) return;
+  var spin = document.getElementById('autoRunBarSpin');
+  var pill = document.getElementById('autoRunBarPill');
+  var stageEl = document.getElementById('autoRunBarStage');
+  var textEl = document.getElementById('autoRunBarText');
+  var btn = document.getElementById('autoRunBarBtn');
+  if (stageEl) stageEl.textContent = stage;
+  if (textEl) textEl.textContent = text || '';
+  var TH = {
+    run:     { bg: 'rgba(99,102,241,0.08)', bd: 'rgba(99,102,241,0.35)', fg: '#c7d2fe', spin: true,  btn: '中止',       act: autoRunAbort },
+    done:    { bg: 'rgba(34,197,94,0.08)',  bd: 'rgba(34,197,94,0.4)',   fg: '#4ade80', spin: false, btn: '返回自动表单', act: autoRunBackToForm },
+    error:   { bg: 'rgba(239,68,68,0.08)',  bd: 'rgba(239,68,68,0.4)',   fg: '#f87171', spin: false, btn: '返回修改信息', act: autoRunBackToForm },
+    stopped: { bg: 'rgba(251,191,36,0.08)', bd: 'rgba(251,191,36,0.4)',  fg: '#fbbf24', spin: false, btn: '返回自动表单', act: autoRunBackToForm },
+  };
+  var t = TH[state] || TH.run;
+  bar.style.background = t.bg; bar.style.borderColor = t.bd;
+  if (pill) pill.style.color = t.fg;
+  if (spin) spin.style.display = t.spin ? '' : 'none';
+  if (btn) { btn.textContent = t.btn; btn.onclick = t.act; }
+}
+function autoRunAbort() {
+  window._autoRunAborted = true;
+  _autoBarSet('已中止', '自动流程已停止 — 下面的界面可以手动继续操作', 'stopped');
+}
+function autoRunBackToForm() {
+  var bar = document.getElementById('autoRunBar'); if (bar) bar.style.display = 'none';
+  var container = document.querySelector('.container'); if (container) container.style.display = 'none';
+  document.getElementById('appAutoPanel').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+// ── Auto-run pipeline (2026-07 confirmed design) ──────────────────────────────
+// Drives the manual pipeline end-to-end on the manual UI: stream search rows
+// into the lead list (画面 01) → the manual AI-filter cards (画面 02) → manual
+// appStartEmailGen/appGenerateAll progress + preview (画面 03) → the manual
+// send hub via showAppSendPanel (画面 04). Because every screen IS the manual
+// component, both modes stay in sync by construction.
+async function fwAutoRunPipeline(inp) {
+  window._autoRunAborted = false;
+
+  // Switch to the manual UI shell.
+  document.getElementById('appAutoPanel').style.display = 'none';
+  document.getElementById('appModeSelect').style.display = 'none';
+  var container = document.querySelector('.container');
+  if (container) container.style.display = '';
+
+  // 画面 01 — search: rows stream into the SAME lead list manual mode shows.
+  if (typeof showAppStep3View === 'function') showAppStep3View('analysis');
+  if (typeof _updateStepper === 'function') _updateStepper(2); // 搜索配置 lit while searching
+  _autoBarSet('自动运行中 · 1/4 搜索', '正在搜索「' + inp.keyword + ' · ' + inp.location + '」…（约 1-3 分钟）', 'run');
+  window.scrollTo(0, 0);
+
+  var leads = [];
+  try {
+    var token = (typeof getStoredToken === 'function') ? getStoredToken() : '';
+    var res = await fetch('/api/google-maps-search', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'Authorization': 'Bearer ' + token } : {}),
+      body: JSON.stringify({ keywords: [inp.keyword], location: inp.location, maxResults: inp.maxResults || 20 }),
+    });
+    if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+    var reader = res.body.getReader(), dec = new TextDecoder(), buf = '', sseError = null, finished = false;
+    while (!finished) {
+      if (window._autoRunAborted) { try { reader.cancel(); } catch (_) {} return; }
+      var r = await reader.read();
+      if (r.done) break;
+      buf += dec.decode(r.value, { stream: true });
+      var idx;
+      while ((idx = buf.indexOf('\n\n')) !== -1) {
+        var chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        var line = chunk.split('\n').find(function (l) { return l.startsWith('data:'); });
+        if (!line) continue;
+        var evt; try { evt = JSON.parse(line.slice(5).trim()); } catch (_) { continue; }
+        if (evt.type === 'row' && evt.row) {
+          var row = evt.row;
+          leads.push({ source: 'gm', name: row.name || '', email: row.email || '', website: row.website || '', phone: row.phone || '', linkedin: row.linkedin || '', raw: row });
+          if (typeof window.setAppLeads === 'function') window.setAppLeads(leads);
+          if (typeof window.appSelectAllLeads === 'function') window.appSelectAllLeads();
+          _autoBarSet('自动运行中 · 1/4 搜索', '已找到 ' + leads.length + ' 家 · ' + (row.name || ''), 'run');
+        } else if (evt.type === 'error') { sseError = evt.error || '搜索失败'; finished = true; break; }
+        else if (evt.type === 'done') { finished = true; break; }
+      }
+    }
+    if (sseError) throw new Error(sseError);
+  } catch (e) {
+    _autoBarSet('搜索失败', (e.message || '未知错误') + ' — 换个关键词或地区重试', 'error');
+    return;
+  }
+  if (window._autoRunAborted) return;
+  if (!leads.length) { _autoBarSet('搜索失败', '没有找到结果 — 换个更常见的关键词试试', 'error'); return; }
+
+  // 画面 02 — AI filter: the manual filter view + result cards, auto-triggered.
+  _autoBarSet('自动运行中 · 2/4 AI 筛选', '开始逐家分析 ' + leads.length + ' 家…', 'run');
+  window._appFilterCriteria = inp.criteria || '';
+  try {
+    if (typeof showAppStep3View === 'function') showAppStep3View('filter'); // fires appAutoRunScreening
+    if (typeof window.appAutoRunScreening === 'function') await window.appAutoRunScreening(); // deduped: same run
+  } catch (e) {
+    _autoBarSet('AI 筛选失败', e.message || '未知错误', 'error');
+    return;
+  }
+  if (window._autoRunAborted) return;
+  var picked = (typeof window.getAppFilteredLeads === 'function') ? window.getAppFilteredLeads() : [];
+  if (!picked.length) { _autoBarSet('AI 筛选完成', '没有符合标准的客户 — 换个关键词或调整业务信息再试', 'error'); return; }
+
+  // Grace pause so the user can adjust the checkboxes before generation.
+  _autoBarSet('自动运行中 · 2/4 AI 筛选', '筛选完成：' + picked.length + ' 家符合 · 5 秒后自动继续（点「中止」可手动调整勾选）', 'run');
+  for (var w = 0; w < 10; w++) {
+    if (window._autoRunAborted) return;
+    await new Promise(function (rs) { setTimeout(rs, 500); });
+  }
+
+  // 画面 03 — email generation: manual's own appStartEmailGen → appGenerateAll,
+  // which renders progress + the preview accordion and ends in showAppSendPanel
+  // (画面 04, the manual send hub). Shared by construction.
+  window._filteredLeads = (typeof window.getAppFilteredLeads === 'function') ? window.getAppFilteredLeads() : picked;
+  _autoBarSet('自动运行中 · 3/4 生成邮件', '为 ' + window._filteredLeads.length + ' 家客户生成邮件序列…', 'run');
+  if (typeof showAppStep3View === 'function') showAppStep3View('email');
+  try {
+    await appStartEmailGen();
+  } catch (e) {
+    _autoBarSet('生成邮件失败', e.message || '未知错误', 'error');
+    return;
+  }
+  if (window._autoRunAborted) return;
+
+  var total = Array.isArray(window._generatedEmails) ? window._generatedEmails.length : 0;
+  _autoBarSet('✓ 自动运行完成', total + ' 家客户的邮件已生成 — 在下面预览，选 SMTP 或 Instantly 发送', 'done');
+}
+
+// DEPRECATED (2026-07): replaced by fwAutoRunPipeline above — the vertical
+// step-list page this drives is no longer shown. Kept only so nothing that
+// references the old panels breaks; do not wire new callers to it.
 async function fwAutoRunFromStepB(inp) {
   const showErr = function(msg) {
     var errEl = document.getElementById('fwAutoError');
@@ -14080,7 +14263,9 @@ function appStartEmailGen() {
     ? window._filteredLeads : (window._appLeads || []);
   if (!leads.length) { alert('还没有客户线索，请先完成搜索和 AI 筛选'); return; }
 
-  appGenerateAll();
+  // Returned so the auto-run driver can await generation; the manual button
+  // ignores the return value — behavior there is unchanged.
+  return appGenerateAll();
 }
 
 // ── Website list upload & enrich ──────────────────────────────────────────────
