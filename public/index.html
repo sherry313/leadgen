@@ -12417,8 +12417,14 @@ async function biPolishField(textareaId, kind, btn) {
 
   window.startAppEmailGeneration = async function () {
     const leads = window._appLeads || [];
-    const picked = [...selected].sort((a, b) => a - b).map(i => leads[i]).filter(Boolean);
-    if (!picked.length) return;
+    const pickedAll = [...selected].sort((a, b) => a - b).map(i => leads[i]).filter(Boolean);
+    // No sendable address → no generation. Same validity gate as the send loops.
+    const picked = pickedAll.filter(l => appIsValidEmail((l.email || l.raw?.email || '').toString().trim()));
+    const droppedNoEmail = pickedAll.length - picked.length;
+    if (!picked.length) {
+      if (pickedAll.length) alert(`所选 ${droppedNoEmail} 家客户都没有可用的收件邮箱，无法生成邮件。请选择有邮箱的客户。`);
+      return;
+    }
     const framework = panel.querySelector('#appFrameworkSelect')?.value || '';
 
     const btn        = panel.querySelector('#appGenerateBtn');
@@ -12439,7 +12445,7 @@ async function biPolishField(textareaId, kind, btn) {
     statusEl.style.display = 'block';
     statusEl.style.background = 'rgba(99,102,241,0.08)';
     statusEl.style.color = '#a5b4fc';
-    statusEl.textContent = '正在生成邮件，请稍候...';
+    statusEl.textContent = '正在生成邮件，请稍候...' + (droppedNoEmail ? `（已跳过 ${droppedNoEmail} 家无邮箱客户）` : '');
     resultsEl.style.display = 'none';
     resultsEl.innerHTML = '';
 
@@ -14262,10 +14268,21 @@ function appEditConfig() {
 
 async function appGenerateAll() {
   // Use the AI-filter selection when present, otherwise all leads.
-  const leads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
+  const allLeads = (Array.isArray(window._filteredLeads) && window._filteredLeads.length)
     ? window._filteredLeads
     : (window._appLeads || []);
-  if (!leads.length) return;
+  if (!allLeads.length) return;
+
+  // Leads without a sendable address can't be emailed — don't spend AI tokens
+  // generating sequences for them. Same validity gate as the send loops.
+  const _leadEmail = l => (l.email || (l.raw && l.raw.email) || '').toString().trim();
+  const _validGate = (typeof window.appIsValidEmail === 'function') ? window.appIsValidEmail : (s => !!s);
+  const leads = allLeads.filter(l => _validGate(_leadEmail(l)));
+  const droppedNoEmail = allLeads.length - leads.length;
+  if (!leads.length) {
+    alert(`所选 ${droppedNoEmail} 家客户都没有可用的收件邮箱，无法生成邮件。请在搜索结果中选择有邮箱的客户。`);
+    return;
+  }
 
   const sellerDesc = document.getElementById('appSellerDesc').value.trim();
   const signatureName = document.getElementById('appSignatureName').value.trim();
@@ -14362,7 +14379,7 @@ async function appGenerateAll() {
     } else {
       statusEl.style.background = 'rgba(34,197,94,0.08)';
       statusEl.style.color = '#86efac';
-      statusEl.textContent = `已生成 ${results.length} 封邮件`;
+      statusEl.textContent = `已生成 ${results.length} 封邮件` + (droppedNoEmail ? `（已跳过 ${droppedNoEmail} 家无邮箱客户，未生成）` : '');
     }
   }
   if (quotaHit && !results.length) return; // nothing generated — stay put
