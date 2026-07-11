@@ -9502,6 +9502,10 @@ setTimeout(_restoreStep, 0);     // deferred: restores in-progress session after
 // panel wins over any manual-wizard restore). Manual keeps today's behavior.
 setTimeout(function () {
   if (location.pathname !== '/app') return;
+  // Deep-link (?search= / ?query=) wins over mode re-entry — restoring history
+  // leads must not be covered by an auto-mode re-enter (same guard as _restoreStep).
+  var _dl = new URLSearchParams(location.search);
+  if (_dl.get('search') || _dl.get('query')) return;
   var savedMode = null;
   try { savedMode = localStorage.getItem('leadgen_app_mode'); } catch (_) {}
   if (savedMode === 'auto' && typeof appSelectMode === 'function' && typeof appConfirmMode === 'function') {
@@ -9648,6 +9652,19 @@ setTimeout(function _restoreAppState() {
   const q   = p.get('query');
   const loc = p.get('location');
   if (sid) {
+    // Deep-link from 个人中心 查看线索: the intent (view results) is already
+    // known, so skip the auto/manual chooser that normally covers /app —
+    // otherwise the restored leads render into a hidden .container and the
+    // user only sees the mode-select screen. Session mode preference is NOT
+    // persisted: this is a one-off view, not a mode choice.
+    const _ms = document.getElementById('appModeSelect');
+    const _ap = document.getElementById('appAutoPanel');
+    const _ct = document.querySelector('.container');
+    if (_ms) _ms.style.display = 'none';
+    if (_ap) _ap.style.display = 'none';
+    if (_ct) _ct.style.display = '';
+    window._appMode = 'manual';
+    if (typeof _appPlaceBusinessInfoCard === 'function') _appPlaceBusinessInfoCard('manual');
     loadSearchById(sid);
   } else if (q && loc) {
     // Auto-rerun scrape, bypassing wizard
