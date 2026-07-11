@@ -132,6 +132,51 @@
     .h-btn.danger { border-color: rgba(248,113,113,0.3); color: var(--danger); padding: 6px 9px; }
     .h-btn.danger:hover { background: rgba(248,113,113,0.1); }
 
+    /* ── 客户表（history card expand） ── */
+    .h-btn.table-btn { background: rgba(74,222,128,0.10); border-color: rgba(74,222,128,0.35); color: #86efac; }
+    .h-btn.table-btn:hover { background: rgba(74,222,128,0.18); }
+    .h-card.expanded { border-radius: 11px 11px 0 0; margin-bottom: 0; border-color: rgba(99,102,241,0.3); }
+    .lead-panel { border: 1px solid rgba(99,102,241,0.3); border-top: none; border-radius: 0 0 11px 11px; background: rgba(255,255,255,0.02); padding: 14px 18px 18px; margin-bottom: 9px; }
+    .lp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .lp-stats { font-size: 0.78rem; color: var(--sub); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .lp-stats b { color: var(--text); }
+    .lp-stats .sent-n { color: #4ade80; }
+    .lp-tools { display: flex; gap: 8px; align-items: center; }
+    .lp-search { padding: 6px 11px 6px 28px; background: var(--card); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-size: 0.78rem; width: 180px; font-family: inherit; outline: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 9px center; }
+    .lp-search:focus { border-color: rgba(99,102,241,0.5); }
+    .lp-btn { padding: 6px 12px; border-radius: 7px; font-size: 0.76rem; font-weight: 600; font-family: inherit; border: 1px solid var(--border); color: var(--sub); background: transparent; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: all 0.15s; }
+    .lp-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+    .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; }
+    .lead-tbl { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 0.78rem; }
+    .lead-tbl th { text-align: left; padding: 9px 12px; color: var(--sub); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .lead-tbl td { padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+    .lead-tbl tr:last-child td { border-bottom: none; }
+    .lead-tbl tr:hover td { background: rgba(255,255,255,0.02); }
+    .lead-tbl .co { font-weight: 600; color: var(--text); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lead-tbl .em { color: #a5b4fc; white-space: nowrap; }
+    .lead-tbl .em.none { color: var(--sub2); }
+    .lead-tbl .muted { color: var(--sub); white-space: nowrap; }
+    .lead-tbl .city { color: var(--sub); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lead-tbl .rating { color: #fbbf24; white-space: nowrap; }
+    .lead-tbl a { color: #a5b4fc; text-decoration: none; }
+    .sent-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 600; color: #4ade80; background: rgba(74,222,128,0.10); border: 1px solid rgba(74,222,128,0.3); border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+    .unsent { color: var(--sub2); }
+    .mail-btn { padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc; background: var(--accent-soft); white-space: nowrap; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
+    .mail-btn:hover { background: rgba(99,102,241,0.22); }
+    .lp-more { text-align: center; padding-top: 10px; font-size: 0.74rem; color: var(--sub2); }
+    /* 邮件内容弹窗 */
+    .mail-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }
+    .mail-box { background: #0a0a0f; border: 1px solid rgba(99,102,241,0.35); border-radius: 14px; max-width: 640px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 22px 24px; }
+    .mail-box h3 { font-size: 0.98rem; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .mail-box .mb-sub { font-size: 0.76rem; color: var(--sub); margin-bottom: 16px; }
+    .mail-box .mb-close { background: transparent; border: 1px solid var(--border); color: var(--sub); border-radius: 7px; padding: 4px 10px; cursor: pointer; font-family: inherit; font-size: 0.76rem; }
+    .mail-box .mb-close:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+    .mail-item { border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; margin-bottom: 10px; background: rgba(255,255,255,0.02); }
+    .mail-item .mi-n { font-size: 0.7rem; color: #a5b4fc; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 5px; }
+    .mail-item .mi-s { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 7px; }
+    .mail-item .mi-b { font-size: 0.78rem; color: var(--sub); line-height: 1.7; white-space: pre-wrap; }
+
     .pg-btn { padding: 6px 13px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; background: var(--card); border: 1px solid var(--border); color: var(--sub); transition: all 0.15s; }
     .pg-btn:hover { border-color: rgba(99,102,241,0.5); color: var(--text); }
     .pg-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -521,6 +566,7 @@
           '</div>' +
         '</div>' +
         '<div class="h-actions">' +
+          '<button class="h-btn table-btn" onclick="toggleLeadTable(\'' + r.id + '\', this)"><i class="ti ti-table"></i> 客户表</button>' +
           '<button class="h-btn primary" onclick="viewSearch(\'' + r.id + '\')"><i class="ti ti-eye"></i> 查看线索</button>' +
           '<button class="h-btn ghost" onclick="rerunSearch(\'' + jsStr(r.query) + '\',\'' + jsStr(r.location) + '\')"><i class="ti ti-refresh"></i> 重新搜</button>' +
           '<button class="h-btn danger" onclick="deleteSearch(\'' + r.id + '\',this)"><i class="ti ti-trash"></i></button>' +
@@ -537,6 +583,144 @@
 
   function viewSearch(id) { location.href = '/app?search=' + id; }
   function rerunSearch(query, loc) { location.href = '/app?query=' + encodeURIComponent(query) + '&location=' + encodeURIComponent(loc); }
+
+  // ── 客户表：expand a search's full lead list under its card ──
+  const _leadCache = {};   // searchId → leads array (loaded once per session)
+  const _tblQuery  = {};   // searchId → current in-table filter string
+
+  function _tableBtnReset() {
+    document.querySelectorAll('.lead-panel').forEach(p => p.remove());
+    document.querySelectorAll('.h-card.expanded').forEach(c => c.classList.remove('expanded'));
+    document.querySelectorAll('.h-btn.table-btn').forEach(b => { b.innerHTML = '<i class="ti ti-table"></i> 客户表'; });
+  }
+
+  async function toggleLeadTable(id, btn) {
+    const open = document.getElementById('leadPanel-' + id);
+    _tableBtnReset();               // 一次只展开一条；再点同一条即收起
+    if (open) return;
+
+    const card = btn.closest('.h-card');
+    card.classList.add('expanded');
+    btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;margin-right:4px"></span>加载中';
+
+    let leads = _leadCache[id];
+    if (!leads) {
+      try {
+        const r = await fetch('/api/history/' + id, { headers: authHeaders() });
+        const d = await r.json();
+        leads = d.leads || [];
+        _leadCache[id] = leads;
+      } catch (e) {
+        alert('客户列表加载失败，请重试');
+        _tableBtnReset();
+        return;
+      }
+    }
+    btn.innerHTML = '<i class="ti ti-chevron-up"></i> 收起';
+
+    const panel = document.createElement('div');
+    panel.className = 'lead-panel';
+    panel.id = 'leadPanel-' + id;
+    panel.innerHTML = buildLeadPanel(id, leads);
+    card.insertAdjacentElement('afterend', panel);
+  }
+
+  function _emailCount(l) {
+    let n = 0;
+    for (let i = 1; i <= 5; i++) if ((l['email' + i + '_subject'] || '').trim() || (l['email' + i + '_body'] || '').trim()) n++;
+    return n;
+  }
+
+  function _leadMatches(l, q) {
+    if (!q) return true;
+    const v = q.toLowerCase();
+    return (l.company_name || '').toLowerCase().includes(v) || (l.email || '').toLowerCase().includes(v);
+  }
+
+  function buildLeadRows(id, leads) {
+    const q = _tblQuery[id] || '';
+    const rows = [];
+    leads.forEach((l, idx) => {
+      if (!_leadMatches(l, q)) return;
+      const mailN = _emailCount(l);
+      rows.push('<tr>' +
+        '<td class="co" title="' + esc(l.company_name) + '">' + (esc(l.company_name) || '—') + '</td>' +
+        '<td>' + (l.website ? '<a href="' + esc(l.website) + '" target="_blank" rel="noopener"><i class="ti ti-external-link"></i> 打开</a>' : '<span class="unsent">—</span>') + '</td>' +
+        '<td class="em' + (l.email ? '' : ' none') + '">' + (esc(l.email) || '（无邮箱）') + '</td>' +
+        '<td class="muted">' + (esc(l.phone) || '—') + '</td>' +
+        '<td class="city" title="' + esc(l.city) + '">' + (esc(l.city) || '—') + '</td>' +
+        '<td class="rating">' + (esc(l.rating) || '—') + '</td>' +
+        '<td>' + (l.email_sent_at
+          ? '<span class="sent-chip"><i class="ti ti-check"></i> ' + fmtWhen(l.email_sent_at) + '</span>'
+          : '<span class="unsent">—</span>') + '</td>' +
+        '<td>' + (mailN
+          ? '<button class="mail-btn" onclick="showMailModal(\'' + id + '\',' + idx + ')"><i class="ti ti-mail"></i> 查看 ' + mailN + ' 封</button>'
+          : '<span class="unsent">—</span>') + '</td>' +
+      '</tr>');
+    });
+    return rows.length ? rows.join('') : '<tr><td colspan="8" style="text-align:center;color:var(--sub2);padding:20px">没有匹配的客户</td></tr>';
+  }
+
+  function buildLeadPanel(id, leads) {
+    const withEmail = leads.filter(l => (l.email || '').trim()).length;
+    const sent      = leads.filter(l => l.email_sent_at).length;
+    return '<div class="lp-head">' +
+        '<div class="lp-stats">共 <b>' + leads.length + '</b> 位客户<span class="h-dot">·</span>有邮箱 <b>' + withEmail + '</b><span class="h-dot">·</span><span class="sent-n">已发邮件 <b class="sent-n">' + sent + '</b></span></div>' +
+        '<div class="lp-tools">' +
+          '<input class="lp-search" placeholder="搜公司名 / 邮箱…" oninput="filterLeadTable(\'' + id + '\', this.value)">' +
+          '<button class="lp-btn" onclick="exportLeadsCsv(\'' + id + '\')"><i class="ti ti-download"></i> 导出 CSV</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="tbl-wrap"><table class="lead-tbl">' +
+        '<thead><tr><th>公司名称</th><th>官网</th><th>邮箱</th><th>电话</th><th>城市</th><th>评分</th><th>已发邮件</th><th>邮件内容</th></tr></thead>' +
+        '<tbody id="leadTbody-' + id + '">' + buildLeadRows(id, leads) + '</tbody>' +
+      '</table></div>';
+  }
+
+  function filterLeadTable(id, q) {
+    _tblQuery[id] = (q || '').trim();
+    const tb = document.getElementById('leadTbody-' + id);
+    if (tb) tb.innerHTML = buildLeadRows(id, _leadCache[id] || []);
+  }
+
+  function exportLeadsCsv(id) {
+    const leads = _leadCache[id] || [];
+    if (!leads.length) return;
+    const cell = s => '"' + String(s ?? '').replace(/"/g, '""') + '"';
+    const head = ['公司名称', '官网', '邮箱', '电话', '城市', '评分', '已发邮件时间'];
+    const lines = [head.join(',')].concat(leads.map(l => [
+      l.company_name, l.website, l.email, l.phone, l.city, l.rating,
+      l.email_sent_at ? fmtWhen(l.email_sent_at) : '',
+    ].map(cell).join(',')));
+    // BOM so Excel opens the Chinese headers correctly.
+    const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: '客户表-' + new Date().toISOString().slice(0, 10) + '.csv' });
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function showMailModal(id, idx) {
+    const l = (_leadCache[id] || [])[idx];
+    if (!l) return;
+    const items = [];
+    for (let i = 1; i <= 5; i++) {
+      const s = (l['email' + i + '_subject'] || '').trim();
+      const b = (l['email' + i + '_body'] || '').trim();
+      if (!s && !b) continue;
+      items.push('<div class="mail-item"><div class="mi-n">EMAIL ' + i + '</div>' +
+        (s ? '<div class="mi-s">' + esc(s) + '</div>' : '') +
+        (b ? '<div class="mi-b">' + esc(b) + '</div>' : '') + '</div>');
+    }
+    const ov = document.createElement('div');
+    ov.className = 'mail-overlay';
+    ov.innerHTML = '<div class="mail-box">' +
+      '<h3><span><i class="ti ti-mail" style="color:var(--accent)"></i> ' + esc(l.company_name) + '</span><button class="mb-close" onclick="this.closest(\'.mail-overlay\').remove()">关闭 ✕</button></h3>' +
+      '<div class="mb-sub">' + (esc(l.email) || '（无邮箱）') + (l.email_sent_at ? ' · 已发送 ' + fmtWhen(l.email_sent_at) : ' · 未发送') + '</div>' +
+      items.join('') + '</div>';
+    ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+    document.body.appendChild(ov);
+  }
 
   async function deleteSearch(id, btn) {
     if (!confirm('确定要删除这条搜索记录及其所有线索吗？此操作不可撤销。')) return;
