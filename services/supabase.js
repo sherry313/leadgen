@@ -347,6 +347,29 @@ async function getLeadsForSearch(searchId, userId) {
   }
 }
 
+// Persist the /app AI-filter verdict onto the stored lead so 查看线索 can show
+// it later without re-running (and re-paying for) the filter. Stored as
+// icp_score 'pass'|'fail' (TEXT — legacy pipelines write numeric strings; /app
+// rows never carried a score before, so the values can't collide) plus
+// icp_reasoning = the AI's one-line reason.
+async function updateLeadFilterResult(searchId, { email, companyName }, { recommended, reason }, userId) {
+  const db = getClient();
+  if (!db || !searchId) return;
+  try {
+    let q = db.from('leads')
+      .update({ icp_score: recommended ? 'pass' : 'fail', icp_reasoning: reason || '' })
+      .eq('search_id', searchId);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    if (email) q = q.eq('email', email);
+    else if (companyName) q = q.eq('company_name', companyName);
+    else return;
+    const { error } = await q;
+    if (error) throw error;
+  } catch (err) {
+    console.warn('[Supabase] updateLeadFilterResult failed:', err.message);
+  }
+}
+
 // Append step-2 costs to an existing search_history row. `sonnetCostUsd` is any
 // Anthropic cost (Haiku included — historical name). Optional qualifiedDelta
 // increments total_qualified (the /app per-lead AI filter bumps it as leads pass).
@@ -534,4 +557,4 @@ async function deleteProductProfile(id, userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };

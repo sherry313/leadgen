@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -3095,6 +3095,9 @@ Reply in JSON only:
       const u = response.usage || {};
       const haikuCost = ((u.input_tokens || 0) / 1_000_000 * 0.80) + ((u.output_tokens || 0) / 1_000_000 * 4.00);
       appendSearchRunCosts(searchId, { sonnetCostUsd: haikuCost, firecrawlCostUsd: 0, qualifiedDelta: parsed.recommended ? 1 : 0 }, req.userId).catch(() => {});
+      // Persist the verdict onto the stored lead so 查看线索 restores it later
+      // without re-running (and re-paying for) the filter.
+      updateLeadFilterResult(searchId, { email: (lead.email || '').trim(), companyName }, { recommended: !!parsed.recommended, reason: parsed.reason || '' }, req.userId).catch(() => {});
     }
     res.json({ recommended: parsed.recommended, reason: parsed.reason });
   } catch (e) {

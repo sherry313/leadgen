@@ -8016,11 +8016,24 @@ async function loadSearchById(searchId) {
         email:   r.email   || '',
         website: r.website || '',
         phone:   r.phone   || '',
+        // Stored AI-filter verdict ('pass'/'fail' in icp_score for /app rows) —
+        // restored so the paid-for judgement survives page reloads.
+        _verdict:       (r.icp_score === 'pass' || r.icp_score === 'fail') ? r.icp_score : '',
+        _verdictReason: (r.icp_score === 'pass' || r.icp_score === 'fail') ? (r.icp_reasoning || '') : '',
         raw:     r,
       }));
       window.setAppLeads(appLeads);
+      const passCount = appLeads.filter(l => l._verdict === 'pass').length;
+      const failCount = appLeads.filter(l => l._verdict === 'fail').length;
+      // Pre-check the recommended leads so the user can continue straight to
+      // email generation without re-running (and re-paying for) the filter.
+      if (passCount && typeof window.appSelectWhere === 'function') {
+        window.appSelectWhere(l => l._verdict === 'pass');
+      }
       if (typeof showAppStep3View === 'function') showAppStep3View('analysis');
-      setStatus(`已恢复 ${appLeads.length} 条历史线索 — 勾选后可继续 AI 筛选和发送`, 'success');
+      setStatus(passCount || failCount
+        ? `已恢复 ${appLeads.length} 条线索 · 已筛选 ${passCount + failCount} 家（✓ 推荐 ${passCount} 已自动勾选）— 无需重筛，可直接生成邮件`
+        : `已恢复 ${appLeads.length} 条历史线索 — 勾选后可继续 AI 筛选和发送`, 'success');
       return;
     }
 
@@ -12252,17 +12265,27 @@ async function biPolishField(textareaId, kind, btn) {
       const rowOpacity = passes ? '1' : '0.4';
       const cbDisabled = passes ? '' : 'disabled';
       const isChecked  = selected.has(idx) ? 'checked' : '';
+      // AI-filter verdict badge (set live by startAppAiFilter, or restored from
+      // the DB by loadSearchById) — shows the paid-for judgement inline so the
+      // user never has to re-run the filter just to see who passed.
+      const verdictTag = lead._verdict === 'pass' ? tag('✓ AI 推荐', '#4ade80')
+                       : lead._verdict === 'fail' ? tag('✕ 不符合',  '#f87171') : '';
       const tags = [
+        verdictTag,
         lead.email    ? tag(lead.email,    '#a5b4fc') : '',
         lead.website  ? tag(lead.website,  '#60a5fa') : '',
         lead.phone    ? tag(lead.phone,    '#34d399') : '',
         lead.linkedin ? tag('LinkedIn',    '#0a66c2') : '',
       ].filter(Boolean).join('');
+      const verdictReason = lead._verdictReason
+        ? `<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(lead._verdictReason)}">${esc(lead._verdictReason)}</div>`
+        : '';
       return `<div class="app-lead-row" data-idx="${idx}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);opacity:${rowOpacity};transition:opacity 0.15s">
         <input type="checkbox" class="app-lead-cb" data-idx="${idx}" ${isChecked} ${cbDisabled} style="cursor:pointer;width:15px;height:15px;accent-color:#6366f1;flex-shrink:0">
         <div style="flex:1;min-width:0">
           <div style="color:#e5e7eb;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(lead.name) || '<span style="color:#64748b">（无名称）</span>'}</div>
           <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">${tags}</div>
+          ${verdictReason}
         </div>
       </div>`;
     }).join('');
@@ -12346,6 +12369,14 @@ async function biPolishField(textareaId, kind, btn) {
     renderLeadList();
   };
 
+  // Select only the leads matching a predicate — used by the history restore to
+  // pre-check the AI-recommended leads so the user can go straight to email gen.
+  window.appSelectWhere = function (pred) {
+    selected.clear();
+    (window._appLeads || []).forEach((l, i) => { if (pred(l)) selected.add(i); });
+    renderLeadList();
+  };
+
   // AI lead-qualification filter. Calls /api/ai-filter-lead per lead in
   // sequence (one Haiku request per lead). Spec'd as global; reads from
   // window._appLeads (not _toolResults, which is an object keyed by source).
@@ -12406,6 +12437,11 @@ async function biPolishField(textareaId, kind, btn) {
         }
         if (!resp.ok) throw new Error('HTTP ' + resp.status); // server error ≠ 不推荐
         const data = await resp.json();
+        // Mark the verdict on the shared lead object too (same reference as
+        // window._appLeads) so the analysis list shows the ✓/✕ badge without
+        // re-filtering — mirrors what the DB now persists server-side.
+        lead._verdict = data.recommended ? 'pass' : 'fail';
+        lead._verdictReason = data.reason || '';
         filtered.push({ ...lead, _aiRecommended: !!data.recommended, _aiReason: data.reason || '' });
       } catch (_) {
         filtered.push({ ...lead, _aiRecommended: false, _aiReason: '分析失败' });
