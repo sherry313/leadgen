@@ -906,7 +906,8 @@
         '<div class="lp-stats"><b>' + esc(cached.name) + '</b> · <span class="g">已发信客户 <b class="g">' + leads.length + '</b></span> · 覆盖 ' + (cities.slice(0, 3).join('/') || '—') + (cities.length > 3 ? ' 等 ' + cities.length + ' 城' : '') + '</div>' +
         '<div class="lp-tools">' +
           '<input class="lp-search" placeholder="搜公司名 / 邮箱…" oninput="filterProdTable(\'' + id + '\', this.value)">' +
-          '<button class="lp-btn" onclick="exportProductDocx(\'' + id + '\', this)"><i class="ti ti-file-text"></i> 导出 Word 文档</button>' +
+          '<button class="lp-btn" onclick="exportProductXlsx(\'' + id + '\', this)"><i class="ti ti-table-export"></i> 导出 Excel</button>' +
+          '<button class="lp-btn" style="border-color:var(--border);color:var(--sub);background:transparent" onclick="exportProductDocx(\'' + id + '\', this)"><i class="ti ti-file-text"></i> Word</button>' +
         '</div>' +
       '</div>' +
       '<div class="tbl-wrap"><table class="lead-tbl">' +
@@ -923,16 +924,16 @@
     if (tb && _prodLeadCache[id]) tb.innerHTML = buildProdRows(id, _prodLeadCache[id].leads);
   }
 
-  async function exportProductDocx(id, btn) {
+  async function _exportProduct(id, btn, ext, label) {
     const orig = btn.innerHTML;
     btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px"></span>生成中…';
     try {
-      const r = await fetch('/api/products/' + id + '/export.docx', { headers: authHeaders() });
+      const r = await fetch('/api/products/' + id + '/export.' + ext, { headers: authHeaders() });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const blob = await r.blob();
       const url = URL.createObjectURL(blob);
       const p = _products.find(x => x.id === id);
-      const a = Object.assign(document.createElement('a'), { href: url, download: (p ? p.name : '客户') + '-客户开发报告-' + new Date().toISOString().slice(0, 10) + '.docx' });
+      const a = Object.assign(document.createElement('a'), { href: url, download: (p ? p.name : '客户') + '-' + label + '-' + new Date().toISOString().slice(0, 10) + '.' + ext });
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
@@ -941,6 +942,8 @@
       btn.disabled = false; btn.innerHTML = orig;
     }
   }
+  function exportProductXlsx(id, btn) { return _exportProduct(id, btn, 'xlsx', '客户表'); }
+  function exportProductDocx(id, btn) { return _exportProduct(id, btn, 'docx', '客户开发报告'); }
 
   // ── Init ──
   if (!token) {

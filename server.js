@@ -1598,6 +1598,71 @@ app.get('/api/products/:id/leads', requireAuth, async (req, res) => {
   res.json({ success: true, name: profile.name, leads });
 });
 
+// ── 产品客户表 → Excel 客户表（.xlsx 下载，样式化表格） ──────────────────────
+app.get('/api/products/:id/export.xlsx', requireAuth, async (req, res) => {
+  const { profile, leads } = await getProductSentLeads(req.params.id, req.userId);
+  if (!profile) return res.status(404).json({ success: false, error: '产品不存在' });
+  try {
+    const ExcelJS = require('exceljs');
+    const wb = new ExcelJS.Workbook();
+    wb.creator = '智拓客';
+    const ws = wb.addWorksheet('客户开发报告', { views: [{ state: 'frozen', ySplit: 4 }] });
+
+    const INDIGO = 'FF4F46E5', ZEBRA = 'FFF8F8FD', GREEN = 'FF16A34A', GREY = 'FF6B7280', INK = 'FF17181C';
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+    const cities = [...new Set(leads.map(l => (l.city || '').split(',')[0].trim()).filter(Boolean))];
+
+    ws.columns = [
+      { width: 30 }, { width: 34 }, { width: 30 }, { width: 18 },
+      { width: 18 }, { width: 10 }, { width: 56 }, { width: 14 },
+    ];
+    ws.mergeCells('A1:H1');
+    ws.getCell('A1').value = `${profile.name} · 客户开发报告`;
+    ws.getCell('A1').font = { bold: true, size: 16, color: { argb: INK } };
+    ws.getRow(1).height = 26;
+    ws.mergeCells('A2:H2');
+    ws.getCell('A2').value = `智拓客自动生成 · ${dateStr} · 客户 ${leads.length} · 覆盖 ${cities.length} 城 · 已发精准开发邮件 ${leads.length * 5} 封`;
+    ws.getCell('A2').font = { size: 10, color: { argb: GREY } };
+
+    const header = ['公司名称', '官网', '邮箱', '电话', '城市', 'AI 判定', '判定理由', '发送时间'];
+    const hr = ws.getRow(4);
+    header.forEach((h, i) => {
+      const c = hr.getCell(i + 1);
+      c.value = h;
+      c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: INDIGO } };
+      c.alignment = { vertical: 'middle' };
+    });
+    hr.height = 20;
+
+    leads.forEach((l, i) => {
+      const sentAt = l.email_sent_at
+        ? (() => { const d = new Date(/[zZ]$|[+-]\d{2}:?\d{2}$/.test(l.email_sent_at) ? l.email_sent_at : l.email_sent_at + 'Z'); return `${d.getMonth() + 1}月${d.getDate()}日`; })()
+        : '';
+      const verdict = l.icp_score === 'pass' ? '✓ 推荐' : (l.icp_score === 'fail' ? '✗ 不推荐' : '—');
+      const row = ws.addRow([
+        l.company_name || '', l.website || '', l.email || '', l.phone || '',
+        (l.city || '').split(',')[0], verdict, l.icp_reasoning || '', sentAt,
+      ]);
+      row.getCell(1).font = { bold: true };
+      row.getCell(6).font = { bold: true, color: { argb: l.icp_score === 'pass' ? GREEN : GREY } };
+      row.getCell(7).alignment = { wrapText: true, vertical: 'top' };
+      if (i % 2) row.eachCell({ includeEmpty: true }, c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ZEBRA } }; });
+    });
+    ws.autoFilter = { from: 'A4', to: 'H4' };
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const fname = `${profile.name}-客户表-${today.toISOString().slice(0, 10)}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="leads.xlsx"; filename*=UTF-8''${encodeURIComponent(fname)}`);
+    res.send(Buffer.from(buffer));
+  } catch (e) {
+    console.error('[ProductXlsx] error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // ── 产品客户表 → Word 客户开发报告（.docx 下载） ─────────────────────────────
 app.get('/api/products/:id/export.docx', requireAuth, async (req, res) => {
   const { profile, leads } = await getProductSentLeads(req.params.id, req.userId);
