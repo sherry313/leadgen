@@ -3110,13 +3110,37 @@ app.post('/api/ai-filter-lead', requireAuth, async (req, res) => {
   const companyName = lead.name        || lead.title || lead.username || '';
   const website     = lead.website     || lead.url   || '';
   const description = lead.description || lead.bio   || '';
-  // Prefer the real scraped page text (saved during the maps/search scrape) so
-  // the qualifier reasons over actual content; fall back to the URL otherwise.
-  const websiteContent = lead.websiteText
-    ? `Website content: ${lead.websiteText}`
+
+  // Prefer the page text scraped during the original search. Leads restored
+  // from history LOST it (it was never persisted to the DB), which made every
+  // re-filter insta-fail as 信息不足 — so when it's missing but the lead has a
+  // website, fetch the page live here and judge on real content.
+  let websiteText = (lead.websiteText || '').trim();
+  if (!websiteText && website) {
+    try {
+      const axios = require('axios');
+      const htmlResp = await axios.get(website, {
+        timeout: 15000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+        maxRedirects: 5,
+        validateStatus: (s) => s < 500,
+      });
+      websiteText = String(htmlResp.data || '')
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 1500);
+    } catch (e) {
+      console.log('[ai-filter] live website fetch failed:', website, e.message);
+    }
+  }
+  const websiteContent = websiteText
+    ? `Website content: ${websiteText}`
     : `Website URL: ${website}`;
 
-  if (!lead.websiteText && description.length < 30) {
+  if (!websiteText && description.length < 30) {
     return res.json({ recommended: false, reason: '信息不足（无官网内容及公司描述），请手动判断' });
   }
 
