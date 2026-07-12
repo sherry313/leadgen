@@ -25,17 +25,41 @@
   .mini-link { font-size: 0.74rem; color: var(--sub); padding: 5px 10px; border: 1px solid var(--border); border-radius: 7px; white-space: nowrap; }
   .mini-link.danger { color: var(--danger); border-color: rgba(248,113,113,0.3); }
 
-  /* 高亮成果横幅 */
-  .hero-banner { background: linear-gradient(135deg, rgba(74,222,128,0.10), rgba(99,102,241,0.10)); border: 1px solid rgba(74,222,128,0.35); border-radius: 14px; padding: 20px 22px; margin-bottom: 12px; }
-  .hero-banner .line { font-size: 1.02rem; line-height: 1.7; color: var(--text); }
-  .hero-banner .line b.n { font-size: 1.6rem; font-weight: 800; color: var(--sent); font-variant-numeric: tabular-nums; padding: 0 3px; }
-  .hero-banner .sub { font-size: 0.72rem; color: var(--sub2); margin-top: 6px; }
-
-  .stats { display: flex; gap: 10px; margin-bottom: 26px; flex-wrap: wrap; }
-  .tile { flex: 1; min-width: 150px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
-  .tile .n { font-size: 1.4rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
-  .tile .n.gold { color: var(--cost); }
-  .tile .l { font-size: 0.73rem; color: var(--sub); margin-top: 4px; }
+  /* ── 成果驾驶舱：三节点漏斗 ── */
+  .funnel { position: relative; overflow: hidden; border: 1px solid rgba(99,102,241,0.35); border-radius: 18px; padding: 26px 26px 22px; margin-bottom: 26px;
+    background:
+      radial-gradient(420px 200px at 8% -20%, rgba(99,102,241,0.22), transparent 65%),
+      radial-gradient(420px 220px at 95% 120%, rgba(74,222,128,0.16), transparent 65%),
+      rgba(255,255,255,0.02); }
+  .funnel::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 22px 22px; opacity: 0.5; }
+  .funnel .eyebrow { position: relative; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .funnel .eyebrow .t { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; color: #a5b4fc; text-transform: uppercase; display: inline-flex; align-items: center; gap: 7px; }
+  .funnel .cost-chip { font-size: 0.72rem; color: var(--cost); border: 1px solid rgba(251,191,36,0.3); background: rgba(251,191,36,0.07); border-radius: 20px; padding: 4px 12px; font-variant-numeric: tabular-nums; }
+  .fun-row { position: relative; display: flex; align-items: stretch; gap: 0; }
+  .node { flex: 1; text-align: center; position: relative; padding: 6px 4px; }
+  .node .halo { width: 54px; height: 54px; margin: 0 auto 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
+  .node .halo .icon { width: 22px; height: 22px; }
+  .node.a .halo { background: rgba(99,102,241,0.14); border: 1px solid rgba(99,102,241,0.45); color: #a5b4fc; box-shadow: 0 0 26px rgba(99,102,241,0.28); }
+  .node.b .halo { background: rgba(139,92,246,0.14); border: 1px solid rgba(139,92,246,0.5); color: #c4b5fd; box-shadow: 0 0 26px rgba(139,92,246,0.3); }
+  .node.c .halo { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.5); color: #86efac; box-shadow: 0 0 30px rgba(74,222,128,0.3); }
+  .node .num { font-size: 2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .node.a .num { background: linear-gradient(180deg, #c7d2fe, #818cf8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .node.b .num { background: linear-gradient(180deg, #ddd6fe, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .node.c .num { font-size: 2.35rem; background: linear-gradient(180deg, #bbf7d0, #4ade80); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 34px rgba(74,222,128,0.35); }
+  .node .lbl { font-size: 0.76rem; color: var(--text); margin-top: 7px; font-weight: 600; }
+  .node .sub { font-size: 0.66rem; color: var(--sub2); margin-top: 3px; }
+  .link { width: 74px; display: flex; align-items: center; position: relative; margin-top: -26px; }
+  .link .line { height: 2px; width: 100%; border-radius: 2px; background: linear-gradient(90deg, rgba(99,102,241,0.15), rgba(99,102,241,0.6), rgba(99,102,241,0.15)); position: relative; overflow: hidden; }
+  .link .line::after { content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.85), transparent); animation: dash 2.4s linear infinite; }
+  .link.g .line { background: linear-gradient(90deg, rgba(139,92,246,0.2), rgba(74,222,128,0.6), rgba(74,222,128,0.2)); }
+  .link .arr { position: absolute; right: -1px; top: 50%; transform: translateY(-50%); color: rgba(165,180,252,0.9); font-size: 0.7rem; }
+  @keyframes dash { to { left: 110%; } }
+  @media (prefers-reduced-motion: reduce) { .link .line::after { animation: none; } }
+  .funnel .tagline { position: relative; text-align: center; margin-top: 18px; font-size: 0.84rem; color: var(--text); }
+  .funnel .tagline b { color: #86efac; }
+  .funnel .tagline .dim { color: var(--sub2); font-size: 0.7rem; margin-top: 4px; }
+  @media (max-width: 620px) { .fun-row { flex-direction: column; gap: 14px; } .link { display: none; } }
 
   .sec-label { font-size: 0.78rem; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px 2px; display: flex; align-items: center; gap: 7px; }
   .sec-label .icon { color: var(--accent); }
@@ -120,6 +144,9 @@
   <g id="i-history"><path d="M12 8v4l3 3"/><path d="M3.5 9a9 9 0 1 1-.5 4"/><path d="M3 4v5h5"/></g>
   <g id="i-doc"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></g>
   <g id="i-rocket"><path d="M5 16c-1 3-1 4-1 4s1 0 4-1M15 4c3 0 5 2 5 5-1 5-6 9-10 11-1-2-2-3-4-4C8 12 10 6 15 4z"/><circle cx="14.5" cy="9.5" r="1.6"/></g>
+  <g id="i-search2"><circle cx="10" cy="10" r="6.5"/><path d="m20.5 20.5-5.2-5.2"/></g>
+  <g id="i-target"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.4"/></g>
+  <g id="i-send"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></g>
 </defs></svg>
 
 <div class="wrap">
@@ -133,14 +160,35 @@
     <span class="mini-link">修改密码</span><span class="mini-link danger">退出</span>
   </div>
 
-  <!-- 显眼的成果横幅（原「已发邮件」格子） -->
-  <div class="hero-banner">
-    <div class="line"><svg class="icon" style="color:var(--sent)"><use href="#i-rocket"/></svg> 已为你找到 <b class="n">118</b> 个潜在客户，并发送 <b class="n">590</b> 封精准开发邮件</div>
-    <div class="sub">邮件封数 = 客户数 × 每套开发信序列封数，实时统计</div>
-  </div>
-  <div class="stats">
-    <div class="tile"><div class="n">663</div><div class="l">已抓取公司</div></div>
-    <div class="tile"><div class="n gold">$9.04</div><div class="l">累计花费</div></div>
+  <!-- 成果驾驶舱：抓取 → 精准客户 → 开发邮件 三节点漏斗 -->
+  <div class="funnel">
+    <div class="eyebrow">
+      <span class="t"><svg class="icon"><use href="#i-rocket"/></svg> 智拓客 · 已为你完成</span>
+      <span class="cost-chip">累计花费 $9.04</span>
+    </div>
+    <div class="fun-row">
+      <div class="node a">
+        <div class="halo"><svg class="icon"><use href="#i-search2"/></svg></div>
+        <div class="num">663</div>
+        <div class="lbl">扫描海外公司</div>
+        <div class="sub">Google 地图 · 官网逐家爬取</div>
+      </div>
+      <div class="link"><div class="line"></div><span class="arr">▶</span></div>
+      <div class="node b">
+        <div class="halo"><svg class="icon"><use href="#i-target"/></svg></div>
+        <div class="num">118</div>
+        <div class="lbl">锁定精准客户</div>
+        <div class="sub">AI 逐家判定 · 匹配你的产品</div>
+      </div>
+      <div class="link g"><div class="line"></div><span class="arr" style="color:rgba(134,239,172,0.9)">▶</span></div>
+      <div class="node c">
+        <div class="halo"><svg class="icon"><use href="#i-send"/></svg></div>
+        <div class="num">590</div>
+        <div class="lbl">封精准开发邮件</div>
+        <div class="sub">每客户一套个性化序列</div>
+      </div>
+    </div>
+    <div class="tagline">已为你找到 <b>118</b> 个潜在客户，并发送 <b>590</b> 封精准开发邮件<div class="dim">实时统计 · 每一封都由 AI 按客户官网内容单独撰写</div></div>
   </div>
 
   <!-- 产品品类：无编号、可重命名、带客户表按钮 -->
