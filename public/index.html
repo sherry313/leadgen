@@ -6361,7 +6361,11 @@ async function _consumeToolSse(res, kind, statusEl) {
           let msg = `完成：共 ${_toolResults[kind].length} 条`;
           if (evt.dupSkipped) msg += `（已跳过 ${evt.dupSkipped} 家重复，不占数量）`;
           if (evt.requested && evt.dupSkipped && _toolResults[kind].length < evt.requested) {
-            msg += ` — 该关键词在此地区的新公司暂时只有这些，换个关键词或城市能找到更多`;
+            msg += `。该关键词在此地区的新公司暂时只有这些`;
+            const kw = (evt.advice?.keywords || []).map(k => `${k.en}（${k.zh}）`).join('、');
+            const ct = (evt.advice?.cities || []).join('、');
+            if (kw) msg += `；AI 建议换关键词：${kw}`;
+            if (ct) msg += `；或换城市：${ct}`;
           }
           statusEl.textContent = msg;
         }

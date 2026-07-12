@@ -2905,8 +2905,32 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       const apifyCostUsd = (items || []).length * 0.002; // same per-place estimate as the legacy pipelines
       updateSearchRunCosts(searchId, { apifyCostUsd, anthropicCostUsd: 0, totalCostUsd: apifyCostUsd, totalQualified: 0, totalScraped: emitted }).catch(() => {});
     }
+    // 凑不满且确因去重（新公司挖尽）→ 让 AI 当场给替代关键词/换城市建议，
+    // 用户不用自己琢磨下一步搜什么。只在这种情况才多花一次 Haiku 零钱。
+    let advice = null;
+    if (_dupSkipped && emitted < maxResults && !aborted) {
+      try {
+        const Anthropic = require('@anthropic-ai/sdk');
+        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        const resp = await withTimeout(client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 300,
+          messages: [{ role: 'user', content: `用户在 Google 地图上找 B2B 买家客户。已用关键词："${keywords.join(', ')}"，地区："${location}"。这个组合下的新公司已基本挖尽（目标 ${maxResults} 家只找到 ${emitted} 家新的）。
+请给：
+1. 3 个不同角度的替代英文搜索关键词（必须是"会买货的买家角色"，禁止 supplier/manufacturer/factory/OEM 等卖家同行词；不要和已用关键词重复），每个配不超过 8 字的中文含义
+2. 同一个国家的 2 个其他城市（英文名）
+只返回 JSON，无 markdown：{"keywords":[{"en":"...","zh":"..."}],"cities":["...","..."]}` }],
+        }), 20000, 'GoogleMapsTool shortfall advice');
+        const parsed = JSON.parse(resp.content[0].text.replace(/```json|```/g, '').trim());
+        const SELLER_ROLE = /\b(supplier|suppliers|manufacturer|manufacturers|manufacturing|factory|factories|oem|odm)\b/i;
+        advice = {
+          keywords: (parsed.keywords || []).filter(k => k && k.en && !SELLER_ROLE.test(k.en)).slice(0, 3),
+          cities:   (parsed.cities || []).map(String).slice(0, 2),
+        };
+      } catch (e) { console.warn('[GoogleMapsTool] shortfall advice failed:', e.message); }
+    }
     // searchId lets the frontend attribute later AI-filter / email-gen costs to this run.
-    send({ type: 'done', success: true, total: emitted, requested: maxResults, dupSkipped: _dupSkipped, searchId });
+    send({ type: 'done', success: true, total: emitted, requested: maxResults, dupSkipped: _dupSkipped, advice, searchId });
   } catch (err) {
     console.error('[GoogleMapsTool] error:', err.message);
     send({ type: 'error', error: err.message || 'Google Maps 抓取失败' });
