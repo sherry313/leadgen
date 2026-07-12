@@ -47,6 +47,8 @@
   .p-chip b { max-width: 210px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
   .p-chip .use { font-size: 0.72rem; color: #a5b4fc; background: var(--accent-soft); border: 1px solid rgba(99,102,241,0.4); border-radius: 6px; padding: 3px 9px; cursor: default; }
   .p-chip .mini { color: var(--sub2); font-size: 0.78rem; cursor: default; }
+  .p-num { width: 20px; height: 20px; border-radius: 6px; background: var(--accent-soft); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .row .ptag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; color: #a5b4fc; background: var(--accent-soft); border: 1px solid rgba(99,102,241,0.35); border-radius: 5px; padding: 1px 7px; white-space: nowrap; flex-shrink: 0; }
   .p-add { font-size: 0.76rem; color: var(--sub); border: 1px dashed var(--border); border-radius: 10px; padding: 9px 13px; cursor: default; }
 
   /* ── 历史记录：单行卡 ── */
@@ -123,7 +125,8 @@
     <span class="right"></span>
   </div>
   <div class="prod-row">
-    <div class="p-chip"><svg class="icon"><use href="#i-box"/></svg><b>系统门窗、全屋定制家居、卫浴</b><span class="use">→ 使用</span><span class="mini">✎</span><span class="mini">🗑</span></div>
+    <div class="p-chip"><span class="p-num">1</span><b>门窗卫浴全案</b><span class="use">→ 使用中</span><span class="mini" title="重命名">✎</span><span class="mini">🗑</span></div>
+    <div class="p-chip" style="opacity:0.75"><span class="p-num">2</span><b>户外遮阳篷</b><span class="use" style="background:transparent;border-color:var(--border);color:var(--sub)">使用</span><span class="mini" title="重命名">✎</span><span class="mini">🗑</span></div>
     <div class="p-add">＋ 保存当前产品</div>
   </div>
 
@@ -137,7 +140,7 @@
   </div>
 
   <div class="row">
-    <div class="main"><span class="q">建材</span><span class="loc">澳大利亚·悉尼</span></div>
+    <div class="main"><span class="ptag">1·门窗卫浴全案</span><span class="q">建材</span><span class="loc">澳大利亚·悉尼</span></div>
     <span class="nums"><span class="g">已发 2</span> / 10 · <span class="c">$0.39</span></span>
     <span class="when">7月10日 21:55</span>
     <div class="acts">
@@ -148,7 +151,7 @@
   </div>
 
   <div class="row" style="border-color:rgba(99,102,241,0.35)">
-    <div class="main"><span class="q">全屋翻新公司</span><span class="loc">新西兰·奥克兰</span></div>
+    <div class="main"><span class="ptag">1·门窗卫浴全案</span><span class="q">全屋翻新公司</span><span class="loc">新西兰·奥克兰</span></div>
     <span class="nums"><span class="g">已发 15</span> / 88 · <span class="c">$4.09</span></span>
     <span class="when">7月10日 14:21</span>
     <div class="acts menu-demo">
@@ -163,7 +166,7 @@
   </div>
 
   <div class="row" style="margin-top:34px">
-    <div class="main"><span class="q">翻新公司</span><span class="loc">澳大利亚·悉尼</span></div>
+    <div class="main"><span class="ptag">2·户外遮阳篷</span><span class="q">翻新公司</span><span class="loc">澳大利亚·悉尼</span></div>
     <span class="nums"><span class="g">已发 5</span> / 50 · <span class="c">$1.95</span></span>
     <span class="when">7月10日 14:06</span>
     <div class="acts">
@@ -180,7 +183,8 @@
     ③ <span class="old">免费额度进度条</span>：只对受限用户显示，你（不限额）看不到它；<br>
     ④ 产品品类两行说明 → 标题旁一句小字；产品卡瘦身成一行 chip；<br>
     ⑤ 历史卡片两行 → <b>一行</b>：抓取/已发合并成「已发 x / 总数」，时间只留「7月10日 21:55」一种（鼠标悬停显示"2天前"）；<br>
-    ⑥ 按钮 4 → 2+1：留<b>客户表</b>、<b>查看线索</b>，<span class="old">重新搜</span>和<span class="old">删除</span>收进「⋯」菜单（第二张卡演示了菜单打开的样子）。功能都在，界面清爽一半。
+    ⑥ 按钮 4 → 2+1：留<b>客户表</b>、<b>查看线索</b>，<span class="old">重新搜</span>和<span class="old">删除</span>收进「⋯」菜单（第二张卡演示了菜单打开的样子）。功能都在，界面清爽一半。<br>
+    ⑦ <b>产品编号 + 自定义名</b>：每个产品品类有固定编号（1、2、3…，删除不影响其他编号），✎ 随时重命名；「使用」某个产品后跑的每条搜索，记录上自动挂<b>紫色产品标签</b>（如「1·门窗卫浴全案」），哪条线索是哪个产品跑的一眼分清。旧记录没有标签（当时没记录是哪个产品跑的），从上线后开始挂。
   </div>
 </div>
 </body>
