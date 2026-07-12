@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lens 报价生成器</title>
+  <title>报价生成器 Quote Generator</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🪟</text></svg>">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -348,8 +348,8 @@
   <div class="container" id="app">
     <div class="header">
       <div>
-        <div class="logo">Lens 铝合金门窗</div>
-        <div class="header-sub">内部报价工具 · Factory Direct — Foshan, China</div>
+        <div class="logo">铝合金门窗报价</div>
+        <div class="header-sub">内部报价工具 · Factory Direct</div>
       </div>
     </div>
 
@@ -444,8 +444,8 @@
 
         <div class="row">
           <div class="field">
-            <label>汇率 AUD/CNY</label>
-            <input id="exchangeRate" type="number" min="0" step="0.01" value="4.7">
+            <label>汇率 USD/CNY</label>
+            <input id="exchangeRate" type="number" min="0" step="0.01" value="7.2">
           </div>
           <div class="field"></div>
         </div>
@@ -511,21 +511,21 @@
         </div>
 
         <div class="calc-row">
-          <span class="label">总成本 AUD</span>
-          <span class="val">A$<span id="calcTotalCostAud">321</span></span>
+          <span class="label">总成本 USD</span>
+          <span class="val">$<span id="calcTotalCostAud">209</span></span>
         </div>
 
         <div class="calc-row final">
-          <span class="label">报价 Quote AUD</span>
-          <span class="val">A$<span id="calcQuoteAud">458</span></span>
+          <span class="label">报价 Quote USD</span>
+          <span class="val">$<span id="calcQuoteAud">299</span></span>
         </div>
 
         <div class="calc-row profit">
-          <span class="label">利润 Profit AUD</span>
-          <span class="val">A$<span id="calcProfitAud">137</span></span>
+          <span class="label">利润 Profit USD</span>
+          <span class="val">$<span id="calcProfitAud">90</span></span>
         </div>
 
-        <div class="calc-sub">报价 AUD/m²: A$<span id="calcQuotePerSqm">204</span></div>
+        <div class="calc-sub">报价 USD/m²: $<span id="calcQuotePerSqm">133</span></div>
 
         <button class="pdf-btn" id="pdfBtn" onclick="generatePdf()">📄 生成报价单 PDF</button>
         <button class="email-btn" id="emailBtn" onclick="openSendPreview()">✉️ 发送报价单到客户邮箱</button>
@@ -646,7 +646,7 @@
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
       const rand = String(Math.floor(1000 + Math.random() * 9000));
-      return `LENS-${yyyy}${mm}${dd}-${rand}`;
+      return `QT-${yyyy}${mm}${dd}-${rand}`;
     }
 
     function formatDate(d) {
@@ -691,10 +691,10 @@
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(20);
-      doc.text('Lens Aluminium Windows & Doors', margin, 15);
+      doc.text('Aluminium Windows & Doors', margin, 15);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.text('Factory Direct — Foshan, China', margin, 23);
+      doc.text('Factory Direct Quotation', margin, 23);
 
       doc.setFontSize(9);
       doc.text(`Quote No: ${qn}`, pageW - margin, 14, { align: 'right' });
@@ -720,8 +720,8 @@
         { label: 'Size (mm)',      w: 26 },
         { label: 'm²',             w: 14 },
         { label: 'Specification',  w: 60 },
-        { label: 'AUD/m²',         w: 22 },
-        { label: 'Total AUD',      w: 20 },
+        { label: 'USD/m²',         w: 22 },
+        { label: 'Total USD',      w: 20 },
       ];
       const tableX = margin;
       const tableW = cols.reduce((s, c) => s + c.w, 0);
@@ -752,8 +752,8 @@
         sizeStr,
         c.area.toFixed(2),
         spec,
-        `A$ ${fmt(c.quotePerSqm)}`,
-        `A$ ${fmt(c.quoteAud)}`,
+        `US$ ${fmt(c.quotePerSqm)}`,
+        `US$ ${fmt(c.quoteAud)}`,
       ];
       cx = tableX;
       cells.forEach((txt, i) => {
@@ -767,7 +767,7 @@
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.setTextColor(37, 99, 235);
-      doc.text(`TOTAL: A$ ${fmt(c.quoteAud)}`, pageW - margin, y + 4, { align: 'right' });
+      doc.text(`TOTAL: US$ ${fmt(c.quoteAud)}`, pageW - margin, y + 4, { align: 'right' });
       y += 14;
 
       // Notes
@@ -775,7 +775,7 @@
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       const notes = [
-        'Prices in Australian Dollars (AUD), EXW Foshan unless otherwise stated.',
+        'Prices in US Dollars (USD), EXW unless otherwise stated.',
         'Quote valid for 30 days from issue date.',
         'Lead time: 25–35 working days from deposit. Payment: 30% deposit / 70% before shipment.',
       ];
@@ -788,7 +788,7 @@
       doc.setTextColor(226, 232, 240);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      doc.text('20 years experience  |  300,000m² factory  |  zhuolu34@gmail.com  |  +86 187 8960 4353',
+      doc.text('Thank you for your business.',
         pageW / 2, footerY + 11, { align: 'center' });
 
       doc.save(`${qn}.pdf`);
@@ -842,8 +842,8 @@
       $('prvSize').textContent    = sizeStr;
       $('prvArea').textContent    = `${c.area.toFixed(2)} m²`;
       $('prvSpec').textContent    = spec;
-      $('prvQuote').textContent   = `AUD $${fmt(c.quoteAud)}`;
-      $('prvProfit').textContent  = `AUD $${fmt(c.profitAud)}`;
+      $('prvQuote').textContent   = `USD $${fmt(c.quoteAud)}`;
+      $('prvProfit').textContent  = `USD $${fmt(c.profitAud)}`;
 
       $('previewModal').style.display = 'flex';
       document.body.style.overflow = 'hidden';

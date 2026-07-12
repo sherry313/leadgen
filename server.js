@@ -2377,8 +2377,8 @@ function _buildQuoteEmailHtml(q) {
   <tr><td align="center">
     <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
       <tr><td style="background:#1d4ed8;padding:24px 28px;color:#ffffff">
-        <div style="font-size:22px;font-weight:700;letter-spacing:-0.3px">Lens Aluminium Windows &amp; Doors</div>
-        <div style="font-size:13px;opacity:0.85;margin-top:4px">Factory Direct — Foshan, China</div>
+        <div style="font-size:22px;font-weight:700;letter-spacing:-0.3px">Aluminium Windows &amp; Doors</div>
+        <div style="font-size:13px;opacity:0.85;margin-top:4px">Factory Direct Quotation</div>
       </td></tr>
 
       <tr><td style="padding:28px">
@@ -2406,7 +2406,7 @@ function _buildQuoteEmailHtml(q) {
           <tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;color:#1e293b">Specification</td>
               <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;text-align:right">${e(q.specification)}</td></tr>
           <tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;color:#1e293b">Unit price</td>
-              <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;text-align:right">A$ ${e(q.unitPriceAud)} / m²</td></tr>
+              <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13.5px;text-align:right">US$ ${e(q.unitPriceAud)} / m²</td></tr>
         </table>
 
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin-bottom:18px">
@@ -2414,20 +2414,19 @@ function _buildQuoteEmailHtml(q) {
             <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
               <tr>
                 <td style="font-size:13px;color:#1e40af;font-weight:600;letter-spacing:0.02em;text-transform:uppercase">Total</td>
-                <td align="right" style="font-size:22px;font-weight:800;color:#1d4ed8;letter-spacing:-0.5px">AUD $${e(q.totalAud)}</td>
+                <td align="right" style="font-size:22px;font-weight:800;color:#1d4ed8;letter-spacing:-0.5px">USD $${e(q.totalAud)}</td>
               </tr>
             </table>
           </td></tr>
         </table>
 
         <p style="font-size:12.5px;color:#64748b;margin:0 0 4px">Valid until <strong style="color:#1e293b">${e(q.validUntil)}</strong></p>
-        <p style="font-size:12px;color:#94a3b8;margin:0 0 4px">Prices in Australian Dollars (AUD), EXW Foshan unless otherwise stated.</p>
+        <p style="font-size:12px;color:#94a3b8;margin:0 0 4px">Prices in US Dollars (USD), EXW unless otherwise stated.</p>
         <p style="font-size:12px;color:#94a3b8;margin:0">Lead time: 25–35 working days from deposit. Payment: 30% deposit / 70% before shipment.</p>
       </td></tr>
 
       <tr><td style="background:#0f172a;padding:18px 28px;color:#cbd5e1;font-size:12px;text-align:center;line-height:1.6">
-        <div>20 years manufacturing experience &nbsp;|&nbsp; 300,000m² factory in Foshan</div>
-        <div style="margin-top:4px">zhuolu34@gmail.com &nbsp;|&nbsp; +86 187 8960 4353</div>
+        <div>Thank you for your business.</div>
       </td></tr>
     </table>
   </td></tr>
@@ -2449,9 +2448,9 @@ app.post('/api/send-quote', async (req, res) => {
 
   try {
     const info = await _gmailTransporter.sendMail({
-      from: `"Lens Aluminium Windows & Doors" <${process.env.GMAIL_USER}>`,
+      from: `"Aluminium Windows & Doors" <${process.env.GMAIL_USER}>`,
       to:      q.customerEmail,
-      subject: `Your Quote from Lens Aluminium Windows & Doors — ${q.quoteNumber}`,
+      subject: `Your Quotation — ${q.quoteNumber}`,
       html:    _buildQuoteEmailHtml(q),
     });
     console.log(`[Quote] Sent to ${q.customerEmail} (${q.quoteNumber}) messageId=${info.messageId}`);
