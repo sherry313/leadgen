@@ -194,9 +194,20 @@
     .menu-pop .mi.danger { color: var(--danger); }
     .menu-pop .mi.danger:hover { background: rgba(248,113,113,0.08); }
 
-    .pg-btn { padding: 6px 13px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; background: var(--card); border: 1px solid var(--border); color: var(--sub); transition: all 0.15s; }
-    .pg-btn:hover { border-color: rgba(99,102,241,0.5); color: var(--text); }
-    .pg-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    /* ── 历史分组窗口 ── */
+    .grp { margin-bottom: 9px; }
+    .grp-head { display: flex; align-items: center; gap: 9px; background: var(--card); border: 1px solid var(--border); border-radius: 11px; padding: 12px 15px; cursor: pointer; user-select: none; transition: border-color 0.15s; }
+    .grp-head:hover { border-color: rgba(99,102,241,0.4); }
+    .grp-head .chev { color: var(--sub2); font-size: 0.9rem; transition: transform 0.15s; flex-shrink: 0; }
+    .grp-head.open { border-color: rgba(99,102,241,0.4); border-radius: 11px 11px 0 0; }
+    .grp-head.open .chev { transform: rotate(90deg); color: #a5b4fc; }
+    .grp-head .gname { font-size: 0.88rem; font-weight: 700; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .grp-head .gstats { font-size: 0.74rem; color: var(--sub); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .grp-head .gstats .g { color: var(--sent); font-weight: 600; }
+    .grp-head .gstats .c { color: var(--cost); font-weight: 600; }
+    .grp-body { border: 1px solid rgba(99,102,241,0.25); border-top: none; border-radius: 0 0 11px 11px; padding: 8px; background: rgba(255,255,255,0.015); }
+    .grp-body .row { margin-bottom: 6px; }
+    .grp-body .row:last-child { margin-bottom: 0; }
 
     .empty-msg { text-align: center; padding: 40px 24px; color: var(--sub); font-size: 0.85rem; }
     .empty-msg a { color: #a5b4fc; }
@@ -282,7 +293,6 @@
     <a href="/app" class="btn-new"><i class="ti ti-plus"></i> 新建搜索</a>
   </div>
   <div id="histList"><div class="empty-msg"><span class="spinner"></span>加载中…</div></div>
-  <div id="pagination" style="display:flex; justify-content:center; gap:8px; margin-top:20px; flex-wrap:wrap;"></div>
 </div>
 
 <footer style="border-top:1px solid var(--border);padding:2rem 6%;text-align:center;color:var(--sub2);font-size:0.78rem;margin-top:3rem">
@@ -498,41 +508,58 @@
     renderPage(1);
   }
 
-  function renderPage(page) {
-    _page = page;
-    const start = (page - 1) * PAGE_SIZE;
-    const slice = _filtered.slice(start, start + PAGE_SIZE);
-    const total = _filtered.length;
+  // 历史记录按产品分组：每个产品一个可折叠窗口（和产品品类同一套交互），
+  // 点开才看到里面的每条搜索。没挂产品的记录归到「未分类」。
+  const _openGroups = new Set();
 
+  function _histRow(r) {
+    const cost = r.total_cost_usd != null ? Number(r.total_cost_usd).toFixed(2) : '0.00';
+    return '<div class="row" data-id="' + r.id + '">' +
+      '<div class="rmain">' +
+        '<span class="q" title="' + esc(r.query) + '">' + (esc(r._zhTitle) || esc(r.query) || '(无关键词)') + '</span>' +
+        '<span class="loc">' + (esc(r._zhLoc) || esc(r.location) || '') + '</span>' +
+      '</div>' +
+      '<span class="nums"><span class="g">已发 ' + (r.sent_count || 0) + '</span> / ' + (r.total_scraped || 0) + ' · <span class="c">$' + cost + '</span></span>' +
+      '<span class="when" title="' + esc(timeAgo(r.created_at)) + '">' + fmtWhen(r.created_at) + '</span>' +
+      '<div class="acts">' +
+        '<button class="b view" onclick="viewSearch(\'' + r.id + '\')"><i class="ti ti-eye"></i> 查看线索</button>' +
+        '<button class="b more" onclick="toggleRowMenu(event, \'' + r.id + '\', \'' + jsStr(r.query) + '\', \'' + jsStr(r.location) + '\')"><i class="ti ti-dots"></i></button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderPage() {
     const list = document.getElementById('histList');
-    if (!slice.length) {
+    if (!_filtered.length) {
       list.innerHTML = '<div class="empty-msg">暂无搜索记录，<a href="/app">立即开始拓客 →</a></div>';
-      document.getElementById('pagination').innerHTML = '';
       return;
     }
-
-    list.innerHTML = slice.map(r => {
-      const cost = r.total_cost_usd != null ? Number(r.total_cost_usd).toFixed(2) : '0.00';
-      return '<div class="row" data-id="' + r.id + '">' +
-        '<div class="rmain">' +
-          (r.product_label ? '<span class="ptag" title="' + esc(r.product_label) + '">' + esc(r.product_label) + '</span>' : '') +
-          '<span class="q" title="' + esc(r.query) + '">' + (esc(r._zhTitle) || esc(r.query) || '(无关键词)') + '</span>' +
-          '<span class="loc">' + (esc(r._zhLoc) || esc(r.location) || '') + '</span>' +
+    // 分组（保持时间倒序），过滤时自动展开有命中的组
+    const filtering = _filtered.length !== _allHistory.length;
+    const groups = new Map();
+    _filtered.forEach(r => {
+      const key = r.product_label || '未分类';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    });
+    list.innerHTML = [...groups.entries()].map(([name, rows]) => {
+      const open = filtering || _openGroups.has(name);
+      const sent = rows.reduce((s, x) => s + (x.sent_count || 0), 0);
+      const cost = rows.reduce((s, x) => s + (x.total_cost_usd || 0), 0);
+      return '<div class="grp">' +
+        '<div class="grp-head' + (open ? ' open' : '') + '" onclick="toggleGroup(\'' + jsStr(name) + '\')">' +
+          '<i class="ti ti-chevron-right chev"></i>' +
+          '<span class="gname" title="' + esc(name) + '">' + esc(name) + '</span>' +
+          '<span class="gstats">' + rows.length + ' 次搜索 · <span class="g">已发 ' + sent + '</span> · <span class="c">$' + cost.toFixed(2) + '</span></span>' +
         '</div>' +
-        '<span class="nums"><span class="g">已发 ' + (r.sent_count || 0) + '</span> / ' + (r.total_scraped || 0) + ' · <span class="c">$' + cost + '</span></span>' +
-        '<span class="when" title="' + esc(timeAgo(r.created_at)) + '">' + fmtWhen(r.created_at) + '</span>' +
-        '<div class="acts">' +
-          '<button class="b view" onclick="viewSearch(\'' + r.id + '\')"><i class="ti ti-eye"></i> 查看线索</button>' +
-          '<button class="b more" onclick="toggleRowMenu(event, \'' + r.id + '\', \'' + jsStr(r.query) + '\', \'' + jsStr(r.location) + '\')"><i class="ti ti-dots"></i></button>' +
-        '</div>' +
+        (open ? '<div class="grp-body">' + rows.map(_histRow).join('') + '</div>' : '') +
       '</div>';
     }).join('');
+  }
 
-    const pages = Math.ceil(total / PAGE_SIZE);
-    const pg = document.getElementById('pagination');
-    pg.innerHTML = pages <= 1 ? '' : Array.from({ length: pages }, (_, i) => i + 1).map(p =>
-      '<button class="pg-btn' + (p === page ? ' active' : '') + '" onclick="renderPage(' + p + ')">' + p + '</button>'
-    ).join('');
+  function toggleGroup(name) {
+    if (_openGroups.has(name)) _openGroups.delete(name); else _openGroups.add(name);
+    renderPage();
   }
 
   function viewSearch(id) { location.href = '/app?search=' + id; }
