@@ -8014,6 +8014,13 @@ async function loadSearchById(searchId) {
       setStatus('未找到该搜索记录或暂无线索', 'done');
       return;
     }
+    // Race guard: on a fast /api/history response (small batches) this resolves
+    // BEFORE the later script block that mounts #appAiPanel and defines
+    // setAppLeads — the branch below then silently fell through to the legacy
+    // read-only view. Wait for the parser to finish so the check is real.
+    if (location.pathname !== '/lens' && typeof window.setAppLeads !== 'function' && document.readyState === 'loading') {
+      await new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }));
+    }
     // /app: restore the batch into the runnable pipeline (筛选结果 lead list)
     // instead of the legacy read-only view, so an interrupted run (quota ran
     // out / page closed) can continue through AI 筛选 → 邮件 → 推送 without
