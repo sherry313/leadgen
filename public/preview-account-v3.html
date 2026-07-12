@@ -65,14 +65,28 @@
   .sec-label .icon { color: var(--accent); }
   .sec-label .tip { font-size: 0.7rem; color: var(--sub2); font-weight: 400; text-transform: none; letter-spacing: 0; }
 
-  .prod-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
-  .p-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 9px 13px; font-size: 0.8rem; }
-  .p-chip b { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
-  .p-chip .btn-s { font-size: 0.72rem; border-radius: 6px; padding: 3px 9px; border: 1px solid; }
-  .p-chip .use { color: #a5b4fc; background: var(--accent-soft); border-color: rgba(99,102,241,0.4); }
-  .p-chip .tbl { color: #86efac; background: rgba(74,222,128,0.10); border-color: rgba(74,222,128,0.35); }
-  .p-chip .mini { color: var(--sub2); font-size: 0.78rem; }
-  .p-add { font-size: 0.76rem; color: var(--sub); border: 1px dashed var(--border); border-radius: 10px; padding: 9px 13px; }
+  .prod-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; align-items: stretch; }
+  .p-card { position: relative; overflow: hidden; width: 232px; background: var(--card); border: 1px solid var(--border); border-radius: 13px; padding: 13px 14px 12px 17px; transition: transform 0.15s, border-color 0.15s; }
+  .p-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, #6366f1, #4ade80); opacity: 0.35; }
+  .p-card.active { border-color: rgba(99,102,241,0.45); background:
+      radial-gradient(200px 110px at 100% 0%, rgba(99,102,241,0.14), transparent 70%), var(--card); }
+  .p-card.active::before { opacity: 1; box-shadow: 0 0 12px rgba(99,102,241,0.5); }
+  .p-card:hover { transform: translateY(-1px); border-color: rgba(99,102,241,0.4); }
+  .p-card .head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+  .p-card .name { font-size: 0.88rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .p-card .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.8); flex-shrink: 0; }
+  .p-card .live-txt { font-size: 0.64rem; color: #86efac; white-space: nowrap; }
+  .p-card .pstats { font-size: 0.7rem; color: var(--sub2); margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+  .p-card .pstats b { color: var(--sub); font-weight: 600; }
+  .p-card .acts { display: flex; gap: 5px; align-items: center; }
+  .p-card .btn-s { font-size: 0.72rem; border-radius: 6px; padding: 4px 10px; border: 1px solid; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-family: inherit; background: transparent; }
+  .p-card .use { color: #a5b4fc; background: var(--accent-soft); border-color: rgba(99,102,241,0.4); }
+  .p-card .tbl { color: #86efac; background: rgba(74,222,128,0.10); border-color: rgba(74,222,128,0.35); }
+  .p-card .mini { color: var(--sub2); font-size: 0.76rem; margin-left: auto; cursor: pointer; }
+  .p-card .mini + .mini { margin-left: 2px; }
+  .p-card.idle { opacity: 0.78; }
+  .p-add { display: flex; align-items: center; justify-content: center; width: 130px; font-size: 0.76rem; color: var(--sub); border: 1px dashed var(--border); border-radius: 13px; cursor: pointer; transition: all 0.15s; }
+  .p-add:hover { color: #a5b4fc; border-color: rgba(99,102,241,0.4); }
 
   /* 产品客户表（展开态） */
   .lead-panel { border: 1px solid rgba(74,222,128,0.3); border-radius: 12px; background: rgba(255,255,255,0.02); padding: 14px 16px; margin: 4px 0 28px; }
@@ -194,13 +208,29 @@
   <!-- 产品品类：无编号、可重命名、带客户表按钮 -->
   <div class="sec-label"><svg class="icon"><use href="#i-box"/></svg> 产品品类 <span class="tip">名称随你改，改完历史记录同步显示</span></div>
   <div class="prod-row">
-    <div class="p-chip" style="border-color:rgba(74,222,128,0.4)"><b>门窗卫浴全案</b><span class="btn-s tbl"><svg class="icon"><use href="#i-table"/></svg> 客户表</span><span class="btn-s use">→ 使用中</span><span class="mini">✎</span><span class="mini">🗑</span></div>
-    <div class="p-chip" style="opacity:0.7"><b>户外遮阳篷</b><span class="btn-s tbl"><svg class="icon"><use href="#i-table"/></svg> 客户表</span><span class="btn-s use" style="background:transparent;border-color:var(--border);color:var(--sub)">使用</span><span class="mini">✎</span><span class="mini">🗑</span></div>
+    <div class="p-card active">
+      <div class="head"><span class="name">门窗卫浴全案</span><span class="live-dot"></span><span class="live-txt">使用中</span></div>
+      <div class="pstats">客户 <b>118</b> · 已发 <b>118</b> · 最近 今天</div>
+      <div class="acts">
+        <button class="btn-s tbl" onclick="var p=document.getElementById('prodPanel'); p.style.display = p.style.display==='none' ? '' : 'none'"><svg class="icon"><use href="#i-table"/></svg> 客户表</button>
+        <span class="btn-s use">→ 使用中</span>
+        <span class="mini" title="重命名">✎</span><span class="mini">🗑</span>
+      </div>
+    </div>
+    <div class="p-card idle">
+      <div class="head"><span class="name">户外遮阳篷</span></div>
+      <div class="pstats">客户 <b>0</b> · 还没跑过搜索</div>
+      <div class="acts">
+        <span class="btn-s tbl" style="opacity:0.55"><svg class="icon"><use href="#i-table"/></svg> 客户表</span>
+        <span class="btn-s use" style="background:transparent;border-color:var(--border);color:var(--sub)">使用</span>
+        <span class="mini" title="重命名">✎</span><span class="mini">🗑</span>
+      </div>
+    </div>
     <div class="p-add">＋ 保存当前产品</div>
   </div>
 
-  <!-- 产品客户表展开态 -->
-  <div class="lead-panel">
+  <!-- 产品客户表：默认收起，点上面的「客户表」按钮展开/收起（预览里真的可以点） -->
+  <div class="lead-panel" id="prodPanel" style="display:none">
     <div class="lp-head">
       <div class="lp-stats"><b>门窗卫浴全案</b> · 客户 <b>118</b> · <span class="g">已发邮件 118</span> · 覆盖 悉尼/奥克兰/墨尔本</div>
       <span class="lp-btn"><svg class="icon"><use href="#i-doc"/></svg> 导出 Word 文档</span>
