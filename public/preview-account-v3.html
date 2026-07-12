@@ -61,6 +61,25 @@
   .funnel .tagline .dim { color: var(--sub2); font-size: 0.7rem; margin-top: 4px; }
   @media (max-width: 620px) { .fun-row { flex-direction: column; gap: 14px; } .link { display: none; } }
 
+  /* ── 成果条 v2：极简 + 数字滚动 + 纸飞机 ── */
+  .hero2 { position: relative; overflow: hidden; border: 1px solid rgba(74,222,128,0.28); border-radius: 16px; padding: 26px 24px 20px; margin-bottom: 26px; text-align: center;
+    background: radial-gradient(500px 160px at 50% -40%, rgba(74,222,128,0.10), transparent 70%), rgba(255,255,255,0.02); }
+  .hero2 .h2-line { position: relative; font-size: 1.08rem; font-weight: 600; color: var(--text); letter-spacing: 0.01em; }
+  .hero2 .cnt { display: inline-block; min-width: 2ch; font-size: 1.9rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; padding: 0 2px; vertical-align: -2px; }
+  .hero2 .cnt.g  { background: linear-gradient(180deg, #bbf7d0, #4ade80); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero2 .cnt.g2 { background: linear-gradient(180deg, #c7d2fe, #818cf8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero2 .h2-foot { position: relative; font-size: 0.7rem; color: var(--sub2); margin-top: 9px; }
+  .hero2 .plane { position: absolute; top: 46%; left: -36px; width: 19px; height: 19px; fill: none; stroke: rgba(134,239,172,0.85); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    transform: rotate(12deg); animation: fly 3.6s cubic-bezier(0.4, 0, 0.5, 1) 0.4s 1 forwards; opacity: 0; }
+  @keyframes fly {
+    0%   { opacity: 0; left: -36px;  top: 62%; transform: rotate(18deg) scale(0.9); }
+    12%  { opacity: 1; }
+    55%  { top: 28%; transform: rotate(6deg) scale(1); }
+    88%  { opacity: 1; }
+    100% { opacity: 0; left: 104%; top: 34%; transform: rotate(10deg) scale(0.95); }
+  }
+  @media (prefers-reduced-motion: reduce) { .hero2 .plane { animation: none; opacity: 0; } }
+
   .sec-label { font-size: 0.78rem; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px 2px; display: flex; align-items: center; gap: 7px; }
   .sec-label .icon { color: var(--accent); }
   .sec-label .tip { font-size: 0.7rem; color: var(--sub2); font-weight: 400; text-transform: none; letter-spacing: 0; }
@@ -174,35 +193,11 @@
     <span class="mini-link">修改密码</span><span class="mini-link danger">退出</span>
   </div>
 
-  <!-- 成果驾驶舱：抓取 → 精准客户 → 开发邮件 三节点漏斗 -->
-  <div class="funnel">
-    <div class="eyebrow">
-      <span class="t"><svg class="icon"><use href="#i-rocket"/></svg> 智拓客 · 已为你完成</span>
-      <span class="cost-chip">累计花费 $9.04</span>
-    </div>
-    <div class="fun-row">
-      <div class="node a">
-        <div class="halo"><svg class="icon"><use href="#i-search2"/></svg></div>
-        <div class="num">663</div>
-        <div class="lbl">扫描海外公司</div>
-        <div class="sub">Google 地图 · 官网逐家爬取</div>
-      </div>
-      <div class="link"><div class="line"></div><span class="arr">▶</span></div>
-      <div class="node b">
-        <div class="halo"><svg class="icon"><use href="#i-target"/></svg></div>
-        <div class="num">118</div>
-        <div class="lbl">锁定精准客户</div>
-        <div class="sub">AI 逐家判定 · 匹配你的产品</div>
-      </div>
-      <div class="link g"><div class="line"></div><span class="arr" style="color:rgba(134,239,172,0.9)">▶</span></div>
-      <div class="node c">
-        <div class="halo"><svg class="icon"><use href="#i-send"/></svg></div>
-        <div class="num">590</div>
-        <div class="lbl">封精准开发邮件</div>
-        <div class="sub">每客户一套个性化序列</div>
-      </div>
-    </div>
-    <div class="tagline">已为你找到 <b>118</b> 个潜在客户，并发送 <b>590</b> 封精准开发邮件<div class="dim">实时统计 · 每一封都由 AI 按客户官网内容单独撰写</div></div>
+  <!-- 成果条：一句话 + 数字滚动 + 纸飞机划过 -->
+  <div class="hero2">
+    <svg class="plane" viewBox="0 0 24 24"><use href="#i-send"/></svg>
+    <div class="h2-line">已为你找到 <span class="cnt g" data-to="118">0</span> 位精准客户，发出 <span class="cnt g2" data-to="590">0</span> 封开发邮件</div>
+    <div class="h2-foot">扫描 663 家海外公司 · 累计花费 $9.04</div>
   </div>
 
   <!-- 产品品类：无编号、可重命名、带客户表按钮 -->
@@ -303,5 +298,18 @@
     3️⃣ 需要在数据库加两样东西：搜索记录表加一列 <b>product_label</b>（挂产品名用）—— 数据库结构变更，需要你批准。
   </div>
 </div>
+<script>
+  // 数字滚动：0 → 目标值，1.4 秒缓出
+  document.querySelectorAll('.cnt').forEach(el => {
+    const to = parseInt(el.dataset.to, 10) || 0;
+    const t0 = performance.now(), dur = 1400;
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / dur);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+</script>
 </body>
 </html>
