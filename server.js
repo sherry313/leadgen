@@ -3519,6 +3519,29 @@ Return ONLY valid JSON, no markdown:
   }
 });
 
+// ── 自定义关键词：中文 → 英文搜索短语（Haiku 秒翻） ──────────────────────────
+// 地图搜索只认英文；用户输入中文时前端调这里翻一下再入列。
+app.post('/api/translate-keyword', requireAuth, async (req, res) => {
+  const text = String(req.body?.text || '').trim();
+  if (!text) return res.status(400).json({ success: false, error: 'text required' });
+  if (!/[一-鿿]/.test(text)) return res.json({ success: true, en: text.toLowerCase(), zh: '' });
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const r = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 60,
+      messages: [{ role: 'user', content: `把这个中文"客户/商家类型"翻译成适合在海外 Google 地图搜索的英文短语（2-4 个词，全小写，只返回短语本身，不要引号不要解释）：${text}` }],
+    }), 15000, 'translate-keyword');
+    const en = (r.content[0].text || '').trim().split('\n')[0].replace(/^["']|["']$/g, '').toLowerCase();
+    if (!en) throw new Error('empty translation');
+    res.json({ success: true, en, zh: text });
+  } catch (e) {
+    console.error('[TranslateKw] error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // Identity code → Chinese label, shared by the advantage / polish endpoints.
 const _IDENTITY_LABEL = { factory: '工厂', trade: '外贸公司', both: '工贸一体' };
 const _IDENTITY_ANGLE = {

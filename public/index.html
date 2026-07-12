@@ -5930,13 +5930,48 @@ function mountKwDropdown(p) {
     if (!toggle.contains(e.target) && !panel.contains(e.target)) panel.style.display = 'none';
   });
 
-  customInput.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    const val = customInput.value.trim();
-    if (val && !selected.some(s => s.en === val)) selected.push({ en: val, zh: '自定义' });
+  // 自定义添加：中文自动秒翻成英文关键词（地图只认英文），英文原样加入。
+  // 加「添加」按钮 — 中文输入法的回车会先被候选框吃掉，只靠回车会"没反应"。
+  async function addCustomKeyword() {
+    const raw = customInput.value.trim();
+    if (!raw) return;
+    let entry = { en: raw, zh: '自定义' };
+    if (/[一-鿿]/.test(raw)) {
+      customInput.disabled = true;
+      statusEl.style.display = 'block';
+      statusEl.textContent = '正在把「' + raw + '」翻成英文搜索词…';
+      try {
+        const r = await fetch('/api/translate-keyword', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getStoredToken() },
+          body: JSON.stringify({ text: raw }),
+        });
+        const d = await r.json();
+        if (!d.en) throw new Error(d.error || '翻译失败');
+        entry = { en: d.en, zh: raw };
+        statusEl.style.display = 'none';
+      } catch (e) {
+        statusEl.textContent = '翻译失败：' + e.message + '，也可以直接输入英文关键词';
+        customInput.disabled = false;
+        return;
+      }
+      customInput.disabled = false;
+    }
+    if (!selected.some(s => s.en === entry.en)) selected.push(entry);
     customInput.value = '';
     renderAll();
+  }
+  customInput.placeholder = '自定义关键词，中文自动翻成英文 — 回车或点添加';
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.textContent = '添加';
+  addBtn.style.cssText = 'margin-left:6px;padding:6px 13px;font-size:12px;border-radius:7px;border:1px solid rgba(99,102,241,0.45);background:rgba(99,102,241,0.12);color:#a5b4fc;cursor:pointer;font-family:inherit;flex-shrink:0';
+  customInput.insertAdjacentElement('afterend', addBtn);
+  addBtn.onclick = addCustomKeyword;
+  customInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return; // 229 = IME composing
+    e.preventDefault();
+    addCustomKeyword();
   });
   if (refreshEl) refreshEl.onclick = () => fetchSuggestions(true);
 
