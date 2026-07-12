@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人中心 v3 + Word 导出 — 效果预览</title>
+<style>
+  :root {
+    --bg: #030303; --card: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.08);
+    --text: #e5e7eb; --sub: rgba(255,255,255,0.45); --sub2: rgba(255,255,255,0.30);
+    --accent: #6366f1; --accent-soft: rgba(99,102,241,0.12); --danger: #f87171;
+    --sent: #4ade80; --cost: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; padding: 34px 5% 60px; }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  .icon { width: 1em; height: 1em; vertical-align: -0.12em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .preview-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; color: #a5b4fc; background: var(--accent-soft); border: 1px solid rgba(99,102,241,0.3); border-radius: 6px; padding: 4px 10px; margin: 26px 0 18px; letter-spacing: 0.04em; }
+
+  .acct-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 18px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); border: 1px solid rgba(99,102,241,0.3); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
+  .acct-email { font-size: 0.88rem; font-weight: 600; }
+  .acct-since { font-size: 0.72rem; color: var(--sub2); }
+  .acct-bar .spacer { flex: 1; }
+  .mini-link { font-size: 0.74rem; color: var(--sub); padding: 5px 10px; border: 1px solid var(--border); border-radius: 7px; white-space: nowrap; }
+  .mini-link.danger { color: var(--danger); border-color: rgba(248,113,113,0.3); }
+
+  /* 高亮成果横幅 */
+  .hero-banner { background: linear-gradient(135deg, rgba(74,222,128,0.10), rgba(99,102,241,0.10)); border: 1px solid rgba(74,222,128,0.35); border-radius: 14px; padding: 20px 22px; margin-bottom: 12px; }
+  .hero-banner .line { font-size: 1.02rem; line-height: 1.7; color: var(--text); }
+  .hero-banner .line b.n { font-size: 1.6rem; font-weight: 800; color: var(--sent); font-variant-numeric: tabular-nums; padding: 0 3px; }
+  .hero-banner .sub { font-size: 0.72rem; color: var(--sub2); margin-top: 6px; }
+
+  .stats { display: flex; gap: 10px; margin-bottom: 26px; flex-wrap: wrap; }
+  .tile { flex: 1; min-width: 150px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
+  .tile .n { font-size: 1.4rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .tile .n.gold { color: var(--cost); }
+  .tile .l { font-size: 0.73rem; color: var(--sub); margin-top: 4px; }
+
+  .sec-label { font-size: 0.78rem; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px 2px; display: flex; align-items: center; gap: 7px; }
+  .sec-label .icon { color: var(--accent); }
+  .sec-label .tip { font-size: 0.7rem; color: var(--sub2); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+  .prod-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
+  .p-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 9px 13px; font-size: 0.8rem; }
+  .p-chip b { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+  .p-chip .btn-s { font-size: 0.72rem; border-radius: 6px; padding: 3px 9px; border: 1px solid; }
+  .p-chip .use { color: #a5b4fc; background: var(--accent-soft); border-color: rgba(99,102,241,0.4); }
+  .p-chip .tbl { color: #86efac; background: rgba(74,222,128,0.10); border-color: rgba(74,222,128,0.35); }
+  .p-chip .mini { color: var(--sub2); font-size: 0.78rem; }
+  .p-add { font-size: 0.76rem; color: var(--sub); border: 1px dashed var(--border); border-radius: 10px; padding: 9px 13px; }
+
+  /* 产品客户表（展开态） */
+  .lead-panel { border: 1px solid rgba(74,222,128,0.3); border-radius: 12px; background: rgba(255,255,255,0.02); padding: 14px 16px; margin: 4px 0 28px; }
+  .lp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 11px; }
+  .lp-stats { font-size: 0.78rem; color: var(--sub); }
+  .lp-stats b { color: var(--text); }
+  .lp-stats .g { color: var(--sent); }
+  .lp-btn { padding: 6px 12px; border-radius: 7px; font-size: 0.76rem; font-weight: 600; border: 1px solid rgba(99,102,241,0.45); color: #a5b4fc; background: var(--accent-soft); display: inline-flex; align-items: center; gap: 5px; }
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; }
+  table.dk { border-collapse: collapse; width: 100%; min-width: 780px; font-size: 0.76rem; }
+  .dk th { text-align: left; padding: 8px 11px; color: var(--sub); font-weight: 600; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .dk td { padding: 8px 11px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .dk tr:last-child td { border-bottom: none; }
+  .dk .co { font-weight: 600; white-space: nowrap; }
+  .dk .em { color: #a5b4fc; white-space: nowrap; }
+  .verdict { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 700; border-radius: 5px; padding: 1px 7px; white-space: nowrap; }
+  .verdict.ok { color: var(--sent); background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); }
+  .verdict.no { color: var(--danger); background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); }
+  .dk .reason { color: var(--sub2); font-size: 0.7rem; max-width: 230px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sent-chip { color: var(--sent); font-size: 0.72rem; white-space: nowrap; }
+
+  .hist-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .filter-in { padding: 7px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--sub2); font-size: 0.8rem; width: 200px; }
+  .btn-new { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--accent); color: #fff; border-radius: 8px; font-size: 0.8rem; font-weight: 600; }
+  .row { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; margin-bottom: 7px; }
+  .row .main { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+  .row .ptag { font-size: 0.68rem; font-weight: 700; color: #a5b4fc; background: var(--accent-soft); border: 1px solid rgba(99,102,241,0.35); border-radius: 5px; padding: 1px 7px; white-space: nowrap; flex-shrink: 0; }
+  .row .q { font-size: 0.86rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .loc { font-size: 0.72rem; color: var(--sub2); white-space: nowrap; }
+  .row .nums { font-size: 0.75rem; color: var(--sub); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .row .nums .g { color: var(--sent); font-weight: 600; }
+  .row .nums .c { color: var(--cost); font-weight: 600; }
+  .row .when { font-size: 0.7rem; color: var(--sub2); white-space: nowrap; width: 86px; text-align: right; }
+  .b { padding: 5px 10px; border-radius: 7px; font-size: 0.73rem; font-weight: 600; border: 1px solid; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; background: transparent; }
+  .b.view { background: var(--accent-soft); border-color: rgba(99,102,241,0.4); color: #a5b4fc; }
+  .b.more { border-color: var(--border); color: var(--sub); padding: 5px 8px; }
+
+  /* ── Word 设计稿（白纸样式） ── */
+  .doc-page { background: #ffffff; color: #1f2430; border-radius: 6px; max-width: 720px; margin: 0 auto; padding: 44px 52px; box-shadow: 0 10px 50px rgba(0,0,0,0.55); font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; }
+  .doc-band { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #6366f1, #8b5cf6); margin-bottom: 26px; }
+  .doc-title { font-size: 1.5rem; font-weight: 800; color: #17181c; }
+  .doc-sub { font-size: 0.8rem; color: #6b7280; margin: 6px 0 2px; }
+  .doc-meta { display: flex; gap: 22px; margin: 18px 0 6px; padding: 13px 16px; background: #f4f4fb; border-radius: 8px; }
+  .doc-meta .m b { display: block; font-size: 1.15rem; color: #4f46e5; font-weight: 800; }
+  .doc-meta .m span { font-size: 0.68rem; color: #6b7280; }
+  .doc-h2 { font-size: 0.95rem; font-weight: 700; color: #4f46e5; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #e5e7f5; }
+  table.doc-t { border-collapse: collapse; width: 100%; font-size: 0.74rem; }
+  .doc-t th { background: #4f46e5; color: #fff; padding: 8px 10px; text-align: left; font-size: 0.7rem; white-space: nowrap; }
+  .doc-t td { padding: 7px 10px; border-bottom: 1px solid #e9eaf2; color: #30323b; vertical-align: top; }
+  .doc-t tr:nth-child(even) td { background: #f8f8fd; }
+  .doc-t .c1 { font-weight: 700; white-space: nowrap; }
+  .doc-t .rec { color: #16a34a; font-weight: 700; white-space: nowrap; }
+  .doc-t .reason-row td { color: #8a8f9c; font-size: 0.68rem; border-bottom: 1px solid #dfe1ec; padding-top: 0; }
+  .doc-foot { margin-top: 26px; padding-top: 12px; border-top: 1px solid #e9eaf2; font-size: 0.66rem; color: #9aa0ab; display: flex; justify-content: space-between; }
+
+  .note-box { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.25); border-radius: 10px; padding: 16px 18px; font-size: 0.8rem; color: var(--sub); line-height: 1.9; margin-top: 26px; }
+  .note-box b { color: var(--text); }
+  .q-box { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.3); border-radius: 10px; padding: 16px 18px; font-size: 0.8rem; color: var(--sub); line-height: 1.9; margin-top: 12px; }
+  .q-box b { color: #fcd34d; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="i-user"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></g>
+  <g id="i-eye"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/></g>
+  <g id="i-table"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10M15 10v10"/></g>
+  <g id="i-dots"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></g>
+  <g id="i-box"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></g>
+  <g id="i-history"><path d="M12 8v4l3 3"/><path d="M3.5 9a9 9 0 1 1-.5 4"/><path d="M3 4v5h5"/></g>
+  <g id="i-doc"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></g>
+  <g id="i-rocket"><path d="M5 16c-1 3-1 4-1 4s1 0 4-1M15 4c3 0 5 2 5 5-1 5-6 9-10 11-1-2-2-3-4-4C8 12 10 6 15 4z"/><circle cx="14.5" cy="9.5" r="1.6"/></g>
+</defs></svg>
+
+<div class="wrap">
+
+  <div class="preview-tag" style="margin-top:0"><svg class="icon"><use href="#i-eye"/></svg> 第一部分 · 个人中心 v3（含你今天全部要求）</div>
+
+  <div class="acct-bar">
+    <div class="avatar"><svg class="icon"><use href="#i-user"/></svg></div>
+    <div><div class="acct-email">591472443@qq.com</div><div class="acct-since">2026年7月1日 注册</div></div>
+    <div class="spacer"></div>
+    <span class="mini-link">修改密码</span><span class="mini-link danger">退出</span>
+  </div>
+
+  <!-- 显眼的成果横幅（原「已发邮件」格子） -->
+  <div class="hero-banner">
+    <div class="line"><svg class="icon" style="color:var(--sent)"><use href="#i-rocket"/></svg> 已为你找到 <b class="n">118</b> 个潜在客户，并发送 <b class="n">590</b> 封精准开发邮件</div>
+    <div class="sub">邮件封数 = 客户数 × 每套开发信序列封数，实时统计</div>
+  </div>
+  <div class="stats">
+    <div class="tile"><div class="n">663</div><div class="l">已抓取公司</div></div>
+    <div class="tile"><div class="n gold">$9.04</div><div class="l">累计花费</div></div>
+  </div>
+
+  <!-- 产品品类：无编号、可重命名、带客户表按钮 -->
+  <div class="sec-label"><svg class="icon"><use href="#i-box"/></svg> 产品品类 <span class="tip">名称随你改，改完历史记录同步显示</span></div>
+  <div class="prod-row">
+    <div class="p-chip" style="border-color:rgba(74,222,128,0.4)"><b>门窗卫浴全案</b><span class="btn-s tbl"><svg class="icon"><use href="#i-table"/></svg> 客户表</span><span class="btn-s use">→ 使用中</span><span class="mini">✎</span><span class="mini">🗑</span></div>
+    <div class="p-chip" style="opacity:0.7"><b>户外遮阳篷</b><span class="btn-s tbl"><svg class="icon"><use href="#i-table"/></svg> 客户表</span><span class="btn-s use" style="background:transparent;border-color:var(--border);color:var(--sub)">使用</span><span class="mini">✎</span><span class="mini">🗑</span></div>
+    <div class="p-add">＋ 保存当前产品</div>
+  </div>
+
+  <!-- 产品客户表展开态 -->
+  <div class="lead-panel">
+    <div class="lp-head">
+      <div class="lp-stats"><b>门窗卫浴全案</b> · 客户 <b>118</b> · <span class="g">已发邮件 118</span> · 覆盖 悉尼/奥克兰/墨尔本</div>
+      <span class="lp-btn"><svg class="icon"><use href="#i-doc"/></svg> 导出 Word 文档</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="dk">
+        <thead><tr><th>公司名称</th><th>邮箱</th><th>城市</th><th>AI 判定</th><th>判定理由</th><th>发送时间</th></tr></thead>
+        <tbody>
+          <tr><td class="co">Pocketspace Interiors</td><td class="em">laura@pocketspaceinteriors.com</td><td>奥克兰</td><td><span class="verdict ok">✓ 推荐</span></td><td class="reason">室内设计公司，承接全屋翻新项目，与卖家产品高度匹配</td><td class="sent-chip">7月8日 15:02</td></tr>
+          <tr><td class="co">Refresh Renovations</td><td class="em">info@refreshreno.com.au</td><td>悉尼</td><td><span class="verdict ok">✓ 推荐</span></td><td class="reason">连锁装修公司，长期采购门窗卫浴类产品</td><td class="sent-chip">7月8日 15:03</td></tr>
+          <tr><td class="co">Koskela</td><td class="em">info@koskela.com.au</td><td>悉尼</td><td><span class="verdict ok">✓ 推荐</span></td><td class="reason">高端家居零售商，有定制家居采购需求</td><td class="sent-chip">7月10日 09:41</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="text-align:center;padding-top:9px;font-size:0.72rem;color:var(--sub2)">…共 118 位客户，新搜索的客户自动汇入</div>
+  </div>
+
+  <!-- 历史记录：客户表按钮已移除 -->
+  <div class="sec-label"><svg class="icon"><use href="#i-history"/></svg> 历史搜索 <span class="tip">共 23 次</span></div>
+  <div class="hist-head"><span class="filter-in">按关键词过滤…</span><span class="btn-new">＋ 新建搜索</span></div>
+  <div class="row">
+    <div class="main"><span class="ptag">门窗卫浴全案</span><span class="q">建材</span><span class="loc">澳大利亚·悉尼</span></div>
+    <span class="nums"><span class="g">已发 2</span> / 10 · <span class="c">$0.39</span></span>
+    <span class="when">7月10日 21:55</span>
+    <span class="b view"><svg class="icon"><use href="#i-eye"/></svg> 查看线索</span><span class="b more"><svg class="icon"><use href="#i-dots"/></svg></span>
+  </div>
+  <div class="row">
+    <div class="main"><span class="ptag">门窗卫浴全案</span><span class="q">全屋翻新公司</span><span class="loc">新西兰·奥克兰</span></div>
+    <span class="nums"><span class="g">已发 15</span> / 88 · <span class="c">$4.09</span></span>
+    <span class="when">7月10日 14:21</span>
+    <span class="b view"><svg class="icon"><use href="#i-eye"/></svg> 查看线索</span><span class="b more"><svg class="icon"><use href="#i-dots"/></svg></span>
+  </div>
+
+  <div class="preview-tag"><svg class="icon"><use href="#i-doc"/></svg> 第二部分 · Word 导出文档设计稿（.docx 打开的样子）</div>
+
+  <div class="doc-page">
+    <div class="doc-band"></div>
+    <div class="doc-title">门窗卫浴全案 · 客户开发报告</div>
+    <div class="doc-sub">智拓客自动生成 · 2026年7月12日</div>
+    <div class="doc-meta">
+      <div class="m"><b>118</b><span>开发客户</span></div>
+      <div class="m"><b>590</b><span>已发精准开发邮件</span></div>
+      <div class="m"><b>3</b><span>覆盖城市</span></div>
+      <div class="m"><b>23</b><span>搜索批次</span></div>
+    </div>
+
+    <div class="doc-h2">客户明细</div>
+    <table class="doc-t">
+      <thead><tr><th>公司名称</th><th>邮箱</th><th>电话</th><th>城市</th><th>AI 判定</th><th>发送时间</th></tr></thead>
+      <tbody>
+        <tr><td class="c1">Pocketspace Interiors</td><td>laura@pocketspaceinteriors.com</td><td>+64 9 212 6820</td><td>奥克兰</td><td class="rec">✓ 推荐</td><td>7月8日</td></tr>
+        <tr class="reason-row"><td colspan="6">AI 理由：室内设计公司，承接全屋翻新项目，与卖家门窗卫浴产品高度匹配 ｜ 官网：pocketspaceinteriors.co.nz</td></tr>
+        <tr><td class="c1">Refresh Renovations Sydney</td><td>info@refreshreno.com.au</td><td>+61 1800 336 033</td><td>悉尼</td><td class="rec">✓ 推荐</td><td>7月8日</td></tr>
+        <tr class="reason-row"><td colspan="6">AI 理由：连锁装修公司，长期采购门窗卫浴类产品 ｜ 官网：refreshrenovations.com.au</td></tr>
+        <tr><td class="c1">Koskela</td><td>info@koskela.com.au</td><td>+61 2 9280 0999</td><td>悉尼</td><td class="rec">✓ 推荐</td><td>7月10日</td></tr>
+        <tr class="reason-row"><td colspan="6">AI 理由：高端家居零售商，有定制家居采购需求 ｜ 官网：koskela.com.au</td></tr>
+      </tbody>
+    </table>
+    <div class="doc-foot"><span>门窗卫浴全案 · 客户开发报告</span><span>由 智拓客 ignightlead.com 生成 · 第 1 页 / 共 12 页</span></div>
+  </div>
+
+  <div class="note-box">
+    <b>本次全部改动汇总（待你确认）</b><br>
+    ① 账号细栏 + 密码/退出上移；② <b>成果横幅</b>：「已为你找到 118 个潜在客户，并发送 590 封精准开发邮件」（绿色大数字，显眼）；③ 看板剩 2 格（抓取/花费），额度条仅限额用户可见；④ 产品品类<b>无编号、可重命名</b>，名称同步显示在历史记录标签上；⑤ <b>客户表搬到产品上</b>（历史记录里删掉），汇总该产品筛过+发过的全部客户，新搜索自动汇入，含 AI 判定+理由；⑥ <b>导出 Word</b>：按第二部分设计稿排版（紫色题头、统计卡、明细表、每客户带 AI 理由行）；⑦ 历史卡一行式：产品标签+标题+地点 | 已发 x/总 · 花费 | 日期 | 查看线索 + ⋯菜单（重新搜/删除在菜单里）。
+  </div>
+  <div class="q-box">
+    <b>要你拍板的 3 个问题</b><br>
+    1️⃣ 客户表收录范围：<b>只收"发过邮件的"</b>，还是<b>"筛选过的全收"</b>（推荐+不推荐都进表、用列区分，发过的显示发送时间）？我建议后者，方便你看 AI 为什么拒了谁；<br>
+    2️⃣ 现有 23 条老记录当时没记产品名 —— 要不要<b>一次性全部归到「门窗卫浴全案」名下</b>？归了客户表立刻就有 118 人，不归就从零攒；<br>
+    3️⃣ 需要在数据库加两样东西：搜索记录表加一列 <b>product_label</b>（挂产品名用）—— 数据库结构变更，需要你批准。
+  </div>
+</div>
+</body>
+</html>
