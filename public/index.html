@@ -6355,10 +6355,16 @@ async function _consumeToolSse(res, kind, statusEl) {
         _toolResults[kind].push(evt.row);
         if (statusEl) statusEl.textContent = `已抓取 ${_toolResults[kind].length} 条…`;
       } else if (evt.type === 'done') {
-        // dupSkipped = 与你数据库里已有客户重复、被自动跳过的数量 — 不说明的话
-        // "设了90只回来23" 看起来像丢数据。
-        if (statusEl) statusEl.textContent = `完成：共 ${_toolResults[kind].length} 条`
-          + (evt.dupSkipped ? `（另有 ${evt.dupSkipped} 家与历史客户重复，已自动跳过）` : '');
+        // dupSkipped = 与已有客户重复、被自动跳过的数量（不占配额，系统已多爬补足）。
+        // 补足后仍不够 = 这个关键词+地区的新公司暂时就这么多，如实告知。
+        if (statusEl) {
+          let msg = `完成：共 ${_toolResults[kind].length} 条`;
+          if (evt.dupSkipped) msg += `（已跳过 ${evt.dupSkipped} 家重复，不占数量）`;
+          if (evt.requested && evt.dupSkipped && _toolResults[kind].length < evt.requested) {
+            msg += ` — 该关键词在此地区的新公司暂时只有这些，换个关键词或城市能找到更多`;
+          }
+          statusEl.textContent = msg;
+        }
         // Remember the run's searchId so downstream AI-filter / email-gen calls
         // can book their token costs onto this search (personal-center 累计花费).
         if (evt.searchId) {

@@ -2762,11 +2762,18 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       ? keywords.map(k => `${k} ${location}`.trim())
       : keywords.slice();
 
-    console.log(`[GoogleMapsTool] terms=${searchStringsArray.length} location="${location}" max=${maxResults}`);
+    // Dedup keys loaded up front — and if the user already has leads, the actor
+    // over-fetches so duplicates don't eat the requested quota: 要 90 家就交付
+    // 90 家【新】公司，重复的自动跳过并用多爬的部分补上（补不上时如实报告）。
+    const { placeIds: _exPids, phones: _exPhones, domains: _exDomains } = await getExistingLeadKeys(req.userId);
+    const _knownCount = _exPids.size + _exPhones.size + _exDomains.size;
+    const _overFetch = _knownCount ? Math.min(maxResults, 200) : 0; // 新用户不多爬，不多花钱
+
+    console.log(`[GoogleMapsTool] terms=${searchStringsArray.length} location="${location}" max=${maxResults} overFetch=${_overFetch}`);
     const items = await withTimeout(
       _runApifyActor('compass~crawler-google-places', {
         searchStringsArray,
-        maxCrawledPlacesPerSearch: maxResults,
+        maxCrawledPlacesPerSearch: maxResults + _overFetch,
         maxAutomaticZoomOut: 1,
         language: 'en',
         scrapeContacts: true,
@@ -2778,21 +2785,11 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       '/api/google-maps-search Apify'
     );
 
-    // The Apify actor's maxCrawledPlacesPerSearch can overshoot (especially with
-    // automatic zoom-out), so enforce our own hard cap. maxResults is a TOTAL across
-    // all keywords (what users expect: "填 12 就最多 12 条"). Slicing BEFORE the
-    // enrichment loop also avoids scraping websites we'd drop.
-    const _cap = maxResults;
-    const _itemsRaw = (items || []).slice(0, _cap);
-    console.log(`[GoogleMapsTool] actor returned ${(items || []).length}, capped to ${_itemsRaw.length} (total max ${maxResults})`);
-
-    // Dedup against the user's existing leads BEFORE enrichment — same key set
-    // as /api/scrape-raw. Re-searching the same keywords must not re-insert
-    // (or spend 20s/site re-enriching) companies already in the database.
-    // Email can't be checked here (it's only known after enrichment).
-    const { placeIds: _exPids, phones: _exPhones, domains: _exDomains } = await getExistingLeadKeys(req.userId);
+    // Dedup FIRST (over the full crawl), THEN cap to maxResults NEW companies —
+    // the requested count is a promise about new leads, not crawled rows.
     const _domainOf = (url) => { try { return new URL(url).hostname.replace('www.', ''); } catch { return ''; } };
-    const _items = _itemsRaw.filter(it => {
+    const _crawled = (items || []);
+    const _deduped = _crawled.filter(it => {
       if (it.placeId && _exPids.has(it.placeId)) return false;
       const ph = String(it.phone || it.phoneUnformatted || '').replace(/\D/g, '');
       if (ph && _exPhones.has(ph)) return false;
@@ -2800,8 +2797,9 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       if (dom && _exDomains.has(dom)) return false;
       return true;
     });
-    const _dupSkipped = _itemsRaw.length - _items.length;
-    if (_dupSkipped) console.log(`[GoogleMapsTool] dedup skipped ${_dupSkipped} already-known places`);
+    const _dupSkipped = _crawled.length - _deduped.length;
+    const _items = _deduped.slice(0, maxResults);
+    console.log(`[GoogleMapsTool] crawled ${_crawled.length}, duplicates ${_dupSkipped}, delivering ${_items.length}/${maxResults}`);
 
     let emitted = 0;
     for (const it of _items) {
@@ -2908,7 +2906,7 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
       updateSearchRunCosts(searchId, { apifyCostUsd, anthropicCostUsd: 0, totalCostUsd: apifyCostUsd, totalQualified: 0, totalScraped: emitted }).catch(() => {});
     }
     // searchId lets the frontend attribute later AI-filter / email-gen costs to this run.
-    send({ type: 'done', success: true, total: emitted, dupSkipped: _dupSkipped, searchId });
+    send({ type: 'done', success: true, total: emitted, requested: maxResults, dupSkipped: _dupSkipped, searchId });
   } catch (err) {
     console.error('[GoogleMapsTool] error:', err.message);
     send({ type: 'error', error: err.message || 'Google Maps 抓取失败' });
