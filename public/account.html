@@ -174,7 +174,7 @@
 
     .row { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; margin-bottom: 7px; transition: border-color 0.15s; }
     .row:hover { border-color: rgba(99,102,241,0.35); }
-    .row .main { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+    .row .rmain { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; }
     .row .ptag { font-size: 0.68rem; font-weight: 700; color: #a5b4fc; background: var(--accent-soft); border: 1px solid rgba(99,102,241,0.35); border-radius: 5px; padding: 1px 7px; white-space: nowrap; flex-shrink: 0; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
     .row .q { font-size: 0.86rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .row .loc { font-size: 0.72rem; color: var(--sub2); white-space: nowrap; }
@@ -514,7 +514,7 @@
     list.innerHTML = slice.map(r => {
       const cost = r.total_cost_usd != null ? Number(r.total_cost_usd).toFixed(2) : '0.00';
       return '<div class="row" data-id="' + r.id + '">' +
-        '<div class="main">' +
+        '<div class="rmain">' +
           (r.product_label ? '<span class="ptag" title="' + esc(r.product_label) + '">' + esc(r.product_label) + '</span>' : '') +
           '<span class="q" title="' + esc(r.query) + '">' + (esc(r._zhTitle) || esc(r.query) || '(无关键词)') + '</span>' +
           '<span class="loc">' + (esc(r._zhLoc) || esc(r.location) || '') + '</span>' +
