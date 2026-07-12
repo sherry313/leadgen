@@ -6355,7 +6355,10 @@ async function _consumeToolSse(res, kind, statusEl) {
         _toolResults[kind].push(evt.row);
         if (statusEl) statusEl.textContent = `已抓取 ${_toolResults[kind].length} 条…`;
       } else if (evt.type === 'done') {
-        if (statusEl) statusEl.textContent = `完成：共 ${_toolResults[kind].length} 条`;
+        // dupSkipped = 与你数据库里已有客户重复、被自动跳过的数量 — 不说明的话
+        // "设了90只回来23" 看起来像丢数据。
+        if (statusEl) statusEl.textContent = `完成：共 ${_toolResults[kind].length} 条`
+          + (evt.dupSkipped ? `（另有 ${evt.dupSkipped} 家与历史客户重复，已自动跳过）` : '');
         // Remember the run's searchId so downstream AI-filter / email-gen calls
         // can book their token costs onto this search (personal-center 累计花费).
         if (evt.searchId) {
