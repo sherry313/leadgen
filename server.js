@@ -3275,6 +3275,7 @@ app.post('/api/recommend-target-customers', requireAuth, async (req, res) => {
 - 输出 6 个目标客户类型
 - 每个类型用简短的中文名词短语（4-10 个字），是「客户的类型/角色」而不是「产品」
 - 例如：卫浴展厅/门店、室内设计公司、装修公司、建材经销商、地产开发商、工程采购商
+- 禁止输出「XX供应商」「XX制造商」「XX工厂」这类和卖家同一侧的角色 —— 那是卖家的同行，不是会掏钱的买家
 - 由强到弱排序，最相关的放前面
 - 不要解释，不要编号
 
@@ -3334,6 +3335,14 @@ Rules:
     factory owner understands what it targets (e.g. en "renovation company" -> zh "装修公司")
 - Search for the CUSTOMER's business type, e.g. target "装修公司" -> en "renovation company";
   target "室内设计公司" -> en "interior design studio"
+- Every keyword MUST describe a BUYER role — a business that would PURCHASE the
+  seller's product to use or resell: renovation company, home builder, fit-out
+  contractor, kitchen & bathroom retailer, showroom, design studio, importer,
+  distributor of the seller's category, etc.
+- HARD BAN: never output a keyword containing "supplier", "manufacturer",
+  "manufacturing", "factory", "OEM" or "ODM" — those describe businesses that
+  SELL the same product (the seller's competitors), and searching them wastes
+  the user's scraping budget on companies that will never buy.
 - Do NOT include a country/city in "en" (the location is added separately)
 - No numbering, no explanation
 
@@ -3345,12 +3354,16 @@ Return ONLY valid JSON, no markdown:
     const text = response.content[0].text;
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
+    // Hard post-filter (belt and braces on top of the prompt rule): seller-side
+    // role words find the user's COMPETITORS, not buyers — drop them even if
+    // the model slips one through.
+    const SELLER_ROLE = /\b(supplier|suppliers|manufacturer|manufacturers|manufacturing|factory|factories|oem|odm)\b/i;
     const keywords = Array.isArray(parsed.keywords)
       ? parsed.keywords
           .map(k => (typeof k === 'string'
             ? { en: k.trim(), zh: '' }
             : { en: String(k.en || '').trim(), zh: String(k.zh || '').trim() }))
-          .filter(k => k.en)
+          .filter(k => k.en && !SELLER_ROLE.test(k.en))
           .slice(0, 8)
       : [];
     res.json({ keywords });
