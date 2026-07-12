@@ -557,4 +557,79 @@ async function deleteProductProfile(id, userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile };
+// 把一次搜索挂到产品名下：searchId 追加进 profile.data.searchIds（jsonb 自由字段，
+// 无 schema 变更）。改名走 profile.name，历史标签自动跟随。read-modify-write，
+// 并发窗口极小可接受。
+async function appendProductSearch(productId, userId, searchId) {
+  const db = getClient();
+  if (!db || !productId || !searchId) return;
+  try {
+    const { data: row, error: readErr } = await db.from('product_profiles')
+      .select('data').eq('id', productId).eq('user_id', userId || 'legacy').single();
+    if (readErr) throw readErr;
+    const d = row?.data || {};
+    const ids = Array.isArray(d.searchIds) ? d.searchIds : [];
+    if (ids.includes(searchId)) return;
+    ids.push(searchId);
+    const { error } = await db.from('product_profiles')
+      .update({ data: { ...d, searchIds: ids } })
+      .eq('id', productId).eq('user_id', userId || 'legacy');
+    if (error) throw error;
+    console.log(`[Supabase] search ${searchId} tagged to product ${productId}`);
+  } catch (err) {
+    console.warn('[Supabase] appendProductSearch failed:', err.message);
+  }
+}
+
+// 产品客户表：该产品所有搜索里"发过邮件"的客户（口径已拍板：只收发过的）。
+async function getProductSentLeads(productId, userId) {
+  const db = getClient();
+  if (!db || !productId) return { profile: null, leads: [] };
+  try {
+    let q = db.from('product_profiles').select('*').eq('id', productId);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data: profile, error: pErr } = await q.single();
+    if (pErr) throw pErr;
+    const ids = Array.isArray(profile?.data?.searchIds) ? profile.data.searchIds : [];
+    if (!ids.length) return { profile, leads: [] };
+    let lq = db.from('leads')
+      .select('company_name, website, email, phone, city, rating, icp_score, icp_reasoning, email_sent_at, search_id')
+      .in('search_id', ids)
+      .not('email_sent_at', 'is', null)
+      .order('email_sent_at', { ascending: false });
+    if (userId && userId !== 'legacy') lq = lq.eq('user_id', userId);
+    const { data: leads, error: lErr } = await lq;
+    if (lErr) throw lErr;
+    return { profile, leads: leads || [] };
+  } catch (err) {
+    console.warn('[Supabase] getProductSentLeads failed:', err.message);
+    return { profile: null, leads: [] };
+  }
+}
+
+// 成果条：发过邮件的客户数 + 实际发出的开发信封数（按每客户已生成的序列封数
+// 累加；老数据序列未落库的按整套 5 封计）。
+async function getSentEmailStats(userId) {
+  const db = getClient();
+  if (!db) return { customers: 0, emails: 0 };
+  try {
+    let q = db.from('leads')
+      .select('email1_subject, email2_subject, email3_subject, email4_subject, email5_subject')
+      .not('email_sent_at', 'is', null);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data, error } = await q;
+    if (error) throw error;
+    let emails = 0;
+    (data || []).forEach(r => {
+      let n = 0;
+      for (let i = 1; i <= 5; i++) if ((r['email' + i + '_subject'] || '').trim()) n++;
+      emails += n || 5;
+    });
+    return { customers: (data || []).length, emails };
+  } catch (err) {
+    console.warn('[Supabase] getSentEmailStats failed:', err.message);
+    return { customers: 0, emails: 0 };
+  }
+}
+
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats };

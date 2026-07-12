@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -1520,14 +1520,21 @@ async function requireQuota(req, res) {
 }
 
 app.get('/api/history', requireAuth, async (req, res) => {
-  const [history, emailsSent, sentCounts] = await Promise.all([
+  const [history, emailsSent, sentCounts, sentStats, profiles] = await Promise.all([
     getSearchHistory(30, req.userId),
     getEmailsSentCount(req.userId),
     getSentCountsBySearch(req.userId),
+    getSentEmailStats(req.userId),           // hero 成果条：客户数 + 开发信封数
+    listProductProfiles(req.userId),         // searchId → 产品名（历史标签）
   ]);
+  const productBySearch = {};
+  (profiles || []).forEach(p => {
+    (Array.isArray(p.data?.searchIds) ? p.data.searchIds : []).forEach(sid => { productBySearch[sid] = p.name; });
+  });
   const marked = (history || []).map(r => ({
     ...r,
     sent_count:         sentCounts[r.id] || 0,
+    product_label:      productBySearch[r.id] || null,
     apify_cost_usd:     r.apify_cost_usd     != null ? parseFloat((r.apify_cost_usd     * COST_MARKUP).toFixed(4)) : r.apify_cost_usd,
     anthropic_cost_usd: r.anthropic_cost_usd != null ? parseFloat((r.anthropic_cost_usd * COST_MARKUP).toFixed(4)) : r.anthropic_cost_usd,
     total_cost_usd:     r.total_cost_usd     != null ? parseFloat((r.total_cost_usd     * COST_MARKUP).toFixed(4)) : r.total_cost_usd,
@@ -1537,7 +1544,7 @@ app.get('/api/history', requireAuth, async (req, res) => {
   if (req.userId && req.userId !== 'legacy') {
     try { const q = await getQuotaState(req.userId); quotaUsd = q.quotaUsd; spentUsd = q.spentUsd; } catch (_) {}
   }
-  res.json({ success: true, history: marked, emailsSent, quotaUsd, spentUsd });
+  res.json({ success: true, history: marked, emailsSent, sentStats, quotaUsd, spentUsd });
 });
 
 app.get('/api/history/:id', requireAuth, async (req, res) => {
@@ -1568,7 +1575,97 @@ app.delete('/api/history/:id', requireAuth, async (req, res) => {
 // between them without re-typing. All routes are user-scoped via req.userId.
 app.get('/api/products', requireAuth, async (req, res) => {
   const profiles = await listProductProfiles(req.userId);
-  res.json({ success: true, profiles });
+  // Card stats: how many emailed customers each product has accumulated.
+  const withStats = await Promise.all((profiles || []).map(async (p) => {
+    let customers = 0;
+    const ids = Array.isArray(p.data?.searchIds) ? p.data.searchIds : [];
+    if (ids.length) {
+      try {
+        const db = require('./services/supabase');
+        const { leads } = await db.getProductSentLeads(p.id, req.userId);
+        customers = leads.length;
+      } catch (_) {}
+    }
+    return { ...p, customers };
+  }));
+  res.json({ success: true, profiles: withStats });
+});
+
+// ── 产品客户表：该产品名下所有"发过邮件"的客户 ────────────────────────────────
+app.get('/api/products/:id/leads', requireAuth, async (req, res) => {
+  const { profile, leads } = await getProductSentLeads(req.params.id, req.userId);
+  if (!profile) return res.status(404).json({ success: false, error: '产品不存在' });
+  res.json({ success: true, name: profile.name, leads });
+});
+
+// ── 产品客户表 → Word 客户开发报告（.docx 下载） ─────────────────────────────
+app.get('/api/products/:id/export.docx', requireAuth, async (req, res) => {
+  const { profile, leads } = await getProductSentLeads(req.params.id, req.userId);
+  if (!profile) return res.status(404).json({ success: false, error: '产品不存在' });
+  const { Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType } = require('docx');
+
+  const INDIGO = '4F46E5', INK = '17181C', GREY = '6B7280', LGREY = '8A8F9C', ZEBRA = 'F8F8FD', GREEN = '16A34A';
+  const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+  const thin = { style: BorderStyle.SINGLE, size: 4, color: 'E9EAF2' };
+  const txt = (t, opts) => new TextRun({ text: String(t ?? ''), font: 'Microsoft YaHei', size: 18, color: '30323B', ...opts });
+  const para = (runs, opts) => new Paragraph({ children: Array.isArray(runs) ? runs : [runs], ...opts });
+  const cell = (children, opts) => new TableCell({ children: Array.isArray(children) ? children : [children], margins: { top: 90, bottom: 90, left: 110, right: 110 }, ...opts });
+
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+  const cities = [...new Set(leads.map(l => (l.city || '').split(',')[0].trim()).filter(Boolean))];
+  const emailsCount = leads.length * 5;
+
+  const children = [
+    // 紫色题头条（细表格模拟色带）
+    new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [new TableRow({ children: [
+      cell(para(txt(' ', { size: 6 })), { shading: { fill: INDIGO }, borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder } }),
+    ] })] }),
+    para(txt(' ', { size: 10 })),
+    para(txt(`${profile.name} · 客户开发报告`, { bold: true, size: 44, color: INK })),
+    para(txt(`智拓客自动生成 · ${dateStr}`, { size: 18, color: GREY }), { spacing: { after: 260 } }),
+    // 统计行
+    para([
+      txt(`开发客户 `, { size: 20, color: GREY }), txt(`${leads.length}`, { bold: true, size: 30, color: INDIGO }),
+      txt(`    已发精准开发邮件 `, { size: 20, color: GREY }), txt(`${emailsCount}`, { bold: true, size: 30, color: INDIGO }),
+      txt(`    覆盖城市 `, { size: 20, color: GREY }), txt(`${cities.length}`, { bold: true, size: 30, color: INDIGO }),
+    ], { spacing: { after: 300 } }),
+    para(txt('客户明细', { bold: true, size: 24, color: INDIGO }), { spacing: { after: 140 } }),
+  ];
+
+  const headRow = new TableRow({ children: ['公司名称', '邮箱', '电话', '城市', 'AI 判定', '发送时间'].map(h =>
+    cell(para(txt(h, { bold: true, color: 'FFFFFF', size: 17 })), { shading: { fill: INDIGO } })) });
+  const bodyRows = [];
+  leads.forEach((l, i) => {
+    const sentAt = l.email_sent_at ? (() => { const d = new Date(/[zZ]$|[+-]\d{2}:?\d{2}$/.test(l.email_sent_at) ? l.email_sent_at : l.email_sent_at + 'Z'); return `${d.getMonth() + 1}月${d.getDate()}日`; })() : '';
+    const verdict = l.icp_score === 'pass' ? '✓ 推荐' : (l.icp_score === 'fail' ? '✗ 不推荐' : '—');
+    const shade = i % 2 ? { shading: { fill: ZEBRA } } : {};
+    bodyRows.push(new TableRow({ children: [
+      cell(para(txt(l.company_name || '—', { bold: true })), shade),
+      cell(para(txt(l.email || '—')), shade),
+      cell(para(txt(l.phone || '—')), shade),
+      cell(para(txt((l.city || '—').split(',')[0])), shade),
+      cell(para(txt(verdict, { bold: true, color: l.icp_score === 'pass' ? GREEN : GREY })), shade),
+      cell(para(txt(sentAt || '—')), shade),
+    ] }));
+    const extra = [l.icp_reasoning ? `AI 理由：${l.icp_reasoning}` : '', l.website ? `官网：${l.website}` : ''].filter(Boolean).join(' ｜ ');
+    if (extra) bodyRows.push(new TableRow({ children: [
+      cell(para(txt(extra, { size: 15, color: LGREY })), { columnSpan: 6 }),
+    ] }));
+  });
+  children.push(new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [headRow, ...bodyRows],
+    borders: { top: thin, bottom: thin, left: noBorder, right: noBorder, insideHorizontal: thin, insideVertical: noBorder },
+  }));
+  children.push(para(txt(`${profile.name} · 客户开发报告　　由 智拓客 ignightlead.com 生成`, { size: 14, color: LGREY }), { alignment: AlignmentType.RIGHT, spacing: { before: 280 } }));
+
+  const doc = new Document({ sections: [{ children }] });
+  const buffer = await Packer.toBuffer(doc);
+  const fname = `${profile.name}-客户开发报告-${today.toISOString().slice(0, 10)}.docx`;
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  res.setHeader('Content-Disposition', `attachment; filename="report.docx"; filename*=UTF-8''${encodeURIComponent(fname)}`);
+  res.send(buffer);
 });
 
 app.post('/api/products', requireAuth, async (req, res) => {
@@ -2478,6 +2575,8 @@ app.post('/api/google-search', requireAuth, async (req, res) => {
   // is not delayed by the DB write.
   let searchId = null;
   try { searchId = await saveSearchRun({ query: keywords.join(', '), location, maxResults, totalScraped: 0 }, req.userId); } catch (_) {}
+  // 当前激活的产品品类（前端从 localStorage 带上来）→ 搜索挂到该产品名下。
+  if (searchId && req.body?.productId) appendProductSearch(req.body.productId, req.userId, searchId);
   const collectedLeads = [];
 
   try {
@@ -2651,6 +2750,8 @@ app.post('/api/google-maps-search', requireAuth, async (req, res) => {
   // forget so the 'done' event is not delayed by the DB write.
   let searchId = null;
   try { searchId = await saveSearchRun({ query: keywords.join(', '), location, maxResults, totalScraped: 0 }, req.userId); } catch (_) {}
+  // 当前激活的产品品类（前端从 localStorage 带上来）→ 搜索挂到该产品名下。
+  if (searchId && req.body?.productId) appendProductSearch(req.body.productId, req.userId, searchId);
   const collectedLeads = [];
 
   try {
@@ -3967,6 +4068,7 @@ app.post('/api/instagram-scrape', requireAuth, async (req, res) => {
   // Persist search history + scraped leads to Supabase (multi-tenant). Non-fatal.
   let searchId = null;
   try { searchId = await saveSearchRun({ query: input, location: '', maxResults: maxPosts, totalScraped: 0 }, req.userId); } catch (_) {}
+  if (searchId && req.body?.productId) appendProductSearch(req.body.productId, req.userId, searchId);
   const collectedLeads = [];
 
   try {
@@ -4046,6 +4148,7 @@ app.post('/api/tiktok-scrape', requireAuth, async (req, res) => {
   // Persist search history + scraped leads to Supabase (multi-tenant). Non-fatal.
   let searchId = null;
   try { searchId = await saveSearchRun({ query: input, location: '', maxResults: maxVideos, totalScraped: 0 }, req.userId); } catch (_) {}
+  if (searchId && req.body?.productId) appendProductSearch(req.body.productId, req.userId, searchId);
   const collectedLeads = [];
 
   try {

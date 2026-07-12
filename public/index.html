@@ -5838,7 +5838,7 @@ async function startGoogleSearch() {
     const res = await fetch('/api/google-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ keywords, location, countryCode, maxResults, fields }),
+      body: JSON.stringify({ keywords, location, countryCode, maxResults, fields, productId: _activeProductId() }),
     });
     if (res.status === 402) { const j = await res.json().catch(() => ({})); if (typeof showQuotaModal === 'function') showQuotaModal(j.error); throw new Error(j.error || '免费额度已用完，请联系客服提升额度'); }
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
@@ -6120,6 +6120,12 @@ function updateGsLocation() {
 // them wastes real money (the 89-lead Melbourne run qualified 1). The AI
 // recommender already bans these; this guard catches hand-typed keywords.
 // Soft-confirm, not a hard block: some sellers legitimately sell TO factories.
+// 当前激活的产品品类 id（个人中心「使用」某产品时写入）——搜索请求带上它，
+// 这次搜索就会挂到该产品名下（历史标签 + 产品客户表都靠它）。
+function _activeProductId() {
+  try { const p = JSON.parse(localStorage.getItem('leadgen_active_product')); return (p && p.id) || null; } catch (_) { return null; }
+}
+
 const _SELLER_ROLE_KW = /\b(supplier|suppliers|manufacturer|manufacturers|manufacturing|factory|factories|oem|odm)\b/i;
 function confirmSellerRoleKeywords(keywords) {
   const bad = (keywords || []).filter(k => _SELLER_ROLE_KW.test(k));
@@ -6153,7 +6159,7 @@ async function startGoogleMapsScrape() {
     const res = await fetch('/api/google-maps-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ keywords, location, maxResults, fields }),
+      body: JSON.stringify({ keywords, location, maxResults, fields, productId: _activeProductId() }),
     });
     if (res.status === 402) { const j = await res.json().catch(() => ({})); if (typeof showQuotaModal === 'function') showQuotaModal(j.error); throw new Error(j.error || '免费额度已用完，请联系客服提升额度'); }
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
@@ -6229,7 +6235,7 @@ async function startInstagramScrape() {
     const res = await fetch('/api/instagram-scrape', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ input, maxPosts, newerThan, fields }),
+      body: JSON.stringify({ input, maxPosts, newerThan, fields, productId: _activeProductId() }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'ig', status);
@@ -6265,7 +6271,7 @@ async function startTikTokScrape() {
     const res = await fetch('/api/tiktok-scrape', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ mode: _ttMode, input, maxVideos, fields }),
+      body: JSON.stringify({ mode: _ttMode, input, maxVideos, fields, productId: _activeProductId() }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'tt', status);
@@ -14028,7 +14034,7 @@ async function fwAutoRunPipeline(inp) {
     var res = await fetch('/api/google-maps-search', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'Authorization': 'Bearer ' + token } : {}),
-      body: JSON.stringify({ keywords: [inp.keyword], location: inp.location, maxResults: inp.maxResults || 20 }),
+      body: JSON.stringify({ keywords: [inp.keyword], location: inp.location, maxResults: inp.maxResults || 20, productId: _activeProductId() }),
     });
     if (res.status === 402) { var qj = await res.json().catch(function () { return {}; }); if (typeof showQuotaModal === 'function') showQuotaModal(qj.error); throw new Error(qj.error || '免费额度已用完，请联系客服提升额度'); }
     if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
