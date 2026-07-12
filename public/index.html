@@ -6155,6 +6155,13 @@ function updateGsLocation() {
 // them wastes real money (the 89-lead Melbourne run qualified 1). The AI
 // recommender already bans these; this guard catches hand-typed keywords.
 // Soft-confirm, not a hard block: some sellers legitimately sell TO factories.
+// Instantly Campaign ID 必须是标准 UUID（8-4-4-4-12 位）。手动复制经常少一位，
+// Instantly 会整批拒收 — 推送前先校验，当场把话说明白。
+function validCampaignId(id) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test((id || '').trim());
+}
+const CAMPAIGN_ID_HINT = 'Campaign ID 格式不对（应为 8-4-4-4-12 位的一串字符，你的少/多了字符）。请回 Instantly 后台三击全选重新复制。';
+
 // 当前激活的产品品类 id（个人中心「使用」某产品时写入）——搜索请求带上它，
 // 这次搜索就会挂到该产品名下（历史标签 + 产品客户表都靠它）。
 function _activeProductId() {
@@ -12999,6 +13006,7 @@ async function biPolishField(textareaId, kind, btn) {
       statusEl.textContent = msg;
     };
     if (!campaignId) { showStatus('请填写 Instantly Campaign ID', '#fca5a5', 'rgba(239,68,68,0.08)'); return; }
+    if (!validCampaignId(campaignId)) { showStatus(CAMPAIGN_ID_HINT, '#fca5a5', 'rgba(239,68,68,0.08)'); return; }
 
     // Persist for next time (separate key from /lens's selected_campaign_id).
     try { localStorage.setItem('leadgen_app_instantly_campaign', campaignId); } catch (_) {}
@@ -13627,6 +13635,7 @@ async function autoStartInstantlySend() {
 
   var campaignId = (document.getElementById('autoInstantlyCampaign')?.value || '').trim();
   if (!campaignId) { _autoSendStatus('请填写 Instantly Campaign ID', '#fca5a5'); return; }
+  if (!validCampaignId(campaignId)) { _autoSendStatus(CAMPAIGN_ID_HINT, '#fca5a5'); return; }
   try { localStorage.setItem('leadgen_app_instantly_campaign', campaignId); } catch (_) {}
 
   var token = (typeof getStoredToken === 'function') ? getStoredToken() : '';

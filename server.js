@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -2027,6 +2027,30 @@ app.get('/api/admin/costs', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ success: false, error: 'Admin only' });
   const summary = await getCostSummary(req.userId);
   res.json({ success: true, ...summary });
+});
+
+// ── Admin: 账号管理（个人中心管理员区块） ──────────────────────────────────────
+// 列出全部账号 + 用量；花费按用户价（×COST_MARKUP）口径，和额度同一单位。
+app.get('/api/admin/users', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ success: false, error: 'Admin only' });
+  const users = await getAdminUsersOverview();
+  res.json({
+    success: true,
+    users: users.map(u => ({ ...u, spendUsd: parseFloat((u.spendRealUsd * COST_MARKUP).toFixed(2)) })),
+  });
+});
+
+// 修改某账号的额度（user-facing USD）。写入后清掉额度缓存立即生效。
+app.post('/api/admin/users/:id/quota', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ success: false, error: 'Admin only' });
+  const quotaUsd = Number(req.body?.quotaUsd);
+  if (!Number.isFinite(quotaUsd) || quotaUsd < 0) {
+    return res.status(400).json({ success: false, error: 'quotaUsd must be a non-negative number' });
+  }
+  const ok = await setUserQuotaUsd(req.params.id, quotaUsd);
+  if (!ok) return res.status(500).json({ success: false, error: '写入失败' });
+  _quotaCache.delete(req.params.id); // 立即生效，不等 60s 缓存过期
+  res.json({ success: true });
 });
 
 // ── 自动发帖 (Blotato) — admin-only: posts go to the OWNER's social accounts ──

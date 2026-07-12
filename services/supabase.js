@@ -607,6 +607,54 @@ async function getProductSentLeads(productId, userId) {
   }
 }
 
+// ── 管理员：全部账号总览（邮箱/注册/最后登录/搜索次数/花费/已发/额度） ────────
+async function getAdminUsersOverview() {
+  const db = getClient();
+  if (!db) return [];
+  try {
+    const [{ data: au, error: aErr }, { data: hist }, { data: sent }, { data: quotas }] = await Promise.all([
+      db.auth.admin.listUsers({ page: 1, perPage: 200 }),
+      db.from('search_history').select('user_id, total_cost_usd'),
+      db.from('leads').select('user_id').not('email_sent_at', 'is', null),
+      db.from('user_quotas').select('user_id, quota_usd'),
+    ]);
+    if (aErr) throw aErr;
+    const spend = {}, searches = {}, sentN = {}, quota = {};
+    (hist || []).forEach(r => { spend[r.user_id] = (spend[r.user_id] || 0) + (r.total_cost_usd || 0); searches[r.user_id] = (searches[r.user_id] || 0) + 1; });
+    (sent || []).forEach(r => { sentN[r.user_id] = (sentN[r.user_id] || 0) + 1; });
+    (quotas || []).forEach(r => { quota[r.user_id] = Number(r.quota_usd); });
+    return (au?.users || []).map(u => ({
+      id: u.id,
+      email: u.email || '',
+      createdAt: u.created_at || null,
+      lastSignInAt: u.last_sign_in_at || null,
+      searches: searches[u.id] || 0,
+      sentCount: sentN[u.id] || 0,
+      spendRealUsd: parseFloat((spend[u.id] || 0).toFixed(4)),
+      quotaUsd: quota[u.id] != null ? quota[u.id] : 5, // 无记录 = 默认 $5
+    }));
+  } catch (err) {
+    console.warn('[Supabase] getAdminUsersOverview failed:', err.message);
+    return [];
+  }
+}
+
+// ── 管理员：设置某账号的额度（user_quotas upsert，user-facing USD） ───────────
+async function setUserQuotaUsd(userId, quotaUsd) {
+  const db = getClient();
+  if (!db || !userId) return false;
+  try {
+    const { error } = await db.from('user_quotas')
+      .upsert({ user_id: userId, quota_usd: quotaUsd }, { onConflict: 'user_id' });
+    if (error) throw error;
+    console.log(`[Supabase] quota set: user=${userId} quota=$${quotaUsd}`);
+    return true;
+  } catch (err) {
+    console.error('[Supabase] setUserQuotaUsd FAILED:', err.message);
+    return false;
+  }
+}
+
 // 成果条：发过邮件的客户数 + 实际发出的开发信封数（按每客户已生成的序列封数
 // 累加；老数据序列未落库的按整套 5 封计）。
 async function getSentEmailStats(userId) {
@@ -632,4 +680,4 @@ async function getSentEmailStats(userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats };
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd };

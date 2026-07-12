@@ -293,6 +293,15 @@
     <a href="/app" class="btn-new"><i class="ti ti-plus"></i> 新建搜索</a>
   </div>
   <div id="histList"><div class="empty-msg"><span class="spinner"></span>加载中…</div></div>
+
+  <!-- 账号管理（仅管理员渲染；普通用户完全看不到这块） -->
+  <div id="adminSec" style="display:none; margin-top:34px">
+    <div class="sec-label"><i class="ti ti-users"></i> 账号管理 <span class="tip">仅你可见 · 修改额度立即生效 · 花费为用户价口径</span></div>
+    <div class="tbl-wrap"><table class="lead-tbl" style="min-width:900px">
+      <thead><tr><th>邮箱</th><th>注册</th><th>最后登录</th><th>搜索</th><th>已发</th><th>花费</th><th>额度（$）</th><th></th></tr></thead>
+      <tbody id="adminTbody"><tr><td colspan="8" style="text-align:center;padding:18px"><span class="spinner"></span></td></tr></tbody>
+    </table></div>
+  </div>
 </div>
 
 <footer style="border-top:1px solid var(--border);padding:2rem 6%;text-align:center;color:var(--sub2);font-size:0.78rem;margin-top:3rem">
@@ -442,8 +451,61 @@
       const d = await r.json();
       document.getElementById('acctEmail').textContent = d.email || '（未知账号）';
       document.getElementById('acctSince').textContent = fmtDate(d.createdAt);
+      if (d.isAdmin) { document.getElementById('adminSec').style.display = 'block'; loadAdminUsers(); }
     } catch (e) {
       document.getElementById('acctEmail').textContent = '（无法加载账号信息）';
+    }
+  }
+
+  // ── 账号管理（管理员专属） ──
+  async function loadAdminUsers() {
+    const tb = document.getElementById('adminTbody');
+    try {
+      const r = await fetch('/api/admin/users', { headers: authHeaders() });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || '加载失败');
+      const users = (d.users || []).sort((a, b) => (b.spendUsd || 0) - (a.spendUsd || 0));
+      tb.innerHTML = users.map(u => {
+        const unlimited = u.quotaUsd >= 100000;
+        return '<tr>' +
+          '<td class="em" style="max-width:210px;overflow:hidden;text-overflow:ellipsis" title="' + esc(u.email) + '">' + esc(u.email) + '</td>' +
+          '<td class="muted">' + (u.createdAt ? fmtWhen(u.createdAt) : '—') + '</td>' +
+          '<td class="muted">' + (u.lastSignInAt ? fmtWhen(u.lastSignInAt) : '从未') + '</td>' +
+          '<td>' + u.searches + '</td>' +
+          '<td><span class="sent-chip">' + u.sentCount + '</span></td>' +
+          '<td style="color:var(--cost)">$' + (u.spendUsd || 0).toFixed(2) + '</td>' +
+          '<td><input class="lp-search" style="width:92px;background-image:none;padding:5px 9px" type="number" min="0" step="1" value="' + u.quotaUsd + '" id="qin-' + u.id + '">' +
+            (unlimited ? ' <span style="font-size:0.66rem;color:var(--sent)">不限</span>' : '') + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<button class="lp-btn" style="padding:4px 10px;font-size:0.7rem" onclick="saveQuota(\'' + u.id + '\', this)">保存</button> ' +
+            '<button class="lp-btn" style="padding:4px 10px;font-size:0.7rem;border-color:rgba(74,222,128,0.4);color:#86efac;background:rgba(74,222,128,0.08)" onclick="document.getElementById(\'qin-' + u.id + '\').value=999999; saveQuota(\'' + u.id + '\', this)">设为不限</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    } catch (e) {
+      tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:16px">加载失败：' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  async function saveQuota(userId, btn) {
+    const input = document.getElementById('qin-' + userId);
+    const v = Number(input.value);
+    if (!Number.isFinite(v) || v < 0) { alert('额度要是不小于 0 的数字'); return; }
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = '…';
+    try {
+      const r = await fetch('/api/admin/users/' + userId + '/quota', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ quotaUsd: v }),
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || '保存失败');
+      btn.textContent = '✓';
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1200);
+    } catch (e) {
+      alert('保存失败：' + e.message);
+      btn.textContent = orig; btn.disabled = false;
     }
   }
 
