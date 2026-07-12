@@ -35,6 +35,7 @@ app.get('/',            (req, res) => sendHtml(res, 'home.html'));
 app.get('/app',         (req, res) => sendHtml(res, 'index.html'));
 app.get('/lens',        (req, res) => sendHtml(res, 'index.html'));
 app.get('/account',     (req, res) => sendHtml(res, 'account.html'));
+app.get('/autopost',    (req, res) => sendHtml(res, 'autopost.html'));
 app.get('/notes',       (req, res) => sendHtml(res, 'notes.html'));
 app.get('/landing',     (req, res) => sendHtml(res, 'landing.html'));
 app.get('/landing.html',(req, res) => sendHtml(res, 'landing.html'));
@@ -1929,6 +1930,74 @@ app.get('/api/admin/costs', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ success: false, error: 'Admin only' });
   const summary = await getCostSummary(req.userId);
   res.json({ success: true, ...summary });
+});
+
+// ── 自动发帖 (Blotato) — admin-only: posts go to the OWNER's social accounts ──
+app.get('/api/autopost/accounts', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ success: false, error: 'Admin only' });
+  try {
+    const { listBlotatoAccounts } = require('./services/blotato');
+    const accounts = await withTimeout(listBlotatoAccounts(), 30000, 'Blotato accounts');
+    res.json({ success: true, accounts });
+  } catch (e) {
+    console.error('[Autopost] accounts error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Body: { targets: [{ id, platform, pageId? }], text, mediaUrls?, scheduledTime? }
+app.post('/api/autopost/publish', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ success: false, error: 'Admin only' });
+  const { targets, text, mediaUrls, scheduledTime } = req.body || {};
+  const list = Array.isArray(targets) ? targets.slice(0, 10) : [];
+  if (!list.length) return res.status(400).json({ success: false, error: '请至少选择一个账号' });
+  if (!(text || '').trim() && !(Array.isArray(mediaUrls) && mediaUrls.length)) {
+    return res.status(400).json({ success: false, error: '帖子内容和媒体不能都为空' });
+  }
+  const { publishBlotatoPost } = require('./services/blotato');
+  const results = [];
+  for (const t of list) {
+    const r = await withTimeout(
+      publishBlotatoPost({ accountId: t.id, platform: t.platform, pageId: t.pageId || '', text: text || '', mediaUrls: mediaUrls || [], scheduledTime: scheduledTime || null }),
+      60000, 'Blotato publish'
+    ).catch(e => ({ success: false, error: e.message }));
+    results.push({ id: t.id, platform: t.platform, success: !!r.success, error: r.error || null });
+  }
+  res.json({ success: true, results });
+});
+
+// Body: { topic, platforms?, language? } → { text } (Sonnet-written social post)
+app.post('/api/autopost/generate', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ success: false, error: 'Admin only' });
+  const topic = (req.body?.topic || '').trim();
+  if (!topic) return res.status(400).json({ success: false, error: 'topic required' });
+  const language  = (req.body?.language || 'English').trim();
+  const platforms = Array.isArray(req.body?.platforms) && req.body.platforms.length ? req.body.platforms.join(', ') : 'social media';
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 700,
+      messages: [{
+        role: 'user',
+        content: `Write ONE social media post in ${language} for these platforms: ${platforms}.
+
+Topic / what to promote: ${topic}
+
+Rules:
+- Hook in the first line. Concrete, specific, no hype-words like "revolutionary".
+- 60-180 words. Short paragraphs or line breaks, easy to skim.
+- End with one clear call-to-action.
+- 2-4 relevant hashtags at the end (no more).
+- Return ONLY the post text, no quotes, no explanations.`,
+      }],
+    }), 60000, 'Autopost Sonnet');
+    res.json({ success: true, text: (response.content[0].text || '').trim() });
+  } catch (e) {
+    console.error('[Autopost] generate error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 // ── Instantly: Campaign management proxy routes ───────────────────────────────

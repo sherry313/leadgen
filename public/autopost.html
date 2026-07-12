@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社媒自动发帖 - 智拓客</title>
+  <script>
+    // Login guard — mirrors /account. Unauthenticated → login and come back.
+    (function () {
+      var hasToken = false;
+      try {
+        var s = localStorage.getItem('leadgen_supabase_session');
+        if (s) { var o = JSON.parse(s); hasToken = !!(o && o.access_token); }
+        if (!hasToken) { var t = localStorage.getItem('leadgen_accessToken'); hasToken = !!(t && t.trim()); }
+      } catch (e) {}
+      if (!hasToken) location.replace('/login.html?redirect=' + encodeURIComponent('/autopost'));
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #030303; --card: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.08);
+      --text: #e5e7eb; --sub: rgba(255,255,255,0.45); --sub2: rgba(255,255,255,0.30);
+      --accent: #6366f1; --accent-soft: rgba(99,102,241,0.12); --danger: #f87171; --ok: #4ade80;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 6%; height: 60px;
+      background: rgba(3,3,3,0.82); backdrop-filter: blur(18px); border-bottom: 1px solid var(--border); }
+    .nav-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 700; }
+    .nav-brand i { color: var(--accent); }
+    .nav-back { display: inline-flex; align-items: center; gap: 6px; font-size: 0.84rem; color: var(--sub); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.15s; }
+    .nav-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .main { padding: 88px 6% 4rem; max-width: 760px; margin: 0 auto; }
+    .page-title { font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; }
+    .page-sub { font-size: 0.82rem; color: var(--sub2); margin-bottom: 26px; }
+    .sec-label { font-size: 0.78rem; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: 0.06em; margin: 22px 0 10px 2px; display: flex; align-items: center; gap: 7px; }
+    .sec-label i { color: var(--accent); font-size: 0.95rem; }
+
+    .acct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+    .acct-chip { display: flex; align-items: center; gap: 9px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
+    .acct-chip:hover { border-color: rgba(99,102,241,0.4); }
+    .acct-chip.on { border-color: rgba(99,102,241,0.6); background: var(--accent-soft); }
+    .acct-chip input { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+    .acct-chip .pi { font-size: 1.05rem; flex-shrink: 0; }
+    .acct-chip .meta { min-width: 0; }
+    .acct-chip .nm { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .acct-chip .pf { font-size: 0.68rem; color: var(--sub); text-transform: capitalize; }
+    .acct-chip .need-media { font-size: 0.62rem; color: #fbbf24; }
+    .pi-twitter { color: #93c5fd; } .pi-linkedin { color: #60a5fa; } .pi-facebook { color: #3b82f6; }
+    .pi-instagram { color: #f472b6; } .pi-youtube { color: #f87171; } .pi-tiktok { color: #e5e7eb; }
+
+    .box { background: var(--card); border: 1px solid var(--border); border-radius: 13px; padding: 18px; }
+    .gen-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .in { padding: 9px 13px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.85rem; font-family: inherit; outline: none; }
+    .in:focus { border-color: rgba(99,102,241,0.5); }
+    .gen-topic { flex: 1; min-width: 220px; }
+    select.in { cursor: pointer; }
+    textarea.in { width: 100%; min-height: 150px; resize: vertical; line-height: 1.6; }
+    .btn { padding: 9px 16px; border-radius: 8px; font-size: 0.84rem; font-weight: 600; cursor: pointer; font-family: inherit; border: 1px solid; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn.ghost { background: transparent; border-color: rgba(99,102,241,0.4); color: #a5b4fc; }
+    .btn.ghost:hover { background: var(--accent-soft); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover { background: #4f52d4; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .hint { font-size: 0.74rem; color: var(--sub2); margin-top: 8px; line-height: 1.6; }
+    .char-n { font-size: 0.72rem; color: var(--sub2); text-align: right; margin-top: 4px; }
+
+    .pub-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+    .result-list { margin-top: 14px; display: none; }
+    .res-chip { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 6px; }
+    .res-chip.ok { border-color: rgba(74,222,128,0.35); color: var(--ok); }
+    .res-chip.fail { border-color: rgba(248,113,113,0.35); color: var(--danger); }
+    .res-chip .err { color: var(--sub); font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .locked { text-align: center; padding: 60px 20px; color: var(--sub); font-size: 0.9rem; line-height: 2; }
+    .locked i { font-size: 2rem; color: var(--accent); display: block; margin-bottom: 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand"><i class="ti ti-bolt"></i>智拓客</a>
+  <a href="/" class="nav-back"><i class="ti ti-arrow-left"></i> 返回首页</a>
+</nav>
+
+<div class="main">
+  <div class="page-title">社媒自动发帖</div>
+  <div class="page-sub">// 一次编辑，同步发布到你的所有社交账号 — 支持 AI 代写和定时发布</div>
+
+  <div id="lockedMsg" class="locked" style="display:none">
+    <i class="ti ti-lock"></i>
+    此功能为管理员专用。<br>如需开通请联系客服。
+  </div>
+
+  <div id="appBody" style="display:none">
+    <div class="sec-label"><i class="ti ti-share"></i> 选择发布账号</div>
+    <div id="acctGrid" class="acct-grid"><span class="spinner"></span></div>
+
+    <div class="sec-label"><i class="ti ti-pencil"></i> 帖子内容</div>
+    <div class="box">
+      <div class="gen-row">
+        <input id="genTopic" class="in gen-topic" placeholder="让 AI 代写：输入主题，例如「智拓客帮建材工厂自动开发海外客户」">
+        <select id="genLang" class="in">
+          <option value="English">英文</option>
+          <option value="Chinese">中文</option>
+        </select>
+        <button class="btn ghost" id="genBtn" onclick="genPost()"><i class="ti ti-sparkles"></i> AI 生成</button>
+      </div>
+      <textarea id="postText" class="in" placeholder="帖子正文…（也可以直接手写，不用 AI）" oninput="updateCharN()"></textarea>
+      <div class="char-n" id="charN">0 字</div>
+      <input id="mediaUrls" class="in" style="width:100%;margin-top:10px" placeholder="图片/视频链接（可选，多个用英文逗号隔开）— Instagram 和 YouTube 必须带媒体">
+      <div class="pub-row">
+        <label style="font-size:0.8rem;color:var(--sub);display:inline-flex;align-items:center;gap:7px">
+          <input type="checkbox" id="schedOn" style="accent-color:var(--accent)" onchange="document.getElementById('schedAt').style.display=this.checked?'':'none'"> 定时发布
+        </label>
+        <input type="datetime-local" id="schedAt" class="in" style="display:none">
+        <div style="flex:1"></div>
+        <button class="btn primary" id="pubBtn" onclick="publishPost()"><i class="ti ti-send"></i> 发布</button>
+      </div>
+      <div class="hint">Instagram / YouTube 必须提供媒体链接（YouTube 需要视频）；Facebook 主页发帖需要在 Blotato 后台绑定 Page。发布结果逐个账号显示在下方。</div>
+      <div class="result-list" id="resultList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function getStoredToken() {
+    const s = localStorage.getItem('leadgen_supabase_session');
+    if (s) { try { const o = JSON.parse(s); if (o && o.access_token) return o.access_token; } catch (e) {} }
+    const t = localStorage.getItem('leadgen_accessToken');
+    return (t && t.trim()) || '';
+  }
+  function authHeaders(extra) { return Object.assign({ Authorization: 'Bearer ' + getStoredToken() }, extra || {}); }
+  function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  const PLATFORM_ICON = { twitter: 'ti-brand-x', linkedin: 'ti-brand-linkedin', facebook: 'ti-brand-facebook', instagram: 'ti-brand-instagram', youtube: 'ti-brand-youtube', tiktok: 'ti-brand-tiktok' };
+  const NEEDS_MEDIA = { instagram: true, youtube: true };
+  let _accounts = [];
+
+  async function init() {
+    // Admin gate first — non-admins see the locked message, no API data.
+    try {
+      const me = await (await fetch('/api/me', { headers: authHeaders() })).json();
+      if (!me.isAdmin) { document.getElementById('lockedMsg').style.display = 'block'; return; }
+    } catch (e) { document.getElementById('lockedMsg').style.display = 'block'; return; }
+    document.getElementById('appBody').style.display = 'block';
+
+    try {
+      const d = await (await fetch('/api/autopost/accounts', { headers: authHeaders() })).json();
+      if (!d.success) throw new Error(d.error || '加载失败');
+      _accounts = d.accounts || [];
+      renderAccounts();
+    } catch (e) {
+      document.getElementById('acctGrid').innerHTML = '<div style="color:var(--danger);font-size:0.82rem">账号加载失败：' + esc(e.message) + '</div>';
+    }
+  }
+
+  function renderAccounts() {
+    const g = document.getElementById('acctGrid');
+    if (!_accounts.length) { g.innerHTML = '<div style="color:var(--sub);font-size:0.82rem">Blotato 里还没有绑定社交账号，先到 blotato.com 绑定。</div>'; return; }
+    g.innerHTML = _accounts.map((a, i) => {
+      const nm = a.username || a.fullname || ('账号 ' + a.id);
+      const icon = PLATFORM_ICON[a.platform] || 'ti-world';
+      return '<label class="acct-chip" id="chip-' + i + '">' +
+        '<input type="checkbox" data-i="' + i + '" onchange="this.closest(\'.acct-chip\').classList.toggle(\'on\', this.checked)">' +
+        '<i class="ti ' + icon + ' pi pi-' + esc(a.platform) + '"></i>' +
+        '<div class="meta"><div class="nm" title="' + esc(nm) + '">' + esc(nm) + '</div>' +
+        '<div class="pf">' + esc(a.platform) + (NEEDS_MEDIA[a.platform] ? ' <span class="need-media">需媒体</span>' : '') + '</div></div>' +
+      '</label>';
+    }).join('');
+  }
+
+  function updateCharN() {
+    const v = document.getElementById('postText').value;
+    document.getElementById('charN').textContent = v.length + ' 字';
+  }
+
+  async function genPost() {
+    const topic = document.getElementById('genTopic').value.trim();
+    if (!topic) { alert('先输入主题，AI 才知道写什么'); return; }
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 生成中…';
+    try {
+      const checked = [...document.querySelectorAll('#acctGrid input:checked')].map(cb => _accounts[+cb.dataset.i].platform);
+      const r = await fetch('/api/autopost/generate', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ topic, language: document.getElementById('genLang').value, platforms: [...new Set(checked)] }),
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || '生成失败');
+      document.getElementById('postText').value = d.text;
+      updateCharN();
+    } catch (e) {
+      alert('AI 生成失败：' + e.message);
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="ti ti-sparkles"></i> AI 生成';
+    }
+  }
+
+  async function publishPost() {
+    const targets = [...document.querySelectorAll('#acctGrid input:checked')].map(cb => {
+      const a = _accounts[+cb.dataset.i];
+      return { id: a.id, platform: a.platform };
+    });
+    if (!targets.length) { alert('请至少勾选一个账号'); return; }
+    const text = document.getElementById('postText').value.trim();
+    const mediaUrls = document.getElementById('mediaUrls').value.split(',').map(s => s.trim()).filter(Boolean);
+    if (!text && !mediaUrls.length) { alert('帖子内容不能为空'); return; }
+    const needMedia = targets.filter(t => NEEDS_MEDIA[t.platform]);
+    if (needMedia.length && !mediaUrls.length) {
+      alert(needMedia.map(t => t.platform).join(' / ') + ' 必须提供媒体链接（图片/视频），请填写或取消勾选这些账号');
+      return;
+    }
+    let scheduledTime = null;
+    if (document.getElementById('schedOn').checked) {
+      const v = document.getElementById('schedAt').value;
+      if (!v) { alert('请选择定时发布时间'); return; }
+      const dt = new Date(v);
+      if (dt.getTime() < Date.now() + 60000) { alert('定时时间要在 1 分钟以后'); return; }
+      scheduledTime = dt.toISOString();
+    }
+
+    const btn = document.getElementById('pubBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 发布中…';
+    const list = document.getElementById('resultList');
+    list.style.display = 'none'; list.innerHTML = '';
+    try {
+      const r = await fetch('/api/autopost/publish', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ targets, text, mediaUrls, scheduledTime }),
+      });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || '发布失败');
+      list.innerHTML = (d.results || []).map(x => {
+        const a = _accounts.find(c => c.id === x.id) || {};
+        const nm = a.username || a.fullname || x.platform;
+        return '<div class="res-chip ' + (x.success ? 'ok' : 'fail') + '">' +
+          '<i class="ti ' + (x.success ? 'ti-check' : 'ti-x') + '"></i>' +
+          '<b>' + esc(nm) + '</b><span style="color:var(--sub2)">' + esc(x.platform) + '</span>' +
+          (x.success ? (scheduledTime ? '已排期' : '已发布') : '<span class="err" title="' + esc(x.error) + '">' + esc((x.error || '').slice(0, 120)) + '</span>') +
+        '</div>';
+      }).join('');
+      list.style.display = 'block';
+    } catch (e) {
+      alert('发布失败：' + e.message);
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> 发布';
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

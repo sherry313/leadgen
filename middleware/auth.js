@@ -5,6 +5,12 @@ const supabase = createClient(
   process.env.SUPABASE_KEY,
 );
 
+// Comma-separated owner/admin emails from .env. req.isAdmin was read all over
+// server.js (/api/me, /api/admin/costs, sheetUrl gating) but never assigned —
+// admin features were dead for everyone until this.
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
+  .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+
 async function requireAuth(req, res, next) {
   const header = req.headers['authorization'] || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
@@ -21,6 +27,7 @@ async function requireAuth(req, res, next) {
       console.log(`[Auth] OK ${req.method} ${req.path} | user=${data.user.email}`);
       req.user = data.user;
       req.userId = data.user.id;
+      req.isAdmin = ADMIN_EMAILS.includes((data.user.email || '').toLowerCase());
       return next();
     }
 
@@ -36,6 +43,7 @@ async function requireAuth(req, res, next) {
       console.warn(`[Auth] LEGACY-TOKEN used ${req.method} ${req.path} | ip=${req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '?'}`);
       req.user = { id: 'legacy', email: 'legacy' };
       req.userId = 'legacy';
+      req.isAdmin = true; // legacy token is the owner's
       return next();
     }
 
