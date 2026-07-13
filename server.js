@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -1520,10 +1520,11 @@ async function requireQuota(req, res) {
 }
 
 app.get('/api/history', requireAuth, async (req, res) => {
-  const [history, emailsSent, sentCounts, sentStats, profiles] = await Promise.all([
+  const [history, emailsSent, sentCounts, writtenCounts, sentStats, profiles] = await Promise.all([
     getSearchHistory(30, req.userId),
     getEmailsSentCount(req.userId),
     getSentCountsBySearch(req.userId),
+    getWrittenCountsBySearch(req.userId),    // 流程状态：写没写过邮件
     getSentEmailStats(req.userId),           // hero 成果条：客户数 + 开发信封数
     listProductProfiles(req.userId),         // searchId → 产品名（历史标签）
   ]);
@@ -1534,6 +1535,7 @@ app.get('/api/history', requireAuth, async (req, res) => {
   const marked = (history || []).map(r => ({
     ...r,
     sent_count:         sentCounts[r.id] || 0,
+    written_count:      writtenCounts[r.id] || 0,
     product_label:      productBySearch[r.id] || null,
     apify_cost_usd:     r.apify_cost_usd     != null ? parseFloat((r.apify_cost_usd     * COST_MARKUP).toFixed(4)) : r.apify_cost_usd,
     anthropic_cost_usd: r.anthropic_cost_usd != null ? parseFloat((r.anthropic_cost_usd * COST_MARKUP).toFixed(4)) : r.anthropic_cost_usd,

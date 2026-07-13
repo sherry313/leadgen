@@ -309,6 +309,30 @@ async function getSentCountsBySearch(userId) {
   }
 }
 
+// Per-search "已写好邮件" counts — drives the history rows' pipeline status
+// (已抓取 → 已筛选 → 已写邮件 → 已发送).
+async function getWrittenCountsBySearch(userId) {
+  const db = getClient();
+  if (!db) return {};
+  try {
+    let q = db.from('leads')
+      .select('search_id')
+      .not('email1_subject', 'is', null)
+      .neq('email1_subject', '');
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data, error } = await q;
+    if (error) throw error;
+    const counts = {};
+    for (const r of data || []) {
+      if (r.search_id) counts[r.search_id] = (counts[r.search_id] || 0) + 1;
+    }
+    return counts;
+  } catch (err) {
+    console.warn('[Supabase] getWrittenCountsBySearch failed:', err.message);
+    return {};
+  }
+}
+
 async function getSearchHistory(limit = 30, userId) {
   const db = getClient();
   if (!db) return [];
@@ -680,4 +704,4 @@ async function getSentEmailStats(userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd };
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch };

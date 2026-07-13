@@ -208,6 +208,13 @@
     .grp-body { border: 1px solid rgba(99,102,241,0.25); border-top: none; border-radius: 0 0 11px 11px; padding: 8px; background: rgba(255,255,255,0.015); }
     .grp-body .row { margin-bottom: 6px; }
     .grp-body .row:last-child { margin-bottom: 0; }
+    /* 流程状态徽章 */
+    .st { font-size: 0.68rem; font-weight: 700; border-radius: 5px; padding: 2px 8px; white-space: nowrap; border: 1px solid; flex-shrink: 0; }
+    .st-sent     { color: #4ade80; background: rgba(74,222,128,0.10);  border-color: rgba(74,222,128,0.35); }
+    .st-written  { color: #a5b4fc; background: rgba(99,102,241,0.12);  border-color: rgba(99,102,241,0.4); }
+    .st-filtered { color: #93c5fd; background: rgba(59,130,246,0.10);  border-color: rgba(59,130,246,0.35); }
+    .st-scraped  { color: #fbbf24; background: rgba(251,191,36,0.08);  border-color: rgba(251,191,36,0.3); }
+    .st-none     { color: rgba(255,255,255,0.3); background: transparent; border-color: rgba(255,255,255,0.1); }
 
     .empty-msg { text-align: center; padding: 40px 24px; color: var(--sub); font-size: 0.85rem; }
     .empty-msg a { color: #a5b4fc; }
@@ -574,17 +581,27 @@
   // 点开才看到里面的每条搜索。没挂产品的记录归到「未分类」。
   const _openGroups = new Set();
 
+  // 流程状态：跑到哪一步一眼看清（已发送 > 已写邮件 > 已筛选 > 已抓取 > 无结果）
+  function rowStatus(r) {
+    if ((r.sent_count || 0) > 0)      return { t: '已发送',            cls: 'st-sent' };
+    if ((r.written_count || 0) > 0)   return { t: '已写邮件 · 未发送', cls: 'st-written' };
+    if ((r.total_qualified || 0) > 0) return { t: '已筛选 · 未写邮件', cls: 'st-filtered' };
+    if ((r.total_scraped || 0) > 0)   return { t: '已抓取 · 未筛选',   cls: 'st-scraped' };
+    return { t: '无结果', cls: 'st-none' };
+  }
+
   function _histRow(r) {
     const cost = r.total_cost_usd != null ? Number(r.total_cost_usd).toFixed(2) : '0.00';
+    const st = rowStatus(r);
     return '<div class="row" data-id="' + r.id + '">' +
       '<div class="rmain">' +
         '<span class="q" title="' + esc(r.query) + '">' + (esc(r._zhTitle) || esc(r.query) || '(无关键词)') + '</span>' +
         '<span class="loc">' + (esc(r._zhLoc) || esc(r.location) || '') + '</span>' +
       '</div>' +
+      '<span class="st ' + st.cls + '">' + st.t + '</span>' +
       '<span class="nums"><span class="g">已发 ' + (r.sent_count || 0) + '</span> / ' + (r.total_scraped || 0) + ' · <span class="c">$' + cost + '</span></span>' +
       '<span class="when" title="' + esc(timeAgo(r.created_at)) + '">' + fmtWhen(r.created_at) + '</span>' +
       '<div class="acts">' +
-        '<button class="b view" onclick="viewSearch(\'' + r.id + '\')"><i class="ti ti-eye"></i> 查看线索</button>' +
         '<button class="b more" onclick="toggleRowMenu(event, \'' + r.id + '\', \'' + jsStr(r.query) + '\', \'' + jsStr(r.location) + '\')"><i class="ti ti-dots"></i></button>' +
       '</div>' +
     '</div>';
@@ -638,8 +655,10 @@
     const m = document.createElement('div');
     m.className = 'menu-pop';
     m.innerHTML =
+      '<div class="mi" data-act="view" style="color:#a5b4fc"><i class="ti ti-eye"></i> 查看线索</div>' +
       '<div class="mi" data-act="rerun"><i class="ti ti-refresh"></i> 重新搜</div>' +
       '<div class="mi danger" data-act="del"><i class="ti ti-trash"></i> 删除记录</div>';
+    m.querySelector('[data-act="view"]').onclick  = () => { closeRowMenus(); viewSearch(id); };
     m.querySelector('[data-act="rerun"]').onclick = () => { closeRowMenus(); rerunSearch(query, loc); };
     m.querySelector('[data-act="del"]').onclick   = (e) => { closeRowMenus(); deleteSearch(id, e.currentTarget); };
     acts.appendChild(m);
