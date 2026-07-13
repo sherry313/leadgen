@@ -301,13 +301,21 @@
   </div>
   <div id="histList"><div class="empty-msg"><span class="spinner"></span>加载中…</div></div>
 
-  <!-- 账号管理（仅管理员渲染；普通用户完全看不到这块） -->
+  <!-- 账号管理（仅管理员渲染；普通用户完全看不到这块）— 折叠，点开才加载 -->
   <div id="adminSec" style="display:none; margin-top:34px">
-    <div class="sec-label"><i class="ti ti-users"></i> 账号管理 <span class="tip">仅你可见 · 修改额度立即生效 · 花费为用户价口径</span></div>
-    <div class="tbl-wrap"><table class="lead-tbl" style="min-width:900px">
-      <thead><tr><th>邮箱</th><th>注册</th><th>最后登录</th><th>搜索</th><th>已发</th><th>花费</th><th>额度（$）</th><th></th></tr></thead>
-      <tbody id="adminTbody"><tr><td colspan="8" style="text-align:center;padding:18px"><span class="spinner"></span></td></tr></tbody>
-    </table></div>
+    <div class="grp">
+      <div class="grp-head" id="adminHead" onclick="toggleAdminSec()">
+        <i class="ti ti-chevron-right chev"></i>
+        <span class="gname"><i class="ti ti-users" style="color:var(--accent);margin-right:6px"></i>账号管理</span>
+        <span class="gstats" id="adminTip">仅你可见 · 点开管理各账号额度</span>
+      </div>
+      <div class="grp-body" id="adminBody" style="display:none">
+        <div class="tbl-wrap"><table class="lead-tbl" style="min-width:900px">
+          <thead><tr><th>邮箱</th><th>注册</th><th>最后登录</th><th>搜索</th><th>已发</th><th>花费</th><th>额度（$）</th><th></th></tr></thead>
+          <tbody id="adminTbody"><tr><td colspan="8" style="text-align:center;padding:18px"><span class="spinner"></span></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -458,13 +466,23 @@
       const d = await r.json();
       document.getElementById('acctEmail').textContent = d.email || '（未知账号）';
       document.getElementById('acctSince').textContent = fmtDate(d.createdAt);
-      if (d.isAdmin) { document.getElementById('adminSec').style.display = 'block'; loadAdminUsers(); }
+      if (d.isAdmin) document.getElementById('adminSec').style.display = 'block'; // 折叠头；点开才加载数据
     } catch (e) {
       document.getElementById('acctEmail').textContent = '（无法加载账号信息）';
     }
   }
 
-  // ── 账号管理（管理员专属） ──
+  // ── 账号管理（管理员专属；折叠，首次点开才拉数据） ──
+  let _adminLoaded = false;
+  function toggleAdminSec() {
+    const body = document.getElementById('adminBody');
+    const head = document.getElementById('adminHead');
+    const open = body.style.display === 'none';
+    body.style.display = open ? 'block' : 'none';
+    head.classList.toggle('open', open);
+    if (open && !_adminLoaded) { _adminLoaded = true; loadAdminUsers(); }
+  }
+
   async function loadAdminUsers() {
     const tb = document.getElementById('adminTbody');
     try {
