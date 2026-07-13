@@ -1648,6 +1648,24 @@
     }
     nav#navbar.nav-mini .nav-account i { font-size: 20px; color: #818cf8; }
     nav#navbar.nav-mini .nav-account:hover { color: #fff; border-color: rgba(99,102,241,0.7); background: rgba(99,102,241,0.2); }
+    /* 个人中心 圆形悬浮大按钮 */
+    .account-fab {
+      position: fixed; right: 40px; top: 50%; transform: translateY(-50%); z-index: 200;
+      width: 92px; height: 92px; border-radius: 50%;
+      flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      border: 1px solid rgba(99,102,241,0.5); background: rgba(99,102,241,0.14);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      color: #a5b4fc; text-decoration: none; box-shadow: 0 8px 28px rgba(99,102,241,0.32);
+      transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+    .account-fab i { font-size: 32px; }
+    .account-fab span { font-size: 12px; font-weight: 600; }
+    .account-fab:hover { background: rgba(99,102,241,0.24); box-shadow: 0 12px 34px rgba(99,102,241,0.45); transform: translateY(-50%) scale(1.06); }
+    @media (max-width: 1000px) {
+      .account-fab { right: 16px; top: auto; bottom: 22px; transform: none; width: 74px; height: 74px; }
+      .account-fab i { font-size: 26px; }
+      .account-fab:hover { transform: scale(1.06); }
+    }
     @media(max-width:560px) {
       nav#navbar.nav-mini .nav-mini-links { gap: 10px; font-size: 12px; }
     }
@@ -2610,15 +2628,19 @@
     <a href="/tools/">免费工具</a>
     <a href="/pricing.html">定价</a>
   </div>
-  <a id="navAccount" href="/account" class="nav-account" title="个人中心" style="display:none">
-    <i class="ti ti-user-circle" aria-hidden="true"></i><span>个人中心</span>
-  </a>
+  <!-- 个人中心 入口移到 </nav> 后的圆形悬浮大按钮（id 保留在那个元素上，toggle JS 不变） -->
 
   <!-- Legacy nav stubs (kept for JS compatibility — hidden) -->
   <ul class="nav-links" id="navMkt" style="display:none"></ul>
   <ul class="nav-links" id="navApp" style="display:none"></ul>
   <div class="hamburger" id="hamburger" style="display:none"><span></span><span></span><span></span></div>
 </nav>
+
+<!-- 个人中心：右侧圆形大按钮悬浮入口（登录后由 navAccount toggle 显示，跨步骤常驻） -->
+<a id="navAccount" class="account-fab" href="/account" title="个人中心" style="display:none">
+  <i class="ti ti-user-circle" aria-hidden="true"></i>
+  <span>个人中心</span>
+</a>
 
 <!-- ════════ /app MODE SELECTION (shown first; .container stays hidden until a mode is chosen) ════════ -->
 <div id="appModeSelect">
@@ -2941,10 +2963,6 @@ document.querySelectorAll('#appModeSelect .mode-card').forEach(function (card) {
           style="display:inline-flex; align-items:center; gap:6px; padding:11px 16px; border-radius:9px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.18)); background:transparent; color:var(--color-text-primary, #e5e7eb); font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; white-space:nowrap;">
           <i class="ti ti-plus" style="font-size:16px; color:#6366f1;"></i> 新建
         </button>
-        <a href="/account" title="个人中心"
-          style="display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:10px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(99,102,241,0.10); color:#a5b4fc; font-size:14px; font-weight:600; text-decoration:none; white-space:nowrap;">
-          <i class="ti ti-user-circle" style="font-size:22px;"></i> 个人中心
-        </a>
       </div>
 
       <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
