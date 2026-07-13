@@ -305,7 +305,7 @@
   <!-- 产品品类（点开产品 → 看它每次跑出的线索；线索按产品各归各表） -->
   <div class="prod-head">
     <div class="sec-label"><i class="ti ti-package"></i> 产品品类 <span class="tip">点开产品查看它每次跑出的线索 <span id="histCountTip"></span></span></div>
-    <a href="/app" class="btn-new"><i class="ti ti-plus"></i> 新建搜索</a>
+    <button class="btn-new" onclick="newSearch()"><i class="ti ti-plus"></i> 新建搜索</button>
   </div>
   <div id="prodList" class="prod-row"><span class="spinner"></span></div>
   <div id="prodPanelHost"></div>
@@ -910,6 +910,20 @@
       localStorage.setItem(ACTIVE_KEY, JSON.stringify({ id: p.id, name: p.name }));
       localStorage.setItem('leadgen_current_step', '1');
       localStorage.removeItem('leadgen_searchId');
+    } catch (e) {}
+    location.href = '/app';
+  }
+
+  // 新建搜索 = 干净的表：清掉上一个产品的业务信息 + AI 优势/案例 + 使用中标记，
+  // 这样 /app 是空表，填新产品后 AI 会重新推荐/润色（否则会沿用上个产品，串味）。
+  // 开跑时 ensureProductForSearch 会按新填的业务信息自动建/挂产品。
+  function newSearch() {
+    try {
+      localStorage.removeItem(APP_BI_KEY);           // 'appBusinessInfo'（含优势/案例）
+      localStorage.removeItem('autoForm');           // 自动模式关键词/地区
+      localStorage.removeItem(ACTIVE_KEY);           // 'leadgen_active_product'
+      localStorage.removeItem('leadgen_searchId');   // 不恢复上一次搜索
+      localStorage.setItem('leadgen_current_step', '1');
     } catch (e) {}
     location.href = '/app';
   }
