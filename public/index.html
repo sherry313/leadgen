@@ -12461,7 +12461,8 @@ async function biPolishField(textareaId, kind, btn) {
   // sequence (one Haiku request per lead). Spec'd as global; reads from
   // window._appLeads (not _toolResults, which is an object keyed by source).
   // Stores the recommended subset in window._filteredLeads for downstream use.
-  window.startAppAiFilter = async function () {
+  // force=true（点「重新筛选」按钮）= 无视已有判定全部重筛；默认沿用已判定的。
+  window.startAppAiFilter = async function (force) {
     // Only analyze the leads the user checked in #appLeadList. Selection is
     // tracked by the closure-scoped `selected` Set of indices into _appLeads
     // (the lead objects carry no _selected flag), so derive the subset here.
@@ -12482,9 +12483,30 @@ async function biPolishField(textareaId, kind, btn) {
     if (!criteria) { alert('请先完成 AI 引导问题'); return; }
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
+    // 已有判定的线索直接沿用（昨天筛过的今天不重复扣费）；只有没判定过的才调 AI。
+    const storedVerdictOf = (l) => force ? ''
+      : (l._verdict === 'pass' || l._verdict === 'fail') ? l._verdict
+      : ((l.raw && (l.raw.icp_score === 'pass' || l.raw.icp_score === 'fail')) ? l.raw.icp_score : '');
+    const hasReuse = leads.some(l => storedVerdictOf(l));
+    let apiStarted = false;
+    let reused = 0;
+
     const filtered = [];
     for (const lead of leads) {
+      const sv = storedVerdictOf(lead);
+      if (sv) {
+        const reason = lead._verdictReason || (lead.raw && lead.raw.icp_reasoning) || '沿用上次筛选判定';
+        lead._verdict = sv; lead._verdictReason = reason;
+        filtered.push({ ...lead, _aiRecommended: sv === 'pass', _aiReason: reason });
+        reused++;
+        progress.textContent = `🤖 AI 正在分析 ${filtered.length}/${leads.length}...`;
+        continue;
+      }
       try {
+        // 合格数清零只在"整批全部重新判定"时做；沿用旧判定的批次不能清（旧的
+        // 合格数还有效，清了会把总数算丢）。
+        const isFirstApi = !apiStarted;
+        apiStarted = true;
         // Token read at call time so a mid-loop session refresh takes effect.
         const doReq = () => fetch('/api/ai-filter-lead', {
           method: 'POST',
@@ -12496,8 +12518,7 @@ async function biPolishField(textareaId, kind, btn) {
             lead: { ...lead, websiteText: lead.websiteText || lead.raw?.websiteText || '' },
             criteria,
             searchId: (typeof _currentSearchId !== 'undefined' && _currentSearchId) || null,
-            // 重跑筛选时从 0 重新计合格数，否则每重筛一轮 history 的合格数就翻一倍
-            resetQualified: filtered.length === 0,
+            resetQualified: !hasReuse && isFirstApi,
           }),
         });
         let resp = await doReq();
@@ -12532,12 +12553,14 @@ async function biPolishField(textareaId, kind, btn) {
     progress.style.display = 'none';
     btn.disabled = false;
     btn.textContent = '✨ 重新筛选';
+    // 重新筛选 = 明确要求全部重判（比如换了产品）— 走强制模式，不沿用旧判定。
+    btn.setAttribute('onclick', 'startAppAiFilter(true)');
 
     const recommended = filtered.filter(l => l._aiRecommended);
 
     resultsDiv.innerHTML = `
       <div style="font-size:13px; color:var(--color-text-secondary, rgba(255,255,255,0.5)); margin-bottom:12px;">
-        筛选结果 — 共 ${filtered.length} 家，推荐 ${recommended.length} 家
+        筛选结果 — 共 ${filtered.length} 家，推荐 ${recommended.length} 家${reused ? `（${reused} 家沿用上次判定，未重复扣费）` : ''}
       </div>
       ${filtered.map(lead => `
         <div style="border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:8px; padding:12px; margin-bottom:8px; display:flex; align-items:center; gap:12px; opacity:${lead._aiRecommended ? '1' : '0.5'}">
