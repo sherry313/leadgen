@@ -14628,13 +14628,29 @@ async function appGenerateAll() {
     && (leads[0].name || leads[0].title || '') === (previewed.name || previewed.title || '')
     && Array.isArray(_appPreviewEmails) && _appPreviewEmails.length;
 
+  // 已落库的邮件直接复用 — 昨晚写过的客户今天再进来不重复扣费。恢复的线索
+  // raw 里带着 email1..5 列；只有真没写过的才调 AI。
+  const storedSeq = (lead) => {
+    const raw = lead.raw || {};
+    const seq = [];
+    for (let k = 1; k <= 5; k++) {
+      const s = (raw['email' + k + '_subject'] || '').trim();
+      const b = (raw['email' + k + '_body'] || '').trim();
+      if (s || b) seq.push({ subject: s, body: b });
+    }
+    return seq.length ? seq : null;
+  };
+
   const results = [];
+  let reused = 0;
   let quotaHit = null; // set when the server says QUOTA_EXCEEDED — stop the loop
   for (let i = 0; i < leads.length; i++) {
     if (statusEl) statusEl.textContent = `正在生成 ${i + 1}/${leads.length} 封邮件...`;
     try {
-      if (i === 0 && reuseFirst) results.push(toEntry(leads[0], _appPreviewEmails));
-      else                       results.push(await genFor(leads[i]));
+      const stored = storedSeq(leads[i]);
+      if (stored)                     { results.push(toEntry(leads[i], stored)); reused++; }
+      else if (i === 0 && reuseFirst) results.push(toEntry(leads[0], _appPreviewEmails));
+      else                            results.push(await genFor(leads[i]));
     } catch (e) {
       if (e.quotaExceeded) { quotaHit = e.message; break; }
       if (e.authExpired) break; // login redirect已触发，别继续打后面的请求
@@ -14653,7 +14669,9 @@ async function appGenerateAll() {
     } else {
       statusEl.style.background = 'rgba(34,197,94,0.08)';
       statusEl.style.color = '#86efac';
-      statusEl.textContent = `已生成 ${results.length} 封邮件` + (droppedNoEmail ? `（已跳过 ${droppedNoEmail} 家无邮箱客户，未生成）` : '');
+      statusEl.textContent = `已生成 ${results.length} 封邮件`
+        + (reused ? `（其中 ${reused} 家复用之前写好的，不重复扣费）` : '')
+        + (droppedNoEmail ? `（已跳过 ${droppedNoEmail} 家无邮箱客户）` : '');
     }
   }
   if (quotaHit && !results.length) return; // nothing generated — stay put
