@@ -1640,13 +1640,14 @@
     }
     nav#navbar.nav-mini .nav-mini-links a:hover { color: #e2e8f0; }
     nav#navbar.nav-mini .nav-account {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; color: #94a3b8; text-decoration: none;
-      padding: 5px 12px; border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px; transition: color 0.15s, border-color 0.15s;
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 15px; font-weight: 600; color: #a5b4fc; text-decoration: none;
+      padding: 9px 18px; border: 1px solid rgba(99,102,241,0.4);
+      background: rgba(99,102,241,0.12);
+      border-radius: 10px; transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
-    nav#navbar.nav-mini .nav-account i { font-size: 15px; color: #6366f1; }
-    nav#navbar.nav-mini .nav-account:hover { color: #e2e8f0; border-color: rgba(99,102,241,0.4); }
+    nav#navbar.nav-mini .nav-account i { font-size: 20px; color: #818cf8; }
+    nav#navbar.nav-mini .nav-account:hover { color: #fff; border-color: rgba(99,102,241,0.7); background: rgba(99,102,241,0.2); }
     @media(max-width:560px) {
       nav#navbar.nav-mini .nav-mini-links { gap: 10px; font-size: 12px; }
     }
@@ -2936,6 +2937,10 @@ document.querySelectorAll('#appModeSelect .mode-card').forEach(function (card) {
             <option value="">引入现有产品 —— 选一个已保存的产品，一键带出业务信息…</option>
           </select>
         </div>
+        <button type="button" onclick="newProduct()" title="清空表单，填写一个新产品"
+          style="display:inline-flex; align-items:center; gap:6px; padding:11px 16px; border-radius:9px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.18)); background:transparent; color:var(--color-text-primary, #e5e7eb); font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; white-space:nowrap;">
+          <i class="ti ti-plus" style="font-size:16px; color:#6366f1;"></i> 新建
+        </button>
         <a href="/account" title="个人中心"
           style="display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:10px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(99,102,241,0.10); color:#a5b4fc; font-size:14px; font-weight:600; text-decoration:none; white-space:nowrap;">
           <i class="ti ti-user-circle" style="font-size:22px;"></i> 个人中心
@@ -10975,6 +10980,21 @@ function importProduct(id) {
     localStorage.setItem('leadgen_active_product', JSON.stringify({ id: p.id, name: p.name }));
     localStorage.setItem('leadgen_current_step', '1');
     localStorage.removeItem('leadgen_searchId');
+  } catch (_) {}
+  location.reload();
+}
+
+// 新建：清空业务信息 + 使用中标记 → 空白表单，填新产品（开跑时自动建/挂产品）。
+function newProduct() {
+  const bi = window._appBusinessInfo || {};
+  const hasContent = bi.product || bi.service || bi.advantage || bi.targetCustomer;
+  if (hasContent && !confirm('清空当前业务信息，开始填写一个新产品？（已存的产品不受影响，可随时从「引入现有产品」找回）')) return;
+  try {
+    localStorage.removeItem('appBusinessInfo');
+    localStorage.removeItem('autoForm');
+    localStorage.removeItem('leadgen_active_product');
+    localStorage.removeItem('leadgen_searchId');
+    localStorage.setItem('leadgen_current_step', '1');
   } catch (_) {}
   location.reload();
 }
