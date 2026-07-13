@@ -2927,6 +2927,21 @@ document.querySelectorAll('#appModeSelect .mode-card').forEach(function (card) {
          filtering/email yet). Hidden by default; revealed only on /app by the
          mountAppBusinessInfo IIFE so /lens never sees it. -->
     <div id="appBusinessInfoCard" style="display:none; background:var(--color-background-primary, rgba(255,255,255,0.03)); border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); border-radius:12px; padding:1.25rem; margin-bottom:1.25rem;">
+      <!-- 顶部：引入现有产品（免绕个人中心）+ 个人中心大图标入口 -->
+      <div id="biTopBar" style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+        <div id="biImportWrap" style="display:none; flex:1; min-width:220px; position:relative;">
+          <i class="ti ti-package" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:16px; color:#6366f1; pointer-events:none;"></i>
+          <select id="biImportSelect" onchange="importProduct(this.value)"
+            style="width:100%; appearance:none; -webkit-appearance:none; padding:11px 12px 11px 36px; border-radius:9px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(99,102,241,0.06); color:var(--color-text-primary, #e5e7eb); font-size:13px; font-family:inherit; cursor:pointer; outline:none;">
+            <option value="">引入现有产品 —— 选一个已保存的产品，一键带出业务信息…</option>
+          </select>
+        </div>
+        <a href="/account" title="个人中心"
+          style="display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:10px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(99,102,241,0.10); color:#a5b4fc; font-size:14px; font-weight:600; text-decoration:none; white-space:nowrap;">
+          <i class="ti ti-user-circle" style="font-size:22px;"></i> 个人中心
+        </a>
+      </div>
+
       <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
         <i class="ti ti-briefcase" style="font-size:20px; color:#6366f1;"></i>
         <span style="font-weight:500; font-size:16px; color:var(--color-text-primary, #e5e7eb);">业务信息</span>
@@ -10921,6 +10936,48 @@ async function smtpSendAll() {
     if (btn.textContent.includes('返回方式选择')) hide(btn);
   });
 })();
+
+// ── 引入现有产品：/app 业务信息卡顶部直接选已存产品，一键带出业务信息 ──────────
+// 等同个人中心里点「使用」（写同一套 localStorage）后 reload —— 复用现有的表单
+// 回填逻辑，零风险。无产品 / 未登录时选择器自动隐藏。/lens 不适用。
+(function mountProductImport() {
+  if (location.pathname === '/lens') return;
+  const wrap = document.getElementById('biImportWrap');
+  const sel  = document.getElementById('biImportSelect');
+  if (!wrap || !sel) return;
+  const token = (typeof getStoredToken === 'function') ? getStoredToken() : '';
+  if (!token) return;
+  window.__importProducts = [];
+  fetch('/api/products', { headers: { Authorization: 'Bearer ' + token } })
+    .then(r => r.json())
+    .then(d => {
+      const list = (d && d.profiles) || [];
+      if (!list.length) return;
+      window.__importProducts = list;
+      list.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id;
+        o.textContent = p.name + (p.customers ? '（客户 ' + p.customers + '）' : '');
+        sel.appendChild(o);
+      });
+      wrap.style.display = 'block';
+    })
+    .catch(() => {});
+})();
+
+// 选中已存产品 → 写入 localStorage（业务信息 + 使用中标记）后刷新，表单自动带出。
+function importProduct(id) {
+  if (!id) return;
+  const p = (window.__importProducts || []).find(x => x.id === id);
+  if (!p) return;
+  try {
+    localStorage.setItem('appBusinessInfo', JSON.stringify(p.data || {}));
+    localStorage.setItem('leadgen_active_product', JSON.stringify({ id: p.id, name: p.name }));
+    localStorage.setItem('leadgen_current_step', '1');
+    localStorage.removeItem('leadgen_searchId');
+  } catch (_) {}
+  location.reload();
+}
 
 // ── /app manual business-info form (Step 1 of 3 — additive only) ─────────────
 // Reveals #appBusinessInfoCard on /app, repopulates the 7 fields from
