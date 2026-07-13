@@ -11535,7 +11535,6 @@ async function biPolishField(textareaId, kind, btn) {
     }
     const key = identity + '||' + product + '||' + service;
     if (!force && key === lastKey && suggested.length) return;
-    lastKey = key;
 
     statusEl.style.display = 'block';
     statusEl.innerHTML = '<i class="ti ti-loader-2"></i> AI 正在推荐优势点…';
@@ -11548,6 +11547,7 @@ async function biPolishField(textareaId, kind, btn) {
       const data = await r.json();
       if (Array.isArray(data.advantages) && data.advantages.length) {
         suggested = data.advantages;
+        lastKey = key;   // 只有真的拿到结果才缓存 key —— 失败/空不烧 key，可重试
         statusEl.style.display = 'none';
       } else {
         statusEl.style.display = 'block';
@@ -11678,7 +11678,6 @@ async function biPolishField(textareaId, kind, btn) {
     }
     const key = identity + '||' + product + '||' + service;
     if (!force && key === lastKey && suggested.length) return;
-    lastKey = key;
 
     statusEl.style.display = 'block';
     statusEl.innerHTML = '<i class="ti ti-loader-2"></i> AI 正在推荐零风险入口…';
@@ -11691,6 +11690,7 @@ async function biPolishField(textareaId, kind, btn) {
       const data = await r.json();
       if (Array.isArray(data.offers) && data.offers.length) {
         suggested = data.offers;
+        lastKey = key;   // 只有真的拿到结果才缓存 key —— 失败/空不烧 key，可重试
         statusEl.style.display = 'none';
       } else {
         statusEl.style.display = 'block';
@@ -11819,7 +11819,6 @@ async function biPolishField(textareaId, kind, btn) {
     if (!product || !advantage) return;
     const key = product + '||' + advantage;
     if (!force && key === lastKey) return;
-    lastKey = key;
 
     statusEl.style.display = 'block';
     statusEl.innerHTML = '<i class="ti ti-loader-2"></i> AI 正在分析目标客户…';
@@ -11832,6 +11831,7 @@ async function biPolishField(textareaId, kind, btn) {
       const data = await r.json();
       if (Array.isArray(data.suggestions) && data.suggestions.length) {
         suggested = data.suggestions;
+        lastKey = key;   // 只有真的拿到结果才缓存 key —— 失败/空不烧 key，可重试
         statusEl.style.display = 'none';
       } else {
         statusEl.style.display = 'block';
