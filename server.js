@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -1741,6 +1741,20 @@ app.post('/api/products', requireAuth, async (req, res) => {
   if (!name) return res.status(400).json({ success: false, error: '缺少品类名称' });
   if (!data || typeof data !== 'object') return res.status(400).json({ success: false, error: '缺少业务信息数据' });
   const profile = await createProductProfile(req.userId, name.slice(0, 120), data);
+  if (!profile) return res.status(500).json({ success: false, error: '保存失败' });
+  res.json({ success: true, profile });
+});
+
+// Auto-save on search start: ensure a product exists for this 业务信息 (keyed by
+// name — one 品类 = one product), refreshing its data but preserving searchIds.
+// The frontend calls this right before a scrape so the run files under the right
+// product regardless of which one was "使用中".
+app.post('/api/products/ensure', requireAuth, async (req, res) => {
+  const name = (req.body?.name || '').toString().trim();
+  const data = req.body?.data;
+  if (!name) return res.status(400).json({ success: false, error: '缺少品类名称' });
+  if (!data || typeof data !== 'object') return res.status(400).json({ success: false, error: '缺少业务信息数据' });
+  const profile = await ensureProductProfile(req.userId, name.slice(0, 120), data);
   if (!profile) return res.status(500).json({ success: false, error: '保存失败' });
   res.json({ success: true, profile });
 });

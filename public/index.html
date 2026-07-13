@@ -5834,11 +5834,12 @@ async function startGoogleSearch() {
   // Remember the search keyword(s) so the AI 筛选 questionnaire can use them as context.
   window._lastSearchKeyword = keywords.join(', ') || '';
 
+  const productId = await ensureProductForSearch();
   try {
     const res = await fetch('/api/google-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ keywords, location, countryCode, maxResults, fields, productId: _activeProductId() }),
+      body: JSON.stringify({ keywords, location, countryCode, maxResults, fields, productId }),
     });
     if (res.status === 402) { const j = await res.json().catch(() => ({})); if (typeof showQuotaModal === 'function') showQuotaModal(j.error); throw new Error(j.error || '免费额度已用完，请联系客服提升额度'); }
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
@@ -6168,6 +6169,30 @@ function _activeProductId() {
   try { const p = JSON.parse(localStorage.getItem('leadgen_active_product')); return (p && p.id) || null; } catch (_) { return null; }
 }
 
+// 开跑即建产品：搜索开始前，用当前「业务信息」确保对应产品存在（按名去重，
+// 一个品类=一个产品），并设为使用中 → 本次搜索一定挂到"实际用的业务信息"名下，
+// 不再依赖可能漂移的"使用中"指针。拿不到业务信息/失败时回退到旧行为。
+async function ensureProductForSearch() {
+  try {
+    const bi = window._appBusinessInfo || {};
+    const name = ((bi.product || bi.service || bi.targetCustomer || '') + '').trim().slice(0, 30);
+    if (!name) return _activeProductId();               // 没业务信息 → 不建，保持旧行为
+    const token = getStoredToken();
+    if (!token) return _activeProductId();
+    const r = await fetch('/api/products/ensure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ name, data: bi }),
+    });
+    const d = await r.json().catch(() => null);
+    if (d && d.success && d.profile) {
+      try { localStorage.setItem('leadgen_active_product', JSON.stringify({ id: d.profile.id, name: d.profile.name })); } catch (_) {}
+      return d.profile.id;
+    }
+  } catch (_) {}
+  return _activeProductId();                            // 兜底
+}
+
 const _SELLER_ROLE_KW = /\b(supplier|suppliers|manufacturer|manufacturers|manufacturing|factory|factories|oem|odm)\b/i;
 function confirmSellerRoleKeywords(keywords) {
   const bad = (keywords || []).filter(k => _SELLER_ROLE_KW.test(k));
@@ -6197,11 +6222,12 @@ async function startGoogleMapsScrape() {
   // Remember the search keyword(s) so the AI 筛选 questionnaire can use them as context.
   window._lastSearchKeyword = keywords.join(', ') || '';
 
+  const productId = await ensureProductForSearch();
   try {
     const res = await fetch('/api/google-maps-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ keywords, location, maxResults, fields, productId: _activeProductId() }),
+      body: JSON.stringify({ keywords, location, maxResults, fields, productId }),
     });
     if (res.status === 402) { const j = await res.json().catch(() => ({})); if (typeof showQuotaModal === 'function') showQuotaModal(j.error); throw new Error(j.error || '免费额度已用完，请联系客服提升额度'); }
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
@@ -6273,11 +6299,12 @@ async function startInstagramScrape() {
   if (wrap) wrap.style.display = 'none';
   _toolResults.ig = [];
 
+  const productId = await ensureProductForSearch();
   try {
     const res = await fetch('/api/instagram-scrape', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ input, maxPosts, newerThan, fields, productId: _activeProductId() }),
+      body: JSON.stringify({ input, maxPosts, newerThan, fields, productId }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'ig', status);
@@ -6309,11 +6336,12 @@ async function startTikTokScrape() {
   // Strip leading # for hashtag mode — the actor expects the bare tag name.
   const input = (_ttMode === 'hashtag') ? raw.replace(/^#/, '') : raw;
 
+  const productId = await ensureProductForSearch();
   try {
     const res = await fetch('/api/tiktok-scrape', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ mode: _ttMode, input, maxVideos, fields, productId: _activeProductId() }),
+      body: JSON.stringify({ mode: _ttMode, input, maxVideos, fields, productId }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     await _consumeToolSse(res, 'tt', status);
