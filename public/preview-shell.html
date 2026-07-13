@@ -3,195 +3,274 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智拓客 控制台样板 — 效果预览</title>
+<title>智拓客 控制台样板 v2 — 效果预览</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
 <style>
   :root {
-    --bg: #030303; --panel: #0a0a0f; --card: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.08);
-    --text: #e5e7eb; --sub: rgba(255,255,255,0.45); --sub2: rgba(255,255,255,0.30);
-    --accent: #6366f1; --accent-soft: rgba(99,102,241,0.12); --sent: #4ade80; --cost: #fbbf24; --danger: #f87171;
+    --bg: #050507; --panel: #0b0b12; --card: #0e0e16; --card2: #12121c;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.11);
+    --text: #ecedf2; --sub: rgba(236,237,242,0.5); --sub2: rgba(236,237,242,0.32);
+    --accent: #6366f1; --accent2: #8b5cf6; --soft: rgba(99,102,241,0.13);
+    --green: #4ade80; --gold: #fbbf24; --pink: #f472b6; --blue: #60a5fa; --danger: #f87171;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
   .shell { display: flex; min-height: 100vh; }
 
-  /* ── 左侧导航 ── */
-  .side { width: 216px; flex-shrink: 0; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
-  .brand { display: flex; align-items: center; gap: 9px; padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
-  .brand .logo { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; }
-  .brand b { font-size: 0.95rem; }
-  .brand .sub { font-size: 0.62rem; color: var(--sub2); }
-  .nav-scroll { flex: 1; overflow-y: auto; padding: 10px 8px; }
-  .ngroup { font-size: 0.64rem; font-weight: 700; color: var(--sub2); letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 10px 5px; }
-  .nitem { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 8px; font-size: 0.82rem; color: var(--sub); cursor: pointer; margin-bottom: 1px; border: 1px solid transparent; transition: all 0.13s; }
-  .nitem i { font-size: 1rem; width: 18px; text-align: center; }
-  .nitem:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-  .nitem.on { color: #c7d2fe; background: var(--accent-soft); border-color: rgba(99,102,241,0.35); }
-  .nitem .tag { margin-left: auto; font-size: 0.58rem; font-weight: 700; border-radius: 4px; padding: 1px 6px; }
-  .tag.live { color: var(--sent); background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); }
-  .tag.soon { color: var(--cost); background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3); }
-  .tag.admin { color: #f9a8d4; background: rgba(244,114,182,0.1); border: 1px solid rgba(244,114,182,0.3); }
-  .side-foot { border-top: 1px solid var(--border); padding: 12px 14px; display: flex; align-items: center; gap: 9px; }
-  .side-foot .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); border: 1px solid rgba(99,102,241,0.35); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 0.85rem; flex-shrink: 0; }
-  .side-foot .em { font-size: 0.7rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* ═ 侧边栏 ═ */
+  .side { width: 224px; flex-shrink: 0; background: linear-gradient(180deg, #0c0c14 0%, #08080d 100%); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 16px; }
+  .brand .logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #a855f7); display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; box-shadow: 0 4px 18px rgba(99,102,241,0.45); }
+  .brand b { font-size: 0.98rem; letter-spacing: 0.02em; }
+  .brand .sub { font-size: 0.6rem; color: var(--sub2); margin-top: 1px; letter-spacing: 0.06em; }
+  .nav-scroll { flex: 1; overflow-y: auto; padding: 4px 10px 10px; }
+  .nav-scroll::-webkit-scrollbar { width: 0; }
+  .ngroup { font-size: 0.6rem; font-weight: 700; color: var(--sub2); letter-spacing: 0.16em; padding: 16px 12px 6px; }
+  .nitem { position: relative; display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; font-size: 0.82rem; color: var(--sub); cursor: pointer; margin-bottom: 2px; transition: all 0.14s; }
+  .nitem i.mi { font-size: 1.02rem; width: 19px; text-align: center; opacity: 0.85; }
+  .nitem:hover { color: var(--text); background: rgba(255,255,255,0.045); }
+  .nitem.on { color: #e3e5ff; background: linear-gradient(90deg, rgba(99,102,241,0.22), rgba(99,102,241,0.07)); }
+  .nitem.on::before { content: ''; position: absolute; left: -10px; top: 7px; bottom: 7px; width: 3px; border-radius: 3px; background: linear-gradient(180deg, #818cf8, #a855f7); box-shadow: 0 0 10px rgba(129,140,248,0.8); }
+  .nitem.on i.mi { color: #a5b4fc; opacity: 1; }
+  .nitem .tag { margin-left: auto; font-size: 0.56rem; font-weight: 700; border-radius: 4px; padding: 1.5px 6px; letter-spacing: 0.02em; }
+  .tag.live { color: #86efac; background: rgba(74,222,128,0.12); }
+  .tag.soon { color: rgba(251,191,36,0.75); background: rgba(251,191,36,0.09); }
+  .tag.admin { color: #f9a8d4; background: rgba(244,114,182,0.12); }
+  .side-foot { margin: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 9px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+  .side-foot .avatar { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, rgba(99,102,241,0.35), rgba(168,85,247,0.25)); display: flex; align-items: center; justify-content: center; color: #c7d2fe; font-size: 0.85rem; flex-shrink: 0; }
+  .side-foot .em { font-size: 0.68rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .side-foot .role { font-size: 0.58rem; color: var(--pink); }
   .side-foot .quit { margin-left: auto; color: var(--sub2); cursor: pointer; }
 
-  /* ── 右侧内容 ── */
-  .content { flex: 1; min-width: 0; padding: 22px 28px 50px; }
-  .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-  .topbar h1 { font-size: 1.15rem; font-weight: 800; }
-  .topbar .crumb { font-size: 0.72rem; color: var(--sub2); }
-  .topbar .right { margin-left: auto; display: flex; gap: 8px; }
-  .btn { padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; border: 1px solid; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; background: transparent; }
-  .btn.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .btn.ghost { border-color: var(--border); color: var(--sub); }
+  /* ═ 内容区 ═ */
+  .content { flex: 1; min-width: 0; padding: 0 30px 56px; }
+  .topbar { display: flex; align-items: center; gap: 14px; padding: 18px 0 6px; }
+  .greet .hi { font-size: 1.28rem; font-weight: 800; letter-spacing: 0.01em; }
+  .greet .hi .em-g { background: linear-gradient(90deg, #a5b4fc, #e9d5ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .greet .date { font-size: 0.7rem; color: var(--sub2); margin-top: 3px; }
+  .topbar .right { margin-left: auto; display: flex; gap: 9px; }
+  .btn { padding: 8px 16px; border-radius: 9px; font-size: 0.78rem; font-weight: 600; border: 1px solid; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; background: transparent; transition: all 0.14s; }
+  .btn.pri { background: linear-gradient(135deg, #6366f1, #7c3aed); border-color: transparent; color: #fff; box-shadow: 0 4px 16px rgba(99,102,241,0.35); }
+  .btn.pri:hover { transform: translateY(-1px); }
+  .btn.ghost { border-color: var(--border2); color: var(--sub); }
 
-  .view { display: none; }
-  .view.on { display: block; }
+  .view { display: none; } .view.on { display: block; }
 
-  /* 工作台 */
-  .hero2 { position: relative; overflow: hidden; border: 1px solid rgba(74,222,128,0.28); border-radius: 16px; padding: 24px 22px 18px; margin-bottom: 18px; text-align: center;
-    background: radial-gradient(500px 160px at 50% -40%, rgba(74,222,128,0.10), transparent 70%), rgba(255,255,255,0.02); }
-  .hero2 .line { font-size: 1.02rem; font-weight: 600; }
-  .hero2 .n { font-size: 1.8rem; font-weight: 800; padding: 0 2px; vertical-align: -2px; background: linear-gradient(180deg,#bbf7d0,#4ade80); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .hero2 .n.v { background: linear-gradient(180deg,#c7d2fe,#818cf8); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .hero2 .foot { font-size: 0.68rem; color: var(--sub2); margin-top: 8px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .panelbox { background: var(--card); border: 1px solid var(--border); border-radius: 13px; padding: 15px 17px; }
-  .panelbox h3 { font-size: 0.82rem; margin-bottom: 11px; display: flex; align-items: center; gap: 7px; }
-  .panelbox h3 i { color: var(--accent); }
-  .panelbox h3 .more { margin-left: auto; font-size: 0.68rem; color: var(--sub2); font-weight: 400; cursor: pointer; }
-  .mini-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 8px; font-size: 0.76rem; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 6px; }
-  .mini-row .g { color: var(--sent); font-weight: 600; }
-  .mini-row .dim { color: var(--sub2); }
-  .st { font-size: 0.64rem; font-weight: 700; border-radius: 5px; padding: 1px 7px; border: 1px solid; white-space: nowrap; }
-  .st.sent { color: #4ade80; background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.35); }
-  .st.written { color: #a5b4fc; background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.4); }
-  .st.scraped { color: #fbbf24; background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.3); }
+  /* KPI 行 */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0 14px; }
+  .kpi { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--card2), var(--card)); border: 1px solid var(--border); border-radius: 14px; padding: 15px 16px 12px; }
+  .kpi .lb { font-size: 0.66rem; color: var(--sub2); display: flex; align-items: center; gap: 5px; }
+  .kpi .lb i { font-size: 0.8rem; }
+  .kpi .num { font-size: 1.65rem; font-weight: 800; letter-spacing: -0.02em; margin-top: 5px; font-variant-numeric: tabular-nums; }
+  .kpi .delta { font-size: 0.62rem; margin-top: 3px; }
+  .kpi .delta.up { color: var(--green); }
+  .kpi svg.spark { position: absolute; right: 8px; bottom: 6px; width: 74px; height: 30px; opacity: 0.9; }
+  .kpi.k1 .num { color: #c7d2fe; } .kpi.k1 .lb i { color: #818cf8; }
+  .kpi.k2 .num { background: linear-gradient(180deg, #bbf7d0, #4ade80); -webkit-background-clip: text; background-clip: text; color: transparent; } .kpi.k2 .lb i { color: var(--green); }
+  .kpi.k3 .num { color: #ddd6fe; } .kpi.k3 .lb i { color: #a78bfa; }
+  .kpi.k4 .num { color: var(--gold); } .kpi.k4 .lb i { color: var(--gold); }
+
+  /* 指挥台横幅 */
+  .cmd { position: relative; overflow: hidden; background: linear-gradient(120deg, rgba(99,102,241,0.14), rgba(168,85,247,0.07) 55%, transparent), var(--card); border: 1px solid rgba(99,102,241,0.3); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; display: flex; align-items: center; gap: 16px; }
+  .cmd::after { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 20px 20px; pointer-events: none; }
+  .cmd .ic { width: 42px; height: 42px; border-radius: 12px; background: rgba(99,102,241,0.18); border: 1px solid rgba(99,102,241,0.4); display: flex; align-items: center; justify-content: center; color: #a5b4fc; font-size: 1.2rem; flex-shrink: 0; }
+  .cmd .t { font-size: 0.92rem; font-weight: 700; }
+  .cmd .d { font-size: 0.72rem; color: var(--sub); margin-top: 3px; line-height: 1.6; }
+  .cmd .go { margin-left: auto; flex-shrink: 0; }
+
+  /* 双栏 */
+  .grid2 { display: grid; grid-template-columns: 1.35fr 1fr; gap: 12px; }
+  .panelbox { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 15px 17px; }
+  .panelbox h3 { font-size: 0.8rem; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; font-weight: 700; }
+  .panelbox h3 i { color: #818cf8; }
+  .panelbox h3 .more { margin-left: auto; font-size: 0.66rem; color: var(--sub2); font-weight: 400; cursor: pointer; }
+  .lrow { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 9px; font-size: 0.76rem; margin-bottom: 5px; background: rgba(255,255,255,0.018); border: 1px solid rgba(255,255,255,0.04); transition: border-color 0.13s; }
+  .lrow:hover { border-color: rgba(99,102,241,0.35); }
+  .lrow b { font-size: 0.79rem; }
+  .lrow .dim { color: var(--sub2); font-size: 0.68rem; }
+  .lrow .g { color: var(--green); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .st { font-size: 0.62rem; font-weight: 700; border-radius: 5px; padding: 1.5px 7px; white-space: nowrap; }
+  .st.sent { color: #86efac; background: rgba(74,222,128,0.12); }
+  .st.written { color: #c7d2fe; background: rgba(99,102,241,0.16); }
+  .st.scraped { color: rgba(251,191,36,0.85); background: rgba(251,191,36,0.1); }
+
+  /* 漏斗卡 */
+  .funnel-line { margin-top: 4px; }
+  .fstats { display: flex; justify-content: space-between; margin-top: 10px; }
+  .fstat { text-align: center; flex: 1; }
+  .fstat b { display: block; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+  .fstat span { font-size: 0.6rem; color: var(--sub2); }
+  .fstat .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 3px; vertical-align: 1px; }
+
+  /* 产品行 */
+  .prow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.018); border: 1px solid rgba(255,255,255,0.04); margin-bottom: 6px; }
+  .prow .bar { width: 3px; align-self: stretch; border-radius: 3px; background: linear-gradient(180deg, #6366f1, #4ade80); }
+  .prow b { font-size: 0.79rem; }
+  .prow .live { font-size: 0.6rem; color: #86efac; }
+  .prow .n { margin-left: auto; font-size: 0.72rem; color: var(--sub); font-variant-numeric: tabular-nums; }
+  .prow .n b { color: var(--green); }
 
   /* 服务页 */
-  .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
-  .svc { background: var(--card); border: 1px solid var(--border); border-radius: 13px; padding: 16px; transition: all 0.15s; cursor: pointer; }
-  .svc:hover { border-color: rgba(99,102,241,0.45); transform: translateY(-1px); }
-  .svc .ic { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 10px; background: var(--accent-soft); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
-  .svc.dim .ic { background: rgba(251,191,36,0.08); color: var(--cost); border-color: rgba(251,191,36,0.25); }
-  .svc h4 { font-size: 0.88rem; margin-bottom: 4px; display: flex; align-items: center; gap: 7px; }
-  .svc p { font-size: 0.72rem; color: var(--sub); line-height: 1.6; }
-  .svc.dim { opacity: 0.65; cursor: default; }
+  .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 12px; margin-top: 16px; }
+  .svc { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--card2), var(--card)); border: 1px solid var(--border); border-radius: 15px; padding: 17px; transition: all 0.16s; cursor: pointer; }
+  .svc::before { content: ''; position: absolute; top: 0; left: 17px; right: 60%; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #6366f1, transparent); opacity: 0; transition: opacity 0.16s; }
+  .svc:hover { border-color: rgba(99,102,241,0.5); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+  .svc:hover::before { opacity: 1; }
+  .svc .ic { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; margin-bottom: 11px; background: rgba(99,102,241,0.14); color: #a5b4fc; }
+  .svc h4 { font-size: 0.88rem; margin-bottom: 5px; display: flex; align-items: center; gap: 7px; }
+  .svc p { font-size: 0.71rem; color: var(--sub); line-height: 1.65; }
+  .svc.dim { opacity: 0.55; cursor: default; }
+  .svc.dim .ic { background: rgba(251,191,36,0.08); color: var(--gold); }
 
   /* 账号管理 */
-  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
-  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.76rem; }
-  th { text-align: left; padding: 9px 12px; color: var(--sub); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); white-space: nowrap; }
-  td { padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .em { color: #a5b4fc; }
-  .qin { width: 84px; padding: 5px 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-size: 0.76rem; font-family: inherit; }
-  .sbtn { padding: 4px 10px; border-radius: 6px; font-size: 0.68rem; font-weight: 600; border: 1px solid rgba(99,102,241,0.45); color: #a5b4fc; background: var(--accent-soft); cursor: pointer; font-family: inherit; }
+  .tbl-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-top: 16px; }
+  .tbl-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 780px; font-size: 0.76rem; }
+  th { text-align: left; padding: 11px 14px; color: var(--sub2); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+  .em { color: #a5b4fc; font-weight: 600; }
+  .qin { width: 86px; padding: 6px 9px; background: rgba(255,255,255,0.03); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: 0.76rem; font-family: inherit; }
+  .sbtn { padding: 5px 12px; border-radius: 7px; font-size: 0.68rem; font-weight: 700; border: none; color: #fff; background: linear-gradient(135deg, #6366f1, #7c3aed); cursor: pointer; font-family: inherit; }
 
-  .note-box { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.25); border-radius: 10px; padding: 15px 17px; font-size: 0.78rem; color: var(--sub); line-height: 1.9; margin-top: 22px; }
+  .note-box { background: rgba(99,102,241,0.05); border: 1px solid rgba(99,102,241,0.22); border-radius: 12px; padding: 15px 17px; font-size: 0.76rem; color: var(--sub); line-height: 1.9; margin-top: 24px; }
   .note-box b { color: var(--text); }
 
-  @media (max-width: 760px) { .side { display: none; } .grid2 { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) { .side { display: none; } .grid2, .kpis { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div class="shell">
 
-  <!-- 左侧导航 -->
   <div class="side">
     <div class="brand">
       <div class="logo"><i class="ti ti-bolt"></i></div>
       <div><b>智拓客</b><div class="sub">外贸客户增长中台</div></div>
     </div>
     <div class="nav-scroll">
-      <div class="nitem on" data-v="dash" onclick="go(this)"><i class="ti ti-layout-dashboard"></i> 工作台</div>
+      <div class="ngroup">总览</div>
+      <div class="nitem on" data-v="dash" onclick="go(this)"><i class="ti ti-layout-dashboard mi"></i> 工作台</div>
 
       <div class="ngroup">拓客服务</div>
-      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-mail-forward"></i> 冷邮件自动化 <span class="tag live">已上线</span></div>
-      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-share"></i> 社媒自动发帖 <span class="tag live">已上线</span></div>
-      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-file-invoice"></i> 报价自动化 <span class="tag soon">即将</span></div>
-      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-message-chatbot"></i> AI 客服 <span class="tag soon">即将</span></div>
-      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-video"></i> 剪辑自动化 <span class="tag soon">即将</span></div>
-      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-seo"></i> SEO / GEO <span class="tag soon">即将</span></div>
+      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-mail-forward mi"></i> 冷邮件自动化 <span class="tag live">已上线</span></div>
+      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-share mi"></i> 社媒自动发帖 <span class="tag live">已上线</span></div>
+      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-file-invoice mi"></i> 报价自动化 <span class="tag soon">即将</span></div>
+      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-message-chatbot mi"></i> AI 客服 <span class="tag soon">即将</span></div>
+      <div class="nitem" data-v="svc" onclick="go(this)"><i class="ti ti-video mi"></i> 剪辑自动化 <span class="tag soon">即将</span></div>
 
       <div class="ngroup">我的资产</div>
-      <div class="nitem" data-v="dash" onclick="go(this)"><i class="ti ti-package"></i> 产品品类</div>
-      <div class="nitem" data-v="dash" onclick="go(this)"><i class="ti ti-history"></i> 历史搜索</div>
-      <div class="nitem" data-v="dash" onclick="go(this)"><i class="ti ti-table"></i> 客户表</div>
+      <div class="nitem" data-v="dash" onclick="go(this)"><i class="ti ti-package mi"></i> 产品品类</div>
+      <div class="nitem" data-v="dash" onclick="go(this)"><i class="ti ti-history mi"></i> 历史搜索</div>
+      <div class="nitem" data-v="dash" onclick="go(this)"><i class="ti ti-table mi"></i> 客户表</div>
 
       <div class="ngroup">管理</div>
-      <div class="nitem" data-v="adm" onclick="go(this)"><i class="ti ti-users"></i> 账号管理 <span class="tag admin">仅你</span></div>
-      <div class="nitem" data-v="dash" onclick="go(this)"><i class="ti ti-settings"></i> 设置</div>
+      <div class="nitem" data-v="adm" onclick="go(this)"><i class="ti ti-users mi"></i> 账号管理 <span class="tag admin">仅你</span></div>
+      <div class="nitem" data-v="dash" onclick="go(this)"><i class="ti ti-settings mi"></i> 设置</div>
     </div>
     <div class="side-foot">
       <div class="avatar"><i class="ti ti-user"></i></div>
-      <div style="min-width:0"><div class="em">591472443@qq.com</div><div style="font-size:0.6rem;color:var(--sub2)">管理员</div></div>
+      <div style="min-width:0"><div class="em">591472443@qq.com</div><div class="role">管理员</div></div>
       <i class="ti ti-logout quit"></i>
     </div>
   </div>
 
-  <!-- 右侧内容 -->
   <div class="content">
 
-    <!-- 视图 1：工作台 -->
+    <!-- 工作台 -->
     <div class="view on" id="v-dash">
       <div class="topbar">
-        <div><h1>工作台</h1><div class="crumb">今天 · 全局业务数据</div></div>
+        <div class="greet">
+          <div class="hi">下午好，<span class="em-g">老板</span> 👋</div>
+          <div class="date">7月13日 · 数据实时更新</div>
+        </div>
         <div class="right"><span class="btn pri"><i class="ti ti-plus"></i> 新建搜索</span><span class="btn ghost"><i class="ti ti-refresh"></i></span></div>
       </div>
-      <div class="hero2">
-        <div class="line">已为你找到 <span class="n">138</span> 位精准客户，发出 <span class="n v">690</span> 封开发邮件</div>
-        <div class="foot">扫描 892 家海外公司 · 累计花费 $20.50</div>
+
+      <div class="kpis">
+        <div class="kpi k1"><div class="lb"><i class="ti ti-radar-2"></i> 扫描海外公司</div><div class="num">892</div><div class="delta up">↑ 今日 +90</div>
+          <svg class="spark" viewBox="0 0 74 30"><polyline points="0,26 12,22 24,23 36,16 48,18 60,8 74,4" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div class="kpi k2"><div class="lb"><i class="ti ti-target-arrow"></i> 精准客户</div><div class="num">138</div><div class="delta up">↑ 本周 +20</div>
+          <svg class="spark" viewBox="0 0 74 30"><polyline points="0,27 12,25 24,20 36,21 48,13 60,10 74,5" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div class="kpi k3"><div class="lb"><i class="ti ti-send"></i> 精准开发邮件</div><div class="num">690</div><div class="delta up">↑ 本周 +100</div>
+          <svg class="spark" viewBox="0 0 74 30"><polyline points="0,28 12,24 24,24 36,18 48,16 60,9 74,6" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div class="kpi k4"><div class="lb"><i class="ti ti-coin"></i> 累计花费</div><div class="num">$20.50</div><div class="delta" style="color:var(--sub2)">每客户 $0.15</div>
+          <svg class="spark" viewBox="0 0 74 30"><polyline points="0,27 12,26 24,22 36,21 48,17 60,15 74,12" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg></div>
       </div>
+
+      <div class="cmd">
+        <div class="ic"><i class="ti ti-sparkles"></i></div>
+        <div>
+          <div class="t">今日建议：奥克兰 69 家客户已写好邮件，还没发出</div>
+          <div class="d">「全屋翻新公司 · 奥克兰」已完成 AI 筛选和写信，点右侧一键进入发送步骤；另有布里斯班 16 家已抓取待筛选。</div>
+        </div>
+        <span class="btn pri go"><i class="ti ti-player-play"></i> 继续处理</span>
+      </div>
+
       <div class="grid2">
         <div class="panelbox">
-          <h3><i class="ti ti-package"></i> 产品品类 <span class="more">管理 →</span></h3>
-          <div class="mini-row"><span style="width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,0.8)"></span><b style="font-size:0.8rem">系统门窗、全屋定制家居…</b><span class="dim">使用中</span><span class="g" style="margin-left:auto">客户 138</span></div>
-          <div class="mini-row" style="opacity:0.65"><b style="font-size:0.8rem">＋ 保存当前产品</b></div>
-        </div>
-        <div class="panelbox">
           <h3><i class="ti ti-history"></i> 最近搜索 <span class="more">全部 30 次 →</span></h3>
-          <div class="mini-row"><b>全房屋翻新公司</b><span class="dim">墨尔本</span><span class="st sent">已发送</span><span class="g" style="margin-left:auto">18/74</span></div>
-          <div class="mini-row"><b>全屋翻新公司</b><span class="dim">奥克兰</span><span class="st written">已写邮件</span><span style="margin-left:auto;color:var(--sub)">0/69</span></div>
-          <div class="mini-row"><b>翻新承包商</b><span class="dim">布里斯班</span><span class="st scraped">已抓取</span><span style="margin-left:auto;color:var(--sub)">0/16</span></div>
+          <div class="lrow"><b>全房屋翻新公司</b><span class="dim">墨尔本</span><span class="st sent">已发送</span><span style="margin-left:auto" class="g">18/74</span><span class="dim">昨天 18:42</span></div>
+          <div class="lrow"><b>全屋翻新公司</b><span class="dim">奥克兰</span><span class="st written">已写邮件</span><span style="margin-left:auto;color:var(--sub)">0/69</span><span class="dim">昨天 18:08</span></div>
+          <div class="lrow"><b>翻新承包商</b><span class="dim">布里斯班</span><span class="st scraped">已抓取</span><span style="margin-left:auto;color:var(--sub)">0/16</span><span class="dim">昨天 17:20</span></div>
+          <div class="lrow"><b>建材</b><span class="dim">悉尼</span><span class="st sent">已发送</span><span style="margin-left:auto" class="g">2/10</span><span class="dim">7月10日</span></div>
+
+          <h3 style="margin-top:18px"><i class="ti ti-package"></i> 产品品类 <span class="more">管理 →</span></h3>
+          <div class="prow"><span class="bar"></span><div><b>系统门窗、全屋定制家居…</b> <span class="live">● 使用中</span><div style="font-size:0.62rem;color:var(--sub2);margin-top:2px">30 次搜索 · 最近 今天</div></div><span class="n">客户 <b>138</b></span></div>
+        </div>
+
+        <div class="panelbox">
+          <h3><i class="ti ti-filter"></i> 线索漏斗 <span class="more">实时</span></h3>
+          <svg class="funnel-line" viewBox="0 0 300 90" style="width:100%">
+            <defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#6366f1"/><stop offset="0.5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#4ade80"/>
+            </linearGradient></defs>
+            <polyline points="20,18 110,42 200,58 280,70" fill="none" stroke="url(#fg)" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="20" cy="18" r="4" fill="#6366f1"/><circle cx="110" cy="42" r="4" fill="#8b5cf6"/>
+            <circle cx="200" cy="58" r="5" fill="#a855f7" style="filter:drop-shadow(0 0 6px #a855f7)"/><circle cx="280" cy="70" r="4" fill="#4ade80"/>
+          </svg>
+          <div class="fstats">
+            <div class="fstat"><b>892</b><span><span class="dot" style="background:#6366f1"></span>已扫描</span></div>
+            <div class="fstat"><b>207</b><span><span class="dot" style="background:#8b5cf6"></span>AI 推荐</span></div>
+            <div class="fstat"><b>157</b><span><span class="dot" style="background:#a855f7"></span>已写邮件</span></div>
+            <div class="fstat"><b style="color:var(--green)">138</b><span><span class="dot" style="background:#4ade80"></span>已发送</span></div>
+          </div>
+          <div style="margin-top:14px;padding:10px 12px;border-radius:9px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);font-size:0.68rem;color:rgba(251,191,36,0.85)">
+            <i class="ti ti-bulb"></i> 转化率 15.5% — 高于上周；奥克兰池子已挖尽，AI 建议换 kitchen renovation company 或换城市 Wellington
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 视图 2：服务总览（点侧边栏任意服务演示） -->
+    <!-- 服务总览 -->
     <div class="view" id="v-svc">
-      <div class="topbar"><div><h1>拓客服务</h1><div class="crumb">每个服务都是为你定制的自动化方案</div></div></div>
+      <div class="topbar"><div class="greet"><div class="hi">拓客<span class="em-g">服务</span></div><div class="date">每个服务都是为你定制的自动化方案</div></div></div>
       <div class="svc-grid">
-        <div class="svc"><div class="ic"><i class="ti ti-mail-forward"></i></div><h4>冷邮件自动化 <span class="tag live">已上线</span></h4><p>8 数据源抓客 → AI 筛选 → AI 写信 → 自动发送跟进</p></div>
-        <div class="svc"><div class="ic"><i class="ti ti-share"></i></div><h4>社媒自动发帖 <span class="tag live">已上线</span></h4><p>一次编辑同步 5 大平台，AI 代写文案，定时发布</p></div>
-        <div class="svc dim"><div class="ic"><i class="ti ti-file-invoice"></i></div><h4>报价自动化 <span class="tag soon">即将上线</span></h4><p>30 秒生成专业报价单 PDF，自动发送客户邮箱</p></div>
-        <div class="svc dim"><div class="ic"><i class="ti ti-message-chatbot"></i></div><h4>AI 客服 <span class="tag soon">即将上线</span></h4><p>7×24 自动回复询盘，智能识别意图，无缝转人工</p></div>
-        <div class="svc dim"><div class="ic"><i class="ti ti-video"></i></div><h4>剪辑自动化 <span class="tag soon">即将上线</span></h4><p>上传素材自动生成短视频，批量剪辑，一键发布</p></div>
-        <div class="svc dim"><div class="ic"><i class="ti ti-seo"></i></div><h4>SEO / GEO <span class="tag soon">即将上线</span></h4><p>AI 生成 SEO 内容，优化地理定向，提升搜索曝光</p></div>
+        <div class="svc"><div class="ic"><i class="ti ti-mail-forward"></i></div><h4>冷邮件自动化 <span class="tag live">已上线</span></h4><p>8 数据源抓客 → AI 筛选 → AI 写信 → 自动发送跟进，全流程断点续跑</p></div>
+        <div class="svc"><div class="ic"><i class="ti ti-share"></i></div><h4>社媒自动发帖 <span class="tag live">已上线</span></h4><p>一次编辑同步 Twitter/LinkedIn/FB/IG/YouTube，AI 代写文案，定时发布</p></div>
+        <div class="svc dim"><div class="ic"><i class="ti ti-file-invoice"></i></div><h4>报价自动化 <span class="tag soon">即将</span></h4><p>30 秒生成专业报价单 PDF，自动发送客户邮箱</p></div>
+        <div class="svc dim"><div class="ic"><i class="ti ti-message-chatbot"></i></div><h4>AI 客服 <span class="tag soon">即将</span></h4><p>7×24 自动回复询盘，智能识别意图，无缝转人工</p></div>
+        <div class="svc dim"><div class="ic"><i class="ti ti-video"></i></div><h4>剪辑自动化 <span class="tag soon">即将</span></h4><p>上传素材自动生成短视频，批量剪辑，一键发布</p></div>
+        <div class="svc dim"><div class="ic"><i class="ti ti-seo"></i></div><h4>SEO / GEO <span class="tag soon">即将</span></h4><p>AI 生成 SEO 内容，优化地理定向，提升搜索曝光</p></div>
       </div>
     </div>
 
-    <!-- 视图 3：账号管理 -->
+    <!-- 账号管理 -->
     <div class="view" id="v-adm">
-      <div class="topbar"><div><h1>账号管理</h1><div class="crumb">仅管理员可见 · 修改额度立即生效</div></div></div>
-      <div class="tbl-wrap"><table>
+      <div class="topbar"><div class="greet"><div class="hi">账号<span class="em-g">管理</span></div><div class="date">仅管理员可见 · 修改额度立即生效</div></div></div>
+      <div class="tbl-card"><div class="tbl-wrap"><table>
         <thead><tr><th>邮箱</th><th>注册</th><th>最后登录</th><th>搜索</th><th>已发</th><th>花费</th><th>额度（$）</th><th></th></tr></thead>
         <tbody>
-          <tr><td class="em">591472443@qq.com</td><td>7月1日</td><td>今天</td><td>31</td><td style="color:#4ade80">138</td><td style="color:#fbbf24">$20.50</td><td><input class="qin" value="999999"></td><td><span class="sbtn">保存</span></td></tr>
-          <tr><td class="em">info@wayexplorers.com</td><td>昨天</td><td>昨天</td><td>2</td><td>0</td><td style="color:#fbbf24">$2.69</td><td><input class="qin" value="5"></td><td><span class="sbtn">保存</span></td></tr>
-          <tr><td class="em">zhuolu34@gmail.com</td><td>7月9日</td><td>7月9日</td><td>4</td><td>0</td><td style="color:#fbbf24">$0.78</td><td><input class="qin" value="444"></td><td><span class="sbtn">保存</span></td></tr>
+          <tr><td class="em">591472443@qq.com</td><td>7月1日</td><td>今天</td><td>31</td><td style="color:#4ade80;font-weight:700">138</td><td style="color:#fbbf24">$20.50</td><td><input class="qin" value="999999"></td><td><button class="sbtn">保存</button></td></tr>
+          <tr><td class="em">info@wayexplorers.com</td><td>昨天</td><td>昨天</td><td>2</td><td>0</td><td style="color:#fbbf24">$2.69</td><td><input class="qin" value="5"></td><td><button class="sbtn">保存</button></td></tr>
+          <tr><td class="em">zhuolu34@gmail.com</td><td>7月9日</td><td>7月9日</td><td>4</td><td>0</td><td style="color:#fbbf24">$0.78</td><td><input class="qin" value="444"></td><td><button class="sbtn">保存</button></td></tr>
+          <tr><td class="em">jimismith405@gmail.com</td><td>7月5日</td><td>7月10日</td><td>5</td><td style="color:#4ade80">2</td><td style="color:#fbbf24">$0.24</td><td><input class="qin" value="5"></td><td><button class="sbtn">保存</button></td></tr>
         </tbody>
-      </table></div>
+      </table></div></div>
     </div>
 
     <div class="note-box">
-      <b>样板说明（点左侧菜单可切换页面感受）</b><br>
-      ① 左侧固定导航 = 你截图那种 CRM 中台布局：顶部品牌、分组菜单（拓客服务 / 我的资产 / 管理）、底部账号信息；<br>
-      ② <b>服务变成菜单项</b>：已上线的带绿标可点进（冷邮件 = 现在的 /app 整个流程、社媒发帖 = /autopost），未上线的黄标"即将"；<br>
-      ③ <b>工作台</b> = 现在个人中心的内容重排：成果条 + 产品品类和最近搜索并排两栏（带状态徽章），大屏利用率更高；<br>
-      ④ <b>账号管理</b>成独立页面（左侧"仅你"粉标，其他用户根本看不到这个菜单项）；<br>
-      ⑤ 保持全站黑底靛蓝主题不变；手机上侧边栏会收成抽屉（样板暂略）。<br>
-      <b>要动的范围</b>：/app、/account、/autopost 三个页面套进这个壳，首页(营销页)不动。确认后我分步骤做，做一步验一步。
+      <b>v2 改了什么</b>：① 左侧导航加了层次（渐变底、选中项左侧发光条、分组标题、底部账号卡）；② 工作台改成 <b>KPI 四卡</b>（大数字+迷你走势线）+ <b>今日建议指挥台</b>（AI 告诉你下一步该干嘛，一键继续）+ 左右双栏（最近搜索/产品 | <b>线索漏斗图</b>+转化率提示）；③ 服务卡带悬停光效；④ 点左侧菜单切换页面试试手感。范围不变：/app、/account、/autopost 套壳，营销首页不动。
     </div>
   </div>
 </div>
@@ -200,9 +279,8 @@
   function go(el) {
     document.querySelectorAll('.nitem').forEach(n => n.classList.remove('on'));
     el.classList.add('on');
-    const v = el.dataset.v;
     document.querySelectorAll('.view').forEach(x => x.classList.remove('on'));
-    document.getElementById('v-' + v).classList.add('on');
+    document.getElementById('v-' + el.dataset.v).classList.add('on');
   }
 </script>
 </body>
