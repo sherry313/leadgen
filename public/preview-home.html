@@ -3,104 +3,108 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智拓客 · 首页整页预览（临时）</title>
+<title>智拓客 · 首页整页预览（临时·暗色）</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
 <style>
   :root{
-    --paper:#faf6ee; --side:#f3ece0; --sidebord:rgba(120,95,55,.12);
-    --ink:#2b2721; --sub:#736a5c; --sub2:#9a917f;
-    --teal:#0d9488; --teal-d:#0f766e; --teal-x:#0b6b60; --amber:#ea9a0b; --amber-d:#c77f06;
-    --grad:linear-gradient(120deg,#0d9488 28%,#ea9a0b);
-    --soft:rgba(13,148,136,.12); --line:rgba(90,75,45,.13);
+    --bg:#030303; --panel:rgba(255,255,255,.022); --panel2:rgba(255,255,255,.04);
+    --card:rgba(255,255,255,.03); --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.14);
+    --text:#e5e7eb; --sub:rgba(255,255,255,.45); --sub2:rgba(255,255,255,.30);
+    --accent:#6366f1; --accent2:#818cf8; --accent-soft:rgba(99,102,241,.12);
+    --green:#4ade80; --amber:#fbbf24;
+    --grad:linear-gradient(120deg,#818cf8 8%,#6366f1 42%,#4ade80);
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
   html,body{ height:100%; }
-  body{ background:var(--paper); color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; }
+  body{ background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+    overflow:hidden; }
   .shell{ display:flex; height:100vh; }
 
   /* 侧边栏 */
-  .side{ width:224px; flex-shrink:0; background:var(--side); border-right:1px solid var(--sidebord);
+  .side{ width:224px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--border);
     display:flex; flex-direction:column; padding:18px 12px; }
   .brand{ display:flex; align-items:center; gap:10px; padding:4px 6px 18px; }
   .brand .lg{ width:34px; height:34px; border-radius:10px;
-    background:linear-gradient(135deg,var(--teal),var(--teal-d));
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
     display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.05rem;
-    box-shadow:0 5px 16px var(--soft); }
+    box-shadow:0 6px 18px rgba(99,102,241,.35); }
   .brand b{ font-size:.98rem; }
   .brand .s{ font-size:.6rem; color:var(--sub2); letter-spacing:.05em; margin-top:1px; }
   .ng{ font-size:.6rem; font-weight:800; color:var(--sub2); letter-spacing:.16em; padding:15px 10px 6px; }
   .ni{ display:flex; align-items:center; gap:11px; font-size:.82rem; color:var(--sub);
     padding:9px 11px; border-radius:9px; margin-bottom:2px; cursor:pointer; position:relative; transition:.14s; }
   .ni i{ font-size:1.05rem; width:19px; text-align:center; opacity:.85; }
-  .ni:hover{ background:rgba(120,95,55,.07); color:var(--ink); }
-  .ni.on{ background:linear-gradient(90deg,rgba(13,148,136,.16),rgba(13,148,136,.05));
-    color:var(--teal-x); font-weight:700; }
-  .ni.on i{ color:var(--teal); opacity:1; }
+  .ni:hover{ background:rgba(255,255,255,.045); color:var(--text); }
+  .ni.on{ background:linear-gradient(90deg,rgba(99,102,241,.20),rgba(99,102,241,.04));
+    color:#c7d2fe; font-weight:700; }
+  .ni.on i{ color:var(--accent2); opacity:1; }
   .ni.on::before{ content:''; position:absolute; left:-12px; top:8px; bottom:8px; width:3px;
-    border-radius:3px; background:linear-gradient(180deg,var(--teal),var(--amber)); }
+    border-radius:3px; background:linear-gradient(180deg,var(--accent),var(--green)); box-shadow:0 0 12px rgba(99,102,241,.6); }
   .ni .tag{ margin-left:auto; font-size:.55rem; font-weight:800; padding:1.5px 7px; border-radius:5px; }
-  .tag.live{ color:#0f766e; background:rgba(13,148,136,.13); }
-  .tag.soon{ color:var(--amber-d); background:rgba(234,154,11,.14); }
-  .tag.admin{ color:#b45309; background:rgba(234,154,11,.12); }
+  .tag.live{ color:#86efac; background:rgba(74,222,128,.13); }
+  .tag.soon{ color:var(--amber); background:rgba(251,191,36,.13); }
+  .tag.admin{ color:#a5b4fc; background:rgba(99,102,241,.14); }
   .foot{ margin-top:auto; display:flex; align-items:center; gap:10px; padding:11px;
-    background:rgba(255,255,255,.55); border:1px solid var(--sidebord); border-radius:12px; }
+    background:var(--card); border:1px solid var(--border); border-radius:12px; }
   .foot .av{ width:30px; height:30px; border-radius:9px;
-    background:linear-gradient(135deg,var(--teal),var(--teal-d)); color:#fff;
+    background:linear-gradient(135deg,var(--accent2),var(--accent)); color:#fff;
     display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700; }
   .foot .em{ font-size:.68rem; font-weight:600; }
-  .foot .rl{ font-size:.58rem; color:var(--amber-d); }
+  .foot .rl{ font-size:.58rem; color:var(--amber); }
   .foot .quit{ margin-left:auto; color:var(--sub2); cursor:pointer; }
 
   /* 主区 —— 首页大留白 */
   .main{ flex:1; min-width:0; position:relative; display:flex; flex-direction:column;
     align-items:center; justify-content:center; text-align:center; overflow:hidden; padding:40px; }
-  .glow{ position:absolute; border-radius:50%; filter:blur(100px); pointer-events:none; }
-  .glow.a{ width:420px; height:420px; background:var(--teal); opacity:.09; top:-80px; left:42%; }
-  .glow.b{ width:320px; height:320px; background:var(--amber); opacity:0; bottom:-60px; right:16%; transition:opacity .6s; }
+  .glow{ position:absolute; border-radius:50%; filter:blur(110px); pointer-events:none; }
+  .glow.a{ width:460px; height:460px; background:var(--accent); opacity:.14; top:-90px; left:42%; }
+  .glow.b{ width:340px; height:340px; background:var(--green); opacity:0; bottom:-70px; right:16%; transition:opacity .6s; }
 
   /* 顶部临时工具条 */
   .bar{ position:absolute; top:18px; right:22px; display:flex; align-items:center; gap:8px; z-index:5; }
-  .seg{ display:flex; background:rgba(255,255,255,.6); border:1px solid var(--line); border-radius:10px; padding:3px; }
+  .seg{ display:flex; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:3px; }
   .seg button{ font-size:.72rem; font-weight:700; color:var(--sub); border:none; background:transparent;
     padding:7px 13px; border-radius:8px; cursor:pointer; font-family:inherit; }
-  .seg button.on{ color:#fff; background:linear-gradient(135deg,var(--teal),var(--teal-d));
-    box-shadow:0 4px 12px rgba(13,148,136,.3); }
-  .rp{ font-size:.72rem; color:var(--sub); background:rgba(255,255,255,.6); border:1px solid var(--line);
-    border-radius:10px; padding:8px 13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-family:inherit; }
-  .flagtxt{ position:absolute; top:22px; left:24px; font-size:.66rem; color:var(--sub2);
-    background:rgba(234,154,11,.1); border:1px solid rgba(234,154,11,.25); color:var(--amber-d);
+  .seg button.on{ color:#fff; background:linear-gradient(135deg,var(--accent2),var(--accent));
+    box-shadow:0 4px 14px rgba(99,102,241,.4); }
+  .rp{ font-size:.72rem; color:var(--sub); background:var(--card); border:1px solid var(--border);
+    border-radius:10px; padding:8px 13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-family:inherit; transition:.15s; }
+  .rp:hover{ color:var(--text); border-color:var(--border2); }
+  .flagtxt{ position:absolute; top:22px; left:24px; font-size:.66rem;
+    background:rgba(251,191,36,.09); border:1px solid rgba(251,191,36,.22); color:var(--amber);
     padding:5px 11px; border-radius:20px; }
 
   .eyebrow{ position:relative; font-size:.7rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase;
     color:var(--sub2); display:flex; align-items:center; gap:10px; }
-  .eyebrow::before,.eyebrow::after{ content:''; width:26px; height:1px; background:var(--line); }
+  .eyebrow::before,.eyebrow::after{ content:''; width:26px; height:1px; background:var(--border2); }
   .l1{ position:relative; font-size:1.15rem; color:var(--sub); margin-top:22px; }
-  .l1 b{ color:var(--ink); font-weight:700; }
+  .l1 b{ color:var(--text); font-weight:700; }
 
   .numwrap{ position:relative; margin:8px 0 4px; }
   .num{ font-size:7.5rem; line-height:1; font-weight:850; letter-spacing:-.04em; font-variant-numeric:tabular-nums;
-    background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 8px 40px rgba(99,102,241,.35)); }
   /* 翻牌 */
-  .odo{ display:inline-flex; height:120px; overflow:hidden; }
+  .odo{ display:inline-flex; height:120px; overflow:hidden; filter:drop-shadow(0 8px 40px rgba(99,102,241,.35)); }
   .odo .reel{ display:flex; flex-direction:column; }
   .odo .reel span{ height:120px; line-height:120px; font-size:7.5rem; font-weight:850; letter-spacing:-.04em;
     font-variant-numeric:tabular-nums; background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
 
-  .l2{ position:relative; font-size:1.35rem; font-weight:700; color:var(--ink); }
-  .l2 .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber);
-    margin:0 2px 0 4px; vertical-align:middle; box-shadow:0 0 0 5px rgba(234,154,11,.14); }
-  .l2 .hi{ color:var(--teal-x); }
+  .l2{ position:relative; font-size:1.35rem; font-weight:700; color:var(--text); }
+  .l2 .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green);
+    margin:0 2px 0 4px; vertical-align:middle; box-shadow:0 0 0 5px rgba(74,222,128,.14); }
+  .l2 .hi{ color:#86efac; }
   .divider{ position:relative; width:60px; height:2px; border-radius:2px; margin:26px 0 20px;
-    background:linear-gradient(90deg,transparent,var(--amber),transparent); }
+    background:linear-gradient(90deg,transparent,var(--accent),transparent); }
   .sub2{ position:relative; font-size:.98rem; color:var(--sub); }
-  .sub2 b{ color:var(--teal-x); font-weight:800; font-variant-numeric:tabular-nums; }
+  .sub2 b{ color:#a5b4fc; font-weight:800; font-variant-numeric:tabular-nums; }
   .sub2 .sep{ color:var(--sub2); margin:0 12px; }
   .cta{ position:relative; margin-top:32px; display:inline-flex; align-items:center; gap:10px;
     font-size:.92rem; font-weight:700; color:#fff; padding:14px 30px; border:none; border-radius:13px;
-    cursor:pointer; font-family:inherit; background:linear-gradient(135deg,var(--teal),var(--teal-d));
-    box-shadow:0 12px 30px rgba(13,148,136,.34); transition:transform .15s, box-shadow .15s; }
-  .cta:hover{ transform:translateY(-2px); box-shadow:0 16px 36px rgba(13,148,136,.42); }
+    cursor:pointer; font-family:inherit; background:linear-gradient(135deg,var(--accent2),var(--accent));
+    box-shadow:0 12px 34px rgba(99,102,241,.42); transition:transform .15s, box-shadow .15s; }
+  .cta:hover{ transform:translateY(-2px); box-shadow:0 16px 40px rgba(99,102,241,.5); }
 
   .st{ opacity:0; transform:translateY(18px); }
   .st.show{ opacity:1; transform:none; transition:opacity .55s ease, transform .55s cubic-bezier(.2,.7,.3,1); }
@@ -140,8 +144,8 @@
     <div class="flagtxt">临时预览 · /preview-home.html</div>
     <div class="bar">
       <div class="seg">
-        <button id="t1" class="on" onclick="pick('count')">顺滑滚动</button>
-        <button id="t2" onclick="pick('odo')">翻牌滚动</button>
+        <button id="t1" onclick="pick('count')">顺滑滚动</button>
+        <button id="t2" class="on" onclick="pick('odo')">翻牌滚动</button>
       </div>
       <button class="rp" onclick="run()"><i class="ti ti-refresh"></i> 重播</button>
     </div>
@@ -158,7 +162,7 @@
 </div>
 
 <script>
-let MODE='count';
+let MODE='odo';
 const numwrap=document.getElementById('numwrap');
 const mail=document.getElementById('mail'), ind=document.getElementById('ind'), glow=document.getElementById('glow');
 
@@ -183,7 +187,7 @@ function run(){
     numwrap.innerHTML='<div class="num">0</div>';
     count(numwrap.querySelector('.num'),128,1600);
     count(mail,512,1600); count(ind,9,1600);
-    setTimeout(()=>{ glow.style.opacity='.5'; setTimeout(()=>glow.style.opacity='.12',600); },400);
+    setTimeout(()=>{ glow.style.opacity='.5'; setTimeout(()=>glow.style.opacity='.14',600); },400);
   } else {
     const digits=['1','2','8'];
     numwrap.innerHTML='<div class="odo">'+digits.map(()=>{
@@ -200,7 +204,7 @@ function run(){
       });
     });
     count(mail,512,1900); count(ind,9,1900);
-    setTimeout(()=>{ glow.style.opacity='.5'; setTimeout(()=>glow.style.opacity='.12',600); },600);
+    setTimeout(()=>{ glow.style.opacity='.5'; setTimeout(()=>glow.style.opacity='.14',600); },600);
   }
 }
 run();
