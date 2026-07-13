@@ -136,6 +136,18 @@
     .prod-head .sec-label { margin-bottom: 0; }
     .prod-empty { font-size: 0.78rem; color: var(--sub); padding: 4px 2px 6px; }
     .prod-empty a { color: #a5b4fc; }
+    .p-card { cursor: pointer; }
+    .p-card .head .chev { color: var(--sub2); font-size: 0.95rem; transition: transform 0.15s; flex-shrink: 0; }
+    .p-card.open .head .chev { transform: rotate(90deg); color: #a5b4fc; }
+    .p-card.open { border-color: rgba(99,102,241,0.45); background: radial-gradient(200px 110px at 100% 0%, rgba(99,102,241,0.10), transparent 70%), var(--card); }
+    /* 产品展开：它名下每次搜索（线索行）+ 汇总客户表 */
+    .prod-detail { border: 1px solid rgba(99,102,241,0.25); border-radius: 12px; background: rgba(255,255,255,0.015); padding: 12px 14px; margin: 8px 0 6px; }
+    .pd-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 11px; }
+    .pd-head b { font-size: 0.9rem; }
+    .pd-head .pd-sub { font-size: 0.74rem; color: var(--sub2); margin-right: auto; }
+    .pd-runs .row { margin-bottom: 6px; }
+    .pd-runs .row:last-child { margin-bottom: 0; }
+    #pdTable:not(:empty) { margin-top: 10px; }
 
     /* ── 产品客户表（点开才有） ── */
     .lead-panel { border: 1px solid rgba(74,222,128,0.3); border-radius: 12px; background: rgba(255,255,255,0.02); padding: 14px 16px; margin: 8px 0 4px; }
@@ -290,22 +302,13 @@
     </div>
   </div>
 
-  <!-- 产品品类 -->
+  <!-- 产品品类（点开产品 → 看它每次跑出的线索；线索按产品各归各表） -->
   <div class="prod-head">
-    <div class="sec-label"><i class="ti ti-package"></i> 产品品类 <span class="tip">名称随你改，历史记录同步显示</span></div>
-    <button class="btn-new" onclick="saveCurrentProduct()"><i class="ti ti-plus"></i> 保存当前产品</button>
+    <div class="sec-label"><i class="ti ti-package"></i> 产品品类 <span class="tip">点开产品查看它每次跑出的线索 <span id="histCountTip"></span></span></div>
+    <a href="/app" class="btn-new"><i class="ti ti-plus"></i> 新建搜索</a>
   </div>
   <div id="prodList" class="prod-row"><span class="spinner"></span></div>
   <div id="prodPanelHost"></div>
-  <div style="height:20px"></div>
-
-  <!-- 历史搜索 -->
-  <div class="sec-label"><i class="ti ti-history"></i> 历史搜索 <span class="tip" id="histCountTip"></span></div>
-  <div class="hist-head">
-    <input id="filterInput" class="filter-in" type="text" placeholder="按关键词过滤…" oninput="applyFilter(this.value)">
-    <a href="/app" class="btn-new"><i class="ti ti-plus"></i> 新建搜索</a>
-  </div>
-  <div id="histList"><div class="empty-msg"><span class="spinner"></span>加载中…</div></div>
 
   <!-- 账号管理（仅管理员渲染；普通用户完全看不到这块）— 折叠，点开才加载 -->
   <div id="adminSec" style="display:none; margin-top:34px">
@@ -567,7 +570,7 @@
       const sum = (k) => _allHistory.reduce((s, x) => s + (x[k] || 0), 0);
       document.getElementById('heroFoot').textContent =
         '扫描 ' + sum('total_scraped') + ' 家海外公司 · 累计花费 $' + sum('total_cost_usd').toFixed(2);
-      document.getElementById('histCountTip').textContent = '共 ' + _allHistory.length + ' 次';
+      document.getElementById('histCountTip').textContent = '· 共 ' + _allHistory.length + ' 次搜索';
 
       // 免费额度：只对受限用户显示（不限额的看不到）。
       if (d.quotaUsd != null && d.spentUsd != null && d.quotaUsd < 100000) {
@@ -584,9 +587,9 @@
       }
 
       _filtered = _allHistory.slice();
-      renderPage(1);
+      renderProducts();   // 历史已并入产品卡：每个产品展开看自己的搜索/线索
     } catch (e) {
-      document.getElementById('histList').innerHTML = '<div class="empty-msg">加载失败，请刷新重试</div>';
+      console.warn('[account] loadHistory failed:', e.message);
     }
   }
 
@@ -633,6 +636,7 @@
 
   function renderPage() {
     const list = document.getElementById('histList');
+    if (!list) return;   // 历史区已移除；此函数保留仅为兼容旧调用
     if (!_filtered.length) {
       list.innerHTML = '<div class="empty-msg">暂无搜索记录，<a href="/app">立即开始拓客 →</a></div>';
       return;
@@ -696,9 +700,11 @@
       const d = await r.json();
       if (!d.success) throw new Error(d.error || '删除失败');
       _allHistory = _allHistory.filter(x => x.id !== id);
-      _filtered   = _filtered.filter(x => x.id !== id);
-      document.getElementById('histCountTip').textContent = '共 ' + _allHistory.length + ' 次';
-      renderPage(Math.min(_page, Math.max(1, Math.ceil(_filtered.length / PAGE_SIZE))));
+      document.getElementById('histCountTip').textContent = '· 共 ' + _allHistory.length + ' 次搜索';
+      const openPid = document.getElementById('prodPanelHost').dataset.pid;
+      document.getElementById('prodPanelHost').dataset.pid = '';
+      renderProducts();
+      if (openPid) openProduct(null, openPid);   // 刷新当前展开产品的线索列表
     } catch (e) {
       alert('删除失败：' + e.message);
     }
@@ -775,24 +781,79 @@
     const box = document.getElementById('prodList');
     const act = activeProduct();
     if (!_products.length) {
-      box.innerHTML = '<div class="prod-empty">还没有保存的产品。在 <a href="/app">应用</a> 填好业务信息后，点右上角「＋ 保存当前产品」。</div>';
+      box.innerHTML = '<div class="prod-empty">还没有产品。到 <a href="/app">应用</a> 填好业务信息并开始搜索，系统会自动为你建立产品、把线索归到它名下。</div>';
       return;
     }
+    const openPid = document.getElementById('prodPanelHost').dataset.pid || '';
+    const runsByName = {};
+    _allHistory.forEach(r => { const k = r.product_label || ''; (runsByName[k] = runsByName[k] || []).push(r); });
     box.innerHTML = _products.map(p => {
       const isActive = act && act.id === p.id;
-      const n = p.customers || 0;
-      return '<div class="p-card' + (isActive ? ' active' : '') + '">' +
+      const isOpen   = openPid === p.id;
+      const n    = p.customers || 0;
+      const runs = (runsByName[p.name] || []).length;
+      return '<div class="p-card' + (isActive ? ' active' : '') + (isOpen ? ' open' : '') + '" onclick="openProduct(event, \'' + p.id + '\')">' +
         '<div class="head"><span class="name" title="' + esc(p.name) + '">' + esc(p.name) + '</span>' +
           (isActive ? '<span class="live-dot"></span><span class="live-txt">使用中</span>' : '') +
+          '<i class="ti ti-chevron-right chev"></i>' +
         '</div>' +
-        '<div class="pstats">客户 <b>' + n + '</b>' + (n ? ' · 已全部发信' : ' · 还没发过邮件') + '</div>' +
+        '<div class="pstats">客户 <b>' + n + '</b> · 搜索 <b>' + runs + '</b> 次</div>' +
         '<div class="acts">' +
-          (isActive ? '' : '<button class="btn-s use" onclick="useProduct(\'' + p.id + '\')"><i class="ti ti-arrow-right"></i> 使用</button>') +
-          '<button class="btn-s tbl" onclick="toggleProdTable(\'' + p.id + '\')"><i class="ti ti-table"></i> 客户表</button>' +
-          '<button class="mini" title="更多" onclick="toggleProdMenu(event, \'' + p.id + '\')"><i class="ti ti-dots"></i></button>' +
+          (isActive ? '' : '<button class="btn-s use" onclick="event.stopPropagation();useProduct(\'' + p.id + '\')"><i class="ti ti-arrow-right"></i> 使用</button>') +
+          '<button class="btn-s tbl" onclick="event.stopPropagation();openProduct(event, \'' + p.id + '\')"><i class="ti ti-list-details"></i> 线索</button>' +
+          '<button class="mini" title="更多" onclick="event.stopPropagation();toggleProdMenu(event, \'' + p.id + '\')"><i class="ti ti-dots"></i></button>' +
         '</div>' +
       '</div>';
     }).join('');
+  }
+
+  // 点开产品 → 在下方展开它名下每次搜索（线索行）+ 汇总客户表。单开一个。
+  function openProduct(ev, id) {
+    if (ev && ev.target && ev.target.closest('.menu-pop')) return;
+    const host = document.getElementById('prodPanelHost');
+    if (host.dataset.pid === id) { host.innerHTML = ''; host.dataset.pid = ''; renderProducts(); return; }
+    host.dataset.pid = id;
+    const p = _products.find(x => x.id === id);
+    const name = p ? p.name : '';
+    const runs = _allHistory.filter(r => r.product_label === name);
+    const runsHtml = runs.length
+      ? runs.map(_histRow).join('')
+      : '<div class="empty-msg" style="padding:14px">这个产品还没有搜索记录 — <a href="/app" onclick="event.stopPropagation();useProduct(\'' + id + '\')">用它跑一轮 →</a></div>';
+    host.innerHTML =
+      '<div class="prod-detail">' +
+        '<div class="pd-head">' +
+          '<b>' + esc(name) + '</b><span class="pd-sub">· 每次搜索的线索（' + runs.length + '）</span>' +
+          '<button class="lp-btn" onclick="showProdTable(\'' + id + '\')"><i class="ti ti-table"></i> 汇总客户表</button>' +
+          '<a class="mini-link" href="/app" onclick="useProduct(\'' + id + '\')"><i class="ti ti-plus"></i> 用此产品新建搜索</a>' +
+        '</div>' +
+        '<div class="pd-runs">' + runsHtml + '</div>' +
+        '<div id="pdTable"></div>' +
+      '</div>';
+    renderProducts();
+  }
+
+  // 汇总客户表（该产品所有发过邮件的客户）→ 注入 #pdTable，可切换收起。
+  async function showProdTable(id) {
+    const tgt = document.getElementById('pdTable');
+    if (!tgt) return;
+    if (tgt.dataset.open === '1') { tgt.innerHTML = ''; tgt.dataset.open = ''; return; }
+    tgt.dataset.open = '1';
+    tgt.innerHTML = '<div class="lead-panel"><span class="spinner"></span>正在汇总该产品的客户…</div>';
+    let cached = _prodLeadCache[id];
+    if (!cached) {
+      try {
+        const r = await fetch('/api/products/' + id + '/leads', { headers: authHeaders() });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.error || '加载失败');
+        cached = { name: d.name, leads: d.leads || [] };
+        _prodLeadCache[id] = cached;
+      } catch (e) {
+        tgt.innerHTML = '<div class="lead-panel" style="color:var(--danger);font-size:0.82rem">客户表加载失败：' + esc(e.message) + '</div>';
+        return;
+      }
+    }
+    if (tgt.dataset.open !== '1') return;
+    tgt.innerHTML = buildProdPanel(id, cached);
   }
 
   // ⋯ 菜单（重命名 / 删除）— 复用历史行的 menu-pop / closeRowMenus
@@ -1009,6 +1070,6 @@
     loadProducts();
   }
 </script>
-<div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:9999;font-size:0.72rem;color:#fbbf24;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.32);padding:5px 14px;border-radius:20px;backdrop-filter:blur(6px)">临时预览 · 产品品类新版（真实 /account 未改动）</div>
+<div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:9999;font-size:0.72rem;color:#fbbf24;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.32);padding:5px 14px;border-radius:20px;backdrop-filter:blur(6px)">临时预览 · 产品卡可点开看线索 · 已删底部汇总（真实 /account 未改动）</div>
 </body>
 </html>
