@@ -1648,23 +1648,62 @@
     }
     nav#navbar.nav-mini .nav-account i { font-size: 20px; color: #818cf8; }
     nav#navbar.nav-mini .nav-account:hover { color: #fff; border-color: rgba(99,102,241,0.7); background: rgba(99,102,241,0.2); }
-    /* 个人中心 圆形悬浮大按钮 */
+    /* 个人中心 圆形悬浮大按钮（可拖动 + 冒泡代表邮件发送） */
     .account-fab {
       position: fixed; right: 40px; top: 50%; transform: translateY(-50%); z-index: 200;
-      width: 92px; height: 92px; border-radius: 50%;
-      flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-      border: 1px solid rgba(99,102,241,0.5); background: rgba(99,102,241,0.14);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      color: #a5b4fc; text-decoration: none; box-shadow: 0 8px 28px rgba(99,102,241,0.32);
-      transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+      flex-direction: column; align-items: center; justify-content: center;
+      width: 104px; color: #c7d2fe; text-decoration: none;
+      cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none;
     }
-    .account-fab i { font-size: 32px; }
-    .account-fab span { font-size: 12px; font-weight: 600; }
-    .account-fab:hover { background: rgba(99,102,241,0.24); box-shadow: 0 12px 34px rgba(99,102,241,0.45); transform: translateY(-50%) scale(1.06); }
+    .account-fab:active { cursor: grabbing; }
+    .account-fab .fab-core {
+      position: relative; width: 76px; height: 76px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; overflow: visible;
+      background: radial-gradient(circle at 33% 27%, rgba(165,180,252,0.6), rgba(79,70,229,0.32) 52%, rgba(30,27,75,0.55));
+      border: 1px solid rgba(129,140,248,0.5);
+      box-shadow: 0 12px 32px rgba(79,70,229,0.45), inset 0 1px 7px rgba(199,210,254,0.45);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .account-fab .fab-core::before {
+      content: ''; position: absolute; inset: -4px; border-radius: 50%;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(165,180,252,0.9) 60deg, transparent 150deg);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+      animation: fabSpin 4.5s linear infinite;
+    }
+    @keyframes fabSpin { to { transform: rotate(360deg); } }
+    .account-fab .fab-ico {
+      position: relative; width: 36px; height: 36px; color: #eef2ff;
+      filter: drop-shadow(0 2px 4px rgba(30,27,75,0.6));
+    }
+    .account-fab .fab-bubbles {
+      position: absolute; left: 0; right: 0; top: -56px; bottom: 8px;
+      pointer-events: none; overflow: visible;
+    }
+    .account-fab .fab-bubbles i {
+      position: absolute; bottom: 8px; border-radius: 50%;
+      background: radial-gradient(circle at 32% 30%, rgba(224,231,255,0.95), rgba(129,140,248,0.35) 70%, rgba(129,140,248,0));
+      box-shadow: 0 0 8px rgba(165,180,252,0.6); opacity: 0;
+      animation: fabBubble var(--d,3.4s) ease-in var(--delay,0s) infinite;
+    }
+    @keyframes fabBubble {
+      0% { transform: translate(0,0) scale(0.35); opacity: 0; }
+      12% { opacity: 0.95; }
+      70% { opacity: 0.7; }
+      100% { transform: translate(var(--drift,0px), -104px) scale(1); opacity: 0; }
+    }
+    .account-fab .fab-label {
+      margin-top: 11px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em;
+      color: #a5b4fc; text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+    }
+    .account-fab:hover .fab-core {
+      transform: scale(1.06);
+      box-shadow: 0 16px 40px rgba(79,70,229,0.6), inset 0 1px 9px rgba(199,210,254,0.6);
+    }
     @media (max-width: 1000px) {
-      .account-fab { right: 16px; top: auto; bottom: 22px; transform: none; width: 74px; height: 74px; }
-      .account-fab i { font-size: 26px; }
-      .account-fab:hover { transform: scale(1.06); }
+      .account-fab { right: 16px; top: auto; bottom: 22px; transform: none; width: 88px; }
+      .account-fab .fab-core { width: 64px; height: 64px; }
+      .account-fab .fab-ico { width: 30px; height: 30px; }
     }
     @media(max-width:560px) {
       nav#navbar.nav-mini .nav-mini-links { gap: 10px; font-size: 12px; }
@@ -2638,9 +2677,59 @@
 
 <!-- 个人中心：右侧圆形大按钮悬浮入口（登录后由 navAccount toggle 显示，跨步骤常驻） -->
 <a id="navAccount" class="account-fab" href="/account" title="个人中心" style="display:none">
-  <i class="ti ti-user-circle" aria-hidden="true"></i>
-  <span>个人中心</span>
+  <span class="fab-bubbles" aria-hidden="true">
+    <i style="left:30%;width:7px;height:7px;--d:3.2s;--delay:0s;--drift:-10px"></i>
+    <i style="left:46%;width:10px;height:10px;--d:3.8s;--delay:.5s;--drift:6px"></i>
+    <i style="left:60%;width:6px;height:6px;--d:2.9s;--delay:1s;--drift:12px"></i>
+    <i style="left:40%;width:8px;height:8px;--d:3.5s;--delay:1.6s;--drift:-6px"></i>
+    <i style="left:55%;width:5px;height:5px;--d:3.1s;--delay:2.1s;--drift:4px"></i>
+    <i style="left:36%;width:9px;height:9px;--d:4s;--delay:2.7s;--drift:-14px"></i>
+  </span>
+  <span class="fab-core">
+    <svg class="fab-ico" viewBox="0 0 24 24" fill="none">
+      <defs>
+        <linearGradient id="fabAvatarGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#eef2ff"/><stop offset="1" stop-color="#c7d2fe"/>
+        </linearGradient>
+      </defs>
+      <circle cx="12" cy="8.6" r="3.6" fill="url(#fabAvatarGrad)"/>
+      <path d="M4.8 19.4c0-3.9 3.2-6.4 7.2-6.4s7.2 2.5 7.2 6.4" fill="url(#fabAvatarGrad)"/>
+    </svg>
+  </span>
+  <span class="fab-label">个人中心</span>
 </a>
+<script>
+(function(){
+  var fab = document.getElementById('navAccount');
+  if(!fab) return;
+  var sx,sy,ox,oy,dragging=false,moved=false, THRESH=5;
+  function applyPos(left,top){
+    var w=fab.offsetWidth||104, h=fab.offsetHeight||110;
+    left=Math.max(6,Math.min(window.innerWidth-w-6,left));
+    top=Math.max(6,Math.min(window.innerHeight-h-6,top));
+    fab.style.left=left+'px'; fab.style.top=top+'px';
+    fab.style.right='auto'; fab.style.bottom='auto'; fab.style.transform='none';
+  }
+  try{ var p=JSON.parse(localStorage.getItem('fabPos')||'null'); if(p) applyPos(p.left,p.top); }catch(e){}
+  fab.addEventListener('pointerdown', function(e){
+    dragging=true; moved=false; sx=e.clientX; sy=e.clientY;
+    var r=fab.getBoundingClientRect(); ox=r.left; oy=r.top;
+    try{ fab.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  fab.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    var dx=e.clientX-sx, dy=e.clientY-sy;
+    if(!moved && Math.hypot(dx,dy)>THRESH) moved=true;
+    if(moved) applyPos(ox+dx, oy+dy);
+  });
+  fab.addEventListener('pointerup', function(){
+    dragging=false;
+    if(moved){ var r=fab.getBoundingClientRect();
+      try{ localStorage.setItem('fabPos', JSON.stringify({left:r.left,top:r.top})); }catch(e){} }
+  });
+  fab.addEventListener('click', function(e){ if(moved){ e.preventDefault(); moved=false; } });
+})();
+</script>
 
 <!-- ════════ /app MODE SELECTION (shown first; .container stays hidden until a mode is chosen) ════════ -->
 <div id="appModeSelect">
