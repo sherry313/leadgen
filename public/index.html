@@ -2676,7 +2676,7 @@
 </nav>
 
 <!-- 个人中心：右侧圆形大按钮悬浮入口（登录后由 navAccount toggle 显示，跨步骤常驻） -->
-<a id="navAccount" class="account-fab" href="/account" title="个人中心" style="display:none">
+<a id="navAccount" class="account-fab" href="/account" title="个人中心" draggable="false" style="display:none">
   <span class="fab-bubbles" aria-hidden="true">
     <i style="left:30%;width:7px;height:7px;--d:3.2s;--delay:0s;--drift:-10px"></i>
     <i style="left:46%;width:10px;height:10px;--d:3.8s;--delay:.5s;--drift:6px"></i>
@@ -2711,7 +2711,11 @@
     fab.style.right='auto'; fab.style.bottom='auto'; fab.style.transform='none';
   }
   try{ var p=JSON.parse(localStorage.getItem('fabPos')||'null'); if(p) applyPos(p.left,p.top); }catch(e){}
+  // 禁掉 <a> 的原生拖拽（否则拖动时会出现链接幽灵、干扰）
+  fab.addEventListener('dragstart', function(e){ e.preventDefault(); });
   fab.addEventListener('pointerdown', function(e){
+    if(e.button && e.button!==0) return;   // 仅左键
+    e.preventDefault();
     dragging=true; moved=false; sx=e.clientX; sy=e.clientY;
     var r=fab.getBoundingClientRect(); ox=r.left; oy=r.top;
     try{ fab.setPointerCapture(e.pointerId); }catch(_){}
@@ -2722,12 +2726,25 @@
     if(!moved && Math.hypot(dx,dy)>THRESH) moved=true;
     if(moved) applyPos(ox+dx, oy+dy);
   });
-  fab.addEventListener('pointerup', function(){
+  fab.addEventListener('pointerup', function(e){
+    if(!dragging) return;
     dragging=false;
-    if(moved){ var r=fab.getBoundingClientRect();
-      try{ localStorage.setItem('fabPos', JSON.stringify({left:r.left,top:r.top})); }catch(e){} }
+    try{ fab.releasePointerCapture(e.pointerId); }catch(_){}
+    if(moved){
+      // 拖动结束：只记住位置，不跳转
+      var r=fab.getBoundingClientRect();
+      try{ localStorage.setItem('fabPos', JSON.stringify({left:r.left,top:r.top})); }catch(_){}
+    } else {
+      // 没移动 = 一次点击：打开个人中心
+      window.location.href = fab.getAttribute('href') || '/account';
+    }
   });
-  fab.addEventListener('click', function(e){ if(moved){ e.preventDefault(); moved=false; } });
+  // 导航完全由 pointerup 手动控制，屏蔽原生 click（避免拖动后误跳转）
+  fab.addEventListener('click', function(e){ e.preventDefault(); });
+  // 键盘可达性：聚焦后回车/空格打开
+  fab.addEventListener('keydown', function(e){
+    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); window.location.href = fab.getAttribute('href') || '/account'; }
+  });
 })();
 </script>
 

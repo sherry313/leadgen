@@ -75,7 +75,7 @@
     <span class="flag">临时预览 · /preview-fab.html</span>
   </div>
 
-  <a id="navAccount" class="account-fab" href="/account" title="个人中心">
+  <a id="navAccount" class="account-fab" href="/account" title="个人中心" draggable="false">
     <span class="fab-bubbles" aria-hidden="true">
       <i style="left:30%;width:7px;height:7px;--d:3.2s;--delay:0s;--drift:-10px"></i>
       <i style="left:46%;width:10px;height:10px;--d:3.8s;--delay:.5s;--drift:6px"></i>
@@ -112,10 +112,13 @@
     fab.style.right='auto'; fab.style.bottom='auto'; fab.style.transform='none';
   }
   try{ const p=JSON.parse(localStorage.getItem('fabPos')||'null'); if(p) applyPos(p.left,p.top); }catch(e){}
+  fab.addEventListener('dragstart', e=>e.preventDefault());
   fab.addEventListener('pointerdown', e=>{
+    if(e.button && e.button!==0) return;
+    e.preventDefault();
     dragging=true; moved=false; sx=e.clientX; sy=e.clientY;
     const r=fab.getBoundingClientRect(); ox=r.left; oy=r.top;
-    fab.setPointerCapture(e.pointerId);
+    try{ fab.setPointerCapture(e.pointerId); }catch(_){}
   });
   fab.addEventListener('pointermove', e=>{
     if(!dragging) return;
@@ -123,12 +126,15 @@
     if(!moved && Math.hypot(dx,dy)>THRESH) moved=true;
     if(moved) applyPos(ox+dx, oy+dy);
   });
-  fab.addEventListener('pointerup', ()=>{
+  fab.addEventListener('pointerup', e=>{
+    if(!dragging) return;
     dragging=false;
+    try{ fab.releasePointerCapture(e.pointerId); }catch(_){}
     if(moved){ const r=fab.getBoundingClientRect();
       try{ localStorage.setItem('fabPos', JSON.stringify({left:r.left,top:r.top})); }catch(e){} }
+    else { window.location.href = fab.getAttribute('href') || '/account'; }
   });
-  fab.addEventListener('click', e=>{ if(moved){ e.preventDefault(); moved=false; } });
+  fab.addEventListener('click', e=>e.preventDefault());
 })();
 </script>
 </body>
