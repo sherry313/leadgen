@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人中心悬浮球 · 预览（临时）</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ min-height:100vh; background:#030303; color:#e5e7eb;
+    font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+    background-image:radial-gradient(rgba(99,102,241,.06) 1px, transparent 1px);
+    background-size:26px 26px; overflow:hidden; }
+  .tip{ position:fixed; left:32px; top:32px; max-width:340px; }
+  .tip h1{ font-size:1.1rem; font-weight:800; }
+  .tip p{ font-size:.82rem; color:#94a3b8; margin-top:8px; line-height:1.7; }
+  .tip .k{ color:#a5b4fc; font-weight:600; }
+  .tip .flag{ display:inline-block; margin-top:14px; font-size:.66rem; color:#818cf8;
+    background:rgba(99,102,241,.1); border:1px solid rgba(99,102,241,.25); padding:5px 11px; border-radius:20px; }
+
+  /* ══ 个人中心 悬浮球 ══ */
+  .account-fab{
+    position:fixed; right:60px; top:50%; transform:translateY(-50%); z-index:200;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    width:104px; text-decoration:none; color:#c7d2fe; cursor:grab;
+    user-select:none; -webkit-user-select:none; touch-action:none;
+  }
+  .account-fab:active{ cursor:grabbing; }
+
+  .fab-core{
+    position:relative; width:76px; height:76px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; overflow:visible;
+    background:radial-gradient(circle at 33% 27%, rgba(165,180,252,.6), rgba(79,70,229,.32) 52%, rgba(30,27,75,.55));
+    border:1px solid rgba(129,140,248,.5);
+    box-shadow:0 12px 32px rgba(79,70,229,.45), inset 0 1px 7px rgba(199,210,254,.45);
+    transition:box-shadow .2s, transform .2s;
+  }
+  /* 旋转光环 */
+  .fab-core::before{
+    content:''; position:absolute; inset:-4px; border-radius:50%;
+    background:conic-gradient(from 0deg, transparent 0deg, rgba(165,180,252,.9) 60deg, transparent 150deg);
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    mask:radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    animation:fabSpin 4.5s linear infinite;
+  }
+  @keyframes fabSpin{ to{ transform:rotate(360deg); } }
+
+  .fab-ico{ position:relative; width:36px; height:36px; color:#eef2ff;
+    filter:drop-shadow(0 2px 4px rgba(30,27,75,.6)); }
+
+  /* 冒泡 —— 代表邮件发送 */
+  .fab-bubbles{ position:absolute; left:0; right:0; top:-56px; bottom:8px; pointer-events:none; overflow:visible; }
+  .fab-bubbles i{ position:absolute; bottom:8px; border-radius:50%;
+    background:radial-gradient(circle at 32% 30%, rgba(224,231,255,.95), rgba(129,140,248,.35) 70%, rgba(129,140,248,0));
+    box-shadow:0 0 8px rgba(165,180,252,.6); opacity:0;
+    animation:fabBubble var(--d,3.4s) ease-in var(--delay,0s) infinite; }
+  @keyframes fabBubble{
+    0%{ transform:translate(0,0) scale(.35); opacity:0; }
+    12%{ opacity:.95; }
+    70%{ opacity:.7; }
+    100%{ transform:translate(var(--drift,0px),-104px) scale(1); opacity:0; }
+  }
+
+  .fab-label{ margin-top:11px; font-size:12.5px; font-weight:600; letter-spacing:.02em;
+    color:#a5b4fc; text-shadow:0 1px 5px rgba(0,0,0,.5); }
+
+  .account-fab:hover .fab-core{ transform:scale(1.06);
+    box-shadow:0 16px 40px rgba(79,70,229,.6), inset 0 1px 9px rgba(199,210,254,.6); }
+</style>
+</head>
+<body>
+  <div class="tip">
+    <h1>个人中心悬浮球</h1>
+    <p><span class="k">按住拖动</span>可以把它挪到任意位置,松手会记住;<span class="k">轻点</span>还是进入个人中心。小泡泡不断往上冒,代表<span class="k">邮件发送中</span>。</p>
+    <span class="flag">临时预览 · /preview-fab.html</span>
+  </div>
+
+  <a id="navAccount" class="account-fab" href="/account" title="个人中心">
+    <span class="fab-bubbles" aria-hidden="true">
+      <i style="left:30%;width:7px;height:7px;--d:3.2s;--delay:0s;--drift:-10px"></i>
+      <i style="left:46%;width:10px;height:10px;--d:3.8s;--delay:.5s;--drift:6px"></i>
+      <i style="left:60%;width:6px;height:6px;--d:2.9s;--delay:1s;--drift:12px"></i>
+      <i style="left:40%;width:8px;height:8px;--d:3.5s;--delay:1.6s;--drift:-6px"></i>
+      <i style="left:55%;width:5px;height:5px;--d:3.1s;--delay:2.1s;--drift:4px"></i>
+      <i style="left:36%;width:9px;height:9px;--d:4s;--delay:2.7s;--drift:-14px"></i>
+    </span>
+    <span class="fab-core">
+      <svg class="fab-ico" viewBox="0 0 24 24" fill="none">
+        <defs>
+          <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#eef2ff"/><stop offset="1" stop-color="#c7d2fe"/>
+          </linearGradient>
+        </defs>
+        <circle cx="12" cy="8.6" r="3.6" fill="url(#fg)"/>
+        <path d="M4.8 19.4c0-3.9 3.2-6.4 7.2-6.4s7.2 2.5 7.2 6.4" fill="url(#fg)"/>
+      </svg>
+    </span>
+    <span class="fab-label">个人中心</span>
+  </a>
+
+<script>
+(function(){
+  const fab = document.getElementById('navAccount');
+  if(!fab) return;
+  let sx,sy,ox,oy,dragging=false,moved=false;
+  const THRESH=5;
+  function applyPos(left,top){
+    const w=fab.offsetWidth,h=fab.offsetHeight;
+    left=Math.max(6,Math.min(window.innerWidth-w-6,left));
+    top=Math.max(6,Math.min(window.innerHeight-h-6,top));
+    fab.style.left=left+'px'; fab.style.top=top+'px';
+    fab.style.right='auto'; fab.style.bottom='auto'; fab.style.transform='none';
+  }
+  try{ const p=JSON.parse(localStorage.getItem('fabPos')||'null'); if(p) applyPos(p.left,p.top); }catch(e){}
+  fab.addEventListener('pointerdown', e=>{
+    dragging=true; moved=false; sx=e.clientX; sy=e.clientY;
+    const r=fab.getBoundingClientRect(); ox=r.left; oy=r.top;
+    fab.setPointerCapture(e.pointerId);
+  });
+  fab.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx=e.clientX-sx, dy=e.clientY-sy;
+    if(!moved && Math.hypot(dx,dy)>THRESH) moved=true;
+    if(moved) applyPos(ox+dx, oy+dy);
+  });
+  fab.addEventListener('pointerup', ()=>{
+    dragging=false;
+    if(moved){ const r=fab.getBoundingClientRect();
+      try{ localStorage.setItem('fabPos', JSON.stringify({left:r.left,top:r.top})); }catch(e){} }
+  });
+  fab.addEventListener('click', e=>{ if(moved){ e.preventDefault(); moved=false; } });
+})();
+</script>
+</body>
+</html>
