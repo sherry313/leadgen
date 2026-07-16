@@ -89,10 +89,64 @@
   .devpage i{ font-size:46px; color:var(--tx3); } .devpage h3{ font-size:18px; margin:16px 0 8px; }
   .devpage p{ font-size:13px; color:var(--tx3); }
   .hidden{ display:none; }
+
+  /* ── 状态点：已上线=发光绿点(图标亮)，开发中=空心暗点(整行调暗) ── */
+  .st{ margin-left:auto; width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .st.on{ background:#34d399; box-shadow:0 0 7px rgba(52,211,153,.85); }
+  .st.dev{ background:transparent; border:1.5px solid rgba(255,255,255,.26); box-shadow:none; }
+  .ni:has(.st.on) i{ color:var(--ac2); opacity:1; }
+  .ni:has(.st.on){ color:var(--tx); }
+  .ni:has(.st.dev){ opacity:.42; }
+  .ni:has(.st.dev):hover{ opacity:.8; }
+  .ni.on{ opacity:1 !important; }
+
+  /* ── 开头封面 ── */
+  #cover{ position:fixed; inset:0; z-index:50; background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; overflow:hidden; transition:opacity .5s ease; }
+  #cover.gone{ opacity:0; pointer-events:none; }
+  .cv-shape{ position:absolute; border-radius:999px; filter:blur(8px); opacity:.5;
+    background:linear-gradient(120deg, rgba(99,102,241,.22), rgba(30,27,75,.05)); }
+  .cv-s1{ width:520px; height:150px; top:14%; left:-6%; transform:rotate(-24deg); }
+  .cv-s2{ width:360px; height:120px; top:20%; right:2%; transform:rotate(18deg);
+    background:linear-gradient(120deg, rgba(120,80,40,.18), rgba(30,27,75,.04)); }
+  .cv-s3{ width:460px; height:150px; bottom:10%; right:6%; transform:rotate(-16deg);
+    background:linear-gradient(120deg, rgba(190,60,80,.16), rgba(30,27,75,.04)); }
+  .cv-s4{ width:340px; height:120px; bottom:14%; left:8%; transform:rotate(20deg); }
+  .cv-in{ position:relative; z-index:2; padding:0 24px; }
+  .cv-badge{ display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:999px;
+    background:var(--card); border:1px solid var(--bd); margin-bottom:34px; font-size:13px; color:var(--tx2); }
+  .cv-badge .dot{ width:8px; height:8px; border-radius:50%; background:#f43f5e; }
+  .cv-title{ font-size:clamp(2.2rem,5vw,3.6rem); font-weight:750; line-height:1.16; letter-spacing:-.02em; }
+  .cv-l1{ display:block; background:linear-gradient(180deg,#fff,rgba(255,255,255,.8)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .cv-l2{ display:block; background:linear-gradient(90deg,#a5b4fc,rgba(255,255,255,.9),#fda4af); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .cv-sub{ font-size:clamp(1rem,2vw,1.15rem); color:var(--tx3); margin:22px auto 40px; max-width:540px; line-height:1.7; font-weight:300; }
+  .cv-btn{ display:inline-flex; align-items:center; gap:10px; font-size:16px; font-weight:700; color:#fff;
+    padding:15px 32px; border:none; border-radius:13px; cursor:pointer; font-family:inherit;
+    background:linear-gradient(135deg,#6366f1,#4f46e5); box-shadow:0 14px 34px rgba(99,102,241,.42);
+    transition:transform .15s, box-shadow .15s; }
+  .cv-btn:hover{ transform:translateY(-2px); box-shadow:0 18px 40px rgba(99,102,241,.55); }
+  .cv-btn i{ font-size:20px; }
+
   @media(max-width:900px){ .kpis{grid-template-columns:repeat(2,1fr)} .row2,.prod-grid{grid-template-columns:1fr} .side{display:none} }
 </style>
 </head>
 <body>
+<!-- 开头封面 -->
+<div id="cover">
+  <div class="cv-shape cv-s1"></div><div class="cv-shape cv-s2"></div>
+  <div class="cv-shape cv-s3"></div><div class="cv-shape cv-s4"></div>
+  <div class="cv-in">
+    <div class="cv-badge"><span class="dot"></span> 外贸冷邮件自动化 · 已上线</div>
+    <div class="cv-title">
+      <span class="cv-l1">找客户 · 写邮件 · 发跟进</span>
+      <span class="cv-l2">全交给 AI 自动跑</span>
+    </div>
+    <p class="cv-sub">谷歌地图批量抓潜在客户 → AI 筛出高意向 → 自动写冷邮件并多轮跟进。你只管收回复。</p>
+    <button class="cv-btn" onclick="enterConsole()"><i class="ti ti-rocket"></i> 开始找寻你的客户</button>
+  </div>
+</div>
+
 <div class="shell">
   <!-- 侧边栏 -->
   <nav class="side">
@@ -102,23 +156,23 @@
     <div class="ni on" data-view="dash"><i class="ti ti-layout-dashboard"></i> 获客大盘</div>
 
     <div class="grp">获客 · 找客户</div>
-    <div class="ni" data-view="dev" data-t="邮件获客"><i class="ti ti-mail-forward"></i> 邮件获客 <span class="tag live">已上线</span></div>
-    <div class="ni" data-view="dev" data-t="社媒自动发帖"><i class="ti ti-share"></i> 社媒自动发帖 <span class="tag live">已上线</span></div>
-    <div class="ni" data-view="dev" data-t="海关数据"><i class="ti ti-ship"></i> 海关数据 <span class="tag dev">开发中</span></div>
-    <div class="ni" data-view="dev" data-t="领英获客"><i class="ti ti-brand-linkedin"></i> 领英获客 <span class="tag dev">开发中</span></div>
-    <div class="ni" data-view="dev" data-t="展会采购商"><i class="ti ti-building-store"></i> 展会采购商 <span class="tag dev">开发中</span></div>
-    <div class="ni" data-view="dev" data-t="WhatsApp 采购商"><i class="ti ti-brand-whatsapp"></i> WhatsApp 采购商 <span class="tag dev">开发中</span></div>
-    <div class="ni" data-view="dev" data-t="SEO / GEO 获客"><i class="ti ti-search"></i> SEO / GEO 获客 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="邮件获客"><i class="ti ti-mail-forward"></i> 邮件获客 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="社媒自动发帖"><i class="ti ti-share"></i> 社媒自动发帖 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="海关数据"><i class="ti ti-ship"></i> 海关数据 <span class="st dev"></span></div>
+    <div class="ni" data-view="dev" data-t="领英获客"><i class="ti ti-brand-linkedin"></i> 领英获客 <span class="st dev"></span></div>
+    <div class="ni" data-view="dev" data-t="展会采购商"><i class="ti ti-building-store"></i> 展会采购商 <span class="st dev"></span></div>
+    <div class="ni" data-view="dev" data-t="WhatsApp 采购商"><i class="ti ti-brand-whatsapp"></i> WhatsApp 采购商 <span class="st dev"></span></div>
+    <div class="ni" data-view="dev" data-t="SEO / GEO 获客"><i class="ti ti-search"></i> SEO / GEO 获客 <span class="st dev"></span></div>
 
     <div class="grp">转化工具</div>
-    <div class="ni" data-view="dev" data-t="客户管理"><i class="ti ti-users"></i> 客户管理 <span class="tag live">已上线</span></div>
-    <div class="ni" data-view="dev" data-t="邮件管理"><i class="ti ti-mail"></i> 邮件管理 <span class="tag live">已上线</span></div>
-    <div class="ni" data-view="dev" data-t="邮件发送"><i class="ti ti-send"></i> 邮件发送 <span class="tag live">已上线</span></div>
-    <div class="ni" data-view="dev" data-t="模板管理"><i class="ti ti-template"></i> 模板管理 <span class="tag live">已上线</span></div>
-    <div class="ni" data-view="dev" data-t="产品管理"><i class="ti ti-package"></i> 产品管理 <span class="tag live">已上线</span></div>
-    <div class="ni" data-view="dev" data-t="报价自动化"><i class="ti ti-file-invoice"></i> 报价自动化 <span class="tag dev">开发中</span></div>
-    <div class="ni" data-view="dev" data-t="AI 客服"><i class="ti ti-message-chatbot"></i> AI 客服 <span class="tag dev">开发中</span></div>
-    <div class="ni" data-view="dev" data-t="任务管理"><i class="ti ti-checklist"></i> 任务管理 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="客户管理"><i class="ti ti-users"></i> 客户管理 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="邮件管理"><i class="ti ti-mail"></i> 邮件管理 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="邮件发送"><i class="ti ti-send"></i> 邮件发送 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="模板管理"><i class="ti ti-template"></i> 模板管理 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="产品管理"><i class="ti ti-package"></i> 产品管理 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="报价自动化"><i class="ti ti-file-invoice"></i> 报价自动化 <span class="st dev"></span></div>
+    <div class="ni" data-view="dev" data-t="AI 客服"><i class="ti ti-message-chatbot"></i> AI 客服 <span class="st dev"></span></div>
+    <div class="ni" data-view="dev" data-t="任务管理"><i class="ti ti-checklist"></i> 任务管理 <span class="st dev"></span></div>
 
     <div class="grp">免费工具</div>
     <div class="ni" data-view="dev" data-t="DNS 记录生成器"><i class="ti ti-dns"></i> DNS 记录生成器</div>
@@ -127,7 +181,7 @@
 
     <div class="grp">账户</div>
     <div class="ni" data-view="account"><i class="ti ti-user-circle"></i> 个人中心</div>
-    <div class="ni" data-view="dev" data-t="数据分析"><i class="ti ti-chart-bar"></i> 数据分析 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="数据分析"><i class="ti ti-chart-bar"></i> 数据分析 <span class="st dev"></span></div>
     <div class="ni" data-view="dev" data-t="定价 / 套餐"><i class="ti ti-diamond"></i> 定价 / 套餐</div>
     <div class="ni" data-view="dev" data-t="设置"><i class="ti ti-settings"></i> 设置</div>
 
@@ -186,6 +240,8 @@
 </div>
 
 <script>
+  function enterConsole(){ document.getElementById('cover').classList.add('gone'); }
+  if(location.hash==='#c'){ document.addEventListener('DOMContentLoaded', enterConsole); }
   const items = document.querySelectorAll('.ni');
   const views = { dash:'view-dash', account:'view-account', dev:'view-dev' };
   function show(v){ Object.values(views).forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById(views[v]).classList.remove('hidden'); }
@@ -196,7 +252,7 @@
       const v = el.dataset.view; show(v);
       if(v==='dev'){
         const t = el.dataset.t || '功能';
-        const live = el.querySelector('.tag.live');
+        const live = el.querySelector('.st.on');
         document.getElementById('devTitle').textContent = t + (live? ' · 已上线' : ' · 开发中');
         document.getElementById('devDesc').textContent = live
           ? '正式版这里会直接跳到你现有的「'+t+'」页面(功能不重做,只换入口)。'
