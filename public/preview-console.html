@@ -180,7 +180,7 @@
     <div class="ni" data-view="dev" data-t="报价单工具"><i class="ti ti-receipt"></i> 报价单工具</div>
 
     <div class="grp">账户</div>
-    <div class="ni" data-view="account"><i class="ti ti-user-circle"></i> 个人中心</div>
+    <div class="ni" data-view="account" data-href="/account"><i class="ti ti-user-circle"></i> 个人中心</div>
     <div class="ni" data-view="dev" data-t="数据分析"><i class="ti ti-chart-bar"></i> 数据分析 <span class="st dev"></span></div>
     <div class="ni" data-view="dev" data-t="定价 / 套餐"><i class="ti ti-diamond"></i> 定价 / 套餐</div>
     <div class="ni" data-view="dev" data-t="设置"><i class="ti ti-settings"></i> 设置</div>
@@ -242,12 +242,21 @@
 <script>
   function enterConsole(){ document.getElementById('cover').classList.add('gone'); }
   if(location.hash==='#c'){ document.addEventListener('DOMContentLoaded', enterConsole); }
+  // 已上线功能 → 跳到现有真实页面（仅导航，不改目标页/API）
+  const HREF = {
+    '邮件获客':'/app', '社媒自动发帖':'/autopost', '客户管理':'/leads.html',
+    '邮件管理':'/app', '邮件发送':'/app', '模板管理':'/app', '产品管理':'/account',
+    'DNS 记录生成器':'/tools/dns-generator.html', 'Spam 敏感词检查':'/tools/spam-word-checker.html',
+    '报价单工具':'/quote.html', '定价 / 套餐':'/pricing.html'
+  };
   const items = document.querySelectorAll('.ni');
   const views = { dash:'view-dash', account:'view-account', dev:'view-dev' };
   function show(v){ Object.values(views).forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById(views[v]).classList.remove('hidden'); }
   items.forEach(el=>{
     if(!el.dataset.view) return;
     el.addEventListener('click', ()=>{
+      const href = el.dataset.href || HREF[el.dataset.t];
+      if(href){ window.location.href = href; return; }
       items.forEach(x=>x.classList.remove('on')); el.classList.add('on');
       const v = el.dataset.view; show(v);
       if(v==='dev'){
