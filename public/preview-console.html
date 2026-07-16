@@ -89,6 +89,8 @@
   .devpage i{ font-size:46px; color:var(--tx3); } .devpage h3{ font-size:18px; margin:16px 0 8px; }
   .devpage p{ font-size:13px; color:var(--tx3); }
   .hidden{ display:none; }
+  #view-frame{ height:calc(100vh - 62px); }
+  #view-frame iframe{ width:100%; height:100%; border:0; display:block; background:var(--bg); }
 
   /* ── 状态点：已上线=发光绿点(图标亮)，开发中=空心暗点(整行调暗) ── */
   .st{ margin-left:auto; width:7px; height:7px; border-radius:50%; flex-shrink:0; }
@@ -236,6 +238,9 @@
     <div class="wrap hidden" id="view-dev">
       <div class="devpage"><i class="ti ti-tools"></i><h3 id="devTitle">功能开发中</h3><p id="devDesc">这个功能正在开发,敬请期待。已上线的功能会直接跳到现有页面。</p></div>
     </div>
+
+    <!-- 嵌入现有功能页（iframe，功能不变、不跳走） -->
+    <div class="hidden" id="view-frame"><iframe id="appFrame" title="功能" src="about:blank"></iframe></div>
   </div>
 </div>
 
@@ -249,15 +254,16 @@
     'DNS 记录生成器':'/tools/dns-generator.html', 'Spam 敏感词检查':'/tools/spam-word-checker.html',
     '报价单工具':'/quote.html', '定价 / 套餐':'/pricing.html'
   };
+  const frame = document.getElementById('appFrame');
   const items = document.querySelectorAll('.ni');
-  const views = { dash:'view-dash', account:'view-account', dev:'view-dev' };
+  const views = { dash:'view-dash', account:'view-account', dev:'view-dev', frame:'view-frame' };
   function show(v){ Object.values(views).forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById(views[v]).classList.remove('hidden'); }
   items.forEach(el=>{
     if(!el.dataset.view) return;
     el.addEventListener('click', ()=>{
-      const href = el.dataset.href || HREF[el.dataset.t];
-      if(href){ window.location.href = href; return; }
       items.forEach(x=>x.classList.remove('on')); el.classList.add('on');
+      const href = el.dataset.href || HREF[el.dataset.t];
+      if(href){ if(frame.getAttribute('src')!==href) frame.setAttribute('src', href); show('frame'); return; }
       const v = el.dataset.view; show(v);
       if(v==='dev'){
         const t = el.dataset.t || '功能';
@@ -269,6 +275,12 @@
       }
     });
   });
+  // 深链：#f=/app 直接在控制台里打开某功能（方便测试/分享）
+  if(location.hash.indexOf('#f=')===0){
+    enterConsole();
+    frame.setAttribute('src', decodeURIComponent(location.hash.slice(3)));
+    show('frame');
+  }
 </script>
 </body>
 </html>
