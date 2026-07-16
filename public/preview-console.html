@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智拓客 · 控制台预览（临时）</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#030303; --panel:#0a0a0c; --card:rgba(255,255,255,0.03); --card2:rgba(255,255,255,0.05);
+    --bd:rgba(255,255,255,0.08); --bd2:rgba(255,255,255,0.12);
+    --tx:#e5e7eb; --tx2:rgba(255,255,255,0.6); --tx3:rgba(255,255,255,0.35);
+    --ac:#6366f1; --ac2:#818cf8; --acbg:rgba(99,102,241,0.14);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{ background:var(--bg); color:var(--tx);
+    font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; }
+  .shell{ display:flex; height:100vh; }
+
+  /* ── 侧边栏 ── */
+  .side{ width:238px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--bd);
+    display:flex; flex-direction:column; overflow-y:auto; }
+  .side::-webkit-scrollbar{ width:6px; } .side::-webkit-scrollbar-thumb{ background:var(--bd); border-radius:3px; }
+  .brand{ display:flex; align-items:center; gap:10px; padding:18px 16px 14px; }
+  .brand .lg{ width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,#6366f1,#4f46e5);
+    display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 4px 14px rgba(99,102,241,0.4); }
+  .brand b{ font-size:15px; }
+  .grp{ font-size:11px; font-weight:700; color:var(--tx3); letter-spacing:0.12em; padding:14px 18px 6px; }
+  .ni{ display:flex; align-items:center; gap:11px; font-size:13.5px; color:var(--tx2);
+    padding:9px 16px; margin:1px 8px; border-radius:9px; cursor:pointer; position:relative; transition:.13s; }
+  .ni i{ font-size:18px; width:20px; text-align:center; opacity:.9; }
+  .ni:hover{ background:var(--card); color:var(--tx); }
+  .ni.on{ background:var(--acbg); color:#c7d2fe; font-weight:600; }
+  .ni.on i{ color:var(--ac2); }
+  .ni.on::before{ content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; border-radius:3px; background:var(--ac); }
+  .tag{ margin-left:auto; font-size:10px; font-weight:700; padding:2px 7px; border-radius:6px; white-space:nowrap; }
+  .tag.live{ color:#6ee7b7; background:rgba(16,185,129,0.14); }
+  .tag.dev{ color:#fcd34d; background:rgba(234,179,8,0.14); }
+  .sfoot{ margin-top:auto; padding:12px; }
+  .userbox{ display:flex; align-items:center; gap:10px; padding:10px; background:var(--card); border:1px solid var(--bd); border-radius:11px; }
+  .userbox .av{ width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+  .userbox .em{ font-size:12px; font-weight:600; } .userbox .rl{ font-size:10.5px; color:var(--ac2); }
+  .userbox i{ margin-left:auto; color:var(--tx3); cursor:pointer; }
+
+  /* ── 主区 ── */
+  .main{ flex:1; min-width:0; overflow-y:auto; }
+  .topbar{ display:flex; align-items:center; gap:14px; padding:16px 28px; border-bottom:1px solid var(--bd); position:sticky; top:0; background:rgba(3,3,3,0.85); backdrop-filter:blur(10px); z-index:5; }
+  .topbar .flag{ font-size:11px; color:var(--tx3); background:var(--card); border:1px solid var(--bd); padding:5px 11px; border-radius:20px; }
+  .topbar .sp{ flex:1; }
+  .topbar .btn{ font-size:12.5px; font-weight:600; color:var(--tx2); background:var(--card); border:1px solid var(--bd); padding:7px 13px; border-radius:9px; cursor:pointer; display:inline-flex; gap:6px; align-items:center; }
+  .topbar .btn.up{ color:#fff; background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; }
+  .wrap{ padding:26px 28px 60px; max-width:1180px; }
+  .ph{ font-size:22px; font-weight:750; } .psub{ font-size:13px; color:var(--tx3); margin-top:5px; }
+
+  /* KPI */
+  .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:22px; }
+  .kpi{ background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:18px; }
+  .kpi .t{ display:flex; align-items:center; justify-content:space-between; font-size:12.5px; color:var(--tx2); }
+  .kpi .t i{ font-size:17px; color:var(--ac2); }
+  .kpi .v{ font-size:30px; font-weight:800; margin:8px 0 3px; font-variant-numeric:tabular-nums; }
+  .kpi .d{ font-size:11.5px; color:var(--tx3); }
+  .kpi .d b{ color:#6ee7b7; }
+
+  .row2{ display:grid; grid-template-columns:1.6fr 1fr; gap:16px; margin-top:16px; }
+  .box{ background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:20px; }
+  .box h3{ font-size:14.5px; font-weight:700; } .box .bs{ font-size:12px; color:var(--tx3); margin-top:3px; margin-bottom:14px; }
+  .act{ display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--bd); font-size:13px; }
+  .act:first-of-type{ border-top:none; }
+  .act .ic{ width:30px; height:30px; border-radius:8px; background:var(--acbg); color:var(--ac2); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+  .act .tm{ margin-left:auto; font-size:11px; color:var(--tx3); }
+  .empty{ font-size:12.5px; color:var(--tx3); padding:16px 0; }
+  .task{ display:flex; align-items:center; gap:10px; font-size:13px; padding:9px 0; border-top:1px solid var(--bd); }
+  .task:first-of-type{ border-top:none; }
+  .task .dot{ width:7px; height:7px; border-radius:50%; background:var(--ac2); }
+
+  /* 个人中心视图 */
+  .acc-hero{ background:linear-gradient(135deg, rgba(99,102,241,0.14), rgba(99,102,241,0.03)); border:1px solid var(--bd); border-radius:16px; padding:26px; margin-top:22px; display:flex; align-items:center; gap:20px; }
+  .acc-hero .big{ width:66px; height:66px; border-radius:16px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:800; }
+  .acc-hero .nm{ font-size:19px; font-weight:750; } .acc-hero .mt{ font-size:12.5px; color:var(--tx2); margin-top:4px; }
+  .acc-stats{ display:flex; gap:26px; margin-left:auto; }
+  .acc-stats .s .n{ font-size:24px; font-weight:800; } .acc-stats .s .l{ font-size:11px; color:var(--tx3); }
+  .prod-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:18px; }
+  .prod{ background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:16px; }
+  .prod .pn{ font-size:14px; font-weight:650; } .prod .pm{ font-size:11.5px; color:var(--tx3); margin-top:5px; }
+  .prod .pt{ display:inline-block; margin-top:10px; font-size:10.5px; color:var(--ac2); background:var(--acbg); padding:2px 8px; border-radius:6px; }
+
+  .devpage{ text-align:center; padding:90px 20px; }
+  .devpage i{ font-size:46px; color:var(--tx3); } .devpage h3{ font-size:18px; margin:16px 0 8px; }
+  .devpage p{ font-size:13px; color:var(--tx3); }
+  .hidden{ display:none; }
+  @media(max-width:900px){ .kpis{grid-template-columns:repeat(2,1fr)} .row2,.prod-grid{grid-template-columns:1fr} .side{display:none} }
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- 侧边栏 -->
+  <nav class="side">
+    <div class="brand"><div class="lg"><i class="ti ti-bolt"></i></div><b>智拓客</b></div>
+
+    <div class="grp">概览</div>
+    <div class="ni on" data-view="dash"><i class="ti ti-layout-dashboard"></i> 获客大盘</div>
+
+    <div class="grp">获客 · 找客户</div>
+    <div class="ni" data-view="dev" data-t="邮件获客"><i class="ti ti-mail-forward"></i> 邮件获客 <span class="tag live">已上线</span></div>
+    <div class="ni" data-view="dev" data-t="社媒自动发帖"><i class="ti ti-share"></i> 社媒自动发帖 <span class="tag live">已上线</span></div>
+    <div class="ni" data-view="dev" data-t="海关数据"><i class="ti ti-ship"></i> 海关数据 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="领英获客"><i class="ti ti-brand-linkedin"></i> 领英获客 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="展会采购商"><i class="ti ti-building-store"></i> 展会采购商 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="WhatsApp 采购商"><i class="ti ti-brand-whatsapp"></i> WhatsApp 采购商 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="SEO / GEO 获客"><i class="ti ti-search"></i> SEO / GEO 获客 <span class="tag dev">开发中</span></div>
+
+    <div class="grp">转化工具</div>
+    <div class="ni" data-view="dev" data-t="客户管理"><i class="ti ti-users"></i> 客户管理 <span class="tag live">已上线</span></div>
+    <div class="ni" data-view="dev" data-t="邮件管理"><i class="ti ti-mail"></i> 邮件管理 <span class="tag live">已上线</span></div>
+    <div class="ni" data-view="dev" data-t="邮件发送"><i class="ti ti-send"></i> 邮件发送 <span class="tag live">已上线</span></div>
+    <div class="ni" data-view="dev" data-t="模板管理"><i class="ti ti-template"></i> 模板管理 <span class="tag live">已上线</span></div>
+    <div class="ni" data-view="dev" data-t="产品管理"><i class="ti ti-package"></i> 产品管理 <span class="tag live">已上线</span></div>
+    <div class="ni" data-view="dev" data-t="报价自动化"><i class="ti ti-file-invoice"></i> 报价自动化 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="AI 客服"><i class="ti ti-message-chatbot"></i> AI 客服 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="任务管理"><i class="ti ti-checklist"></i> 任务管理 <span class="tag dev">开发中</span></div>
+
+    <div class="grp">免费工具</div>
+    <div class="ni" data-view="dev" data-t="DNS 记录生成器"><i class="ti ti-dns"></i> DNS 记录生成器</div>
+    <div class="ni" data-view="dev" data-t="Spam 敏感词检查"><i class="ti ti-shield-check"></i> Spam 敏感词检查</div>
+    <div class="ni" data-view="dev" data-t="报价单工具"><i class="ti ti-receipt"></i> 报价单工具</div>
+
+    <div class="grp">账户</div>
+    <div class="ni" data-view="account"><i class="ti ti-user-circle"></i> 个人中心</div>
+    <div class="ni" data-view="dev" data-t="数据分析"><i class="ti ti-chart-bar"></i> 数据分析 <span class="tag dev">开发中</span></div>
+    <div class="ni" data-view="dev" data-t="定价 / 套餐"><i class="ti ti-diamond"></i> 定价 / 套餐</div>
+    <div class="ni" data-view="dev" data-t="设置"><i class="ti ti-settings"></i> 设置</div>
+
+    <div class="sfoot">
+      <div class="userbox"><div class="av">S</div><div><div class="em">sherry@...</div><div class="rl">管理员</div></div><i class="ti ti-logout"></i></div>
+    </div>
+  </nav>
+
+  <!-- 主区 -->
+  <div class="main">
+    <div class="topbar">
+      <span class="flag">临时预览 · /preview-console.html</span>
+      <span class="sp"></span>
+      <button class="btn"><i class="ti ti-player-play"></i> 找客户演示</button>
+      <button class="btn up"><i class="ti ti-crown"></i> 升级套餐</button>
+    </div>
+
+    <!-- 获客大盘 -->
+    <div class="wrap" id="view-dash">
+      <div class="ph">获客大盘</div>
+      <div class="psub">欢迎回来！这是你的业务概览</div>
+      <div class="kpis">
+        <div class="kpi"><div class="t">总客户数 <i class="ti ti-users"></i></div><div class="v">118</div><div class="d">实时数据 · <b>本周 +12</b></div></div>
+        <div class="kpi"><div class="t">邮件发送 <i class="ti ti-mail"></i></div><div class="v">512</div><div class="d">累计发送量</div></div>
+        <div class="kpi"><div class="t">邮件打开率 <i class="ti ti-trending-up"></i></div><div class="v">38%</div><div class="d">平均打开率</div></div>
+        <div class="kpi"><div class="t">回复率 <i class="ti ti-message-2"></i></div><div class="v">9%</div><div class="d">平均回复率</div></div>
+      </div>
+      <div class="row2">
+        <div class="box">
+          <h3>最近活动</h3><div class="bs">你最近的获客与发信记录</div>
+          <div class="act"><div class="ic"><i class="ti ti-search"></i></div><div>谷歌地图搜索「Sydney timber importer」<div style="color:var(--tx3);font-size:11px">抓到 46 家 · AI 筛出 18 家高意向</div></div><span class="tm">2 小时前</span></div>
+          <div class="act"><div class="ic"><i class="ti ti-send"></i></div><div>向 18 位客户发出第一封冷邮件</div><span class="tm">2 小时前</span></div>
+          <div class="act"><div class="ic"><i class="ti ti-message-reply"></i></div><div>收到 2 封回复<div style="color:var(--tx3);font-size:11px">Melbourne Doors Co. · BuildRight Pty</div></div><span class="tm">昨天</span></div>
+        </div>
+        <div class="box">
+          <h3>今日任务</h3><div class="bs">需要完成的重要事项</div>
+          <div class="task"><span class="dot"></span> 跟进 2 封新回复</div>
+          <div class="task"><span class="dot"></span> 审核 18 封待发第二轮跟进</div>
+          <div class="task"><span class="dot"></span> 补充「木门」产品资料</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 个人中心 -->
+    <div class="wrap hidden" id="view-account">
+      <div class="ph">个人中心</div>
+      <div class="psub">你的账户、成果与产品品类</div>
+      <div class="acc-hero">
+        <div class="big">S</div>
+        <div><div class="nm">sherry</div><div class="mt">管理员 · 已加入 24 天</div></div>
+        <div class="acc-stats">
+          <div class="s"><div class="n">118</div><div class="l">累计客户</div></div>
+          <div class="s"><div class="n">512</div><div class="l">发出邮件</div></div>
+          <div class="s"><div class="n">3</div><div class="l">产品品类</div></div>
+        </div>
+      </div>
+      <h3 style="font-size:15px;margin-top:24px">我的产品品类</h3>
+      <div class="prod-grid">
+        <div class="prod"><div class="pn">实木门</div><div class="pm">2 次搜索 · 64 条线索</div><span class="pt">使用中</span></div>
+        <div class="prod"><div class="pn">铝合金窗</div><div class="pm">1 次搜索 · 32 条线索</div><span class="pt">点击使用</span></div>
+        <div class="prod"><div class="pn">户外家具</div><div class="pm">1 次搜索 · 22 条线索</div><span class="pt">点击使用</span></div>
+      </div>
+    </div>
+
+    <!-- 开发中占位 -->
+    <div class="wrap hidden" id="view-dev">
+      <div class="devpage"><i class="ti ti-tools"></i><h3 id="devTitle">功能开发中</h3><p id="devDesc">这个功能正在开发,敬请期待。已上线的功能会直接跳到现有页面。</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const items = document.querySelectorAll('.ni');
+  const views = { dash:'view-dash', account:'view-account', dev:'view-dev' };
+  function show(v){ Object.values(views).forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById(views[v]).classList.remove('hidden'); }
+  items.forEach(el=>{
+    if(!el.dataset.view) return;
+    el.addEventListener('click', ()=>{
+      items.forEach(x=>x.classList.remove('on')); el.classList.add('on');
+      const v = el.dataset.view; show(v);
+      if(v==='dev'){
+        const t = el.dataset.t || '功能';
+        const live = el.querySelector('.tag.live');
+        document.getElementById('devTitle').textContent = t + (live? ' · 已上线' : ' · 开发中');
+        document.getElementById('devDesc').textContent = live
+          ? '正式版这里会直接跳到你现有的「'+t+'」页面(功能不重做,只换入口)。'
+          : '「'+t+'」还没接 API,先占位。等你接好数据源我再填充。';
+      }
+    });
+  });
+</script>
+</body>
+</html>
