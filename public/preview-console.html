@@ -145,7 +145,7 @@
       <span class="cv-l2">交给 AI 就好</span>
     </div>
     <p class="cv-sub">你专注成交,剩下的我们来。</p>
-    <button class="cv-btn" onclick="enterConsole()"><i class="ti ti-rocket"></i> 开始找寻你的客户</button>
+    <button class="cv-btn" onclick="startFind()"><i class="ti ti-rocket"></i> 开始找寻你的客户</button>
   </div>
 </div>
 
@@ -246,6 +246,12 @@
 
 <script>
   function enterConsole(){ document.getElementById('cover').classList.add('gone'); }
+  // 点「开始找寻你的客户」：已登录直接进控制台；没登录先去登录邮箱，登录后自动跳回
+  function startFind(){
+    var token = localStorage.getItem('leadgen_accessToken');
+    if(token && token.trim()){ enterConsole(); }
+    else { window.location.href = '/login.html?redirect=' + encodeURIComponent('/preview-console.html#c'); }
+  }
   if(location.hash==='#c'){ document.addEventListener('DOMContentLoaded', enterConsole); }
   // 已上线功能 → 跳到现有真实页面（仅导航，不改目标页/API）
   const HREF = {
