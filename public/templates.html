@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模板管理 - 智拓客</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#030303; --card:rgba(255,255,255,0.03); --card2:rgba(255,255,255,0.05);
+    --bd:rgba(255,255,255,0.08); --bd2:rgba(255,255,255,0.12);
+    --tx:#e5e7eb; --tx2:rgba(255,255,255,0.6); --tx3:rgba(255,255,255,0.38);
+    --ac:#6366f1; --ac2:#818cf8; --ok:#34d399; --danger:#f87171;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--tx);
+    font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; }
+  .hd{ padding:26px 30px 6px; }
+  .hd h1{ font-size:1.35rem; font-weight:800; }
+  .hd p{ font-size:.82rem; color:var(--tx3); margin-top:5px; }
+  .sec-t{ padding:22px 30px 10px; font-size:.72rem; font-weight:800; color:var(--tx3);
+    letter-spacing:.12em; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+  .sec-t .cnt{ color:var(--ac2); }
+  .grid{ padding:0 30px; display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+  .grid.last{ padding-bottom:44px; }
+  .tpl{ background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:18px; position:relative; }
+  .tpl .ico{ font-size:22px; margin-bottom:10px; }
+  .tpl .nm{ font-size:.95rem; font-weight:700; }
+  .tpl .en{ font-size:.72rem; color:var(--tx3); margin-top:3px; line-height:1.4; }
+  .tpl .best{ font-size:.74rem; color:var(--tx2); margin-top:10px; line-height:1.5; }
+  .tpl .best b{ color:var(--ac2); font-weight:600; }
+  .tpl .acts{ display:flex; gap:8px; margin-top:14px; }
+  .tpl .b{ font-size:.74rem; color:var(--ac2); background:none; border:1px solid var(--bd2);
+    border-radius:8px; padding:6px 11px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-family:inherit; }
+  .tpl .b:hover{ background:var(--card2); color:#fff; }
+  .tpl .b.del{ color:var(--danger); border-color:rgba(248,113,113,0.3); }
+  .tpl .b.del:hover{ background:rgba(248,113,113,0.1); }
+  .tpl.add{ border-style:dashed; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; cursor:pointer; min-height:150px; color:var(--tx3); }
+  .tpl.add:hover{ border-color:var(--ac); color:var(--ac2); background:rgba(99,102,241,0.04); }
+  .tpl.add i{ font-size:26px; margin-bottom:8px; }
+  .tag-c{ position:absolute; top:14px; right:14px; font-size:.6rem; font-weight:800; color:var(--ac2);
+    background:rgba(99,102,241,0.14); border-radius:5px; padding:2px 7px; }
+
+  /* modal */
+  .ov{ position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+  .ov.show{ display:flex; }
+  .modal{ background:#0c0c10; border:1px solid var(--bd2); border-radius:16px; width:100%; max-width:560px;
+    max-height:88vh; overflow-y:auto; padding:24px; }
+  .modal h3{ font-size:1.05rem; font-weight:700; margin-bottom:4px; }
+  .modal .sub{ font-size:.78rem; color:var(--tx3); margin-bottom:18px; }
+  .fld{ margin-bottom:15px; }
+  .fld label{ display:block; font-size:.78rem; font-weight:600; color:var(--tx2); margin-bottom:6px; }
+  .fld label .req{ color:var(--danger); }
+  .fld input, .fld textarea{ width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--bd2);
+    border-radius:9px; padding:10px 12px; color:var(--tx); font-size:.85rem; font-family:inherit; outline:none; }
+  .fld input:focus, .fld textarea:focus{ border-color:var(--ac); }
+  .fld textarea{ resize:vertical; min-height:64px; line-height:1.5; }
+  .fld .hint{ font-size:.7rem; color:var(--tx3); margin-top:5px; }
+  .modal-btns{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+  .mbtn{ font-size:.85rem; font-weight:600; border-radius:9px; padding:10px 20px; cursor:pointer; font-family:inherit; border:1px solid var(--bd2); background:none; color:var(--tx2); }
+  .mbtn.primary{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .mbtn.primary:hover{ background:#4f46e5; }
+  .sample-box{ white-space:pre-wrap; font-size:.8rem; line-height:1.6; color:var(--tx2);
+    background:rgba(255,255,255,0.03); border:1px solid var(--bd); border-radius:10px; padding:16px; }
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#16171c;
+    border:1px solid var(--bd2); border-radius:10px; padding:11px 18px; font-size:.82rem; z-index:200;
+    display:none; box-shadow:0 8px 30px rgba(0,0,0,0.4); }
+</style>
+</head>
+<body>
+  <div class="hd">
+    <h1>模板管理</h1>
+    <p>不同模板适合不同客户。预设框架可直接用;自定义框架最多 5 个,写邮件时可引用(与「邮件获客」同一份数据)。</p>
+  </div>
+
+  <div class="sec-t"><i class="ti ti-layout-grid"></i> 预设框架 <span class="cnt" id="presetCnt"></span></div>
+  <div class="grid" id="presetGrid"></div>
+
+  <div class="sec-t"><i class="ti ti-star"></i> 我的自定义框架 <span class="cnt" id="customCnt"></span></div>
+  <div class="grid last" id="customGrid"></div>
+
+  <!-- 编辑/新建 modal -->
+  <div class="ov" id="editOv">
+    <div class="modal">
+      <h3 id="editTitle">新建自定义框架</h3>
+      <div class="sub">描述你的邮件框架,写邮件时 AI 会按它生成序列。</div>
+      <div class="fld"><label>框架名称 <span class="req">*</span></label><input id="fName" maxlength="30" placeholder="例如:我的建材开发框架"></div>
+      <div class="fld"><label>框架结构 <span class="req">*</span></label><textarea id="fStructure" placeholder="例如:开场问候 → 点出痛点 → 我的优势 → 低风险邀约"></textarea><div class="hint">每封邮件的写作结构/步骤。</div></div>
+      <div class="fld"><label>写作规则(可选)</label><textarea id="fRules" placeholder="例如:语气专业不夸张,每封 120 词以内,结尾只问一个问题"></textarea></div>
+      <div class="fld"><label>示例邮件(可选)</label><textarea id="fSample" placeholder="贴一封符合这个框架的示例邮件(可留空)"></textarea></div>
+      <div class="modal-btns">
+        <button class="mbtn" onclick="closeEdit()">取消</button>
+        <button class="mbtn primary" onclick="saveCustom()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 看示例 modal -->
+  <div class="ov" id="sampleOv">
+    <div class="modal">
+      <h3 id="sampleTitle">示例</h3>
+      <div class="sub" id="sampleSub"></div>
+      <div class="sample-box" id="sampleBody"></div>
+      <div class="modal-btns"><button class="mbtn primary" onclick="document.getElementById('sampleOv').classList.remove('show')">关闭</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const CUSTOM_KEY = 'zhituoke_custom_frameworks';
+  function getStoredToken(){
+    const s = localStorage.getItem('leadgen_supabase_session');
+    if (s){ try{ const o = JSON.parse(s); if(o && o.access_token) return o.access_token; }catch(e){} }
+    const t = localStorage.getItem('leadgen_accessToken');
+    return (t && t.trim()) ? t.trim() : '';
+  }
+  const token = getStoredToken();
+  if (!token){ location.replace('/login.html?redirect=' + encodeURIComponent('/templates.html')); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',1800); }
+  function loadCustom(){ try{ return JSON.parse(localStorage.getItem(CUSTOM_KEY)||'[]'); }catch(e){ return []; } }
+  function saveCustomArr(a){ localStorage.setItem(CUSTOM_KEY, JSON.stringify(a)); }
+
+  let _presets = [];
+  async function loadPresets(){
+    try{
+      const r = await fetch('/api/frameworks', { headers:{ Authorization:'Bearer '+token } });
+      const d = await r.json();
+      _presets = (d.frameworks||[]).filter(f=>!f.is_custom);
+    }catch(e){ _presets = []; }
+    document.getElementById('presetCnt').textContent = _presets.length ? ('· '+_presets.length+' 个') : '';
+    document.getElementById('presetGrid').innerHTML = _presets.map((f,i)=>
+      '<div class="tpl">'
+      + '<div class="ico">'+(f.icon||'📧')+'</div>'
+      + '<div class="nm">'+esc(f.name)+'</div>'
+      + '<div class="en">'+esc((f.structure&&f.structure.length)?f.structure.join(' → '):(f.en_name||''))+'</div>'
+      + (f.best_for?'<div class="best">适合:<b>'+esc(f.best_for)+'</b></div>':'')
+      + '<div class="acts">'+(f.sample_email_body?'<button class="b" onclick="showSample('+i+')"><i class="ti ti-eye"></i> 看示例</button>':'')+'</div>'
+      + '</div>').join('');
+  }
+  function showSample(i){
+    const f=_presets[i];
+    document.getElementById('sampleTitle').textContent = f.name;
+    document.getElementById('sampleSub').textContent = f.sample_subject ? ('主题:'+f.sample_subject) : '';
+    document.getElementById('sampleBody').textContent = f.sample_email_body || '（无示例）';
+    document.getElementById('sampleOv').classList.add('show');
+  }
+
+  function renderCustom(){
+    const list = loadCustom();
+    document.getElementById('customCnt').textContent = '· '+list.length+'/5';
+    let html = list.map(cf=>
+      '<div class="tpl"><span class="tag-c">自定义</span>'
+      + '<div class="ico">⭐</div>'
+      + '<div class="nm">'+esc(cf.name||'未命名')+'</div>'
+      + '<div class="en">'+esc(cf.structure||'')+'</div>'
+      + '<div class="acts">'
+      + '<button class="b" onclick="editCustom(\''+esc(cf.id)+'\')"><i class="ti ti-edit"></i> 编辑</button>'
+      + '<button class="b del" onclick="delCustom(\''+esc(cf.id)+'\')"><i class="ti ti-trash"></i> 删除</button>'
+      + '</div></div>').join('');
+    if (list.length < 5){
+      html += '<div class="tpl add" onclick="newCustom()"><i class="ti ti-plus"></i><div>新建自定义框架</div><div style="font-size:.72rem;margin-top:4px">最多 5 个</div></div>';
+    } else {
+      html += '<div class="tpl add" style="cursor:default;border-style:solid"><div style="font-size:.78rem">已达上限 5 个<br>删除一个再新建</div></div>';
+    }
+    document.getElementById('customGrid').innerHTML = html;
+  }
+
+  let _editId = null;
+  function newCustom(){ _editId=null; fill('','','',''); document.getElementById('editTitle').textContent='新建自定义框架'; document.getElementById('editOv').classList.add('show'); }
+  function editCustom(id){
+    const cf = loadCustom().find(f=>String(f.id)===String(id)); if(!cf) return;
+    _editId = cf.id; fill(cf.name,cf.structure,cf.rules,cf.sample);
+    document.getElementById('editTitle').textContent='编辑自定义框架';
+    document.getElementById('editOv').classList.add('show');
+  }
+  function fill(n,s,r,sa){ document.getElementById('fName').value=n||''; document.getElementById('fStructure').value=s||''; document.getElementById('fRules').value=r||''; document.getElementById('fSample').value=sa||''; }
+  function closeEdit(){ document.getElementById('editOv').classList.remove('show'); }
+  function saveCustom(){
+    const name=document.getElementById('fName').value.trim();
+    const structure=document.getElementById('fStructure').value.trim();
+    const rules=document.getElementById('fRules').value.trim();
+    const sample=document.getElementById('fSample').value.trim();
+    if(!name){ toast('请填写框架名称'); return; }
+    if(!structure){ toast('请填写框架结构'); return; }
+    let list = loadCustom();
+    if(_editId!=null){
+      const idx = list.findIndex(f=>String(f.id)===String(_editId));
+      if(idx>=0) list[idx] = { ...list[idx], name, structure, rules, sample };
+    } else {
+      if(list.length>=5){ toast('最多 5 个,请先删除'); return; }
+      const newId = 'cf_' + (list.reduce((m,f)=>Math.max(m, parseInt(String(f.id).replace(/\D/g,''))||0),0)+1);
+      list.push({ id:newId, name, structure, rules, sample, sequence_length:5, days:[0,2,4,7,11] });
+    }
+    saveCustomArr(list); closeEdit(); renderCustom(); toast('已保存');
+  }
+  function delCustom(id){
+    if(!confirm('删除这个自定义框架?')) return;
+    saveCustomArr(loadCustom().filter(f=>String(f.id)!==String(id)));
+    renderCustom(); toast('已删除');
+  }
+
+  if (token){ loadPresets(); renderCustom(); }
+</script>
+</body>
+</html>
