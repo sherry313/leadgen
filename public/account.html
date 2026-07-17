@@ -1083,6 +1083,21 @@
     loadHistory();
     loadProducts();
   }
+
+  // 从控制台侧栏「账号管理」进来(/account#accounts)：等管理员区显示后自动展开
+  if (location.hash === '#accounts') {
+    let _t = 0;
+    const _iv = setInterval(function () {
+      const sec = document.getElementById('adminSec');
+      const body = document.getElementById('adminBody');
+      if (sec && sec.style.display !== 'none') {
+        if (body && body.style.display === 'none') toggleAdminSec();
+        sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        clearInterval(_iv);
+      }
+      if (++_t > 40) clearInterval(_iv); // 非管理员 ~8s 后放弃，静默
+    }, 200);
+  }
 </script>
 </body>
 </html>
