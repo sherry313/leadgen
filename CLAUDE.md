@@ -47,7 +47,10 @@
 - /tools/ → Free tools listing (public/tools/index.html)
 - /login.html → Login page (redirects to /lens after token entry)
 - /landing → Old landing page (hidden, preserved)
-- /quote.html → Quote tool
+- /quote.html → 报价工具，**已下线**（2026-07-17）。server.js 里有个 handler 返回维护页；
+  页面文件 public/quote.html 保留未删。它读 Lens 出厂成本价、显示成本与利润，是卖家内部
+  工具，此前被误放在公开的「免费工具」区。重新上线前必须先决定谁能看成本价。
+  相关：/api/quote/products 和 /api/send-quote 都已加 requireAuth。
 
 ### 8. Lens vs New Users
 - Lens config (seller name, products, ICP) lives ONLY in /lens (public/lens.html)

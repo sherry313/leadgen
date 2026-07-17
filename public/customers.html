@@ -59,6 +59,17 @@
   .spin{ display:inline-block; width:16px; height:16px; border:2px solid var(--bd2);
     border-top-color:var(--ac2); border-radius:50%; animation:sp .7s linear infinite; }
   @keyframes sp{ to{ transform:rotate(360deg); } }
+
+  /* 分页条 */
+  .pager{ display:flex; align-items:center; gap:12px; padding:14px 20px; border-top:1px solid var(--bd);
+    background:rgba(255,255,255,0.012); }
+  .pager .range{ font-size:.75rem; color:var(--tx3); }
+  .pager .ctrl{ margin-left:auto; display:flex; align-items:center; gap:8px; }
+  .pager .pb{ font-size:.78rem; color:var(--tx2); background:var(--card2); border:1px solid var(--bd2);
+    border-radius:8px; padding:6px 12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:.13s; }
+  .pager .pb:hover:not(:disabled){ background:rgba(99,102,241,0.16); color:#fff; border-color:rgba(99,102,241,0.4); }
+  .pager .pb:disabled{ opacity:.35; cursor:not-allowed; }
+  .pager .pinfo{ font-size:.78rem; color:var(--tx2); font-variant-numeric:tabular-nums; min-width:64px; text-align:center; }
   @media(max-width:820px){ .wrap{ flex-direction:column; } .cats{ width:100%; } }
 </style>
 </head>
@@ -135,13 +146,52 @@
     const leads = data.leads;
     document.getElementById('pCount').textContent = leads.length + ' 位客户';
     if (!leads.length){ body.innerHTML = '<div class="empty"><i class="ti ti-users"></i>这个品类还没有客户<br><span style="font-size:.75rem">在「邮件获客」用这个产品跑一次搜索,客户就会进这张表</span></div>'; return; }
-    body.innerHTML = '<table><thead><tr><th>公司名称</th><th>邮箱</th><th>城市</th><th>状态</th></tr></thead><tbody>'
-      + leads.map(l=>
-        '<tr><td class="co">'+(l.website?('<a href="'+esc(l.website)+'" target="_blank" rel="noopener">'+(esc(l.company_name)||'—')+'</a>'):(esc(l.company_name)||'—'))+'</td>'
-        + '<td class="em'+(l.email?'':' none')+'">'+(esc(l.email)||'（无邮箱）')+'</td>'
-        + '<td class="city">'+(esc((l.city||'').split(',')[0])||'—')+'</td>'
-        + '<td><span class="chip"><i class="ti ti-check"></i> '+fmtWhen(l.email_sent_at)+'</span></td></tr>'
-      ).join('') + '</tbody></table>';
+    // 每次打开品类都从第 1 页开始
+    _view = { leads: leads, page: 1 };
+    renderLeadsPage();
+  }
+
+  // 客户表分页：一页 15 条，底部翻页。避免一长条拉到底。
+  const PAGE_SIZE = 15;
+  let _view = { leads: [], page: 1 };
+
+  function leadRow(l){
+    return '<tr><td class="co">'+(l.website?('<a href="'+esc(l.website)+'" target="_blank" rel="noopener">'+(esc(l.company_name)||'—')+'</a>'):(esc(l.company_name)||'—'))+'</td>'
+      + '<td class="em'+(l.email?'':' none')+'">'+(esc(l.email)||'（无邮箱）')+'</td>'
+      + '<td class="city">'+(esc((l.city||'').split(',')[0])||'—')+'</td>'
+      + '<td><span class="chip"><i class="ti ti-check"></i> '+fmtWhen(l.email_sent_at)+'</span></td></tr>';
+  }
+
+  function renderLeadsPage(){
+    const body = document.getElementById('pBody');
+    const leads = _view.leads;
+    const total = leads.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (_view.page > pages) _view.page = pages;
+    if (_view.page < 1) _view.page = 1;
+    const start = (_view.page - 1) * PAGE_SIZE;
+    const slice = leads.slice(start, start + PAGE_SIZE);
+
+    let html = '<table><thead><tr><th>公司名称</th><th>邮箱</th><th>城市</th><th>状态</th></tr></thead><tbody>'
+      + slice.map(leadRow).join('') + '</tbody></table>';
+
+    // 只有超过一页才显示翻页条
+    if (pages > 1){
+      const from = start + 1, to = start + slice.length;
+      html += '<div class="pager">'
+        + '<span class="range">第 '+from+'–'+to+' 位 · 共 '+total+' 位</span>'
+        + '<span class="ctrl">'
+        + '<button class="pb" id="pgPrev"'+(_view.page<=1?' disabled':'')+'><i class="ti ti-chevron-left"></i>上一页</button>'
+        + '<span class="pinfo">'+_view.page+' / '+pages+'</span>'
+        + '<button class="pb" id="pgNext"'+(_view.page>=pages?' disabled':'')+'>下一页<i class="ti ti-chevron-right"></i></button>'
+        + '</span></div>';
+    }
+    body.innerHTML = html;
+
+    const prev = document.getElementById('pgPrev');
+    const next = document.getElementById('pgNext');
+    if (prev) prev.addEventListener('click', ()=>{ if(_view.page>1){ _view.page--; renderLeadsPage(); body.scrollIntoView({block:'start'}); } });
+    if (next) next.addEventListener('click', ()=>{ _view.page++; renderLeadsPage(); body.scrollIntoView({block:'start'}); });
   }
 
   if (token) loadCats();

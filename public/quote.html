@@ -858,8 +858,29 @@
       if (e.target === $('previewModal')) closeSendPreview();
     }
 
+    // 与 index.html / account.html 等页面保持一致：新 session 优先，回落到旧 key。
+    function getStoredToken() {
+      const sessionStr = localStorage.getItem('leadgen_supabase_session');
+      if (sessionStr) {
+        try {
+          const session = JSON.parse(sessionStr);
+          if (session && session.access_token) return session.access_token;
+        } catch (e) {}
+      }
+      const stored = localStorage.getItem('leadgen_accessToken');
+      if (stored && stored.trim()) return stored.trim();
+      return '';
+    }
+
     async function confirmSendQuote() {
       if (!_pendingQuotePayload) { toast('请重新打开预览'); return; }
+      // 没登录就别发请求了，直接提示。不清空 _pendingQuotePayload，也不跳转，
+      // 用户去别的标签页登录完回来再点发送即可，填好的表单不会丢。
+      const token = getStoredToken();
+      if (!token) {
+        toast('直接发送到客户邮箱需要先登录（PDF 下载不受影响，可先下载）', 5000);
+        return;
+      }
       const btn = $('prvConfirmBtn');
       const orig = btn.textContent;
       btn.disabled = true;
@@ -867,9 +888,16 @@
       try {
         const r = await fetch('/api/send-quote', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           body: JSON.stringify(_pendingQuotePayload),
         });
+        if (r.status === 401) {
+          toast('登录已过期，请重新登录后再发送', 5000);
+          return;
+        }
         const j = await r.json().catch(() => ({}));
         if (!r.ok || !j.success) throw new Error(j.error || `HTTP ${r.status}`);
         toast(`✓ 报价单已发送到 ${_pendingQuotePayload.customerEmail}`, 3500);
@@ -901,7 +929,7 @@
     // ── Load products & adders from backend ──────────────────────────────
     async function loadProducts() {
       try {
-        const r = await fetch('/api/products');
+        const r = await fetch('/api/quote/products');
         const j = await r.json();
         if (!j.success) throw new Error(j.error || 'load failed');
 

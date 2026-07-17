@@ -62,6 +62,31 @@
   .kpi .d{ font-size:11.5px; color:var(--tx3); }
   .kpi .d b{ color:#6ee7b7; }
 
+  /* 大盘欢迎栏 */
+  .dash-hero{ background:linear-gradient(120deg, rgba(99,102,241,0.13), rgba(99,102,241,0.02));
+    border:1px solid var(--bd); border-radius:16px; padding:22px 26px; margin-top:22px;
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+  .dash-hero .hi{ font-size:20px; font-weight:750; }
+  .dash-hero .hs{ font-size:13px; color:var(--tx2); margin-top:6px; }
+  .dash-hero .cta{ margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
+  .dash-hero .cta button{ font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+    border-radius:10px; padding:10px 16px; display:inline-flex; align-items:center; gap:7px;
+    border:1px solid var(--bd); background:var(--card); color:var(--tx2); transition:.14s; }
+  .dash-hero .cta button:hover{ color:#fff; border-color:rgba(99,102,241,0.4); background:rgba(99,102,241,0.14); }
+  .dash-hero .cta button.primary{ background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; border:none; }
+
+  /* 快速开始 */
+  .qs{ margin-top:24px; }
+  .qs-h{ font-size:13px; font-weight:700; color:var(--tx2); margin-bottom:12px; }
+  .qs-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .qs-card{ background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:18px; cursor:pointer; transition:.14s; }
+  .qs-card:hover{ border-color:rgba(99,102,241,0.4); background:var(--card2); transform:translateY(-2px); }
+  .qs-card .qi{ width:38px; height:38px; border-radius:10px; background:var(--acbg); color:var(--ac2);
+    display:flex; align-items:center; justify-content:center; font-size:19px; margin-bottom:12px; }
+  .qs-card .qn{ font-size:14px; font-weight:650; }
+  .qs-card .qd{ font-size:12px; color:var(--tx3); margin-top:4px; }
+  @media(max-width:900px){ .qs-grid{ grid-template-columns:1fr; } }
+
   .row2{ display:grid; grid-template-columns:1.6fr 1fr; gap:16px; margin-top:16px; }
   .box{ background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:20px; }
   .box h3{ font-size:14.5px; font-weight:700; } .box .bs{ font-size:12px; color:var(--tx3); margin-top:3px; margin-bottom:14px; }
@@ -179,7 +204,9 @@
     <div class="grp">免费工具</div>
     <div class="ni" data-view="dev" data-t="DNS 记录生成器"><i class="ti ti-dns"></i> DNS 记录生成器</div>
     <div class="ni" data-view="dev" data-t="Spam 敏感词检查"><i class="ti ti-shield-check"></i> Spam 敏感词检查</div>
-    <div class="ni" data-view="dev" data-t="报价单工具"><i class="ti ti-receipt"></i> 报价单工具</div>
+    <!-- 报价单工具 2026-07-17 下线：它读 Lens 出厂成本价、显示成本与利润，是卖家内部
+         工具，不该对外开放。页面仍在，重新上线前先决定谁能看成本价。 -->
+    <div class="ni" data-view="dev" data-t="报价单工具"><i class="ti ti-receipt"></i> 报价单工具 <span class="st dev"></span></div>
 
     <div class="grp">账户</div>
     <div class="ni" data-view="account" data-href="/account#accounts"><i class="ti ti-users"></i> 账号管理 <span class="st on"></span></div>
@@ -205,33 +232,33 @@
     <!-- 获客大盘 -->
     <div class="wrap" id="view-dash">
       <div class="ph">获客大盘</div>
-      <div class="psub">欢迎回来！这是你的业务概览</div>
+      <div class="psub">你的业务概览</div>
+
+      <div class="dash-hero">
+        <div>
+          <div class="hi" id="dashGreet">欢迎回来</div>
+          <div class="hs">找客户 · 写邮件 · 发跟进 —— 今天也帮你自动跑起来。</div>
+        </div>
+        <div class="cta">
+          <button class="primary" data-go="邮件获客"><i class="ti ti-rocket"></i> 开始找客户</button>
+          <button data-go="客户管理"><i class="ti ti-users"></i> 看客户</button>
+        </div>
+      </div>
+
       <div class="kpis">
         <div class="kpi"><div class="t">总客户数 <i class="ti ti-users"></i></div><div class="v">118</div><div class="d">实时数据 · <b>本周 +12</b></div></div>
         <div class="kpi"><div class="t">邮件发送 <i class="ti ti-mail"></i></div><div class="v">512</div><div class="d">累计发送量</div></div>
         <div class="kpi"><div class="t">邮件打开率 <i class="ti ti-trending-up"></i></div><div class="v">38%</div><div class="d">平均打开率</div></div>
         <div class="kpi"><div class="t">回复率 <i class="ti ti-message-2"></i></div><div class="v">9%</div><div class="d">平均回复率</div></div>
       </div>
-    </div>
 
-    <!-- 个人中心 -->
-    <div class="wrap hidden" id="view-account">
-      <div class="ph">个人中心</div>
-      <div class="psub">你的账户、成果与产品品类</div>
-      <div class="acc-hero">
-        <div class="big">S</div>
-        <div><div class="nm">sherry</div><div class="mt">管理员 · 已加入 24 天</div></div>
-        <div class="acc-stats">
-          <div class="s"><div class="n">118</div><div class="l">累计客户</div></div>
-          <div class="s"><div class="n">512</div><div class="l">发出邮件</div></div>
-          <div class="s"><div class="n">3</div><div class="l">产品品类</div></div>
+      <div class="qs">
+        <div class="qs-h">快速开始</div>
+        <div class="qs-grid">
+          <div class="qs-card" data-go="邮件获客"><div class="qi"><i class="ti ti-mail-forward"></i></div><div class="qn">邮件获客</div><div class="qd">抓客户 → AI 筛选 → 写开发信 → 发送</div></div>
+          <div class="qs-card" data-go="社媒自动发帖"><div class="qi"><i class="ti ti-share"></i></div><div class="qn">社媒自动发帖</div><div class="qd">内容排期，自动发到各平台</div></div>
+          <div class="qs-card" data-go="客户管理"><div class="qi"><i class="ti ti-users"></i></div><div class="qn">客户管理</div><div class="qd">按品类查看已获取的客户表</div></div>
         </div>
-      </div>
-      <h3 style="font-size:15px;margin-top:24px">我的产品品类</h3>
-      <div class="prod-grid">
-        <div class="prod"><div class="pn">实木门</div><div class="pm">2 次搜索 · 64 条线索</div><span class="pt">使用中</span></div>
-        <div class="prod"><div class="pn">铝合金窗</div><div class="pm">1 次搜索 · 32 条线索</div><span class="pt">点击使用</span></div>
-        <div class="prod"><div class="pn">户外家具</div><div class="pm">1 次搜索 · 22 条线索</div><span class="pt">点击使用</span></div>
       </div>
     </div>
 
@@ -246,24 +273,41 @@
 </div>
 
 <script>
-  function enterConsole(){ document.getElementById('cover').classList.add('gone'); }
-  // 点「开始找寻你的客户」：已登录直接进控制台；没登录先去登录邮箱，登录后自动跳回
-  function startFind(){
-    var token = localStorage.getItem('leadgen_accessToken');
-    if(token && token.trim()){ enterConsole(); }
-    else { window.location.href = '/login.html?redirect=' + encodeURIComponent('/preview-console.html#c'); }
+  // 与 /app、/account 等页面保持一致：新 session 优先，回落到旧 key。
+  function getStoredToken(){
+    var s = localStorage.getItem('leadgen_supabase_session');
+    if(s){ try{ var j = JSON.parse(s); if(j && j.access_token) return j.access_token; }catch(e){} }
+    var t = localStorage.getItem('leadgen_accessToken');
+    return (t && t.trim()) ? t.trim() : '';
   }
-  if(location.hash==='#c'){ document.addEventListener('DOMContentLoaded', enterConsole); }
-  // 已上线功能 → 跳到现有真实页面（仅导航，不改目标页/API）
+
+  function enterConsole(){ document.getElementById('cover').classList.add('gone'); }
+
+  // 登录闸门。没登录一律送去登录页，登录完自动跳回控制台。
+  // 之前 #c 和 #f= 这两条路径直接调 enterConsole()、完全不查登录 —— 随便谁打开
+  // /preview-console.html#c 就能进控制台外壳（这就是「没登录也直接进去了」的原因）。
+  function requireLogin(){
+    if(getStoredToken()) return true;
+    window.location.href = '/login.html?redirect=' + encodeURIComponent('/preview-console.html#c');
+    return false;
+  }
+
+  function startFind(){ if(requireLogin()) enterConsole(); }
+
+  if(location.hash==='#c'){
+    document.addEventListener('DOMContentLoaded', function(){ if(requireLogin()) enterConsole(); });
+  }
+
+  // 已上线功能 → 用 iframe 嵌进右边（仅导航，不改目标页/API）
   const HREF = {
     '邮件获客':'/app', '社媒自动发帖':'/autopost', '客户管理':'/customers.html',
     '邮件管理':'/emails.html', '邮件发送':'/app', '模板管理':'/templates.html', '产品管理':'/products.html',
     'DNS 记录生成器':'/tools/dns-generator.html', 'Spam 敏感词检查':'/tools/spam-word-checker.html',
-    '报价单工具':'/quote.html', '定价 / 套餐':'/pricing.html'
+    '定价 / 套餐':'/pricing.html'
   };
   const frame = document.getElementById('appFrame');
   const items = document.querySelectorAll('.ni');
-  const views = { dash:'view-dash', account:'view-account', dev:'view-dev', frame:'view-frame' };
+  const views = { dash:'view-dash', dev:'view-dev', frame:'view-frame' };
   function show(v){ Object.values(views).forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById(views[v]).classList.remove('hidden'); }
   items.forEach(el=>{
     if(!el.dataset.view) return;
@@ -282,12 +326,29 @@
       }
     });
   });
-  // 深链：#f=/app 直接在控制台里打开某功能（方便测试/分享）
-  if(location.hash.indexOf('#f=')===0){
+  // 深链：#f=/app 直接在控制台里打开某功能（方便测试/分享）——同样先查登录
+  if(location.hash.indexOf('#f=')===0 && requireLogin()){
     enterConsole();
     frame.setAttribute('src', decodeURIComponent(location.hash.slice(3)));
     show('frame');
   }
+
+  // 大盘问候语：按当前时段变化
+  (function(){
+    var h = new Date().getHours();
+    var g = h < 6 ? '凌晨好' : h < 11 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
+    var el = document.getElementById('dashGreet');
+    if(el) el.textContent = g + '，欢迎回来';
+  })();
+
+  // 大盘上的快捷入口 → 触发对应侧栏项（复用现有导航逻辑，不另写跳转）
+  document.querySelectorAll('[data-go]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t = b.getAttribute('data-go');
+      var target = Array.from(document.querySelectorAll('.ni')).find(function(x){ return x.dataset.t === t; });
+      if(target) target.click();
+    });
+  });
 </script>
 </body>
 </html>

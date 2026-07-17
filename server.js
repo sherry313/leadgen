@@ -41,6 +41,29 @@ app.get('/landing',     (req, res) => sendHtml(res, 'landing.html'));
 app.get('/landing.html',(req, res) => sendHtml(res, 'landing.html'));
 app.get(['/tools', '/tools/'], (req, res) => sendHtml(res, 'tools', 'index.html'));
 
+// 报价工具暂时下线（2026-07-17）。
+// 它读取 Lens 的出厂成本价、显示总成本与利润 —— 是卖家内部算账工具，此前被误
+// 放在公开的「免费工具」区。页面文件 public/quote.html 保留不动，想重新上线时
+// 删掉这个 handler 即可（另见 /api/quote/products 与 /api/send-quote 的鉴权）。
+// 必须放在下面的 express.static 之前，否则静态中间件会直接把文件发出去。
+app.get('/quote.html', (req, res) => {
+  res.status(503).set({
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  }).send(`<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>报价工具维护中</title></head>
+<body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#030303;color:#e5e7eb;font-family:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+  <div style="max-width:420px;padding:40px 32px;text-align:center;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px">
+    <h1 style="margin:0 0 12px;font-size:20px;font-weight:600;color:#fff">报价工具维护中</h1>
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#9ca3af">该工具正在调整，暂时无法使用。</p>
+    <a href="/tools/" style="display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-size:14px">← 查看其他免费工具</a>
+  </div>
+</body></html>`);
+});
+
 // Static middleware — apply no-cache to HTML files (login.html, pricing.html,
 // dashboard.html, quote.html, /tools/*.html, etc.) so the same anti-stale
 // guarantee covers everything served from public/.
@@ -2335,7 +2358,16 @@ function requireAdminPassword(req, res, next) {
   next();
 }
 
-app.get('/api/products', async (req, res) => {
+// 报价单价格表。返回的 base_price_cny 是 Lens 的出厂成本价 —— 商业敏感，必须
+// 登录才能读，不可改回匿名开放。
+//
+// 曾经注册在 '/api/products'，与上面 :1578 的用户产品档案接口同名 —— Express
+// 先注册先匹配，导致这段代码从未执行过，quote.html 拿到的是那个要 token 的
+// 接口并被 401 挡回，产品下拉框永远加载失败。改用独立路径修好。
+//
+// 副作用：admin.html（Lens 价格管理）读这个接口时不带 token，重新启用报价工具
+// 时要一并给它加上。该页目前因 .env 未配 ADMIN_PASSWORD 本就不可用。
+app.get('/api/quote/products', requireAuth, async (req, res) => {
   if (!_productsDb) return res.status(503).json({ success: false, error: 'supabase not configured' });
   try {
     const [{ data: products, error: pe }, { data: adders, error: ae }] = await Promise.all([
@@ -2539,7 +2571,11 @@ function _buildQuoteEmailHtml(q) {
 </body></html>`;
 }
 
-app.post('/api/send-quote', async (req, res) => {
+// 发信必须登录：这个接口会用公司 Gmail 向请求方指定的任意地址发出一封带公司
+// 抬头的报价单，匿名开放等于开放邮件中继（可被用来发假报价 / 烧发信声誉 / 触发
+// Gmail 滥用封号）。报价单 PDF 是纯前端生成的，不经过这里，所以免费工具的主
+// 卖点不受影响 —— 匿名访客照常算价下载，只有"直接发到客户邮箱"需要登录。
+app.post('/api/send-quote', requireAuth, async (req, res) => {
   if (!_gmailTransporter) {
     return res.status(503).json({ success: false, error: 'Gmail SMTP not configured (set GMAIL_USER and GMAIL_APP_PASSWORD)' });
   }

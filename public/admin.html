@@ -225,7 +225,7 @@
 
     async function loadAll() {
       try {
-        const r = await fetch('/api/products');
+        const r = await fetch('/api/quote/products');
         const j = await r.json();
         if (!j.success) throw new Error(j.error || 'load failed');
         renderProducts(j.products || []);
