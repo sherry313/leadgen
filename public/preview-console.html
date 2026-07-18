@@ -170,6 +170,7 @@
   .cs-add{ font-family:inherit; font-size:12px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:7px; padding:5px 11px; cursor:pointer; white-space:nowrap; }
   .cs-add:hover{ color:#fff; background:rgba(99,102,241,0.28); }
   .cs-kw{ font-size:12px; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.25); border-radius:7px; padding:4px 11px; }
+  .cs-hs{ font-size:14px; font-weight:800; color:#6ee7b7; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.25); border-radius:8px; padding:5px 12px; font-variant-numeric:tabular-nums; display:inline-block; }
   .cs-em.none{ color:var(--tx3); }
   .cs-empty{ text-align:center; color:var(--tx3); font-size:13px; line-height:1.9; padding:38px 20px; border:1px dashed var(--bd2); border-radius:14px; margin-top:16px; }
   .cs-loading{ display:flex; align-items:center; gap:10px; color:var(--tx2); font-size:13px; padding:26px 4px; }
@@ -440,9 +441,15 @@
             <select><option>50 家</option><option selected>100 家</option><option>200 家</option></select>
           </label>
         </div>
-        <div style="margin-top:14px">
-          <div style="font-size:11.5px;color:var(--tx2);font-weight:600;margin-bottom:8px"><i class="ti ti-tags" style="vertical-align:-2px"></i> 产品关键词 —— 从产品自动带出，不用再选（在「产品管理」里只输一次，全平台通用）</div>
-          <div id="csKw" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div style="display:flex;gap:26px;flex-wrap:wrap;margin-top:14px">
+          <div>
+            <div style="font-size:11.5px;color:var(--tx2);font-weight:600;margin-bottom:8px"><i class="ti ti-barcode" style="vertical-align:-2px"></i> 海关编码 HS —— 从产品带出（不知道？产品管理里 AI 一键推荐）</div>
+            <span class="cs-hs" id="csHs">—</span>
+          </div>
+          <div style="flex:1;min-width:220px">
+            <div style="font-size:11.5px;color:var(--tx2);font-weight:600;margin-bottom:8px"><i class="ti ti-tags" style="vertical-align:-2px"></i> 产品关键词 —— 从产品带出，可再改</div>
+            <div id="csKw" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+          </div>
         </div>
         <button class="cs-search" id="csSearchBtn" style="margin-top:16px"><i class="ti ti-search"></i> 查进口商</button>
       </div>
@@ -618,8 +625,10 @@
   (function(){
     var sel=document.getElementById('csProduct'), box=document.getElementById('csKw');
     if(!sel||!box) return;
+    var hsBox=document.getElementById('csHs');
     var KW={ window:['aluminium window','sliding door','curtain wall','system window'], cabinet:['bathroom vanity','vanity units','bathroom cabinet','basin cabinet'] };
-    function render(){ var a=KW[sel.value]||[]; box.innerHTML=a.map(function(k){return '<span class="cs-kw">'+k+'</span>';}).join(''); }
+    var HS={ window:'7610.10', cabinet:'9403.60' };
+    function render(){ var a=KW[sel.value]||[]; box.innerHTML=a.map(function(k){return '<span class="cs-kw">'+k+'</span>';}).join(''); if(hsBox) hsBox.textContent=HS[sel.value]||'—'; }
     sel.addEventListener('change', render); render();
   })();
 
