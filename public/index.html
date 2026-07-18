@@ -2756,20 +2756,8 @@
 
   <div class="mode-cards">
 
-    <!-- CARD 1 — 自动模式 -->
-    <div class="mode-card card-rec" id="modeCardAuto" onclick="appSelectMode('auto')">
-      <div class="spotlight"></div>
-      <div class="spot-border"></div>
-      <div class="card-mode-id">MODE_01</div>
-      <div class="card-icon-box"><i class="ti ti-bolt" aria-hidden="true"></i></div>
-      <p class="card-mode-name">自动模式</p>
-      <p class="card-mode-tag">recommended</p>
-      <p class="card-mode-desc">填一次信息，系统全自动跑完所有流程，直接出可发送的邮件。</p>
-      <div class="card-spec"><div class="card-spec-dot"></div>AI 审核 + 自动搜索</div>
-      <div class="card-spec"><div class="card-spec-dot"></div>自动筛选目标客户</div>
-      <div class="card-spec"><div class="card-spec-dot"></div>批量生成 7 封序列</div>
-      <button class="card-mode-btn" id="btnModeAuto">选择此模式</button>
-    </div>
+    <!-- 自动模式已删除（2026-07-18）：有了「引入现有产品(一键带出业务信息)」+ 手动模式，
+         自动模式冗余。完整清理(移除 appAutoPanel 等无用代码)留到 /app→控制台迁移时做。 -->
 
     <!-- CARD 2 — 手动模式 -->
     <div class="mode-card card-adv" id="modeCardManual" onclick="appSelectMode('manual')">
