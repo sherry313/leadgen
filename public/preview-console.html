@@ -147,6 +147,18 @@
   .send-note{ margin-top:16px; font-size:12.5px; color:var(--tx2); background:var(--card); border:1px solid var(--bd); border-radius:11px; padding:12px 16px; display:flex; gap:8px; align-items:flex-start; }
   .send-note i{ color:var(--ac2); font-size:15px; margin-top:1px; flex-shrink:0; }
 
+  /* 大盘：趋势小图 + 获客漏斗 */
+  .kpi{ overflow:hidden; }
+  .kpi .spark{ width:calc(100% + 36px); height:30px; margin:10px -18px -18px; display:block; }
+  .funnel{ display:flex; flex-direction:column; gap:11px; margin-top:14px; }
+  .fn-row{ display:grid; grid-template-columns:82px 1fr auto; align-items:center; gap:14px; }
+  .fn-row .lbl{ font-size:13px; color:var(--tx2); white-space:nowrap; }
+  .fn-track{ height:28px; border-radius:8px; background:rgba(255,255,255,0.035); overflow:hidden; }
+  .fn-fill{ height:100%; border-radius:8px; background:linear-gradient(90deg,#6366f1,#4f46e5); }
+  .fn-row .cnt{ font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; min-width:46px; text-align:right; }
+  .fn-row .cnt small{ display:block; font-size:10px; font-weight:600; color:var(--tx3); }
+  .act .nm{ font-size:13px; font-weight:600; } .act .mt{ font-size:11px; color:var(--tx3); margin-top:2px; }
+
   .devpage{ text-align:center; padding:90px 20px; }
   .devpage i{ font-size:46px; color:var(--tx3); } .devpage h3{ font-size:18px; margin:16px 0 8px; }
   .devpage p{ font-size:13px; color:var(--tx3); }
@@ -302,18 +314,31 @@
 
       <div class="qs-h" style="margin:26px 0 12px">核心指标</div>
       <div class="kpis" style="margin-top:0">
-        <div class="kpi"><div class="t">总客户数 <i class="ti ti-users"></i></div><div class="v">118</div><div class="d">实时数据 · <b>本周 +12</b></div></div>
-        <div class="kpi"><div class="t">邮件发送 <i class="ti ti-mail"></i></div><div class="v">512</div><div class="d">累计发送量</div></div>
-        <div class="kpi"><div class="t">邮件打开率 <i class="ti ti-trending-up"></i></div><div class="v">38%</div><div class="d">平均打开率</div></div>
-        <div class="kpi"><div class="t">回复率 <i class="ti ti-message-2"></i></div><div class="v">9%</div><div class="d">平均回复率</div></div>
+        <div class="kpi"><div class="t">总客户数 <i class="ti ti-users"></i></div><div class="v">118</div><div class="d">实时数据 · <b>本周 +12</b></div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,24 20,22 40,23 60,16 80,18 100,11 120,7 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,24 20,22 40,23 60,16 80,18 100,11 120,7" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">邮件发送 <i class="ti ti-mail"></i></div><div class="v">512</div><div class="d">累计 · <b>本周 +67</b></div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,25 20,23 40,20 60,21 80,14 100,12 120,6 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,25 20,23 40,20 60,21 80,14 100,12 120,6" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">邮件打开率 <i class="ti ti-trending-up"></i></div><div class="v">38%</div><div class="d">平均 · <b>+3%</b></div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,18 20,20 40,15 60,17 80,13 100,14 120,10 120,30" fill="rgba(110,231,183,0.12)"/><polyline points="0,18 20,20 40,15 60,17 80,13 100,14 120,10" fill="none" stroke="#6ee7b7" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">回复率 <i class="ti ti-message-2"></i></div><div class="v">9%</div><div class="d">平均 · <b>+1%</b></div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,22 20,23 40,20 60,21 80,18 100,19 120,15 120,30" fill="rgba(110,231,183,0.12)"/><polyline points="0,22 20,23 40,20 60,21 80,18 100,19 120,15" fill="none" stroke="#6ee7b7" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
       </div>
 
-      <div class="qs">
-        <div class="qs-h">快速开始</div>
-        <div class="qs-grid">
-          <div class="qs-card" data-go="邮件获客"><div class="qi"><i class="ti ti-mail-forward"></i></div><div class="qn">邮件获客</div><div class="qd">抓客户 → AI 筛选 → 写开发信 → 发送</div></div>
-          <div class="qs-card" data-go="社媒自动发帖"><div class="qi"><i class="ti ti-share"></i></div><div class="qn">社媒自动发帖</div><div class="qd">内容排期，自动发到各平台</div></div>
-          <div class="qs-card" data-go="客户管理"><div class="qi"><i class="ti ti-users"></i></div><div class="qn">客户管理</div><div class="qd">按品类查看已获取的客户表</div></div>
+      <div class="qs-h" style="margin:28px 0 12px">获客转化</div>
+      <div class="row2">
+        <div class="box">
+          <h3>获客漏斗</h3>
+          <div class="bs">从扫描到回复，每一步剩下多少</div>
+          <div class="funnel">
+            <div class="fn-row"><span class="lbl">扫描公司</span><div class="fn-track"><div class="fn-fill" style="width:100%"></div></div><span class="cnt">803</span></div>
+            <div class="fn-row"><span class="lbl">精准客户</span><div class="fn-track"><div class="fn-fill" style="width:38%"></div></div><span class="cnt">118<small>15%</small></span></div>
+            <div class="fn-row"><span class="lbl">已发开发信</span><div class="fn-track"><div class="fn-fill" style="width:35%"></div></div><span class="cnt">96<small>81%</small></span></div>
+            <div class="fn-row"><span class="lbl">已打开</span><div class="fn-track"><div class="fn-fill" style="width:23%"></div></div><span class="cnt">44<small>46%</small></span></div>
+            <div class="fn-row"><span class="lbl">已回复</span><div class="fn-track"><div class="fn-fill" style="width:11%"></div></div><span class="cnt">9<small>20%</small></span></div>
+          </div>
+        </div>
+        <div class="box">
+          <h3>最近搜索</h3>
+          <div class="bs">你最近跑的几次获客</div>
+          <div class="act"><div class="ic"><i class="ti ti-search"></i></div><div><div class="nm">系统门窗 · 澳大利亚</div><div class="mt">新增 32 条线索</div></div><span class="tm">2 小时前</span></div>
+          <div class="act"><div class="ic"><i class="ti ti-search"></i></div><div><div class="nm">铝合金窗 · 美国</div><div class="mt">新增 28 条线索</div></div><span class="tm">昨天</span></div>
+          <div class="act"><div class="ic"><i class="ti ti-search"></i></div><div><div class="nm">不锈钢橱柜 · 加拿大</div><div class="mt">新增 19 条线索</div></div><span class="tm">3 天前</span></div>
         </div>
       </div>
     </div>
