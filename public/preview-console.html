@@ -140,6 +140,8 @@
   .fld input{ font-family:inherit; font-size:13px; color:var(--tx); background:var(--bg); border:1px solid var(--bd); border-radius:9px; padding:9px 12px; outline:none; transition:.13s; width:100%; }
   .fld input:focus{ border-color:var(--ac); }
   .fld input::placeholder{ color:var(--tx3); }
+  .fld textarea{ font-family:inherit; font-size:13px; color:var(--tx); background:var(--bg); border:1px solid var(--bd); border-radius:9px; padding:10px 12px; outline:none; width:100%; resize:vertical; line-height:1.6; }
+  .fld textarea:focus{ border-color:var(--ac); } .fld textarea::placeholder{ color:var(--tx3); }
   .fld-row{ display:flex; gap:12px; }
   .sc-btn{ font-family:inherit; margin-top:2px; font-size:13px; font-weight:650; color:#fff; background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; border-radius:10px; padding:11px; cursor:pointer; }
   .sc-btn.ghost{ background:var(--card2); color:var(--tx2); border:1px solid var(--bd); }
@@ -158,6 +160,21 @@
   .fn-row .cnt{ font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; min-width:46px; text-align:right; }
   .fn-row .cnt small{ display:block; font-size:10px; font-weight:600; color:var(--tx3); }
   .act .nm{ font-size:13px; font-weight:600; } .act .mt{ font-size:11px; color:var(--tx3); margin-top:2px; }
+
+  /* 海关数据获客 */
+  .cs-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media(max-width:900px){ .cs-grid{ grid-template-columns:1fr; } }
+  .fld select{ font-family:inherit; font-size:13px; color:var(--tx); background:var(--bg); border:1px solid var(--bd); border-radius:9px; padding:9px 12px; outline:none; width:100%; }
+  .cs-search{ font-family:inherit; margin-top:16px; font-size:13.5px; font-weight:650; color:#fff; background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; border-radius:10px; padding:11px 22px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
+  .cs-search:hover{ filter:brightness(1.08); }
+  .cs-add{ font-family:inherit; font-size:12px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:7px; padding:5px 11px; cursor:pointer; white-space:nowrap; }
+  .cs-add:hover{ color:#fff; background:rgba(99,102,241,0.28); }
+  .cs-em.none{ color:var(--tx3); }
+  .cs-empty{ text-align:center; color:var(--tx3); font-size:13px; line-height:1.9; padding:38px 20px; border:1px dashed var(--bd2); border-radius:14px; margin-top:16px; }
+  .cs-loading{ display:flex; align-items:center; gap:10px; color:var(--tx2); font-size:13px; padding:26px 4px; }
+  .spin{ width:16px; height:16px; border:2px solid var(--bd2); border-top-color:var(--ac2); border-radius:50%; animation:cspin .7s linear infinite; display:inline-block; }
+  @keyframes cspin{ to{ transform:rotate(360deg); } }
+  .cs-add.done{ color:#6ee7b7; background:rgba(16,185,129,0.14); border-color:rgba(16,185,129,0.3); cursor:default; }
 
   .devpage{ text-align:center; padding:90px 20px; }
   .devpage i{ font-size:46px; color:var(--tx3); } .devpage h3{ font-size:18px; margin:16px 0 8px; }
@@ -253,7 +270,7 @@
     <div class="grp">获客 · 找客户</div>
     <div class="ni" data-view="dev" data-t="邮件获客"><i class="ti ti-mail-forward"></i> 邮件获客 <span class="st on"></span></div>
     <div class="ni" data-view="dev" data-t="社媒自动发帖"><i class="ti ti-share"></i> 社媒自动发帖 <span class="st on"></span></div>
-    <div class="ni" data-view="dev" data-t="海关数据"><i class="ti ti-ship"></i> 海关数据 <span class="st dev"></span></div>
+    <div class="ni" data-view="customs"><i class="ti ti-ship"></i> 海关数据 <span class="st on"></span></div>
     <div class="ni" data-view="dev" data-t="领英获客"><i class="ti ti-brand-linkedin"></i> 领英获客 <span class="st dev"></span></div>
     <div class="ni" data-view="dev" data-t="展会采购商"><i class="ti ti-building-store"></i> 展会采购商 <span class="st dev"></span></div>
     <div class="ni" data-view="dev" data-t="WhatsApp 采购商"><i class="ti ti-brand-whatsapp"></i> WhatsApp 采购商 <span class="st dev"></span></div>
@@ -404,6 +421,49 @@
       <div class="send-note"><i class="ti ti-info-circle"></i> 设好之后，「邮件获客」跑完流程，点“发送”会直接用这里选中的方式发出，不用再填一遍。</div>
     </div>
 
+    <!-- 海关数据获客 -->
+    <div class="wrap hidden" id="view-customs">
+      <div class="ph">海关数据获客</div>
+      <div class="psub">从全球进出口报关记录里，找到真实进过你这类货的买家</div>
+
+      <div class="box" style="margin-top:22px">
+        <div class="cs-grid">
+          <label class="fld"><span>产品关键词 / HS 编码</span><input type="text" placeholder="如 aluminium window / 7610"></label>
+          <label class="fld"><span>目标国家 / 地区</span><input type="text" placeholder="如 澳大利亚、美国"></label>
+          <label class="fld"><span>时间范围</span>
+            <select><option>最近 3 个月</option><option selected>最近半年</option><option>最近 1 年</option></select>
+          </label>
+        </div>
+        <button class="cs-search" id="csSearchBtn"><i class="ti ti-search"></i> 开始查进口商</button>
+      </div>
+
+      <div class="send-note"><i class="ti ti-info-circle"></i> 完整流水线：查进口商 → <b style="color:var(--tx)">自动补全邮箱</b> → 进入你的<b style="color:var(--tx)">筛选（ICP 打分）</b> → AI 写开发信 → 发送。海关数据源接好后，这条线就能一键自动跑。</div>
+
+      <div id="csEmpty" class="cs-empty"><i class="ti ti-ship" style="font-size:30px;opacity:.45"></i><br>填好上面的条件，点「开始查进口商」，这里会列出真实进过这类货的买家。</div>
+      <div id="csLoading" class="cs-loading hidden"><span class="spin"></span> 正在从海关报关记录里筛查进口商…</div>
+
+      <div id="csResults" class="hidden">
+        <div style="display:flex;align-items:baseline;gap:10px;margin:8px 0 12px;flex-wrap:wrap">
+          <div class="qs-h" style="margin:0">查到的进口商</div>
+          <span style="font-size:12px;color:var(--tx3)">演示 · 找到 6 家</span>
+          <button class="cs-add" id="csAddAll" style="margin-left:auto"><i class="ti ti-users-plus"></i> 全部加入客户</button>
+        </div>
+        <div class="acc-tw">
+          <table class="acc-tb">
+            <thead><tr><th>公司</th><th>国家</th><th>进口产品</th><th>近一年采购</th><th>联系方式</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>BuildRight Windows Pty Ltd</td><td>澳大利亚</td><td>铝合金窗 · 推拉门</td><td>42 批 · ~18 万件</td><td class="cs-em">procurement@buildright.com.au</td><td><button class="cs-add" data-row>加入</button></td></tr>
+              <tr><td>Coastal Glazing Co</td><td>澳大利亚</td><td>系统门窗</td><td>19 批</td><td class="cs-em">info@coastalglazing.com.au</td><td><button class="cs-add" data-row>加入</button></td></tr>
+              <tr><td>Sunset Aluminium Inc</td><td>美国</td><td>断桥铝窗</td><td>31 批</td><td class="cs-em">sourcing@sunsetalum.com</td><td><button class="cs-add" data-row>加入</button></td></tr>
+              <tr><td>NordFenster GmbH</td><td>德国</td><td>铝包木窗</td><td>12 批</td><td class="cs-em">einkauf@nordfenster.de</td><td><button class="cs-add" data-row>加入</button></td></tr>
+              <tr><td>Gulf Building Materials LLC</td><td>阿联酋</td><td>幕墙铝材</td><td>15 批</td><td class="cs-em">purchasing@gulfbm.ae</td><td><button class="cs-add" data-row>加入</button></td></tr>
+              <tr><td>Maple Home Solutions</td><td>加拿大</td><td>门窗五金</td><td>8 批</td><td class="cs-em none">（无邮箱）</td><td><button class="cs-add" data-row>加入</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- 开发中占位 -->
     <div class="wrap hidden" id="view-dev">
       <div class="devpage"><i class="ti ti-tools"></i><h3 id="devTitle">功能开发中</h3><p id="devDesc">这个功能正在开发,敬请期待。已上线的功能会直接跳到现有页面。</p></div>
@@ -449,7 +509,7 @@
   };
   const frame = document.getElementById('appFrame');
   const items = document.querySelectorAll('.ni');
-  const views = { dash:'view-dash', account:'view-account', send:'view-send', dev:'view-dev', frame:'view-frame' };
+  const views = { dash:'view-dash', account:'view-account', send:'view-send', customs:'view-customs', dev:'view-dev', frame:'view-frame' };
   function show(v){ Object.values(views).forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById(views[v]).classList.remove('hidden'); }
   items.forEach(el=>{
     if(!el.dataset.view) return;
@@ -528,6 +588,22 @@
       show('frame');
     });
   });
+
+  // 海关数据获客：演示交互（点查询→"查"一下→出结果→加入客户）
+  (function(){
+    var btn=document.getElementById('csSearchBtn');
+    if(!btn) return;
+    var empty=document.getElementById('csEmpty'), loading=document.getElementById('csLoading'), results=document.getElementById('csResults');
+    btn.addEventListener('click', function(){
+      empty.classList.add('hidden'); results.classList.add('hidden'); loading.classList.remove('hidden');
+      setTimeout(function(){ loading.classList.add('hidden'); results.classList.remove('hidden'); }, 1200);
+    });
+    function mark(b){ if(b.classList.contains('done')) return; b.classList.add('done'); b.innerHTML='<i class="ti ti-check"></i> 已加入'; }
+    document.querySelectorAll('#csResults .cs-add[data-row]').forEach(function(b){ b.addEventListener('click', function(){ mark(b); }); });
+    var all=document.getElementById('csAddAll');
+    if(all) all.addEventListener('click', function(){ document.querySelectorAll('#csResults .cs-add[data-row]').forEach(mark); });
+  })();
+
 </script>
 </body>
 </html>

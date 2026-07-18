@@ -196,4 +196,39 @@ function filterCompany(websiteContent) {
   return { shouldSkip: false, reason: null, keepSignals, lowSignal, claimsLocalManufacturing };
 }
 
-module.exports = { crawlWebsite, filterCompany };
+// ── 找官网 + 抓原始 HTML（给「找邮箱」工具用）────────────────────────────────
+// searchWebsite: 公司名 → Firecrawl 搜索 → 返回最可能的官网 URL（取第一条结果）。
+// scrapeHtml:    抓某个 URL 的原始 HTML（含 footer / mailto），交给 _pickBestEmail 抠邮箱。
+async function searchWebsite(name) {
+  if (!FIRECRAWL_KEY || !name) return '';
+  try {
+    const r = await axios.post(
+      'https://api.firecrawl.dev/v1/search',
+      { query: `${name} official website`, limit: 3 },
+      { headers: { 'Authorization': `Bearer ${FIRECRAWL_KEY}`, 'Content-Type': 'application/json' }, timeout: 25000 }
+    );
+    const list = (r.data && (r.data.data || r.data.results)) || [];
+    const top = list[0];
+    return top ? (top.url || top.link || '') : '';
+  } catch (err) {
+    console.log(`[Firecrawl] search failed for "${name}": ${err.message}`);
+    return '';
+  }
+}
+
+async function scrapeHtml(url) {
+  if (!FIRECRAWL_KEY || !url) return '';
+  try {
+    const r = await axios.post(
+      FIRECRAWL_URL,
+      { url, formats: ['html'], onlyMainContent: false, waitFor: 2500, timeout: 25000 },
+      { headers: { 'Authorization': `Bearer ${FIRECRAWL_KEY}`, 'Content-Type': 'application/json' }, timeout: 30000 }
+    );
+    return (r.data && r.data.data && r.data.data.html) || '';
+  } catch (err) {
+    console.log(`[Firecrawl] scrapeHtml failed for ${url}: ${err.message}`);
+    return '';
+  }
+}
+
+module.exports = { crawlWebsite, filterCompany, searchWebsite, scrapeHtml };

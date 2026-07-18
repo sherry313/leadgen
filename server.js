@@ -8,7 +8,7 @@ const { Document, Packer, Paragraph, TextRun, HeadingLevel } = require('docx');
 const requireAuth = require('./middleware/auth');
 const { scrapeAustralianCompanies } = require('./services/apify');
 const { searchGoogleSearch }        = require('./services/googleSearch');
-const { crawlWebsite, filterCompany } = require('./services/firecrawl');
+const { crawlWebsite, filterCompany, searchWebsite, scrapeHtml } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
 const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
@@ -2687,6 +2687,49 @@ function _pickBestEmail(html, siteUrl) {
   }
   return '';
 }
+
+// ── 找邮箱工具（SSE）──────────────────────────────────────────────────────────
+// 输入一批公司名 → 每家用 Firecrawl 搜官网 → 抓 HTML → _pickBestEmail 抠邮箱 →
+// 逐条流式返回 { company, website, email }。复用现有 Firecrawl / 邮箱质检助手。
+app.post('/api/find-emails', requireAuth, async (req, res) => {
+  const names = Array.isArray(req.body?.names)
+    ? req.body.names.map(n => String(n).trim()).filter(Boolean).slice(0, 40)
+    : [];
+  if (!names.length) return res.status(400).json({ success: false, error: 'names required' });
+
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+  res.flushHeaders();
+  const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+  const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  try {
+    for (const name of names) {
+      if (aborted) break;
+      let website = '', email = '';
+      try {
+        website = await withTimeout(searchWebsite(name), 30000, 'find-emails search');
+        if (website) {
+          const html = await withTimeout(scrapeHtml(website), 40000, 'find-emails scrape');
+          email = _pickBestEmail(html, website);
+          if (!email) {
+            const contactUrl = new URL('/contact', website).toString();
+            const h2 = await withTimeout(scrapeHtml(contactUrl), 40000, 'find-emails scrape /contact');
+            email = _pickBestEmail(h2, website);
+          }
+        }
+      } catch (_) { /* 单家失败不影响其它 */ }
+      send({ type: 'result', company: name, website, email });
+    }
+    if (!aborted) send({ type: 'done', total: names.length });
+  } catch (err) {
+    if (!aborted) send({ type: 'error', error: err.message });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
 
 app.post('/api/google-search', requireAuth, async (req, res) => {
   // Accept either a single `keyword` (legacy) or a `keywords` array + optional
