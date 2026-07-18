@@ -169,6 +169,7 @@
   .cs-search:hover{ filter:brightness(1.08); }
   .cs-add{ font-family:inherit; font-size:12px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:7px; padding:5px 11px; cursor:pointer; white-space:nowrap; }
   .cs-add:hover{ color:#fff; background:rgba(99,102,241,0.28); }
+  .cs-kw{ font-size:12px; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.25); border-radius:7px; padding:4px 11px; }
   .cs-em.none{ color:var(--tx3); }
   .cs-empty{ text-align:center; color:var(--tx3); font-size:13px; line-height:1.9; padding:38px 20px; border:1px dashed var(--bd2); border-radius:14px; margin-top:16px; }
   .cs-loading{ display:flex; align-items:center; gap:10px; color:var(--tx2); font-size:13px; padding:26px 4px; }
@@ -428,16 +429,25 @@
 
       <div class="box" style="margin-top:22px">
         <div class="cs-grid">
-          <label class="fld"><span>产品关键词 / HS 编码</span><input type="text" placeholder="如 aluminium window / 7610"></label>
-          <label class="fld"><span>目标国家 / 地区</span><input type="text" placeholder="如 澳大利亚、美国"></label>
-          <label class="fld"><span>时间范围</span>
-            <select><option>最近 3 个月</option><option selected>最近半年</option><option>最近 1 年</option></select>
+          <label class="fld"><span>引入现有产品（信息 + 关键词一键带出）</span>
+            <select id="csProduct">
+              <option value="cabinet">不锈钢橱柜、浴室柜、整体厨柜…</option>
+              <option value="window" selected>系统门窗、全屋定制家居、卫浴产品全系列</option>
+            </select>
+          </label>
+          <label class="fld"><span>目标国家 / 地区</span><input type="text" placeholder="如 澳大利亚、美国" value="澳大利亚"></label>
+          <label class="fld"><span>查询数量</span>
+            <select><option>50 家</option><option selected>100 家</option><option>200 家</option></select>
           </label>
         </div>
-        <button class="cs-search" id="csSearchBtn"><i class="ti ti-search"></i> 开始查进口商</button>
+        <div style="margin-top:14px">
+          <div style="font-size:11.5px;color:var(--tx2);font-weight:600;margin-bottom:8px"><i class="ti ti-tags" style="vertical-align:-2px"></i> 产品关键词 —— 从产品自动带出，不用再选（在「产品管理」里只输一次，全平台通用）</div>
+          <div id="csKw" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        </div>
+        <button class="cs-search" id="csSearchBtn" style="margin-top:16px"><i class="ti ti-search"></i> 查进口商</button>
       </div>
 
-      <div class="send-note"><i class="ti ti-info-circle"></i> 完整流水线：查进口商 → <b style="color:var(--tx)">自动补全邮箱</b> → 进入你的<b style="color:var(--tx)">筛选（ICP 打分）</b> → AI 写开发信 → 发送。海关数据源接好后，这条线就能一键自动跑。</div>
+      <div class="send-note"><i class="ti ti-info-circle"></i> 完整流程：<b style="color:var(--tx)">引入产品(带出关键词)</b> → 查进口商 → 自动补邮箱 → <b style="color:var(--tx)">AI 筛选打分</b> → 合格的写信 → 进<b style="color:var(--tx)">【海关来源】客户表</b>。同一产品的「邮件获客」客户是**另一张表**，按来源分开管。</div>
 
       <div id="csEmpty" class="cs-empty"><i class="ti ti-ship" style="font-size:30px;opacity:.45"></i><br>填好上面的条件，点「开始查进口商」，这里会列出真实进过这类货的买家。</div>
       <div id="csLoading" class="cs-loading hidden"><span class="spin"></span> 正在从海关报关记录里筛查进口商…</div>
@@ -446,7 +456,7 @@
         <div style="display:flex;align-items:baseline;gap:10px;margin:8px 0 12px;flex-wrap:wrap">
           <div class="qs-h" style="margin:0">查到的进口商</div>
           <span style="font-size:12px;color:var(--tx3)">演示 · 找到 6 家</span>
-          <button class="cs-add" id="csAddAll" style="margin-left:auto"><i class="ti ti-users-plus"></i> 全部加入客户</button>
+          <button class="cs-add" id="csAddAll" style="margin-left:auto"><i class="ti ti-arrow-right"></i> 全部进入流程（补邮箱→筛选→进客户表）</button>
         </div>
         <div class="acc-tw">
           <table class="acc-tb">
@@ -602,6 +612,15 @@
     document.querySelectorAll('#csResults .cs-add[data-row]').forEach(function(b){ b.addEventListener('click', function(){ mark(b); }); });
     var all=document.getElementById('csAddAll');
     if(all) all.addEventListener('click', function(){ document.querySelectorAll('#csResults .cs-add[data-row]').forEach(mark); });
+  })();
+
+  // 海关：选产品 → 自动带出该产品的关键词(演示)
+  (function(){
+    var sel=document.getElementById('csProduct'), box=document.getElementById('csKw');
+    if(!sel||!box) return;
+    var KW={ window:['aluminium window','sliding door','curtain wall','system window'], cabinet:['bathroom vanity','vanity units','bathroom cabinet','basin cabinet'] };
+    function render(){ var a=KW[sel.value]||[]; box.innerHTML=a.map(function(k){return '<span class="cs-kw">'+k+'</span>';}).join(''); }
+    sel.addEventListener('change', render); render();
   })();
 
 </script>
