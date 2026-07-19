@@ -38,9 +38,15 @@
     }
     .nav-logo {
       font-size: 17px; font-weight: 700; color: #fff;
-      display: inline-flex; align-items: center; gap: 8px;
+      display: inline-flex; align-items: center; gap: 10px;
     }
-    .nav-logo .ti { color: #a5b4fc; font-size: 20px; }
+    .logo-badge {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(99,102,241,0.4);
+    }
+    .logo-badge .ti { color: #fff; font-size: 17px; }
     .nav-links {
       display: flex; align-items: center; gap: 24px;
       font-size: 14px;
@@ -48,16 +54,18 @@
     .nav-links a { color: rgba(255,255,255,0.6); transition: color 0.2s ease; }
     .nav-links a:hover { color: #fff; }
     .nav-cta {
-      padding: 7px 16px;
-      border: 1px solid rgba(99,102,241,0.45);
+      padding: 8px 18px;
+      border: 1px solid transparent;
       border-radius: 9px;
-      color: #c7d2fe !important;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #fff !important;
       font-weight: 600;
+      box-shadow: 0 4px 14px rgba(99,102,241,0.3);
       transition: all 0.25s ease;
     }
     .nav-cta:hover {
-      background: rgba(99,102,241,0.18);
-      border-color: rgba(99,102,241,0.6);
+      filter: brightness(1.08);
+      box-shadow: 0 6px 20px rgba(99,102,241,0.42);
       color: #fff !important;
     }
     @media (max-width: 560px) {
@@ -231,7 +239,8 @@
     .hero-badge-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: rgba(244,63,94,0.8);
+      background: #34d399;
+      box-shadow: 0 0 0 3px rgba(52,211,153,0.18);
     }
 
     .hero-badge span {
@@ -301,18 +310,19 @@
     /* ── Buttons ─────────────────────────────────────────────────────── */
     .btn-primary {
       display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(99,102,241,0.18);
-      color: #c7d2fe;
-      border: 1px solid rgba(99,102,241,0.4);
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #fff;
+      border: 1px solid transparent;
       border-radius: 10px;
       padding: 11px 22px;
       font-size: 14px; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.32);
       transition: all 0.25s ease;
       cursor: pointer; font-family: inherit;
     }
     .btn-primary:hover {
-      background: rgba(99,102,241,0.3);
-      border-color: rgba(99,102,241,0.6);
+      filter: brightness(1.08);
+      box-shadow: 0 6px 22px rgba(99,102,241,0.42);
       color: #fff;
       transform: translateY(-1px);
     }
@@ -401,9 +411,9 @@
       letter-spacing: 0.02em;
     }
     .service-tag.live {
-      background: rgba(74,222,128,0.1);
-      color: #86efac;
-      border: 1px solid rgba(74,222,128,0.25);
+      background: rgba(16,185,129,0.14);
+      color: #6ee7b7;
+      border: 1px solid rgba(16,185,129,0.3);
     }
     .service-tag.soon {
       background: rgba(245,158,11,0.1);
@@ -806,7 +816,7 @@
 <nav class="nav">
   <div class="nav-inner">
     <a href="/" class="nav-logo">
-      <i class="ti ti-bolt"></i>智拓客
+      <span class="logo-badge"><i class="ti ti-bolt"></i></span>智拓客
     </a>
     <div class="nav-links">
       <a href="/tools/">免费工具</a>
