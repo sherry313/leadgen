@@ -9958,6 +9958,47 @@ setTimeout(function _restoreAppState() {
   }
 })();
 
+// 邮件线索管理「继续处理」：按批次状态跳到对应步骤（恢复线索后调用）。
+//  tofilter→AI筛选；towrite→写邮件；tosend→用恢复线索里的邮件重建发送列表、直接进发送面板。
+function _appJumpToStage(goto){
+  if (!goto) return;
+  try {
+    if (goto === 'tofilter') { if (typeof showAppStep3View === 'function') showAppStep3View('filter'); return; }
+    if (goto === 'towrite')  { if (typeof showAppStep3View === 'function') showAppStep3View('email');  return; }
+    if (goto === 'tosend') {
+      // 先切到邮件步（隐藏上面的筛选/线索列表），再把写好的邮件重建进发送面板
+      if (typeof showAppStep3View === 'function') showAppStep3View('email');
+      const leads = window._appLeads || [];
+      const emails = leads
+        .filter(l => l && l.raw)
+        .map(l => {
+          const r = l.raw || {};
+          const sequence = [];
+          for (let i = 1; i <= 7; i++) {   // 拼出整套序列（第1封~第7封，有几封算几封）
+            const subj = r['email' + i + '_subject'], body = r['email' + i + '_body'];
+            if ((subj && String(subj).trim()) || (body && String(body).trim())) sequence.push({ subject: subj || '', body: body || '' });
+          }
+          return {
+            email:     l.email || r.email || '',
+            to:        l.email || r.email || l.name || '',
+            recipient: l.name || r.company_name || '',
+            subject:   sequence[0] ? sequence[0].subject : '',
+            body:      sequence[0] ? sequence[0].body : '',
+            sequence:  sequence,
+            lead:      l,
+          };
+        })
+        .filter(e => (e.email || (e.to || '').includes('@')) && e.sequence.length);
+      if (emails.length && typeof showAppSendPanel === 'function') {
+        window._generatedEmails = emails;
+        showAppSendPanel();
+        const cfg = document.getElementById('appEmailConfigPanel'); if (cfg) cfg.style.display = 'none';  // 已写好，不用再显示生成配置
+      }
+      return;
+    }
+  } catch (e) { console.warn('[jumpToStage]', e && e.message); }
+}
+
 // Deep-link: index.html?search=<id> loads that search's leads directly
 // Deep-link: index.html?query=X&location=Y re-runs a scrape directly
 (function() {
@@ -9979,7 +10020,8 @@ setTimeout(function _restoreAppState() {
     if (_ct) _ct.style.display = '';
     window._appMode = 'manual';
     if (typeof _appPlaceBusinessInfoCard === 'function') _appPlaceBusinessInfoCard('manual');
-    loadSearchById(sid);
+    const _goto = p.get('goto');   // 邮件线索管理「继续处理」带来的目标步骤
+    loadSearchById(sid).then(function(){ if (typeof _appJumpToStage === 'function') _appJumpToStage(_goto); }).catch(function(){});
   } else if (q && loc) {
     // Auto-rerun scrape, bypassing wizard
     (async () => {

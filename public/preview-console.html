@@ -433,9 +433,9 @@
               <option value="window" selected>系统门窗、全屋定制家居、卫浴产品全系列</option>
             </select>
           </label>
-          <label class="fld"><span>目标国家 / 地区</span><input type="text" placeholder="如 澳大利亚、美国" value="澳大利亚"></label>
-          <label class="fld"><span>查询数量</span>
-            <select><option>50 家</option><option selected>100 家</option><option>200 家</option></select>
+          <label class="fld"><span>目标国家 / 地区（试点期海关源仅美国）</span><input type="text" placeholder="如 美国" value="美国"></label>
+          <label class="fld"><span>查询数量（自己填，1–1000）</span>
+            <input id="csCount" type="number" min="1" max="1000" value="100" placeholder="例：100" style="font-family:inherit;font-size:14px;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:10px 13px;outline:none;width:100%">
           </label>
         </div>
         <div style="display:flex;gap:26px;flex-wrap:wrap;margin-top:14px">
@@ -459,20 +459,13 @@
       <div id="csResults" class="hidden">
         <div style="display:flex;align-items:baseline;gap:10px;margin:8px 0 12px;flex-wrap:wrap">
           <div class="qs-h" style="margin:0">查到的进口商</div>
-          <span style="font-size:12px;color:var(--tx3)">演示 · 找到 6 家</span>
-          <button class="cs-add" id="csAddAll" style="margin-left:auto"><i class="ti ti-arrow-right"></i> 全部进入流程（补邮箱→筛选→进客户表）</button>
+          <span style="font-size:12px;color:var(--tx3)">—</span>
+          <button class="cs-add" id="csAddAll" style="margin-left:auto"><i class="ti ti-arrow-right"></i> 去「邮件线索管理」继续处理</button>
         </div>
         <div class="acc-tw">
           <table class="acc-tb">
-            <thead><tr><th>公司</th><th>国家</th><th>进口产品</th><th>近一年采购</th><th>联系方式</th><th></th></tr></thead>
-            <tbody>
-              <tr><td>BuildRight Windows Pty Ltd</td><td>澳大利亚</td><td>铝合金窗 · 推拉门</td><td>42 批 · ~18 万件</td><td class="cs-em">procurement@buildright.com.au</td><td><button class="cs-add" data-row>加入</button></td></tr>
-              <tr><td>Coastal Glazing Co</td><td>澳大利亚</td><td>系统门窗</td><td>19 批</td><td class="cs-em">info@coastalglazing.com.au</td><td><button class="cs-add" data-row>加入</button></td></tr>
-              <tr><td>Sunset Aluminium Inc</td><td>美国</td><td>断桥铝窗</td><td>31 批</td><td class="cs-em">sourcing@sunsetalum.com</td><td><button class="cs-add" data-row>加入</button></td></tr>
-              <tr><td>NordFenster GmbH</td><td>德国</td><td>铝包木窗</td><td>12 批</td><td class="cs-em">einkauf@nordfenster.de</td><td><button class="cs-add" data-row>加入</button></td></tr>
-              <tr><td>Gulf Building Materials LLC</td><td>阿联酋</td><td>幕墙铝材</td><td>15 批</td><td class="cs-em">purchasing@gulfbm.ae</td><td><button class="cs-add" data-row>加入</button></td></tr>
-              <tr><td>Maple Home Solutions</td><td>加拿大</td><td>门窗五金</td><td>8 批</td><td class="cs-em none">（无邮箱）</td><td><button class="cs-add" data-row>加入</button></td></tr>
-            </tbody>
+            <thead><tr><th>公司</th><th>国家</th><th>HS</th><th>网站</th><th>邮箱</th><th></th></tr></thead>
+            <tbody></tbody>
           </table>
         </div>
       </div>
@@ -574,7 +567,9 @@
     if(d.type==='console-nav' && d.target){ var el=findNi(String(d.target)); if(el) el.click(); return; }
     // 继续处理某一批：打开「邮件获客」并深链载入该次搜索（/flow?search=<id>）
     if(d.type==='console-open-search' && d.searchId){
-      openFrame('/flow?search=' + encodeURIComponent(String(d.searchId)));
+      var u = '/flow?search=' + encodeURIComponent(String(d.searchId));
+      if(d.goto) u += '&goto=' + encodeURIComponent(String(d.goto));   // 按批次状态跳到对应步骤
+      openFrame(u);
       var f=findNi('邮件获客');
       if(f){ document.querySelectorAll('.ni').forEach(function(x){ x.classList.remove('on'); }); f.classList.add('on'); }
       return;
@@ -684,33 +679,78 @@
     });
   });
 
-  // 海关数据获客：演示交互（点查询→"查"一下→出结果→加入客户）
+  // ── 海关数据获客：真实接入（ImportYeti→补邮箱→跨源去重→存批次挂产品）──────────
   (function(){
-    var btn=document.getElementById('csSearchBtn');
-    if(!btn) return;
+    var sel=document.getElementById('csProduct'), kwBox=document.getElementById('csKw'), hsBox=document.getElementById('csHs');
+    var btn=document.getElementById('csSearchBtn'), countEl=document.getElementById('csCount');
     var empty=document.getElementById('csEmpty'), loading=document.getElementById('csLoading'), results=document.getElementById('csResults');
-    btn.addEventListener('click', function(){
-      results.classList.add('hidden'); empty.classList.add('hidden'); loading.classList.remove('hidden');
-      setTimeout(function(){
-        loading.classList.add('hidden'); empty.classList.remove('hidden');
-        empty.innerHTML='<i class="ti ti-ship" style="font-size:30px;opacity:.45"></i><br><b style="color:var(--tx)">海关数据源正在接入中，即将开放</b><br><span style="font-size:12px">接好后：查进口商 → 自动补邮箱 → AI 筛选 → 合格进「海关来源」客户表。</span>';
-      }, 1000);
-    });
-    function mark(b){ if(b.classList.contains('done')) return; b.classList.add('done'); b.innerHTML='<i class="ti ti-check"></i> 已加入'; }
-    document.querySelectorAll('#csResults .cs-add[data-row]').forEach(function(b){ b.addEventListener('click', function(){ mark(b); }); });
-    var all=document.getElementById('csAddAll');
-    if(all) all.addEventListener('click', function(){ document.querySelectorAll('#csResults .cs-add[data-row]').forEach(mark); });
-  })();
+    if(!sel||!btn) return;
+    var tk=getStoredToken();
+    function esc(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+    var _products=[];
+    function curP(){ return _products.find(function(p){ return String(p.id)===sel.value; }); }
+    function kwsOf(p){ var a=(p&&p.data&&Array.isArray(p.data.keywords))?p.data.keywords:[]; return a.map(function(k){ return (typeof k==='string')?k:(k.en||''); }).filter(Boolean); }
+    function renderMeta(){
+      var p=curP(), kws=kwsOf(p);
+      kwBox.innerHTML = kws.length ? kws.map(function(k){ return '<span class="cs-kw">'+esc(k)+'</span>'; }).join('')
+        : '<span style="color:var(--tx3);font-size:12px">这个产品还没存关键词——去「邮件获客」或「产品管理」选一组</span>';
+      if(hsBox) hsBox.textContent = (p&&p.data&&p.data.hsCode) ? p.data.hsCode : '—';
+    }
+    function country(){ var el=document.querySelector('#view-customs input[placeholder^="如 澳大利亚"]'); return el?el.value.trim():''; }
 
-  // 海关：选产品 → 自动带出该产品的关键词(演示)
-  (function(){
-    var sel=document.getElementById('csProduct'), box=document.getElementById('csKw');
-    if(!sel||!box) return;
-    var hsBox=document.getElementById('csHs');
-    var KW={ window:['aluminium window','sliding door','curtain wall','system window'], cabinet:['bathroom vanity','vanity units','bathroom cabinet','basin cabinet'] };
-    var HS={ window:'7610.10', cabinet:'9403.60' };
-    function render(){ var a=KW[sel.value]||[]; box.innerHTML=a.map(function(k){return '<span class="cs-kw">'+k+'</span>';}).join(''); if(hsBox) hsBox.textContent=HS[sel.value]||'—'; }
-    sel.addEventListener('change', render); render();
+    if(tk){
+      fetch('/api/products',{headers:{Authorization:'Bearer '+tk}}).then(function(r){return r.json();}).then(function(d){
+        _products=(d&&d.profiles)||[];
+        if(_products.length){ sel.innerHTML=_products.map(function(p,i){ return '<option value="'+esc(p.id)+'"'+(i===0?' selected':'')+'>'+esc(p.name||'未命名')+'</option>'; }).join(''); }
+        renderMeta();
+      }).catch(renderMeta);
+    }
+    sel.addEventListener('change', renderMeta);
+
+    // 「全部进入流程」→ 直接切到邮件线索管理（结果已自动存入该产品的批次）
+    var addAll=document.getElementById('csAddAll');
+    if(addAll) addAll.addEventListener('click', function(){
+      var ni=Array.prototype.find.call(document.querySelectorAll('.ni'), function(n){ return (n.textContent||'').indexOf('邮件线索管理')>=0; });
+      if(ni) ni.click();
+    });
+
+    var running=false;
+    btn.addEventListener('click', function(){
+      if(running) return;
+      var kws=kwsOf(curP());
+      if(!kws.length){ alert('这个产品还没有关键词。先去「邮件获客」或「产品管理」给它选/存一组关键词，再来查。'); return; }
+      running=true; btn.disabled=true;
+      empty.classList.add('hidden'); results.classList.remove('hidden'); loading.classList.remove('hidden');
+      var tbody=results.querySelector('tbody'); if(tbody) tbody.innerHTML='';
+      var lbl=results.querySelector('span'); if(lbl) lbl.textContent='查询中…';
+      var n=0, saved=0, dup=0, hs=(hsBox?hsBox.textContent:'')||'';
+      fetch('/api/customs/search',{ method:'POST', headers:{Authorization:'Bearer '+tk,'Content-Type':'application/json'},
+        body:JSON.stringify({ keywords:kws, hsCode:hs, country:country(), count:parseInt(countEl&&countEl.value,10)||50, productId:sel.value }) })
+      .then(function(res){
+        if(!res.body) throw new Error('无响应');
+        var reader=res.body.getReader(), dec=new TextDecoder(), buf='';
+        function finish(){ loading.classList.add('hidden'); running=false; btn.disabled=false; if(lbl) lbl.textContent='共 '+n+' 家 · 新增 '+saved+' · 去重跳过 '+dup+' · 已存入，去「邮件线索管理」继续'; }
+        function handle(evt){
+          if(evt.type==='phase'){ loading.innerHTML='<span class="spin"></span> '+esc(evt.message||''); }
+          else if(evt.type==='result'){
+            n++; if(evt.dupe) dup++; else if(evt.email) saved++;
+            if(tbody){ var em = evt.dupe?'<span class="cs-em none">（已存在，去重跳过）</span>':(evt.email?'<span class="cs-em">'+esc(evt.email)+'</span>':'<span class="cs-em none">（未找到邮箱）</span>');
+              tbody.insertAdjacentHTML('beforeend','<tr'+(evt.dupe?' style="opacity:.45"':'')+'><td>'+esc(evt.company)+'</td><td>'+esc(evt.country||'')+'</td><td>'+esc(hs)+'</td><td>'+(evt.website?'<a href="'+esc(evt.website)+'" target="_blank" style="color:var(--ac2)">网站</a>':'—')+'</td><td>'+em+'</td><td></td></tr>'); }
+          }
+          else if(evt.type==='error'){ loading.innerHTML='<span style="color:#fda4af">出错：'+esc(evt.error)+'</span>'; }
+        }
+        function pump(){ return reader.read().then(function(o){
+          if(o.done){ finish(); return; }
+          buf+=dec.decode(o.value,{stream:true}); var idx;
+          while((idx=buf.indexOf('\n\n'))!==-1){ var chunk=buf.slice(0,idx); buf=buf.slice(idx+2);
+            var line=chunk.split('\n').find(function(l){return l.indexOf('data:')===0;}); if(!line) continue;
+            var evt; try{ evt=JSON.parse(line.slice(5).trim()); }catch(e){ continue; } handle(evt);
+          }
+          return pump();
+        }); }
+        return pump();
+      }).catch(function(e){ loading.innerHTML='<span style="color:#fda4af">请求失败：'+esc(e.message)+'</span>'; running=false; btn.disabled=false; });
+    });
   })();
 
   // 大盘 + 个人中心：接真实数据（替换演示数字；没数据显示空态/—）

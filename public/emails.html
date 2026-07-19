@@ -10,11 +10,12 @@
     --bg:#030303; --card:rgba(255,255,255,0.03); --card2:rgba(255,255,255,0.05);
     --bd:rgba(255,255,255,0.08); --bd2:rgba(255,255,255,0.12);
     --tx:#e5e7eb; --tx2:rgba(255,255,255,0.6); --tx3:rgba(255,255,255,0.38);
-    --ac:#6366f1; --ac2:#818cf8; --ok:#34d399;
-    --warn:#fbbf24; --warnbg:rgba(251,191,36,0.12);
-    --send:#818cf8; --sendbg:rgba(99,102,241,0.14);
-    --done:#34d399; --donebg:rgba(52,211,153,0.12);
+    --ac:#6366f1; --ac2:#818cf8;
+    --crawl:#f59e0b; --crawlbg:rgba(245,158,11,0.12);
+    --filt:#fbbf24;  --filtbg:rgba(251,191,36,0.12);
     --write:#22d3ee; --writebg:rgba(34,211,238,0.12);
+    --send:#818cf8;  --sendbg:rgba(99,102,241,0.14);
+    --done:#34d399;  --donebg:rgba(52,211,153,0.12);
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
   body{ background:var(--bg); color:var(--tx);
@@ -23,24 +24,25 @@
   .hd h1{ font-size:1.35rem; font-weight:800; }
   .hd p{ font-size:.82rem; color:var(--tx3); margin-top:5px; }
 
-  /* 顶部：全部产品总汇总 */
+  /* 顶部：全部产品的待办任务汇总 */
   .banner{ margin:6px 30px 0; border-radius:12px; padding:12px 16px; font-size:.85rem;
     display:flex; align-items:center; gap:14px; flex-wrap:wrap; border:1px solid var(--bd); background:var(--card); }
   .banner .bt{ font-size:.72rem; font-weight:800; color:var(--tx3); letter-spacing:.1em; }
   .pill{ display:inline-flex; align-items:center; gap:6px; font-weight:700; padding:4px 10px; border-radius:8px; font-size:.82rem; }
   .pill i{ font-size:15px; }
-  .pill.warn{ color:var(--warn); background:var(--warnbg); }
+  .pill.filt{ color:var(--filt); background:var(--filtbg); }
   .pill.write{ color:var(--write); background:var(--writebg); }
   .pill.send{ color:var(--send); background:var(--sendbg); }
   .pill.done{ color:var(--done); background:var(--donebg); }
+  .banner .allclear{ color:var(--done); font-weight:700; }
 
   .wrap{ display:flex; gap:18px; padding:14px 30px 40px; align-items:flex-start; }
   .col{ flex-shrink:0; }
-  .cats{ width:260px; } .leadsCol{ width:330px; }
+  .cats{ width:270px; } .tasksCol{ flex:1; min-width:0; }
   .col-h{ font-size:.66rem; font-weight:800; color:var(--tx3); letter-spacing:.12em;
     text-transform:uppercase; padding:6px 8px 10px; }
 
-  /* 产品项：含自己的三态汇总 */
+  /* 产品项 */
   .item{ display:flex; align-items:flex-start; gap:10px; padding:11px 12px; border-radius:10px;
     border:1px solid transparent; cursor:pointer; margin-bottom:4px; transition:.15s; }
   .item:hover{ background:var(--card); }
@@ -48,97 +50,43 @@
   .item .ci{ width:30px; height:30px; border-radius:8px; background:var(--card2); flex-shrink:0;
     display:flex; align-items:center; justify-content:center; color:var(--ac2); font-size:14px; margin-top:1px; }
   .item .nm{ font-size:.83rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .item .sub{ font-size:.68rem; color:var(--tx3); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .item .meta{ min-width:0; flex:1; }
-  .statline{ display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
-  .s{ font-size:.64rem; font-weight:700; padding:1px 6px; border-radius:5px; white-space:nowrap; }
-  .s.tofilter{ color:var(--warn); background:var(--warnbg); } .s.towrite{ color:var(--write); background:var(--writebg); }
-  .s.tosend{ color:var(--send); background:var(--sendbg); } .s.sent{ color:var(--done); background:var(--donebg); }
-  .s.excluded{ color:var(--tx3); background:var(--card2); } .s.dim{ color:var(--tx3); background:var(--card2); }
+  .item .tsum{ font-size:.68rem; color:var(--tx3); margin-top:5px; }
+  .item .tsum b{ color:var(--tx2); font-weight:700; }
+  .item .tsum.clear{ color:var(--done); }
 
-  /* 状态筛选 chips */
-  .filters{ display:flex; flex-wrap:wrap; gap:6px; padding:0 8px 10px; }
-  .chip{ font-size:.72rem; font-weight:600; padding:5px 10px; border-radius:8px; cursor:pointer;
-    border:1px solid var(--bd); background:var(--card); color:var(--tx2); user-select:none; }
-  .chip.on{ border-color:rgba(99,102,241,0.5); background:rgba(99,102,241,0.14); color:#c7d2fe; }
-  .chip .c{ opacity:.7; margin-left:3px; }
+  /* 任务行（每次爬的 = 一个任务 = 一个状态） */
+  .task{ display:flex; align-items:center; gap:14px; padding:16px 18px; margin-bottom:10px;
+    background:var(--card); border:1px solid var(--bd); border-radius:14px; transition:.15s; }
+  .task:hover{ border-color:var(--bd2); }
+  .task.taskdone{ opacity:.5; }
+  .st{ flex-shrink:0; font-size:.78rem; font-weight:800; padding:6px 12px; border-radius:9px; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; }
+  .st i{ font-size:15px; }
+  .st.crawl{ color:var(--crawl); background:var(--crawlbg); }
+  .st.tofilter{ color:var(--filt); background:var(--filtbg); }
+  .st.towrite{ color:var(--write); background:var(--writebg); }
+  .st.tosend{ color:var(--send); background:var(--sendbg); }
+  .st.done{ color:var(--done); background:var(--donebg); }
+  .task .info{ flex:1; min-width:0; }
+  .task .tt{ font-size:.95rem; font-weight:700; }
+  .task .td{ font-size:.74rem; color:var(--tx3); margin-top:3px; }
+  .bcont{ flex-shrink:0; font-family:inherit; font-size:.82rem; font-weight:700; color:#fff;
+    background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; border-radius:9px; padding:9px 16px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .bcont:hover{ filter:brightness(1.08); } .bcont i{ font-size:15px; }
 
-  /* 批次分组 */
-  .batch{ margin-bottom:10px; }
-  .batch-h{ display:flex; align-items:center; gap:8px; padding:9px 11px; background:var(--card);
-    border:1px solid var(--bd); border-radius:10px; cursor:pointer; }
-  .batch-h:hover{ background:var(--card2); }
-  .batch-h .chev{ color:var(--tx3); transition:transform .2s; flex-shrink:0; }
-  .batch.open .batch-h .chev{ transform:rotate(90deg); }
-  .batch-h .info{ flex:1; min-width:0; }
-  .batch-h .bttl{ font-size:.76rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .batch-h .bmeta{ font-size:.64rem; color:var(--tx3); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .batch-mini{ display:flex; gap:4px; flex-shrink:0; }
-  .bcont{ flex-shrink:0; font-family:inherit; font-size:.68rem; font-weight:700; color:#fff;
-    background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; border-radius:7px; padding:5px 9px; cursor:pointer; }
-  .bcont:hover{ filter:brightness(1.08); }
-  .batch-leads{ display:none; padding:6px 2px 2px; }
-  .batch.open .batch-leads{ display:block; }
-
-  .lead{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px; cursor:pointer; }
-  .lead:hover{ background:var(--card); } .lead.on{ background:rgba(99,102,241,0.12); }
-  .lead .ci{ width:26px; height:26px; border-radius:7px; background:var(--card2); flex-shrink:0;
-    display:flex; align-items:center; justify-content:center; color:var(--ac2); font-size:12px; }
-  .lead .meta{ min-width:0; flex:1; }
-  .lead .nm{ font-size:.8rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .lead .sub{ font-size:.66rem; color:var(--tx3); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .stag{ flex-shrink:0; font-size:.62rem; font-weight:800; padding:2px 7px; border-radius:6px; white-space:nowrap; }
-  .stag.tofilter{ color:var(--warn); background:var(--warnbg); }
-  .stag.towrite{ color:var(--write); background:var(--writebg); }
-  .stag.tosend{ color:var(--send); background:var(--sendbg); }
-  .stag.sent{ color:var(--done); background:var(--donebg); }
-  .stag.excluded{ color:var(--tx3); background:var(--card2); }
-
-  .panel{ flex:1; min-width:0; background:var(--card); border:1px solid var(--bd); border-radius:16px; }
-  .panel-h{ padding:16px 20px; border-bottom:1px solid var(--bd); }
-  .panel-h .t{ font-size:1rem; font-weight:700; }
-  .panel-h .n{ font-size:.75rem; color:var(--tx3); margin-top:2px; }
-  .seq{ padding:8px 20px 20px; }
-
-  .ov{ padding:20px; }
-  .ov-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
-  .ov-card{ flex:1; min-width:110px; background:var(--card2); border:1px solid var(--bd); border-radius:12px; padding:14px 16px; }
-  .ov-card .v{ font-size:1.7rem; font-weight:800; font-variant-numeric:tabular-nums; }
-  .ov-card .l{ font-size:.74rem; color:var(--tx3); margin-top:3px; }
-  .ov-card.warn .v{ color:var(--warn); } .ov-card.write .v{ color:var(--write); } .ov-card.send .v{ color:var(--send); } .ov-card.done .v{ color:var(--done); }
-  .ov-row.five .ov-card{ min-width:92px; }
-  .ov-note{ font-size:.82rem; color:var(--tx2); line-height:1.7; background:var(--card2); border:1px solid var(--bd); border-radius:12px; padding:14px 16px; }
-  .ov-note b{ color:var(--tx); }
-  .ov-note .lead-hint{ display:block; margin-top:6px; color:var(--tx3); font-size:.78rem; }
-
-  .mail{ border:1px solid var(--bd); border-radius:12px; margin-top:14px; overflow:hidden; }
-  .mail-h{ display:flex; align-items:center; gap:10px; padding:12px 16px; background:rgba(255,255,255,0.02); cursor:pointer; }
-  .mail-h .step{ font-size:.64rem; font-weight:800; color:var(--ac2); background:rgba(99,102,241,0.14);
-    border-radius:5px; padding:2px 8px; flex-shrink:0; }
-  .mail-h .subj{ font-size:.85rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .mail-h .chev{ margin-left:auto; color:var(--tx3); transition:transform .2s; }
-  .mail.open .mail-h .chev{ transform:rotate(90deg); }
-  .mail-b{ display:none; padding:14px 16px; font-size:.83rem; line-height:1.65; color:var(--tx2); white-space:pre-wrap; border-top:1px solid var(--bd); }
-  .mail.open .mail-b{ display:block; }
-  .callout{ margin:16px 20px; border-radius:12px; padding:16px; font-size:.85rem; line-height:1.7;
-    border:1px solid var(--bd); background:var(--card2); color:var(--tx2); }
-  .callout b{ color:var(--tx); } .callout i{ color:var(--ac2); margin-right:6px; }
-  .actbtn{ display:inline-flex; align-items:center; gap:6px; margin-top:12px; font-family:inherit;
-    font-size:.82rem; font-weight:600; color:#fff; background:linear-gradient(135deg,#6366f1,#4f46e5);
-    border:none; border-radius:9px; padding:9px 15px; cursor:pointer; }
-  .actbtn:hover{ filter:brightness(1.08); } .actbtn i{ font-size:15px; margin:0; color:#fff; }
-  .empty{ padding:50px 20px; text-align:center; color:var(--tx3); font-size:.82rem; }
-  .empty i{ font-size:32px; display:block; margin-bottom:10px; opacity:.5; }
+  .empty{ padding:60px 20px; text-align:center; color:var(--tx3); font-size:.85rem; }
+  .empty i{ font-size:34px; display:block; margin-bottom:12px; opacity:.5; }
+  .empty.clear i{ color:var(--done); opacity:.8; }
   .spin{ display:inline-block; width:16px; height:16px; border:2px solid var(--bd2);
     border-top-color:var(--ac2); border-radius:50%; animation:sp .7s linear infinite; }
   @keyframes sp{ to{ transform:rotate(360deg); } }
-  @media(max-width:900px){ .wrap{ flex-wrap:wrap; } .cats,.leadsCol{ width:100%; } }
+  @media(max-width:900px){ .wrap{ flex-wrap:wrap; } .cats,.tasksCol{ width:100%; } }
 </style>
 </head>
 <body>
   <div class="hd">
     <h1>邮件线索管理</h1>
-    <p>点产品 → 看每一次爬的线索批次 → 每条状态一目了然：收了没写、写好没发、已发。可从这里接着写 / 发。</p>
+    <p>每一次爬的 = 一个任务。只显示还没做完的：卡在哪一步一眼看到，点「继续处理」接着干。</p>
   </div>
   <div class="banner" id="banner" style="display:none"></div>
   <div class="wrap">
@@ -146,14 +94,9 @@
       <div class="col-h">产品</div>
       <div id="catList"><div class="item"><span class="spin"></span></div></div>
     </div>
-    <div class="col leadsCol">
-      <div class="col-h">线索批次（每次爬的分开）</div>
-      <div class="filters" id="filters"></div>
-      <div id="batchList"><div class="empty" style="padding:24px 8px">← 先选一个产品</div></div>
-    </div>
-    <div class="panel">
-      <div class="panel-h"><div class="t" id="pTitle">选一条线索</div><div class="n" id="pSub">左边选产品，中间按批次展开，点一条线索看它的邮件和状态</div></div>
-      <div class="seq" id="seq"><div class="empty"><i class="ti ti-mail-opened"></i>选一条线索，看它的开发邮件和发送状态</div></div>
+    <div class="col tasksCol">
+      <div class="col-h">待办任务（每次爬的分开）</div>
+      <div id="taskList"><div class="empty">← 先选一个产品</div></div>
     </div>
   </div>
 
@@ -170,30 +113,35 @@
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
   function hasEmail(l){ return !!((l.email1_subject && String(l.email1_subject).trim()) || (l.email1_body && String(l.email1_body).trim())); }
-  // 筛选：'pass'→过，'fail'→没过，数字→>=5 过，空/未知→还没筛(null)
   function passedFilter(v){ v=String(v==null?'':v).trim().toLowerCase(); if(v==='pass')return true; if(v==='fail')return false; const n=parseFloat(v); if(!isNaN(n))return n>=5; return null; }
-  // 一条线索只有一个状态：已发 > 待发(写了没发) > 待写(筛过通过) > 不合格(筛过没过) > 待筛选(还没筛)
-  function statusOf(l){
-    if (l.email_sent_at) return 'sent';
-    if (hasEmail(l)) return 'tosend';
-    const p = passedFilter(l.icp_score);
-    if (p===true) return 'towrite';
-    if (p===false) return 'excluded';
-    return 'tofilter';
-  }
-  const STATUS_LABEL = { tofilter:'待筛选', towrite:'待写邮件', tosend:'待发送', sent:'已发送', excluded:'不合格' };
-  function sentDate(l){ if(!l.email_sent_at) return ''; return fmtDate(l.email_sent_at); }
-  function fmtDate(raw){ try{ const d=new Date(/[zZ]$|[+-]\d{2}:?\d{2}$/.test(raw)?raw:raw+'Z'); return (d.getMonth()+1)+'月'+d.getDate()+'日'; }catch(e){ return ''; } }
   function fmtDT(raw){ if(!raw) return '未知时间'; try{ const d=new Date(/[zZ]$|[+-]\d{2}:?\d{2}$/.test(raw)?raw:raw+'Z'); const p=n=>String(n).padStart(2,'0'); return (d.getMonth()+1)+'月'+d.getDate()+'日 '+p(d.getHours())+':'+p(d.getMinutes()); }catch(e){ return '未知时间'; } }
+  function goSearch(sid, stage){ try{ window.parent.postMessage({ type:'console-open-search', searchId:String(sid), goto:String(stage||'') }, '*'); }catch(e){} }
 
-  // 继续下一步：通知外层控制台
-  function goConsole(target){ try{ window.parent.postMessage({ type:'console-nav', target:target }, '*'); }catch(e){} }
-  function navBtn(target, label, icon){ return '<button class="actbtn" onclick="goConsole(\''+target+'\')"><i class="ti '+icon+'"></i>'+label+'</button>'; }
-  // 继续处理某一批：打开「邮件获客」并载入这次搜索的线索
-  function goSearch(sid){ try{ window.parent.postMessage({ type:'console-open-search', searchId:String(sid) }, '*'); }catch(e){} }
+  // 一个批次(每次爬的)的单一状态 = 它卡在哪一步。
+  // 判定：这批只要有任何"筛过/写过/发过"的痕迹，就算已处理过；完全没痕迹 = 待筛选。
+  // （未爬完暂时测不出来——数据库没记爬取完成标记；以后加了标记再支持。）
+  const STAGE = { tofilter:{lbl:'待筛选', icon:'ti-filter',       cls:'tofilter', hint:'爬完了还没筛，去筛一遍'},
+                  towrite: {lbl:'待写邮件', icon:'ti-pencil',      cls:'towrite',  hint:'筛过通过了，还没写开发信'},
+                  tosend:  {lbl:'待发送',  icon:'ti-mail-forward', cls:'tosend',   hint:'邮件写好了，还没发出去'},
+                  done:    {lbl:'已完成',  icon:'ti-checks',       cls:'done',     hint:'写完也发完了'} };
+  function batchStage(leads){
+    let sent=0, written=0, verdict=0, passNoEmail=0;
+    leads.forEach(l=>{
+      const w = hasEmail(l), v = passedFilter(l.icp_score);
+      if (l.email_sent_at) sent++;
+      if (w) written++;
+      if (v!==null) verdict++;
+      if (v===true && !w) passNoEmail++;
+    });
+    const processed = verdict>0 || written>0 || sent>0;   // 有任何处理痕迹
+    const unsentWritten = written - sent;
+    if (!processed) return 'tofilter';       // 爬完没动过 → 待筛选
+    if (unsentWritten>0) return 'tosend';    // 有写好没发的 → 优先待发送
+    if (passNoEmail>0) return 'towrite';     // 没有待发、但有筛过没写的 → 待写
+    return 'done';                            // 写的都发了、没有待写 → 已完成
+  }
 
-  let _pipeCache = {};   // pid -> {leads, searches, summary}
-  let _curPid = null, _curName = '', _curFilter = 'all';
+  let _pipeCache = {};   // pid -> {leads, searches}
   let _productList = [];
 
   async function loadCats(){
@@ -207,14 +155,13 @@
         '<div class="item'+(i===0?' on':'')+'" data-id="'+esc(p.id)+'" data-name="'+esc(p.name)+'">'
         + '<div class="ci"><i class="ti ti-package"></i></div>'
         + '<div class="meta"><div class="nm">'+(esc(p.name)||'未命名')+'</div>'
-        + '<div class="statline" id="sl-'+esc(p.id)+'"><span class="s dim">加载中…</span></div></div></div>').join('');
+        + '<div class="tsum" id="ts-'+esc(p.id)+'">加载中…</div></div></div>').join('');
       box.querySelectorAll('.item').forEach(el=> el.addEventListener('click', ()=>{
         box.querySelectorAll('.item').forEach(x=>x.classList.remove('on')); el.classList.add('on');
         selectProduct(el.dataset.id, el.dataset.name);
       }));
-      // 逐个预取以填每产品汇总 + 顶部总汇总；同时先展示第一个
       selectProduct(_productList[0].id, _productList[0].name);
-      _productList.forEach(p=> loadPipe(p.id).then(()=>{ updateStatline(p.id); renderAggregate(); }).catch(()=>{}));
+      _productList.forEach(p=> loadPipe(p.id).then(()=>{ updateProdSummary(p.id); renderAggregate(); }).catch(()=>{}));
     }catch(e){ box.innerHTML = '<div class="empty">加载失败：'+esc(e.message)+'</div>'; }
   }
 
@@ -223,190 +170,88 @@
     const r = await fetch('/api/products/'+encodeURIComponent(pid)+'/pipeline', { headers: authHeaders() });
     const d = await r.json();
     if(!d.success) throw new Error(d.error||'加载失败');
-    _pipeCache[pid] = { leads: d.leads||[], searches: d.searches||[], summary: d.summary||{total:0,toWrite:0,toSend:0,sent:0} };
+    _pipeCache[pid] = { leads: d.leads||[], searches: d.searches||[] };
     return _pipeCache[pid];
   }
 
-  const STATE_KEY = { tofilter:'toFilter', towrite:'toWrite', tosend:'toSend', sent:'sent', excluded:'excluded' };
-  const STATE_SHORT = { tofilter:'待筛', towrite:'待写', tosend:'待发', sent:'已发', excluded:'不合格' };
-  const STATE_ORDER = ['tofilter','towrite','tosend','sent','excluded'];
-  function statChips(s){
-    const parts = [];
-    STATE_ORDER.forEach(st=>{ const n=(s[STATE_KEY[st]])||0; if(n>0) parts.push('<span class="s '+st+'">'+STATE_SHORT[st]+' '+n+'</span>'); });
-    if (!parts.length) parts.push('<span class="s dim">'+(s.total? '—' : '无线索')+'</span>');
-    return parts.join('');
-  }
-
-  function updateStatline(pid){
-    const el = document.getElementById('sl-'+pid); if(!el) return;
-    const s = (_pipeCache[pid]||{}).summary; if(!s) return;
-    el.innerHTML = statChips(s);
-  }
-
-  function renderAggregate(){
-    // 只在所有产品都取到后再显示总汇总
-    const loaded = _productList.filter(p=> _pipeCache[p.id]);
-    if (loaded.length < _productList.length) return;
-    let t={total:0,toFilter:0,toWrite:0,toSend:0,sent:0,excluded:0};
-    loaded.forEach(p=>{ const s=_pipeCache[p.id].summary; t.total+=s.total||0; t.toFilter+=s.toFilter||0; t.toWrite+=s.toWrite||0; t.toSend+=s.toSend||0; t.sent+=s.sent||0; t.excluded+=s.excluded||0; });
-    const b = document.getElementById('banner');
-    let html = '<span class="bt">全部产品汇总</span>';
-    html += '<span class="pill warn"><i class="ti ti-filter"></i>'+t.toFilter+' 待筛选</span>';
-    html += '<span class="pill write"><i class="ti ti-mail-off"></i>'+t.toWrite+' 待写邮件</span>';
-    html += '<span class="pill send"><i class="ti ti-mail-forward"></i>'+t.toSend+' 待发送</span>';
-    html += '<span class="pill done"><i class="ti ti-checks"></i>'+t.sent+' 已发送</span>';
-    b.innerHTML = html; b.style.display = 'flex';
-  }
-
-  async function selectProduct(pid, pname){
-    _curPid = pid; _curName = pname||''; _curFilter = 'all';
-    document.getElementById('filters').innerHTML = '';
-    const box = document.getElementById('batchList');
-    box.innerHTML = '<div class="item"><span class="spin"></span></div>';
-    let pipe;
-    try{ pipe = await loadPipe(pid); }
-    catch(e){ box.innerHTML = '<div class="empty">加载失败：'+esc(e.message)+'</div>'; return; }
-    updateStatline(pid);
-    renderFilters(pipe.summary);
-    renderBatches();
-    renderOverview(pname, pipe.summary);
-  }
-
-  function renderFilters(s){
-    let chips = [['all','全部', s.total]];
-    STATE_ORDER.forEach(st=>{ const n=(s[STATE_KEY[st]])||0; if(n>0) chips.push([st, STATUS_LABEL[st], n]); });
-    document.getElementById('filters').innerHTML = chips.map(([k,lbl,n])=>
-      '<span class="chip'+(k===_curFilter?' on':'')+'" data-f="'+k+'">'+lbl+'<span class="c">'+(n||0)+'</span></span>'
-    ).join('');
-    document.querySelectorAll('#filters .chip').forEach(el=> el.addEventListener('click', ()=>{
-      _curFilter = el.dataset.f;
-      document.querySelectorAll('#filters .chip').forEach(x=>x.classList.toggle('on', x.dataset.f===_curFilter));
-      renderBatches();
-    }));
-  }
-
-  // 按 search_id 把线索分批，附搜索元信息 + 每批三态
-  function groupBatches(pipe){
+  // 把一个产品的线索按批次分组，算每批的单一状态
+  function batchesOf(pid){
+    const pipe = _pipeCache[pid]; if(!pipe) return [];
     const meta = {}; (pipe.searches||[]).forEach(s=> meta[String(s.id)] = s);
     const g = {};
     (pipe.leads||[]).forEach(l=>{ const k=String(l.search_id||'__none__'); (g[k]=g[k]||[]).push(l); });
     const arr = Object.keys(g).map(k=>{
-      const leads = g[k], m = meta[k] || {};
+      const leads=g[k], m=meta[k]||{};
       const ts = m.created_at || (leads[0]&&leads[0].created_at) || null;
-      let c={toFilter:0,toWrite:0,toSend:0,sent:0,excluded:0};
-      leads.forEach(l=>{ const st=statusOf(l); if(st==='sent')c.sent++; else if(st==='tosend')c.toSend++; else if(st==='towrite')c.toWrite++; else if(st==='excluded')c.excluded++; else c.toFilter++; });
-      return { key:k, leads, meta:m, ts, s:Object.assign({total:leads.length}, c) };
+      return { key:k, ts, count:leads.length, stage:batchStage(leads) };
     });
     arr.sort((a,b)=> (new Date(b.ts||0)) - (new Date(a.ts||0)));
     return arr;
   }
 
-  function renderBatches(){
-    const box = document.getElementById('batchList');
-    const pipe = _pipeCache[_curPid] || {leads:[],searches:[]};
-    const batches = groupBatches(pipe);
-    if (!batches.length){ box.innerHTML = '<div class="empty" style="padding:24px 6px"><i class="ti ti-inbox"></i>这个产品还没有爬到线索</div>'; return; }
-    let html = '';
-    batches.forEach((b, bi)=>{
-      const shown = b.leads.filter(l=> _curFilter==='all' ? true : statusOf(l)===_curFilter);
-      if (!shown.length) return;   // 该筛选下这批没有，隐藏整批
-      const pending = (b.s.toFilter||0) + (b.s.toWrite||0) + (b.s.toSend||0);
-      const title = fmtDT(b.ts);
-      const metaLine = ((b.meta.query||'')+(b.meta.location?(' · '+b.meta.location):'')) || '（无搜索信息）';
-      const cont = (pending>0 && b.key!=='__none__') ? '<button class="bcont" onclick="event.stopPropagation();goSearch(\''+esc(b.key)+'\')">继续处理</button>' : '';
-      const open = (_curFilter !== 'all');   // 每次打开默认全部折叠；选了具体筛选才展开对应批次
-      html += '<div class="batch'+(open?' open':'')+'" data-b="'+bi+'">'
-        + '<div class="batch-h" onclick="this.parentNode.classList.toggle(\'open\')">'
-        + '<i class="ti ti-chevron-right chev"></i>'
-        + '<div class="info"><div class="bttl">'+esc(title)+' · '+b.leads.length+' 条</div>'
-        + '<div class="bmeta">'+esc(metaLine)+'</div></div>'
-        + '<div class="batch-mini">'+statChips(b.s)+'</div>'
-        + cont + '</div>'
-        + '<div class="batch-leads">'
-        + shown.map((l,i)=>{
-            const st=statusOf(l); const tag = st==='sent'?('已发 '+sentDate(l)):STATUS_LABEL[st];
-            return '<div class="lead" data-b="'+bi+'" data-i="'+i+'">'
-              + '<div class="ci"><i class="ti ti-building"></i></div>'
-              + '<div class="meta"><div class="nm">'+(esc(l.company_name)||'—')+'</div><div class="sub">'+(esc(l.email)||'无邮箱')+'</div></div>'
-              + '<span class="stag '+st+'">'+tag+'</span></div>';
-          }).join('')
-        + '</div></div>';
-      // 存该批过滤后的数组，供点击取用
-      b._shown = shown;
-    });
-    box.innerHTML = html || '<div class="empty" style="padding:24px 6px"><i class="ti ti-filter"></i>这个筛选下没有线索</div>';
-    box._batches = batches;
-    box.querySelectorAll('.lead').forEach(el=> el.addEventListener('click', ()=>{
-      box.querySelectorAll('.lead').forEach(x=>x.classList.remove('on')); el.classList.add('on');
-      const b = box._batches[+el.dataset.b]; if(!b||!b._shown) return;
-      showLead(b._shown[+el.dataset.i]);
-    }));
+  // 统计一个产品各阶段的"待办任务数"（批次数）
+  function stageCounts(pid){
+    const c = { tofilter:0, towrite:0, tosend:0, done:0 };
+    batchesOf(pid).forEach(b=> c[b.stage]++);
+    return c;
   }
 
-  function renderOverview(pname, s){
-    document.getElementById('pTitle').textContent = (pname||'产品') + ' · 进度总览';
-    document.getElementById('pSub').textContent = '中间按“每次爬的批次”展开；点一条线索看它的邮件';
-    const pending = (s.toFilter||0)+(s.toWrite||0)+(s.toSend||0);
-    let note;
-    if (!s.total) note = '<i class="ti ti-info-circle"></i>这个产品还没有爬到线索。去「邮件获客」搜一批客户回来吧。';
-    else if (pending===0) note = '<i class="ti ti-circle-check"></i><b>都处理完了。</b>这个产品能发的线索都已发送。';
+  function updateProdSummary(pid){
+    const el = document.getElementById('ts-'+pid); if(!el) return;
+    const c = stageCounts(pid);
+    const pending = c.tofilter + c.towrite + c.tosend;
+    if (!batchesOf(pid).length){ el.className='tsum'; el.textContent='还没爬到线索'; return; }
+    if (pending===0){ el.className='tsum clear'; el.innerHTML='<i class="ti ti-circle-check"></i> 都处理完了'; return; }
+    const parts=[];
+    if(c.tofilter) parts.push('待筛 <b>'+c.tofilter+'</b>');
+    if(c.towrite)  parts.push('待写 <b>'+c.towrite+'</b>');
+    if(c.tosend)   parts.push('待发 <b>'+c.tosend+'</b>');
+    if(c.done)     parts.push('<span style="color:var(--done)">已完成 '+c.done+'</span>');
+    el.className='tsum'; el.innerHTML = parts.join(' · ') + ' 批';
+  }
+
+  function renderAggregate(){
+    const loaded = _productList.filter(p=> _pipeCache[p.id]);
+    if (loaded.length < _productList.length) return;
+    let t={tofilter:0,towrite:0,tosend:0,done:0};
+    loaded.forEach(p=>{ const c=stageCounts(p.id); t.tofilter+=c.tofilter; t.towrite+=c.towrite; t.tosend+=c.tosend; t.done+=c.done; });
+    const b = document.getElementById('banner');
+    const pending = t.tofilter+t.towrite+t.tosend;
+    let html = '<span class="bt">全部产品 · 待办任务</span>';
+    if (!pending){ html += '<span class="allclear"><i class="ti ti-circle-check"></i> 全部处理完了</span>'; }
     else {
-      note = '<i class="ti ti-bell"></i><b>还有 '+pending+' 条线索要处理：</b>';
-      if (s.toFilter>0) note += '<span class="lead-hint">· <b style="color:var(--warn)">'+s.toFilter+' 条</b>还没筛选</span>';
-      if (s.toWrite>0)  note += '<span class="lead-hint">· <b style="color:var(--write)">'+s.toWrite+' 条</b>筛过通过、还没写邮件</span>';
-      if (s.toSend>0)   note += '<span class="lead-hint">· <b style="color:var(--send)">'+s.toSend+' 封</b>写好了还没发</span>';
-      note += '<span class="lead-hint" style="color:var(--tx3)">在中间每一批右上角点「继续处理」，会打开「邮件获客」并载入那一批，接着筛 / 写 / 发。</span>';
+      if(t.tofilter) html += '<span class="pill filt"><i class="ti ti-filter"></i>'+t.tofilter+' 批待筛选</span>';
+      if(t.towrite)  html += '<span class="pill write"><i class="ti ti-pencil"></i>'+t.towrite+' 批待写邮件</span>';
+      if(t.tosend)   html += '<span class="pill send"><i class="ti ti-mail-forward"></i>'+t.tosend+' 批待发送</span>';
     }
-    const exc = (s.excluded||0) ? '<div class="ov-card"><div class="v" style="color:var(--tx3)">'+(s.excluded)+'</div><div class="l">不合格</div></div>' : '';
-    document.getElementById('seq').innerHTML =
-      '<div class="ov"><div class="ov-row five">'
-      + '<div class="ov-card"><div class="v">'+(s.total||0)+'</div><div class="l">总线索</div></div>'
-      + '<div class="ov-card warn"><div class="v">'+(s.toFilter||0)+'</div><div class="l">待筛选</div></div>'
-      + '<div class="ov-card write"><div class="v">'+(s.toWrite||0)+'</div><div class="l">待写邮件</div></div>'
-      + '<div class="ov-card send"><div class="v">'+(s.toSend||0)+'</div><div class="l">待发送</div></div>'
-      + '<div class="ov-card done"><div class="v">'+(s.sent||0)+'</div><div class="l">已发送</div></div>'
-      + exc
-      + '</div><div class="ov-note">'+note+'</div></div>';
+    if(t.done) html += '<span class="pill done"><i class="ti ti-checks"></i>'+t.done+' 批已完成</span>';
+    b.innerHTML = html; b.style.display = 'flex';
   }
 
-  function showLead(l){
-    const st = statusOf(l);
-    document.getElementById('pTitle').textContent = l.company_name || '线索';
-    const badge = st==='sent' ? (' · 已发送 '+sentDate(l)) : (' · '+STATUS_LABEL[st]);
-    document.getElementById('pSub').textContent = (l.email||'无邮箱') + (l.email_framework_key?(' · 框架 '+l.email_framework_key):'') + badge;
-    const seq = document.getElementById('seq');
-
-    if (st==='tofilter'){
-      seq.innerHTML = '<div class="callout"><i class="ti ti-filter"></i><b>这条线索还没筛选。</b><br>去「邮件获客」载入这一批，先让 AI 筛一遍；通过的才需要写开发信。<br>'+navBtn('邮件获客','去邮件获客筛','ti-filter')+'</div>';
+  async function selectProduct(pid, pname){
+    const box = document.getElementById('taskList');
+    box.innerHTML = '<div class="empty"><span class="spin"></span></div>';
+    try{ await loadPipe(pid); }
+    catch(e){ box.innerHTML = '<div class="empty">加载失败：'+esc(e.message)+'</div>'; return; }
+    updateProdSummary(pid);
+    const all = batchesOf(pid);
+    if (!all.length){
+      box.innerHTML = '<div class="empty"><i class="ti ti-inbox"></i>这个产品还没爬到线索<br><span style="font-size:.78rem">去「邮件获客」搜一批客户回来</span></div>';
       return;
     }
-    if (st==='excluded'){
-      seq.innerHTML = '<div class="callout"><i class="ti ti-circle-x"></i><b>这条线索没通过筛选（不合格）。</b><br>AI 判断它不符合你的目标客户，不用写邮件。'
-        + (l.icp_reasoning ? '<br><span style="color:var(--tx3)">理由：'+esc(l.icp_reasoning)+'</span>' : '') + '</div>';
-      return;
-    }
-    if (st==='towrite'){
-      seq.innerHTML = '<div class="callout"><i class="ti ti-mail-off"></i><b>这条线索筛过通过、还没写邮件。</b><br>去「邮件获客」载入这一批，把这条（和同批待写的）写出来。<br>'+navBtn('邮件获客','去邮件获客写','ti-pencil')+'</div>';
-      return;
-    }
-    let html='';
-    for (let i=1;i<=5;i++){
-      const subj=l['email'+i+'_subject'], body=l['email'+i+'_body'];
-      if(!subj && !body) continue;
-      html += '<div class="mail'+(i===1?' open':'')+'">'
-        + '<div class="mail-h" onclick="this.parentNode.classList.toggle(\'open\')">'
-        + '<span class="step">第 '+i+' 封</span>'
-        + '<span class="subj">'+(esc(subj)||'(无主题)')+'</span>'
-        + '<i class="ti ti-chevron-right chev"></i></div>'
-        + '<div class="mail-b">'+(esc(body)||'(无正文)')+'</div></div>';
-    }
-    const top = st==='tosend'
-      ? '<div class="callout"><i class="ti ti-mail-forward"></i><b>这套邮件写好了，还没发送。</b>去「邮件发送」把它发出去。<br>'+navBtn('邮件发送','去邮件发送','ti-send')+'</div>'
-      : '<div class="callout"><i class="ti ti-checks"></i><b>已发送</b>（'+sentDate(l)+'）。下面是发给这家客户的整套开发邮件。</div>';
-    const insBox = '<div class="callout" style="border-style:dashed">'
-      + '<i class="ti ti-chart-line"></i><b>发送进度 & 打开率</b> —— 这家客户发到第几封、有没有打开，'
-      + '来自 Instantly（定时发信平台）。<b style="color:var(--send)">接入中</b>，接好后显示在这里。</div>';
-    seq.innerHTML = top + insBox + (html || '<div class="empty">这条线索没有邮件正文</div>');
+    // 待办在前（按时间），已完成排在最后（灰、无按钮）
+    const pending = all.filter(b=> b.stage!=='done');
+    const done    = all.filter(b=> b.stage==='done');
+    box.innerHTML = pending.concat(done).map(b=>{
+      const s = STAGE[b.stage];
+      const isDone = b.stage==='done';
+      return '<div class="task'+(isDone?' taskdone':'')+'">'
+        + '<span class="st '+s.cls+'"><i class="ti '+s.icon+'"></i>'+s.lbl+'</span>'
+        + '<div class="info"><div class="tt">'+fmtDT(b.ts)+' · '+b.count+' 条线索</div>'
+        + (s.hint?('<div class="td">'+s.hint+'</div>'):'')+'</div>'
+        + (!isDone && b.key!=='__none__' ? '<button class="bcont" onclick="goSearch(\''+esc(b.key)+'\',\''+b.stage+'\')"><i class="ti ti-player-play"></i> 继续处理</button>' : '')
+        + '</div>';
+    }).join('');
   }
 
   if (token) loadCats();

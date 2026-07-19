@@ -108,21 +108,33 @@ async function getCostSummary(userId) {
 
 async function getExistingLeadKeys(userId) {
   const db = getClient();
-  if (!db) return { placeIds: new Set(), phones: new Set(), emails: new Set(), domains: new Set() };
+  const empty = { placeIds: new Set(), phones: new Set(), emails: new Set(), domains: new Set() };
+  if (!db) return empty;
   try {
-    let q = db.from('leads').select('place_id, phone_normalized, email, website_domain');
-    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
-    const { data, error } = await q;
-    if (error) throw error;
-    return {
-      placeIds: new Set(data.map(r => r.place_id).filter(Boolean)),
-      phones:   new Set(data.map(r => r.phone_normalized).filter(Boolean)),
-      emails:   new Set(data.map(r => r.email?.toLowerCase()).filter(Boolean)),
-      domains:  new Set(data.map(r => r.website_domain).filter(Boolean)),
-    };
+    // 分页读全部线索——Supabase 默认单次只返回 1000 行；不分页会导致超过 1000 条后
+    // 去重集不全 → 同一家跨源/跨批被当成新客户重复插入、可能重复发信。
+    const res = { placeIds: new Set(), phones: new Set(), emails: new Set(), domains: new Set() };
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      let q = db.from('leads')
+        .select('place_id, phone_normalized, email, website_domain')
+        .range(from, from + PAGE - 1);
+      if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+      const { data, error } = await q;
+      if (error) throw error;
+      if (!data || !data.length) break;
+      for (const r of data) {
+        if (r.place_id)        res.placeIds.add(r.place_id);
+        if (r.phone_normalized) res.phones.add(r.phone_normalized);
+        if (r.email)           res.emails.add(r.email.toLowerCase());
+        if (r.website_domain)  res.domains.add(r.website_domain);
+      }
+      if (data.length < PAGE) break;
+    }
+    return res;
   } catch (err) {
     console.warn('[Supabase] getExistingLeadKeys failed:', err.message);
-    return { placeIds: new Set(), phones: new Set(), emails: new Set(), domains: new Set() };
+    return empty;
   }
 }
 
@@ -681,14 +693,21 @@ async function getProductAllLeads(productId, userId) {
     let sq = db.from('search_history').select('id, query, location, created_at, total_scraped').in('id', ids);
     if (userId && userId !== 'legacy') sq = sq.eq('user_id', userId);
     const { data: searches } = await sq;   // 失败容错：下面用 (searches||[])
-    let lq = db.from('leads')
-      .select('id, company_name, website, email, phone, city, icp_score, icp_reasoning, email_sent_at, search_id, created_at, email_framework_key, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body')
-      .in('search_id', ids)
-      .order('created_at', { ascending: false });
-    if (userId && userId !== 'legacy') lq = lq.eq('user_id', userId);
-    const { data: leads, error: lErr } = await lq;
-    if (lErr) throw lErr;
-    return { profile, leads: leads || [], searches: searches || [] };
+    const COLS = 'id, company_name, website, email, phone, city, icp_score, icp_reasoning, email_sent_at, search_id, created_at, email_framework_key, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body';
+    const leads = [];
+    const PAGE = 1000;   // 分页读全部，避免单个产品线索超 1000 条后显示不全
+    for (let from = 0; ; from += PAGE) {
+      let lq = db.from('leads').select(COLS).in('search_id', ids)
+        .order('created_at', { ascending: false }).order('id', { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (userId && userId !== 'legacy') lq = lq.eq('user_id', userId);
+      const { data, error: lErr } = await lq;
+      if (lErr) throw lErr;
+      if (!data || !data.length) break;
+      leads.push(...data);
+      if (data.length < PAGE) break;
+    }
+    return { profile, leads, searches: searches || [] };
   } catch (err) {
     console.warn('[Supabase] getProductAllLeads failed:', err.message);
     return { profile: null, leads: [], searches: [] };

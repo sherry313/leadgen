@@ -2779,6 +2779,98 @@ app.post('/api/find-emails', requireAuth, async (req, res) => {
   }
 });
 
+// ── 海关数据获客（美国 · ImportYeti via Apify）—— 试点 ────────────────────────
+// ImportYeti 采集器查"美国进口商公司名" → 复用现有 Firecrawl(searchWebsite/scrapeHtml/
+// _pickBestEmail)补网站+邮箱 → 与所有来源共用一张 leads 表统一去重 → 存为一次搜索
+// 批次并挂到产品(和谷歌地图同一套,进「邮件线索管理」)。计费走 requireQuota，用户查一次
+// 扣一次额度(SaaS 转售、赚差价)。⚠️ 采集器爬 ImportYeti 违反其 ToS，正式商用前应换官方 API。
+const IMPORTYETI_ACTOR = 'parseforge~importyeti-scraper';
+function _usableSite(u) {
+  const s = String(u || '').trim().toLowerCase();
+  if (!/^https?:\/\/[^ ]+\.[a-z]{2,}/.test(s)) return false;
+  if (/cbp\.gov|\.gov(\/|$)|importyeti\.com|census\.gov/.test(s)) return false;  // ImportYeti 常返回海关局网址等垃圾
+  return true;
+}
+app.post('/api/customs/search', requireAuth, async (req, res) => {
+  const keywords = Array.isArray(req.body?.keywords)
+    ? req.body.keywords.map(k => String(k).trim()).filter(Boolean)
+    : ((req.body?.keyword || '').trim() ? [String(req.body.keyword).trim()] : []);
+  const hsCode    = String(req.body?.hsCode || '').trim();
+  const country   = String(req.body?.country || '').trim();
+  const count     = Math.min(200, Math.max(1, parseInt(req.body?.count, 10) || 50));
+  const productId = req.body?.productId || null;
+  const q = keywords[0] || hsCode;   // ImportYeti 按关键词查（HS 兜底）
+  if (!q) return res.status(400).json({ success: false, error: '缺少关键词或 HS 编码' });
+  if (!(await requireQuota(req, res))) return;
+
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+  res.flushHeaders();
+  const send = d => res.write(`data: ${JSON.stringify(d)}\n\n`);
+  let aborted = false;
+  res.on('close', () => { aborted = true; });
+  const heartbeat = setInterval(() => { if (!aborted) res.write(': heartbeat\n\n'); }, 15000);
+
+  try {
+    send({ type: 'phase', phase: 'query', message: '正在从海关报关记录查进口商…' });
+    let importers = [];
+    try {
+      importers = await withTimeout(_runApifyActor(IMPORTYETI_ACTOR, { q, type: 'company', maxItems: count }), 10 * 60 * 1000, 'ImportYeti');
+    } catch (e) {
+      if (!aborted) send({ type: 'error', error: '海关查询失败：' + e.message });
+      clearInterval(heartbeat); return res.end();
+    }
+    importers = (importers || []).filter(it => it && (it.title || it.company));
+    send({ type: 'phase', phase: 'found', count: importers.length, message: `找到 ${importers.length} 家进口商，正在补网站+邮箱…` });
+
+    const searchId = await saveSearchRun({ query: '[海关] ' + q, location: country || 'US', maxResults: count, totalScraped: importers.length }, req.userId);
+    if (productId && searchId) appendProductSearch(productId, req.userId, searchId).catch(() => {});
+
+    const keys = await getExistingLeadKeys(req.userId);
+    const results = [];
+    let i = 0;
+    for (const it of importers) {
+      if (aborted) break;
+      i++;
+      const name = (it.title || it.company || '').trim();
+      let website = _usableSite(it.website) ? it.website : '';
+      let email = '';
+      try {
+        if (!website) website = await withTimeout(searchWebsite(name), 30000, 'customs search');
+        if (website && _usableSite(website)) {
+          const html = await withTimeout(scrapeHtml(website), 40000, 'customs scrape');
+          email = _pickBestEmail(html, website);
+          if (!email) {
+            try { const h2 = await withTimeout(scrapeHtml(new URL('/contact', website).toString()), 40000, 'customs /contact'); email = _pickBestEmail(h2, website); } catch (_) {}
+          }
+        }
+      } catch (_) { /* 单家失败不影响其它 */ }
+
+      const domain = website ? (() => { try { return new URL(website).hostname.replace('www.', ''); } catch { return ''; } })() : '';
+      const dupe = !!((email && keys.emails.has(email.toLowerCase())) || (domain && keys.domains.has(domain)));  // 跨源去重
+      send({ type: 'result', index: i, total: importers.length, company: name, website, email, country: it.countryCode || '', dupe });
+      if (dupe) continue;
+      if (email)  keys.emails.add(email.toLowerCase());
+      if (domain) keys.domains.add(domain);
+      results.push({
+        companyName: name, website, email, phone: '', city: it.countryCode || country,
+        googleRating: '', intentScore: '', icpScore: '', intentReasoning: '', icpReasoning: '',
+        placeId: '', status: 'raw',
+      });
+    }
+
+    if (results.length && searchId) await saveLeads(searchId, results, req.userId);
+    const costUsd = importers.length * 0.05;   // 占位单价（Apify+Firecrawl 成本）——你在后台按额度价定，赚差价
+    if (searchId) appendSearchRunCosts(searchId, { sonnetCostUsd: 0, firecrawlCostUsd: costUsd, qualifiedDelta: 0 }, req.userId).catch(() => {});
+
+    if (!aborted) send({ type: 'done', searchId, found: importers.length, saved: results.length });
+  } catch (err) {
+    if (!aborted) send({ type: 'error', error: err.message });
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
+  }
+});
+
 app.post('/api/google-search', requireAuth, async (req, res) => {
   // Accept either a single `keyword` (legacy) or a `keywords` array + optional
   // `location` — mirrors /api/google-maps-search so the /app gsPanel matches gmPanel.
