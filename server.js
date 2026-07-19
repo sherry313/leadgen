@@ -31,7 +31,8 @@ const sendHtml = (res, ...parts) => {
   res.sendFile(path.join(__dirname, 'public', ...parts));
 };
 
-app.get('/',            (req, res) => sendHtml(res, 'home.html'));
+app.get('/',            (req, res) => sendHtml(res, 'preview-console.html')); // 根路由 = 封面 → 控制台（营销首页 home.html 已下线，文件保留）
+app.get('/home',        (req, res) => sendHtml(res, 'home.html'));            // 旧营销首页保留入口，随时可切回
 app.get('/app',         (req, res) => sendHtml(res, 'preview-console.html')); // 控制台 = /app 新门面（迁移阶段1）
 app.get('/flow',        (req, res) => sendHtml(res, 'index.html'));          // 现有获客流程，被控制台「邮件获客」iframe 嵌入
 app.get('/lens',        (req, res) => sendHtml(res, 'index.html'));
