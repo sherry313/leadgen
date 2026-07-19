@@ -385,35 +385,36 @@
       <div class="ph">邮件发送</div>
       <div class="psub">选一种发信方式填好，跑完流程点“发送”就直接用这里的配置，不用每次重填</div>
       <div class="send-grid">
-        <div class="send-card active">
+        <div class="send-card" id="csInstCard">
           <div class="sc-top">
             <div class="sc-ic"><i class="ti ti-rocket"></i></div>
             <div>
               <div class="sc-nm">Instantly 托管发信</div>
               <div class="sc-dt">用 Instantly 平台批量发，不用自己管发信服务器，送达率高、能自动跟进</div>
             </div>
-            <span class="sc-badge on">使用中</span>
+            <span class="sc-badge" id="csInstBadge">未启用</span>
           </div>
-          <label class="fld"><span>Instantly API Key</span><input type="password" placeholder="粘贴你的 Instantly API 密钥"></label>
-          <label class="fld"><span>发信 Campaign / 邮箱池</span><input type="text" placeholder="选择或输入 campaign 名称"></label>
-          <button class="sc-btn">保存并使用</button>
+          <label class="fld"><span>Instantly API Key（选填，平台已内置可留空）</span><input id="csInstKey" type="password" placeholder="粘贴你的 Instantly API 密钥"></label>
+          <label class="fld"><span>发信 Campaign ID / 邮箱池</span><input id="csInstCampaign" type="text" placeholder="选择或输入 campaign ID"></label>
+          <button class="sc-btn" id="csInstSave">保存并使用</button>
         </div>
-        <div class="send-card">
+        <div class="send-card" id="csSmtpCard">
           <div class="sc-top">
             <div class="sc-ic"><i class="ti ti-mail-cog"></i></div>
             <div>
               <div class="sc-nm">自己的邮箱（SMTP）</div>
-              <div class="sc-dt">用你自己的邮箱发（Gmail / 企业邮箱等），需要填 SMTP 服务器信息</div>
+              <div class="sc-dt">用你自己的邮箱发（Gmail / 企业邮箱 / QQ 等），需要填 SMTP 服务器信息</div>
             </div>
-            <span class="sc-badge">未启用</span>
+            <span class="sc-badge" id="csSmtpBadge">未启用</span>
           </div>
-          <label class="fld"><span>邮箱地址</span><input type="email" placeholder="you@company.com"></label>
+          <label class="fld"><span>发件人姓名</span><input id="csSmtpSender" type="text" placeholder="例：王伟"></label>
+          <label class="fld"><span>邮箱账号</span><input id="csSmtpUser" type="email" placeholder="you@company.com"></label>
           <div class="fld-row">
-            <label class="fld" style="flex:1"><span>SMTP 服务器</span><input type="text" placeholder="smtp.gmail.com"></label>
-            <label class="fld" style="width:96px"><span>端口</span><input type="text" placeholder="465"></label>
+            <label class="fld" style="flex:1"><span>SMTP 服务器</span><input id="csSmtpHost" type="text" placeholder="smtp.gmail.com"></label>
+            <label class="fld" style="width:96px"><span>端口</span><input id="csSmtpPort" type="text" placeholder="465"></label>
           </div>
-          <label class="fld"><span>应用专用密码</span><input type="password" placeholder="邮箱的应用专用密码"></label>
-          <button class="sc-btn ghost">保存并使用</button>
+          <label class="fld"><span>邮箱密码 / 授权码</span><input id="csSmtpPass" type="password" placeholder="邮箱密码或应用专用密码"></label>
+          <button class="sc-btn ghost" id="csSmtpSave">保存并使用</button>
         </div>
       </div>
       <div class="send-note"><i class="ti ti-info-circle"></i> 设好之后，「邮件获客」跑完流程，点“发送”会直接用这里选中的方式发出，不用再填一遍。</div>
@@ -533,6 +534,7 @@
       const href = el.dataset.href || HREF[el.dataset.t];
       if(href){ if(frame.getAttribute('src')!==href) frame.setAttribute('src', href); show('frame'); return; }
       const v = el.dataset.view; show(v);
+      if(v==='send' && typeof csLoadSend==='function') csLoadSend();
       if(v==='dev'){
         const t = el.dataset.t || '功能';
         const live = el.querySelector('.st.on');
@@ -549,6 +551,56 @@
     frame.setAttribute('src', decodeURIComponent(location.hash.slice(3)));
     show('frame');
   }
+
+  // ── 邮件发送设置：与「邮件获客」流程共用同一份本地配置（填一次，两处通用）───────────
+  // 读写的 localStorage 键与 index.html 发送步骤完全一致，因此这里填/存后，流程跑到
+  // 发送步会自动带出；反之流程里填过，这里进来也自动显示。不经后端，纯本地同步。
+  function _lsg(k){ try{ return localStorage.getItem(k)||''; }catch(_){ return ''; } }
+  function _lss(k,v){ try{ localStorage.setItem(k, v==null?'':String(v)); }catch(_){} }
+  function _csSetBadges(){
+    const m = _lsg('leadgen_send_method');
+    const sB = document.getElementById('csSmtpBadge'), iB = document.getElementById('csInstBadge');
+    const sC = document.getElementById('csSmtpCard'),  iC = document.getElementById('csInstCard');
+    const smtpFilled = _lsg('leadgen_smtpUser') && _lsg('leadgen_smtpPass');
+    const instFilled = _lsg('leadgen_app_instantly_campaign');
+    const active = m || (instFilled ? 'instantly' : (smtpFilled ? 'smtp' : ''));
+    if(sB){ sB.textContent = active==='smtp' ? '使用中' : (smtpFilled?'已保存':'未启用'); sB.classList.toggle('on', active==='smtp'); }
+    if(iB){ iB.textContent = active==='instantly' ? '使用中' : (instFilled?'已保存':'未启用'); iB.classList.toggle('on', active==='instantly'); }
+    if(sC) sC.classList.toggle('active', active==='smtp');
+    if(iC) iC.classList.toggle('active', active==='instantly');
+  }
+  window.csLoadSend = function(){
+    const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value = val; };
+    set('csSmtpSender', _lsg('leadgen_smtpSenderName'));
+    set('csSmtpUser',   _lsg('leadgen_smtpUser'));
+    set('csSmtpHost',   _lsg('leadgen_smtpHost'));
+    set('csSmtpPort',   _lsg('leadgen_smtpPort'));
+    set('csSmtpPass',   _lsg('leadgen_smtpPass'));
+    set('csInstKey',    _lsg('leadgen_instantly_api_key'));
+    set('csInstCampaign', _lsg('leadgen_app_instantly_campaign'));
+    _csSetBadges();
+  };
+  (function wireSendSave(){
+    const smtpBtn = document.getElementById('csSmtpSave');
+    const instBtn = document.getElementById('csInstSave');
+    const g = id => (document.getElementById(id)?.value || '').trim();
+    const flash = (btn, ok)=>{ const t=btn.getAttribute('data-t')||btn.textContent; btn.setAttribute('data-t',t); btn.textContent = ok; setTimeout(()=>{ btn.textContent = t; }, 1400); };
+    if(smtpBtn) smtpBtn.onclick = ()=>{
+      _lss('leadgen_smtpSenderName', g('csSmtpSender'));
+      _lss('leadgen_smtpUser', g('csSmtpUser'));
+      _lss('leadgen_smtpHost', g('csSmtpHost'));
+      _lss('leadgen_smtpPort', g('csSmtpPort'));
+      _lss('leadgen_smtpPass', document.getElementById('csSmtpPass')?.value || '');
+      _lss('leadgen_send_method', 'smtp');
+      _csSetBadges(); flash(smtpBtn, '已保存 ✓');
+    };
+    if(instBtn) instBtn.onclick = ()=>{
+      _lss('leadgen_instantly_api_key', document.getElementById('csInstKey')?.value || '');
+      _lss('leadgen_app_instantly_campaign', g('csInstCampaign'));
+      _lss('leadgen_send_method', 'instantly');
+      _csSetBadges(); flash(instBtn, '已保存 ✓');
+    };
+  })();
 
   // 大盘问候语：按当前时段变化
   (function(){
