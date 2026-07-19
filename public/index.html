@@ -2750,9 +2750,10 @@
 
 <!-- ════════ /app MODE SELECTION (shown first; .container stays hidden until a mode is chosen) ════════ -->
 <div id="appModeSelect">
-  <!-- /flow：模式选择屏永远直接走手动（见下方 80ms skip 块），这里在渲染前就把它藏掉，
-       避免「引入产品」reload 时闪一下这屏再跳回表单。只影响 /flow，/lens 不动。 -->
-  <script>if(location.pathname==='/flow'){try{var _m0=document.getElementById('appModeSelect');if(_m0)_m0.style.display='none';}catch(e){}}</script>
+  <!-- /flow：全新进入(step≤1)时模式屏直接走手动（见下方 80ms skip 块），这里在渲染前
+       就藏掉，避免「引入产品」reload 时闪一下这屏。有进行中任务(step>1)则不藏，交给
+       _restoreStep 恢复，绝不留空白。只影响 /flow，/lens 不动。 -->
+  <script>if(location.pathname==='/flow'){try{var _st0=parseInt(localStorage.getItem('leadgen_current_step')||'1',10);if(_st0<=1){var _m0=document.getElementById('appModeSelect');if(_m0)_m0.style.display='none';}}catch(e){}}</script>
   <div style="margin-bottom:8px; font-size:10px; color:#818cf8; letter-spacing:0.15em; text-transform:uppercase;">sys · cold outreach engine v2</div>
   <div style="font-size:22px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:4px;">选择运行模式</div>
   <div style="font-size:12px; color:var(--color-text-tertiary, rgba(255,255,255,0.35)); margin-bottom:24px;">选好之后填一次信息，剩下的交给系统</div>

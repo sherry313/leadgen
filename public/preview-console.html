@@ -484,7 +484,7 @@
     </div>
 
     <!-- 嵌入现有功能页（iframe，功能不变、不跳走） -->
-    <div class="hidden" id="view-frame"><iframe id="appFrame" title="功能" src="about:blank"></iframe></div>
+    <div class="hidden" id="view-frame"></div><!-- 常驻窗口在此动态创建，每个功能页各一个 -->
   </div>
 </div>
 
@@ -522,7 +522,21 @@
     'DNS 记录生成器':'/tools/dns-generator.html', 'Spam 敏感词检查':'/tools/spam-word-checker.html',
     '定价 / 套餐':'/pricing.html'
   };
-  const frame = document.getElementById('appFrame');
+  // 每个功能页一个"常驻窗口"：切走只隐藏、不卸载，里面正在跑的任务（爬数据/写邮件/
+  // 发送）继续在后台运行，回来还在原地、进度不丢。绝不重置已加载窗口的 src。
+  const frameHost = document.getElementById('view-frame');
+  const _frames = {};   // href -> iframe（每个功能页各留一个，互不顶替）
+  function openFrame(href){
+    if(!_frames[href]){
+      const f = document.createElement('iframe');
+      f.title = '功能'; f.src = href;
+      f.style.cssText = 'width:100%;height:100%;border:0;display:block;background:var(--bg)';
+      frameHost.appendChild(f);
+      _frames[href] = f;
+    }
+    Object.keys(_frames).forEach(k => { _frames[k].style.display = (k===href) ? 'block' : 'none'; });
+    show('frame');
+  }
   const items = document.querySelectorAll('.ni');
   const views = { dash:'view-dash', account:'view-account', send:'view-send', customs:'view-customs', dev:'view-dev', frame:'view-frame' };
   function show(v){ Object.values(views).forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById(views[v]).classList.remove('hidden'); }
@@ -532,7 +546,7 @@
       items.forEach(x=>x.classList.remove('on')); el.classList.add('on');
       document.body.classList.remove('nav-open');
       const href = el.dataset.href || HREF[el.dataset.t];
-      if(href){ if(frame.getAttribute('src')!==href) frame.setAttribute('src', href); show('frame'); return; }
+      if(href){ openFrame(href); return; }
       const v = el.dataset.view; show(v);
       if(v==='send' && typeof csLoadSend==='function') csLoadSend();
       if(v==='dev'){
@@ -548,8 +562,7 @@
   // 深链：#f=/app 直接在控制台里打开某功能（方便测试/分享）——同样先查登录
   if(location.hash.indexOf('#f=')===0 && requireLogin()){
     enterConsole();
-    frame.setAttribute('src', decodeURIComponent(location.hash.slice(3)));
-    show('frame');
+    openFrame(decodeURIComponent(location.hash.slice(3)));
   }
 
   // ── 邮件发送设置：与「邮件获客」流程共用同一份本地配置（填一次，两处通用）───────────
