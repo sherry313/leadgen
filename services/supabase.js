@@ -664,6 +664,33 @@ async function getProductSentLeads(productId, userId) {
   }
 }
 
+// 产品「全部」线索（不限是否已发）——用于「邮件管理」状态提醒：分辨
+// 待写邮件(email1_subject 空) / 待发送(写了 email_sent_at 空) / 已发送(email_sent_at 有值)。
+// 刻意与 getProductSentLeads 分开——后者口径"只已发"(客户表/导出用)，不要动。
+async function getProductAllLeads(productId, userId) {
+  const db = getClient();
+  if (!db || !productId) return { profile: null, leads: [] };
+  try {
+    let q = db.from('product_profiles').select('*').eq('id', productId);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { data: profile, error: pErr } = await q.single();
+    if (pErr) throw pErr;
+    const ids = Array.isArray(profile?.data?.searchIds) ? profile.data.searchIds : [];
+    if (!ids.length) return { profile, leads: [] };
+    let lq = db.from('leads')
+      .select('id, company_name, website, email, phone, city, icp_score, email_sent_at, search_id, created_at, email_framework_key, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body')
+      .in('search_id', ids)
+      .order('created_at', { ascending: false });
+    if (userId && userId !== 'legacy') lq = lq.eq('user_id', userId);
+    const { data: leads, error: lErr } = await lq;
+    if (lErr) throw lErr;
+    return { profile, leads: leads || [] };
+  } catch (err) {
+    console.warn('[Supabase] getProductAllLeads failed:', err.message);
+    return { profile: null, leads: [] };
+  }
+}
+
 // ── 管理员：全部账号总览（邮箱/注册/最后登录/搜索次数/花费/已发/额度） ────────
 async function getAdminUsersOverview() {
   const db = getClient();
@@ -737,4 +764,4 @@ async function getSentEmailStats(userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch };
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getProductAllLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch };

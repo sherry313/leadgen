@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>邮件管理 - 智拓客</title>
+<title>邮件线索管理 - 智拓客</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
 <style>
   :root{
@@ -11,16 +11,30 @@
     --bd:rgba(255,255,255,0.08); --bd2:rgba(255,255,255,0.12);
     --tx:#e5e7eb; --tx2:rgba(255,255,255,0.6); --tx3:rgba(255,255,255,0.38);
     --ac:#6366f1; --ac2:#818cf8; --ok:#34d399;
+    --warn:#fbbf24; --warnbg:rgba(251,191,36,0.12);
+    --send:#818cf8; --sendbg:rgba(99,102,241,0.14);
+    --done:#34d399; --donebg:rgba(52,211,153,0.12);
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
   body{ background:var(--bg); color:var(--tx);
     font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; }
-  .hd{ padding:26px 30px 16px; }
+  .hd{ padding:26px 30px 12px; }
   .hd h1{ font-size:1.35rem; font-weight:800; }
   .hd p{ font-size:.82rem; color:var(--tx3); margin-top:5px; }
-  .wrap{ display:flex; gap:18px; padding:0 30px 40px; align-items:flex-start; }
+
+  /* 提醒条 */
+  .banner{ margin:6px 30px 0; border-radius:12px; padding:12px 16px; font-size:.85rem;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap; border:1px solid var(--bd); background:var(--card); }
+  .banner .pill{ display:inline-flex; align-items:center; gap:6px; font-weight:600; padding:4px 10px; border-radius:8px; }
+  .banner .pill i{ font-size:15px; }
+  .pill.warn{ color:var(--warn); background:var(--warnbg); }
+  .pill.send{ color:var(--send); background:var(--sendbg); }
+  .pill.done{ color:var(--done); background:var(--donebg); }
+  .banner .hint{ color:var(--tx3); font-size:.78rem; }
+
+  .wrap{ display:flex; gap:18px; padding:14px 30px 40px; align-items:flex-start; }
   .col{ flex-shrink:0; }
-  .cats{ width:210px; } .leadsCol{ width:270px; }
+  .cats{ width:230px; } .leadsCol{ width:300px; }
   .col-h{ font-size:.66rem; font-weight:800; color:var(--tx3); letter-spacing:.12em;
     text-transform:uppercase; padding:6px 8px 10px; }
   .item{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
@@ -30,14 +44,44 @@
   .item .ci{ width:30px; height:30px; border-radius:8px; background:var(--card2); flex-shrink:0;
     display:flex; align-items:center; justify-content:center; color:var(--ac2); font-size:14px; }
   .item .nm{ font-size:.83rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .item .sub{ font-size:.68rem; color:var(--tx3); margin-top:1px; }
-  .item .meta{ min-width:0; }
+  .item .sub{ font-size:.68rem; color:var(--tx3); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .item .meta{ min-width:0; flex:1; }
+  /* 产品待处理徽标 */
+  .cbadge{ flex-shrink:0; font-size:.66rem; font-weight:800; padding:2px 8px; border-radius:20px; white-space:nowrap; }
+  .cbadge.warn{ color:var(--warn); background:var(--warnbg); }
+  .cbadge.done{ color:var(--done); background:var(--donebg); }
+  .cbadge.dim{ color:var(--tx3); background:var(--card2); }
+
+  /* 状态筛选 chips */
+  .filters{ display:flex; flex-wrap:wrap; gap:6px; padding:0 8px 10px; }
+  .chip{ font-size:.72rem; font-weight:600; padding:5px 10px; border-radius:8px; cursor:pointer;
+    border:1px solid var(--bd); background:var(--card); color:var(--tx2); user-select:none; }
+  .chip.on{ border-color:rgba(99,102,241,0.5); background:rgba(99,102,241,0.14); color:#c7d2fe; }
+  .chip .c{ opacity:.7; margin-left:3px; }
+
+  /* 线索状态标签 */
+  .stag{ flex-shrink:0; font-size:.64rem; font-weight:800; padding:2px 7px; border-radius:6px; white-space:nowrap; }
+  .stag.towrite{ color:var(--warn); background:var(--warnbg); }
+  .stag.tosend{ color:var(--send); background:var(--sendbg); }
+  .stag.sent{ color:var(--done); background:var(--donebg); }
 
   .panel{ flex:1; min-width:0; background:var(--card); border:1px solid var(--bd); border-radius:16px; }
   .panel-h{ padding:16px 20px; border-bottom:1px solid var(--bd); }
   .panel-h .t{ font-size:1rem; font-weight:700; }
   .panel-h .n{ font-size:.75rem; color:var(--tx3); margin-top:2px; }
   .seq{ padding:8px 20px 20px; }
+
+  /* 右栏默认：产品进度总览 */
+  .ov{ padding:20px; }
+  .ov-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .ov-card{ flex:1; min-width:120px; background:var(--card2); border:1px solid var(--bd); border-radius:12px; padding:14px 16px; }
+  .ov-card .v{ font-size:1.7rem; font-weight:800; font-variant-numeric:tabular-nums; }
+  .ov-card .l{ font-size:.74rem; color:var(--tx3); margin-top:3px; }
+  .ov-card.warn .v{ color:var(--warn); } .ov-card.send .v{ color:var(--send); } .ov-card.done .v{ color:var(--done); }
+  .ov-note{ font-size:.82rem; color:var(--tx2); line-height:1.7; background:var(--card2); border:1px solid var(--bd); border-radius:12px; padding:14px 16px; }
+  .ov-note b{ color:var(--tx); }
+  .ov-note .lead-hint{ display:block; margin-top:6px; color:var(--tx3); font-size:.78rem; }
+
   .mail{ border:1px solid var(--bd); border-radius:12px; margin-top:14px; overflow:hidden; }
   .mail-h{ display:flex; align-items:center; gap:10px; padding:12px 16px; background:rgba(255,255,255,0.02); cursor:pointer; }
   .mail-h .step{ font-size:.64rem; font-weight:800; color:var(--ac2); background:rgba(99,102,241,0.14);
@@ -47,6 +91,13 @@
   .mail.open .mail-h .chev{ transform:rotate(90deg); }
   .mail-b{ display:none; padding:14px 16px; font-size:.83rem; line-height:1.65; color:var(--tx2); white-space:pre-wrap; border-top:1px solid var(--bd); }
   .mail.open .mail-b{ display:block; }
+  .callout{ margin:16px 20px; border-radius:12px; padding:16px; font-size:.85rem; line-height:1.7;
+    border:1px solid var(--bd); background:var(--card2); color:var(--tx2); }
+  .callout b{ color:var(--tx); } .callout i{ color:var(--ac2); margin-right:6px; }
+  .actbtn{ display:inline-flex; align-items:center; gap:6px; margin-top:12px; font-family:inherit;
+    font-size:.82rem; font-weight:600; color:#fff; background:linear-gradient(135deg,#6366f1,#4f46e5);
+    border:none; border-radius:9px; padding:9px 15px; cursor:pointer; }
+  .actbtn:hover{ filter:brightness(1.08); } .actbtn i{ font-size:15px; margin:0; color:#fff; }
   .empty{ padding:60px 20px; text-align:center; color:var(--tx3); font-size:.85rem; }
   .empty i{ font-size:34px; display:block; margin-bottom:12px; opacity:.5; }
   .spin{ display:inline-block; width:16px; height:16px; border:2px solid var(--bd2);
@@ -57,9 +108,10 @@
 </head>
 <body>
   <div class="hd">
-    <h1>邮件管理</h1>
-    <p>按 产品 → 线索 → 邮件 查看每次为客户写的整套开发邮件</p>
+    <h1>邮件线索管理</h1>
+    <p>每个产品 → 你爬到的线索 → 状态一目了然：哪些收了还没写邮件、哪些写好了还没发，别漏发漏跟进</p>
   </div>
+  <div class="banner" id="banner" style="display:none"></div>
   <div class="wrap">
     <div class="col cats">
       <div class="col-h">产品</div>
@@ -67,11 +119,12 @@
     </div>
     <div class="col leadsCol">
       <div class="col-h">线索</div>
+      <div class="filters" id="filters"></div>
       <div id="leadList"><div class="empty" style="padding:24px 8px;font-size:.78rem">← 先选一个产品</div></div>
     </div>
     <div class="panel">
-      <div class="panel-h"><div class="t" id="pTitle">邮件序列</div><div class="n" id="pSub">选择左边的线索查看它的邮件</div></div>
-      <div class="seq" id="seq"><div class="empty"><i class="ti ti-mail-opened"></i>选一个线索,看它收到的整套开发邮件</div></div>
+      <div class="panel-h"><div class="t" id="pTitle">选一个线索</div><div class="n" id="pSub">左边选产品，中间选线索，这里看它的邮件和状态</div></div>
+      <div class="seq" id="seq"><div class="empty"><i class="ti ti-mail-opened"></i>选一个线索，看它的开发邮件和发送状态</div></div>
     </div>
   </div>
 
@@ -87,7 +140,18 @@
   function authHeaders(){ return { Authorization:'Bearer '+token }; }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-  let _leadCache = {};
+  // 一条线索的状态：已发(sent) > 写好待发(tosend) > 收了待写(towrite)
+  function hasEmail(l){ return !!((l.email1_subject && String(l.email1_subject).trim()) || (l.email1_body && String(l.email1_body).trim())); }
+  function statusOf(l){ if (l.email_sent_at) return 'sent'; return hasEmail(l) ? 'tosend' : 'towrite'; }
+  const STATUS_LABEL = { towrite:'待写邮件', tosend:'待发送', sent:'已发送' };
+  function sentDate(l){ if(!l.email_sent_at) return ''; try{ const raw=l.email_sent_at; const d=new Date(/[zZ]$|[+-]\d{2}:?\d{2}$/.test(raw)?raw:raw+'Z'); return (d.getMonth()+1)+'月'+d.getDate()+'日'; }catch(e){ return ''; } }
+  // 「继续下一步」——通知外层控制台切到对应菜单（邮件获客 / 邮件发送）
+  function goConsole(target){ try{ window.parent.postMessage({ type:'console-nav', target:target }, '*'); }catch(e){} }
+  function navBtn(target, label, icon){ return '<button class="actbtn" onclick="goConsole(\''+target+'\')"><i class="ti '+icon+'"></i>'+label+'</button>'; }
+
+  let _pipeCache = {};       // pid -> {leads, summary}
+  let _curPid = null, _curFilter = 'all';
+
   async function loadCats(){
     const box = document.getElementById('catList');
     try{
@@ -98,46 +162,142 @@
       box.innerHTML = list.map((p,i)=>
         '<div class="item'+(i===0?' on':'')+'" data-id="'+esc(p.id)+'" data-name="'+esc(p.name)+'">'
         + '<div class="ci"><i class="ti ti-package"></i></div>'
-        + '<div class="meta"><div class="nm">'+(esc(p.name)||'未命名')+'</div></div></div>').join('');
+        + '<div class="meta"><div class="nm">'+(esc(p.name)||'未命名')+'</div></div>'
+        + '<span class="cbadge dim" id="cb-'+esc(p.id)+'">…</span></div>').join('');
       box.querySelectorAll('.item').forEach(el=> el.addEventListener('click', ()=>{
         box.querySelectorAll('.item').forEach(x=>x.classList.remove('on')); el.classList.add('on');
-        loadLeads(el.dataset.id, el.dataset.name);
+        selectProduct(el.dataset.id, el.dataset.name);
       }));
-      loadLeads(list[0].id, list[0].name);
+      // 先选中第一个，其余在后台预取以填徽标
+      selectProduct(list[0].id, list[0].name);
+      list.slice(1).forEach(p=> loadPipe(p.id).then(()=>updateBadge(p.id)));
     }catch(e){ box.innerHTML = '<div class="empty">加载失败：'+esc(e.message)+'</div>'; }
   }
 
-  function hasEmails(l){ return !!(l.email1_body || l.email2_body || l.email3_body || l.email4_body || l.email5_body); }
+  async function loadPipe(pid){
+    if (_pipeCache[pid]) return _pipeCache[pid];
+    const r = await fetch('/api/products/'+encodeURIComponent(pid)+'/pipeline', { headers: authHeaders() });
+    const d = await r.json();
+    if(!d.success) throw new Error(d.error||'加载失败');
+    _pipeCache[pid] = { leads: d.leads||[], summary: d.summary||{total:0,toWrite:0,toSend:0,sent:0} };
+    return _pipeCache[pid];
+  }
 
-  async function loadLeads(pid, pname){
-    const box = document.getElementById('leadList');
-    box.innerHTML = '<div class="item"><span class="spin"></span></div>';
-    document.getElementById('pTitle').textContent = '邮件序列';
-    document.getElementById('pSub').textContent = '选择左边的线索查看它的邮件';
-    document.getElementById('seq').innerHTML = '<div class="empty"><i class="ti ti-mail-opened"></i>选一个线索,看它收到的整套开发邮件</div>';
-    let data = _leadCache[pid];
-    if (!data){
-      try{
-        const r = await fetch('/api/products/'+encodeURIComponent(pid)+'/leads', { headers: authHeaders() });
-        const d = await r.json(); if(!d.success) throw new Error(d.error||'加载失败');
-        data = d.leads||[]; _leadCache[pid]=data;
-      }catch(e){ box.innerHTML = '<div class="empty">加载失败：'+esc(e.message)+'</div>'; return; }
-    }
-    const withMail = data.filter(hasEmails);
-    if (!withMail.length){ box.innerHTML = '<div class="empty" style="padding:24px 6px;font-size:.76rem"><i class="ti ti-mail-off"></i>这个产品还没有写好邮件的线索</div>'; return; }
-    box.innerHTML = withMail.map((l,i)=>
-      '<div class="item" data-i="'+i+'">'
-      + '<div class="ci"><i class="ti ti-building"></i></div>'
-      + '<div class="meta"><div class="nm">'+(esc(l.company_name)||'—')+'</div><div class="sub">'+(esc(l.email)||'无邮箱')+'</div></div></div>').join('');
-    box.querySelectorAll('.item').forEach(el=> el.addEventListener('click', ()=>{
-      box.querySelectorAll('.item').forEach(x=>x.classList.remove('on')); el.classList.add('on');
-      showSeq(withMail[+el.dataset.i]);
+  function updateBadge(pid){
+    const el = document.getElementById('cb-'+pid); if(!el) return;
+    const s = (_pipeCache[pid]||{}).summary; if(!s){ return; }
+    const pending = (s.toWrite||0) + (s.toSend||0);
+    if (!s.total){ el.className='cbadge dim'; el.textContent='无线索'; }
+    else if (pending>0){ el.className='cbadge warn'; el.textContent=pending+' 待处理'; }
+    else { el.className='cbadge done'; el.textContent='✓ 已处理'; }
+  }
+
+  async function selectProduct(pid, pname){
+    _curPid = pid; _curFilter = 'all';
+    const leadBox = document.getElementById('leadList');
+    leadBox.innerHTML = '<div class="item"><span class="spin"></span></div>';
+    document.getElementById('filters').innerHTML = '';
+    let pipe;
+    try{ pipe = await loadPipe(pid); }
+    catch(e){ leadBox.innerHTML = '<div class="empty">加载失败：'+esc(e.message)+'</div>'; return; }
+    updateBadge(pid);
+    renderBanner(pname, pipe.summary);
+    renderFilters(pipe.summary);
+    renderLeadList();
+    renderOverview(pname, pipe.summary);
+  }
+
+  function renderBanner(pname, s){
+    const b = document.getElementById('banner');
+    const pending = (s.toWrite||0)+(s.toSend||0);
+    if (!s.total){ b.style.display='none'; return; }
+    let html = '';
+    if (s.toWrite>0) html += '<span class="pill warn"><i class="ti ti-mail-off"></i>'+s.toWrite+' 条收了还没写邮件</span>';
+    if (s.toSend>0)  html += '<span class="pill send"><i class="ti ti-mail-forward"></i>'+s.toSend+' 封写好了还没发</span>';
+    if (s.sent>0)    html += '<span class="pill done"><i class="ti ti-checks"></i>'+s.sent+' 已发送</span>';
+    if (pending>0)   html += '<span class="hint">— 去「邮件获客」写、去「邮件发送」发</span>';
+    else if (s.sent>0) html += '<span class="hint">这个产品的线索都处理完了 👍</span>';
+    b.innerHTML = html; b.style.display = html ? 'flex' : 'none';
+  }
+
+  function renderFilters(s){
+    const chips = [
+      ['all','全部', s.total],
+      ['towrite','待写邮件', s.toWrite],
+      ['tosend','待发送', s.toSend],
+      ['sent','已发送', s.sent],
+    ];
+    document.getElementById('filters').innerHTML = chips.map(([k,lbl,n])=>
+      '<span class="chip'+(k===_curFilter?' on':'')+'" data-f="'+k+'">'+lbl+'<span class="c">'+(n||0)+'</span></span>'
+    ).join('');
+    document.querySelectorAll('#filters .chip').forEach(el=> el.addEventListener('click', ()=>{
+      _curFilter = el.dataset.f;
+      document.querySelectorAll('#filters .chip').forEach(x=>x.classList.toggle('on', x.dataset.f===_curFilter));
+      renderLeadList();
     }));
   }
 
-  function showSeq(l){
-    document.getElementById('pTitle').textContent = l.company_name || '邮件序列';
-    document.getElementById('pSub').textContent = (l.email||'') + (l.email_framework_key?(' · 框架 '+l.email_framework_key):'');
+  function renderLeadList(){
+    const box = document.getElementById('leadList');
+    const leads = ((_pipeCache[_curPid]||{}).leads)||[];
+    const shown = leads.filter(l=> _curFilter==='all' ? true : statusOf(l)===_curFilter);
+    if (!shown.length){
+      box.innerHTML = '<div class="empty" style="padding:24px 6px;font-size:.76rem"><i class="ti ti-inbox"></i>'+(leads.length?'这个筛选下没有线索':'这个产品还没有爬到线索')+'</div>';
+      return;
+    }
+    box.innerHTML = shown.map((l,i)=>{
+      const st = statusOf(l);
+      const tagTxt = st==='sent' ? ('已发 '+sentDate(l)) : STATUS_LABEL[st];
+      return '<div class="item" data-i="'+i+'">'
+        + '<div class="ci"><i class="ti ti-building"></i></div>'
+        + '<div class="meta"><div class="nm">'+(esc(l.company_name)||'—')+'</div><div class="sub">'+(esc(l.email)||'无邮箱')+'</div></div>'
+        + '<span class="stag '+st+'">'+tagTxt+'</span></div>';
+    }).join('');
+    box.querySelectorAll('.item').forEach(el=> el.addEventListener('click', ()=>{
+      box.querySelectorAll('.item').forEach(x=>x.classList.remove('on')); el.classList.add('on');
+      showLead(shown[+el.dataset.i]);
+    }));
+  }
+
+  function renderOverview(pname, s){
+    document.getElementById('pTitle').textContent = (pname||'产品') + ' · 进度总览';
+    document.getElementById('pSub').textContent = '选中间的线索看它的邮件；下面是这个产品的整体进度';
+    const pending = (s.toWrite||0)+(s.toSend||0);
+    let note;
+    if (!s.total) note = '<i class="ti ti-info-circle"></i>这个产品还没有爬到线索。去「邮件获客」搜一批客户回来吧。';
+    else if (pending===0) note = '<i class="ti ti-circle-check"></i><b>都处理完了。</b>这个产品的线索都已经写好并发送。';
+    else {
+      note = '<i class="ti ti-bell"></i><b>还有 '+pending+' 条线索要处理：</b>';
+      if (s.toWrite>0) note += '<span class="lead-hint">· <b style="color:var(--warn)">'+s.toWrite+' 条</b>收了还没写邮件 —— 去「邮件获客」引入这个产品、把它们写出来</span>';
+      if (s.toSend>0)  note += '<span class="lead-hint">· <b style="color:var(--send)">'+s.toSend+' 封</b>写好了还没发 —— 去「邮件发送」发出去</span>';
+      note += '<div style="margin-top:4px">';
+      if (s.toWrite>0) note += navBtn('邮件获客','去写这批邮件','ti-pencil')+' ';
+      if (s.toSend>0)  note += navBtn('邮件发送','去发送','ti-send');
+      note += '</div>';
+    }
+    document.getElementById('seq').innerHTML =
+      '<div class="ov">'
+      + '<div class="ov-row">'
+      + '<div class="ov-card"><div class="v">'+(s.total||0)+'</div><div class="l">总线索</div></div>'
+      + '<div class="ov-card warn"><div class="v">'+(s.toWrite||0)+'</div><div class="l">待写邮件</div></div>'
+      + '<div class="ov-card send"><div class="v">'+(s.toSend||0)+'</div><div class="l">待发送</div></div>'
+      + '<div class="ov-card done"><div class="v">'+(s.sent||0)+'</div><div class="l">已发送</div></div>'
+      + '</div>'
+      + '<div class="ov-note">'+note+'</div>'
+      + '</div>';
+  }
+
+  function showLead(l){
+    const st = statusOf(l);
+    document.getElementById('pTitle').textContent = l.company_name || '线索';
+    const badge = st==='sent' ? (' · 已发送 '+sentDate(l)) : (st==='tosend' ? ' · 写好待发' : ' · 待写邮件');
+    document.getElementById('pSub').textContent = (l.email||'无邮箱') + (l.email_framework_key?(' · 框架 '+l.email_framework_key):'') + badge;
+    const seq = document.getElementById('seq');
+
+    if (st==='towrite'){
+      seq.innerHTML = '<div class="callout"><i class="ti ti-mail-off"></i><b>这条线索还没写开发邮件。</b><br>去「邮件获客」引入这个产品，把这条（和其它待写的）线索一起写出来，就会出现在这里。<br>'+navBtn('邮件获客','去邮件获客写','ti-pencil')+'</div>';
+      return;
+    }
     let html='';
     for (let i=1;i<=5;i++){
       const subj=l['email'+i+'_subject'], body=l['email'+i+'_body'];
@@ -149,7 +309,14 @@
         + '<i class="ti ti-chevron-right chev"></i></div>'
         + '<div class="mail-b">'+(esc(body)||'(无正文)')+'</div></div>';
     }
-    document.getElementById('seq').innerHTML = html || '<div class="empty">这条线索没有邮件正文</div>';
+    const top = st==='tosend'
+      ? '<div class="callout"><i class="ti ti-mail-forward"></i><b>这套邮件写好了，还没发送。</b>去「邮件发送」把它发出去。<br>'+navBtn('邮件发送','去邮件发送','ti-send')+'</div>'
+      : '<div class="callout"><i class="ti ti-checks"></i><b>已发送</b>（'+sentDate(l)+'）。下面是发给这家客户的整套开发邮件。</div>';
+    // 打开率 / 发送进度占位——数据来自 Instantly（定时发信 + 打开追踪），接好后填充这里。
+    const insBox = '<div class="callout" style="border-style:dashed">'
+      + '<i class="ti ti-chart-line"></i><b>发送进度 & 打开率</b> —— 这家客户发到第几封、有没有打开，'
+      + '来自 Instantly（定时发信平台）。<b style="color:var(--send)">接入中</b>，接好后显示在这里。</div>';
+    seq.innerHTML = top + insBox + (html || '<div class="empty">这条线索没有邮件正文</div>');
   }
 
   if (token) loadCats();

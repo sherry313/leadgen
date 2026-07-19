@@ -11,7 +11,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany, searchWebsite, scrapeHtml } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getProductAllLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -1623,6 +1623,21 @@ app.get('/api/products/:id/leads', requireAuth, async (req, res) => {
   const { profile, leads } = await getProductSentLeads(req.params.id, req.userId);
   if (!profile) return res.status(404).json({ success: false, error: '产品不存在' });
   res.json({ success: true, name: profile.name, leads });
+});
+
+// 「邮件管理」状态提醒：产品全部线索（不限已发）+ 三态汇总。
+// 待写邮件 = 没写过开发信；待发送 = 写好了但没发；已发送 = email_sent_at 有值。
+app.get('/api/products/:id/pipeline', requireAuth, async (req, res) => {
+  const { profile, leads } = await getProductAllLeads(req.params.id, req.userId);
+  if (!profile) return res.status(404).json({ success: false, error: '产品不存在' });
+  const written = l => !!((l.email1_subject && String(l.email1_subject).trim()) || (l.email1_body && String(l.email1_body).trim()));
+  let toWrite = 0, toSend = 0, sent = 0;
+  for (const l of leads) {
+    if (l.email_sent_at) sent++;
+    else if (written(l)) toSend++;
+    else toWrite++;
+  }
+  res.json({ success: true, name: profile.name, leads, summary: { total: leads.length, toWrite, toSend, sent } });
 });
 
 // ── 产品客户表 → Excel 客户表（.xlsx 下载，样式化表格） ──────────────────────

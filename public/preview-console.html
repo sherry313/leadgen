@@ -280,7 +280,7 @@
 
     <div class="grp">转化工具</div>
     <div class="ni" data-view="dev" data-t="客户管理"><i class="ti ti-users"></i> 客户管理 <span class="st on"></span></div>
-    <div class="ni" data-view="dev" data-t="邮件管理"><i class="ti ti-mail"></i> 邮件管理 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="邮件线索管理"><i class="ti ti-mail"></i> 邮件线索管理 <span class="st on"></span></div>
     <div class="ni" data-view="send"><i class="ti ti-send"></i> 邮件发送 <span class="st on"></span></div>
     <div class="ni" data-view="dev" data-t="模板管理"><i class="ti ti-template"></i> 模板管理 <span class="st on"></span></div>
     <div class="ni" data-view="dev" data-t="产品管理"><i class="ti ti-package"></i> 产品管理 <span class="st on"></span></div>
@@ -335,8 +335,8 @@
       <div class="kpis" style="margin-top:0">
         <div class="kpi"><div class="t">总客户数 <i class="ti ti-users"></i></div><div class="v" id="kpiCustomers">—</div><div class="d">累计客户</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,24 20,22 40,23 60,16 80,18 100,11 120,7 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,24 20,22 40,23 60,16 80,18 100,11 120,7" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
         <div class="kpi"><div class="t">邮件发送 <i class="ti ti-mail"></i></div><div class="v" id="kpiEmails">—</div><div class="d">累计发出</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,25 20,23 40,20 60,21 80,14 100,12 120,6 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,25 20,23 40,20 60,21 80,14 100,12 120,6" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
-        <div class="kpi"><div class="t">产品品类 <i class="ti ti-package"></i></div><div class="v" id="kpiProducts">—</div><div class="d">已保存产品</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,18 20,20 40,15 60,17 80,13 100,14 120,10 120,30" fill="rgba(110,231,183,0.12)"/><polyline points="0,18 20,20 40,15 60,17 80,13 100,14 120,10" fill="none" stroke="#6ee7b7" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
-        <div class="kpi"><div class="t">累计搜索 <i class="ti ti-search"></i></div><div class="v" id="kpiSearches">—</div><div class="d">历史搜索次数</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,22 20,23 40,20 60,21 80,18 100,19 120,15 120,30" fill="rgba(110,231,183,0.12)"/><polyline points="0,22 20,23 40,20 60,21 80,18 100,19 120,15" fill="none" stroke="#6ee7b7" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">发送率 <i class="ti ti-send"></i></div><div class="v" id="kpiSendRate" style="font-size:19px;color:var(--tx3)">接入中</div><div class="d">接 Instantly 后显示</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polyline points="0,20 20,20 40,20 60,20 80,20 100,20 120,20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">打开率 <i class="ti ti-eye"></i></div><div class="v" id="kpiOpenRate" style="font-size:19px;color:var(--tx3)">接入中</div><div class="d">接 Instantly 后显示</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polyline points="0,20 20,20 40,20 60,20 80,20 100,20 120,20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
       </div>
 
       <div class="qs-h" style="margin:28px 0 12px">获客转化</div>
@@ -518,7 +518,7 @@
   // 已上线功能 → 用 iframe 嵌进右边（仅导航，不改目标页/API）
   const HREF = {
     '邮件获客':'/flow', '社媒自动发帖':'/autopost', '客户管理':'/customers.html',
-    '邮件管理':'/emails.html', '模板管理':'/templates.html', '产品管理':'/products.html',
+    '邮件线索管理':'/emails.html', '模板管理':'/templates.html', '产品管理':'/products.html',
     'DNS 记录生成器':'/tools/dns-generator.html', 'Spam 敏感词检查':'/tools/spam-word-checker.html',
     '定价 / 套餐':'/pricing.html'
   };
@@ -564,6 +564,18 @@
     enterConsole();
     openFrame(decodeURIComponent(location.hash.slice(3)));
   }
+
+  // 子页面（如「邮件线索管理」的"继续下一步"按钮）请求切到某菜单：
+  // iframe 里 postMessage({type:'console-nav', target:'邮件获客'|'邮件发送'|...}) → 这里找到并点击对应菜单。
+  window.addEventListener('message', function(e){
+    var d = e && e.data;
+    if(!d || d.type!=='console-nav' || !d.target) return;
+    var target = String(d.target);
+    var el = Array.prototype.find.call(document.querySelectorAll('.ni'), function(n){
+      return n.dataset.t===target || (n.textContent||'').indexOf(target)>=0;
+    });
+    if(el) el.click();
+  });
 
   // ── 邮件发送设置：与「邮件获客」流程共用同一份本地配置（填一次，两处通用）───────────
   // 读写的 localStorage 键与 index.html 发送步骤完全一致，因此这里填/存后，流程跑到
@@ -711,16 +723,11 @@
       if(j.createdAt){ var d=new Date(j.createdAt); setTxt('accJoin', (j.isAdmin?'管理员 · ':'')+d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 注册'); }
     }).catch(function(){});
 
-    fetch('/api/products',{headers:H}).then(function(r){return r.json();}).then(function(j){
-      if(j&&j.success) setTxt('kpiProducts', (j.profiles||[]).length);
-    }).catch(function(){});
-
     fetch('/api/history',{headers:H}).then(function(r){return r.json();}).then(function(j){
       if(!j||!j.success) return;
       var hist=j.history||[], ss=j.sentStats||{};
       setTxt('kpiCustomers', ss.customers!=null?ss.customers:0);
       setTxt('kpiEmails', ss.emails!=null?ss.emails:0);
-      setTxt('kpiSearches', hist.length);
       if(j.quotaUsd!=null){ setTxt('accQuotaLeft', '$'+Math.max(0,j.quotaUsd-(j.spentUsd||0)).toFixed(2)); setTxt('accQuotaUsed', '$'+(j.spentUsd||0).toFixed(2)); }
       var scan=hist.reduce(function(s,r){return s+(r.total_scraped||0);},0);
       var qual=hist.reduce(function(s,r){return s+(r.total_qualified||0);},0);
