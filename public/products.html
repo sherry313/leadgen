@@ -90,13 +90,16 @@
     document.getElementById('grid').innerHTML = _products.map(p=>{
       const on = String(p.id)===String(act);
       const n = p.customers || 0;
+      const hs = (p.data && p.data.hsCode) || '';
       return '<div class="prod'+(on?' active':'')+'">'
         + (on?'<span class="badge">使用中</span>':'')
         + '<div class="ico"><i class="ti ti-package"></i></div>'
         + '<div class="nm">'+(esc(p.name)||'未命名产品')+'</div>'
         + '<div class="st">客户 '+n+' 位</div>'
+        + '<div class="st">HS 编码: '+(hs?('<b style="color:var(--ac2)">'+esc(hs)+'</b>'):'<span style="color:var(--tx3)">未设置</span>')+'</div>'
         + '<div class="acts">'
         + (on?'<button class="b" disabled style="opacity:.5">使用中</button>':'<button class="b use" onclick="useProduct(\''+esc(p.id)+'\')"><i class="ti ti-check"></i> 使用</button>')
+        + '<button class="b" onclick="setHs(\''+esc(p.id)+'\')"><i class="ti ti-barcode"></i> HS 编码</button>'
         + '<button class="b" onclick="renameProduct(\''+esc(p.id)+'\')"><i class="ti ti-edit"></i> 改名</button>'
         + '<button class="b del" onclick="delProduct(\''+esc(p.id)+'\')"><i class="ti ti-trash"></i> 删除</button>'
         + '</div></div>';
@@ -130,6 +133,28 @@
       const d = await r.json(); if(!d.success) throw new Error(d.error||'删除失败');
       _products = _products.filter(x=>String(x.id)!==String(id)); render(); toast('已删除');
     }catch(e){ toast('删除失败：'+e.message); }
+  }
+
+  async function setHs(id){
+    const p = _products.find(x=>String(x.id)===String(id)); if(!p) return;
+    const cur = (p.data && p.data.hsCode) || '';
+    toast('AI 正在推荐 HS 编码…');
+    let suggest = cur, note = '';
+    try{
+      const desc = (p.data && p.data.product) || p.name || '';
+      const r = await fetch('/api/recommend-hs', { method:'POST', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ product: desc }) });
+      const d = await r.json();
+      if(d.success && d.hsCode){ suggest = d.hsCode; note = d.note||''; }
+    }catch(e){}
+    const val = prompt('海关编码 HS'+(note?('（AI 推荐:'+note+'）'):'')+'\n可修改后确定；清空则不设:', suggest);
+    if(val==null) return;
+    const hs = val.trim();
+    try{
+      const newData = Object.assign({}, p.data||{}, { hsCode: hs });
+      const r = await fetch('/api/products/'+encodeURIComponent(id), { method:'PATCH', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ data: newData }) });
+      const d2 = await r.json(); if(!d2.success) throw new Error(d2.error||'保存失败');
+      p.data = newData; render(); toast(hs?('HS 编码已保存: '+hs):'HS 编码已清空');
+    }catch(e){ toast('保存失败：'+e.message); }
   }
 
   async function addProduct(){

@@ -2650,7 +2650,7 @@
   // an unauthenticated visitor never sees the app shell.
   (function () {
     var p = location.pathname;
-    if (p !== '/app' && p !== '/lens') return;
+    if (p !== '/app' && p !== '/lens' && p !== '/flow') return;  // /flow = 控制台里嵌入的获客流程（迁移阶段1）
     var hasToken = false;
     try {
       var s = localStorage.getItem('leadgen_supabase_session');
@@ -9740,7 +9740,7 @@ function _showRefreshWarning(panel) {
 (function() {
   const token = localStorage.getItem('leadgen_accessToken');
   if (!token || !token.trim()) {
-    window.location.href = location.pathname === '/app' ? '/login.html?redirect=/app' : '/login.html';
+    window.location.href = (location.pathname === '/app' || location.pathname === '/flow') ? '/login.html?redirect=/app' : '/login.html';
   }
 })();
 
@@ -9751,6 +9751,20 @@ if (agreeBox) agreeBox.checked = true;
 updateLoginStatus();
 checkAdminAndShow();
 setTimeout(_restoreStep, 0);     // deferred: restores in-progress session after init
+
+// /flow（控制台嵌入的获客流程）：自动模式已删，全新进入直接走手动，跳过"选择运行模式"小屏。
+// 只在真正全新进入时触发——有进行中会话(current_step>1)或深链(?search/?query)时不干预。
+setTimeout(function () {
+  if (location.pathname !== '/flow') return;
+  var _p = new URLSearchParams(location.search);
+  if (_p.get('search') || _p.get('query')) return;
+  var _st = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
+  if (_st > 1 && _st <= 4) return;
+  var _ms = document.getElementById('appModeSelect');
+  if (!_ms || _ms.style.display === 'none') return;
+  if (typeof appSelectMode === 'function') appSelectMode('manual');
+  if (typeof appConfirmMode === 'function') appConfirmMode();
+}, 80);
 // /app: re-enter auto mode after a refresh (runs AFTER _restoreStep so the auto
 // panel wins over any manual-wizard restore). Manual keeps today's behavior.
 setTimeout(function () {

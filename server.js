@@ -32,7 +32,8 @@ const sendHtml = (res, ...parts) => {
 };
 
 app.get('/',            (req, res) => sendHtml(res, 'home.html'));
-app.get('/app',         (req, res) => sendHtml(res, 'index.html'));
+app.get('/app',         (req, res) => sendHtml(res, 'preview-console.html')); // 控制台 = /app 新门面（迁移阶段1）
+app.get('/flow',        (req, res) => sendHtml(res, 'index.html'));          // 现有获客流程，被控制台「邮件获客」iframe 嵌入
 app.get('/lens',        (req, res) => sendHtml(res, 'index.html'));
 app.get('/account',     (req, res) => sendHtml(res, 'account.html'));
 app.get('/autopost',    (req, res) => sendHtml(res, 'autopost.html'));
@@ -1803,6 +1804,32 @@ app.delete('/api/products/:id', requireAuth, async (req, res) => {
   const ok = await deleteProductProfile(req.params.id, req.userId);
   if (!ok) return res.status(500).json({ success: false, error: '删除失败' });
   res.json({ success: true });
+});
+
+// ── AI 推荐海关编码 HS code ────────────────────────────────────────────────────
+// 产品描述 → Haiku → 品类级 HS 编码(4-6位,够搜海关线索找进口商)。前端存进产品 data.hsCode。
+app.post('/api/recommend-hs', requireAuth, async (req, res) => {
+  const product = (req.body?.product || '').toString().trim().slice(0, 200);
+  if (!product) return res.status(400).json({ success: false, error: 'product required' });
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 150,
+      messages: [{
+        role: 'user',
+        content: `产品:"${product}"。给出这个产品最可能的海关 HS 编码(国际协调制度 Harmonized System，取 4-6 位品类级即可，用于海关数据检索找进口商)。只返回 JSON，不要多余文字:{"hsCode":"XXXX.XX","note":"品类简述(10字内)"}`,
+      }],
+    }), 30000, 'HS recommend');
+    const text = (response.content?.[0]?.text || '').trim();
+    let out = {};
+    try { out = JSON.parse((text.match(/\{[\s\S]*\}/) || ['{}'])[0]); } catch (_) {}
+    res.json({ success: true, hsCode: out.hsCode || '', note: out.note || '' });
+  } catch (e) {
+    console.error('[HS] recommend error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 // ── DIAG: client-side log relay ──────────────────────────────────────────────

@@ -309,7 +309,7 @@
   <div class="main">
     <div class="topbar">
       <button class="menu-btn" id="menuBtn" aria-label="打开侧边栏"><i class="ti ti-menu-2"></i></button>
-      <span class="flag">临时预览 · /preview-console.html</span>
+      <span class="flag">智拓客 · 控制台</span>
       <span class="sp"></span>
       <button class="btn"><i class="ti ti-player-play"></i> 找客户演示</button>
       <button class="btn up"><i class="ti ti-crown"></i> 升级套餐</button>
@@ -333,31 +333,27 @@
 
       <div class="qs-h" style="margin:26px 0 12px">核心指标</div>
       <div class="kpis" style="margin-top:0">
-        <div class="kpi"><div class="t">总客户数 <i class="ti ti-users"></i></div><div class="v">118</div><div class="d">实时数据 · <b>本周 +12</b></div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,24 20,22 40,23 60,16 80,18 100,11 120,7 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,24 20,22 40,23 60,16 80,18 100,11 120,7" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
-        <div class="kpi"><div class="t">邮件发送 <i class="ti ti-mail"></i></div><div class="v">512</div><div class="d">累计 · <b>本周 +67</b></div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,25 20,23 40,20 60,21 80,14 100,12 120,6 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,25 20,23 40,20 60,21 80,14 100,12 120,6" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
-        <div class="kpi"><div class="t">邮件打开率 <i class="ti ti-trending-up"></i></div><div class="v">38%</div><div class="d">平均 · <b>+3%</b></div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,18 20,20 40,15 60,17 80,13 100,14 120,10 120,30" fill="rgba(110,231,183,0.12)"/><polyline points="0,18 20,20 40,15 60,17 80,13 100,14 120,10" fill="none" stroke="#6ee7b7" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
-        <div class="kpi"><div class="t">回复率 <i class="ti ti-message-2"></i></div><div class="v">9%</div><div class="d">平均 · <b>+1%</b></div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,22 20,23 40,20 60,21 80,18 100,19 120,15 120,30" fill="rgba(110,231,183,0.12)"/><polyline points="0,22 20,23 40,20 60,21 80,18 100,19 120,15" fill="none" stroke="#6ee7b7" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">总客户数 <i class="ti ti-users"></i></div><div class="v" id="kpiCustomers">—</div><div class="d">累计客户</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,24 20,22 40,23 60,16 80,18 100,11 120,7 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,24 20,22 40,23 60,16 80,18 100,11 120,7" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">邮件发送 <i class="ti ti-mail"></i></div><div class="v" id="kpiEmails">—</div><div class="d">累计发出</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,25 20,23 40,20 60,21 80,14 100,12 120,6 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,25 20,23 40,20 60,21 80,14 100,12 120,6" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">产品品类 <i class="ti ti-package"></i></div><div class="v" id="kpiProducts">—</div><div class="d">已保存产品</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,18 20,20 40,15 60,17 80,13 100,14 120,10 120,30" fill="rgba(110,231,183,0.12)"/><polyline points="0,18 20,20 40,15 60,17 80,13 100,14 120,10" fill="none" stroke="#6ee7b7" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">累计搜索 <i class="ti ti-search"></i></div><div class="v" id="kpiSearches">—</div><div class="d">历史搜索次数</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,22 20,23 40,20 60,21 80,18 100,19 120,15 120,30" fill="rgba(110,231,183,0.12)"/><polyline points="0,22 20,23 40,20 60,21 80,18 100,19 120,15" fill="none" stroke="#6ee7b7" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
       </div>
 
       <div class="qs-h" style="margin:28px 0 12px">获客转化</div>
       <div class="row2">
         <div class="box">
           <h3>获客漏斗</h3>
-          <div class="bs">从扫描到回复，每一步剩下多少</div>
+          <div class="bs">从扫描到发信，每一步剩下多少（真实数据）</div>
           <div class="funnel">
-            <div class="fn-row"><span class="lbl">扫描公司</span><div class="fn-track"><div class="fn-fill" style="width:100%"></div></div><span class="cnt">803</span></div>
-            <div class="fn-row"><span class="lbl">精准客户</span><div class="fn-track"><div class="fn-fill" style="width:38%"></div></div><span class="cnt">118<small>15%</small></span></div>
-            <div class="fn-row"><span class="lbl">已发开发信</span><div class="fn-track"><div class="fn-fill" style="width:35%"></div></div><span class="cnt">96<small>81%</small></span></div>
-            <div class="fn-row"><span class="lbl">已打开</span><div class="fn-track"><div class="fn-fill" style="width:23%"></div></div><span class="cnt">44<small>46%</small></span></div>
-            <div class="fn-row"><span class="lbl">已回复</span><div class="fn-track"><div class="fn-fill" style="width:11%"></div></div><span class="cnt">9<small>20%</small></span></div>
+            <div class="fn-row"><span class="lbl">扫描公司</span><div class="fn-track"><div class="fn-fill" id="fnScanFill" style="width:100%"></div></div><span class="cnt" id="fnScan">—</span></div>
+            <div class="fn-row"><span class="lbl">精准客户</span><div class="fn-track"><div class="fn-fill" id="fnCustFill" style="width:40%"></div></div><span class="cnt" id="fnCust">—</span></div>
+            <div class="fn-row"><span class="lbl">已发开发信</span><div class="fn-track"><div class="fn-fill" id="fnMailFill" style="width:30%"></div></div><span class="cnt" id="fnMail">—</span></div>
           </div>
         </div>
         <div class="box">
           <h3>最近搜索</h3>
           <div class="bs">你最近跑的几次获客</div>
-          <div class="act"><div class="ic"><i class="ti ti-search"></i></div><div><div class="nm">系统门窗 · 澳大利亚</div><div class="mt">新增 32 条线索</div></div><span class="tm">2 小时前</span></div>
-          <div class="act"><div class="ic"><i class="ti ti-search"></i></div><div><div class="nm">铝合金窗 · 美国</div><div class="mt">新增 28 条线索</div></div><span class="tm">昨天</span></div>
-          <div class="act"><div class="ic"><i class="ti ti-search"></i></div><div><div class="nm">不锈钢橱柜 · 加拿大</div><div class="mt">新增 19 条线索</div></div><span class="tm">3 天前</span></div>
+          <div id="dashRecent"><div class="act" style="color:var(--tx3);border:none">加载中…</div></div>
         </div>
       </div>
     </div>
@@ -365,22 +361,22 @@
     <!-- 个人中心（精简版：头像 + 关键数字 + 两个按钮） -->
     <div class="wrap hidden" id="view-account">
       <div class="ph">个人中心</div>
-      <div class="psub">你的账户 · 子账号 · 额度</div>
+      <div class="psub">你的账户与额度</div>
       <div class="acc-hero">
-        <div class="big">5</div>
+        <div class="big">U</div>
         <div>
-          <div class="nm">591472443@qq.com</div>
-          <div class="mt">管理员 · 2026年7月1日 注册</div>
+          <div class="nm" id="accEmail">—</div>
+          <div class="mt" id="accJoin">—</div>
         </div>
         <div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap">
           <button class="mini-btn"><i class="ti ti-lock"></i> 修改密码</button>
-          <button class="mini-btn danger"><i class="ti ti-logout"></i> 退出</button>
+          <button class="mini-btn danger" onclick="localStorage.removeItem('leadgen_supabase_session');localStorage.removeItem('leadgen_accessToken');location.href='/login.html'"><i class="ti ti-logout"></i> 退出</button>
         </div>
       </div>
       <div class="qs-h" style="margin:24px 0 12px">账户额度</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px">
-        <div class="kpi"><div class="t">剩余额度 <i class="ti ti-wallet"></i></div><div class="v">8,400</div><div class="d">当前套餐可用额度</div></div>
-        <div class="kpi"><div class="t">本月已用 <i class="ti ti-flame"></i></div><div class="v">1,600</div><div class="d">累计消耗</div></div>
+        <div class="kpi"><div class="t">剩余额度 <i class="ti ti-wallet"></i></div><div class="v" id="accQuotaLeft">—</div><div class="d">当前套餐可用额度</div></div>
+        <div class="kpi"><div class="t">本月已用 <i class="ti ti-flame"></i></div><div class="v" id="accQuotaUsed">—</div><div class="d">累计消耗</div></div>
       </div>
     </div>
 
@@ -507,19 +503,20 @@
   // /preview-console.html#c 就能进控制台外壳（这就是「没登录也直接进去了」的原因）。
   function requireLogin(){
     if(getStoredToken()) return true;
-    window.location.href = '/login.html?redirect=' + encodeURIComponent('/preview-console.html#c');
+    window.location.href = '/login.html?redirect=' + encodeURIComponent('/app');
     return false;
   }
 
   function startFind(){ if(requireLogin()) enterConsole(); }
 
+  // 显示封面/落地页；从登录页回来(#c)时自动进控制台。点封面「开始找寻你的客户」进入(内部查登录)。
   if(location.hash==='#c'){
     document.addEventListener('DOMContentLoaded', function(){ if(requireLogin()) enterConsole(); });
   }
 
   // 已上线功能 → 用 iframe 嵌进右边（仅导航，不改目标页/API）
   const HREF = {
-    '邮件获客':'/app', '社媒自动发帖':'/autopost', '客户管理':'/customers.html',
+    '邮件获客':'/flow', '社媒自动发帖':'/autopost', '客户管理':'/customers.html',
     '邮件管理':'/emails.html', '模板管理':'/templates.html', '产品管理':'/products.html',
     'DNS 记录生成器':'/tools/dns-generator.html', 'Spam 敏感词检查':'/tools/spam-word-checker.html',
     '定价 / 套餐':'/pricing.html'
@@ -612,8 +609,11 @@
     if(!btn) return;
     var empty=document.getElementById('csEmpty'), loading=document.getElementById('csLoading'), results=document.getElementById('csResults');
     btn.addEventListener('click', function(){
-      empty.classList.add('hidden'); results.classList.add('hidden'); loading.classList.remove('hidden');
-      setTimeout(function(){ loading.classList.add('hidden'); results.classList.remove('hidden'); }, 1200);
+      results.classList.add('hidden'); empty.classList.add('hidden'); loading.classList.remove('hidden');
+      setTimeout(function(){
+        loading.classList.add('hidden'); empty.classList.remove('hidden');
+        empty.innerHTML='<i class="ti ti-ship" style="font-size:30px;opacity:.45"></i><br><b style="color:var(--tx)">海关数据源正在接入中，即将开放</b><br><span style="font-size:12px">接好后：查进口商 → 自动补邮箱 → AI 筛选 → 合格进「海关来源」客户表。</span>';
+      }, 1000);
     });
     function mark(b){ if(b.classList.contains('done')) return; b.classList.add('done'); b.innerHTML='<i class="ti ti-check"></i> 已加入'; }
     document.querySelectorAll('#csResults .cs-add[data-row]').forEach(function(b){ b.addEventListener('click', function(){ mark(b); }); });
@@ -630,6 +630,50 @@
     var HS={ window:'7610.10', cabinet:'9403.60' };
     function render(){ var a=KW[sel.value]||[]; box.innerHTML=a.map(function(k){return '<span class="cs-kw">'+k+'</span>';}).join(''); if(hsBox) hsBox.textContent=HS[sel.value]||'—'; }
     sel.addEventListener('change', render); render();
+  })();
+
+  // 大盘 + 个人中心：接真实数据（替换演示数字；没数据显示空态/—）
+  (function(){
+    var tk = getStoredToken(); if(!tk) return;
+    var H = { 'Authorization':'Bearer '+tk };
+    function setTxt(id,v){ var e=document.getElementById(id); if(e!=null&&v!=null) e.textContent=v; }
+    function esc(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+    function ago(ts){ if(!ts) return ''; var d=(Date.now()-new Date(ts).getTime())/1000; if(d<3600) return Math.max(1,Math.round(d/60))+' 分钟前'; if(d<86400) return Math.round(d/3600)+' 小时前'; return Math.round(d/86400)+' 天前'; }
+
+    fetch('/api/me',{headers:H}).then(function(r){return r.json();}).then(function(j){
+      if(!j||!j.success) return;
+      if(j.email && j.email!=='legacy'){ setTxt('accEmail', j.email); var av=document.querySelector('#view-account .acc-hero .big'); if(av) av.textContent=(j.email[0]||'U').toUpperCase(); }
+      if(j.createdAt){ var d=new Date(j.createdAt); setTxt('accJoin', (j.isAdmin?'管理员 · ':'')+d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 注册'); }
+    }).catch(function(){});
+
+    fetch('/api/products',{headers:H}).then(function(r){return r.json();}).then(function(j){
+      if(j&&j.success) setTxt('kpiProducts', (j.profiles||[]).length);
+    }).catch(function(){});
+
+    fetch('/api/history',{headers:H}).then(function(r){return r.json();}).then(function(j){
+      if(!j||!j.success) return;
+      var hist=j.history||[], ss=j.sentStats||{};
+      setTxt('kpiCustomers', ss.customers!=null?ss.customers:0);
+      setTxt('kpiEmails', ss.emails!=null?ss.emails:0);
+      setTxt('kpiSearches', hist.length);
+      if(j.quotaUsd!=null){ setTxt('accQuotaLeft', '$'+Math.max(0,j.quotaUsd-(j.spentUsd||0)).toFixed(2)); setTxt('accQuotaUsed', '$'+(j.spentUsd||0).toFixed(2)); }
+      var scan=hist.reduce(function(s,r){return s+(r.total_scraped||0);},0);
+      var qual=hist.reduce(function(s,r){return s+(r.total_qualified||0);},0);
+      var mail=ss.emails!=null?ss.emails:0, mx=Math.max(scan,qual,mail,1), f;
+      setTxt('fnScan',scan); setTxt('fnCust',qual); setTxt('fnMail',mail);
+      if(f=document.getElementById('fnScanFill')) f.style.width='100%';
+      if(f=document.getElementById('fnCustFill')) f.style.width=Math.max(6,Math.round(qual/mx*100))+'%';
+      if(f=document.getElementById('fnMailFill')) f.style.width=Math.max(6,Math.round(mail/mx*100))+'%';
+      var box=document.getElementById('dashRecent');
+      if(box){
+        if(!hist.length){ box.innerHTML='<div class="act" style="color:var(--tx3);border:none">还没有搜索记录 —— 去「邮件获客」跑一次</div>'; }
+        else{ box.innerHTML=hist.slice(0,4).map(function(h){
+          var nm=(h.product_label||h.query||'搜索')+(h.location?(' · '+h.location):'');
+          var lc=(h.total_scraped!=null?h.total_scraped:(h.sent_count||0));
+          return '<div class="act"><div class="ic"><i class="ti ti-search"></i></div><div><div class="nm">'+esc(nm)+'</div><div class="mt">'+lc+' 条线索</div></div><span class="tm">'+ago(h.created_at)+'</span></div>';
+        }).join(''); }
+      }
+    }).catch(function(){});
   })();
 
 </script>
