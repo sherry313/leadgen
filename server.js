@@ -1631,13 +1631,18 @@ app.get('/api/products/:id/pipeline', requireAuth, async (req, res) => {
   const { profile, leads, searches } = await getProductAllLeads(req.params.id, req.userId);
   if (!profile) return res.status(404).json({ success: false, error: '产品不存在' });
   const written = l => !!((l.email1_subject && String(l.email1_subject).trim()) || (l.email1_body && String(l.email1_body).trim()));
-  let toWrite = 0, toSend = 0, sent = 0;
+  // 筛选口径：'pass'→通过；'fail'→没过；数字→>=5 通过；空/未知→还没筛(null)。
+  const passed = v => { v = String(v==null?'':v).trim().toLowerCase(); if(v==='pass') return true; if(v==='fail') return false; const n = parseFloat(v); if(!isNaN(n)) return n>=5; return null; };
+  let toFilter = 0, toWrite = 0, toSend = 0, sent = 0, excluded = 0;
   for (const l of leads) {
-    if (l.email_sent_at) sent++;
-    else if (written(l)) toSend++;
-    else toWrite++;
+    if (l.email_sent_at) { sent++; continue; }           // 已发送
+    if (written(l)) { toSend++; continue; }               // 写好了、待发送
+    const p = passed(l.icp_score);
+    if (p === true) toWrite++;                            // 筛过通过、待写
+    else if (p === false) excluded++;                    // 筛过没通过、不合格
+    else toFilter++;                                     // 还没筛、待筛选
   }
-  res.json({ success: true, name: profile.name, leads, searches: searches || [], summary: { total: leads.length, toWrite, toSend, sent } });
+  res.json({ success: true, name: profile.name, leads, searches: searches || [], summary: { total: leads.length, toFilter, toWrite, toSend, sent, excluded } });
 });
 
 // ── 产品客户表 → Excel 客户表（.xlsx 下载，样式化表格） ──────────────────────

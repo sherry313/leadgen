@@ -682,7 +682,7 @@ async function getProductAllLeads(productId, userId) {
     if (userId && userId !== 'legacy') sq = sq.eq('user_id', userId);
     const { data: searches } = await sq;   // 失败容错：下面用 (searches||[])
     let lq = db.from('leads')
-      .select('id, company_name, website, email, phone, city, icp_score, email_sent_at, search_id, created_at, email_framework_key, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body')
+      .select('id, company_name, website, email, phone, city, icp_score, icp_reasoning, email_sent_at, search_id, created_at, email_framework_key, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body')
       .in('search_id', ids)
       .order('created_at', { ascending: false });
     if (userId && userId !== 'legacy') lq = lq.eq('user_id', userId);
