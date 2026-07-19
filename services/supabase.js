@@ -676,7 +676,11 @@ async function getProductAllLeads(productId, userId) {
     const { data: profile, error: pErr } = await q.single();
     if (pErr) throw pErr;
     const ids = Array.isArray(profile?.data?.searchIds) ? profile.data.searchIds : [];
-    if (!ids.length) return { profile, leads: [] };
+    if (!ids.length) return { profile, leads: [], searches: [] };
+    // 每批搜索的元信息（搜索词/地区/时间/爬取数）——用于按"每次收的线索"分组显示。
+    let sq = db.from('search_history').select('id, query, location, created_at, total_scraped').in('id', ids);
+    if (userId && userId !== 'legacy') sq = sq.eq('user_id', userId);
+    const { data: searches } = await sq;   // 失败容错：下面用 (searches||[])
     let lq = db.from('leads')
       .select('id, company_name, website, email, phone, city, icp_score, email_sent_at, search_id, created_at, email_framework_key, email1_subject, email1_body, email2_subject, email2_body, email3_subject, email3_body, email4_subject, email4_body, email5_subject, email5_body')
       .in('search_id', ids)
@@ -684,10 +688,10 @@ async function getProductAllLeads(productId, userId) {
     if (userId && userId !== 'legacy') lq = lq.eq('user_id', userId);
     const { data: leads, error: lErr } = await lq;
     if (lErr) throw lErr;
-    return { profile, leads: leads || [] };
+    return { profile, leads: leads || [], searches: searches || [] };
   } catch (err) {
     console.warn('[Supabase] getProductAllLeads failed:', err.message);
-    return { profile: null, leads: [] };
+    return { profile: null, leads: [], searches: [] };
   }
 }
 

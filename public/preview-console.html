@@ -568,13 +568,17 @@
   // 子页面（如「邮件线索管理」的"继续下一步"按钮）请求切到某菜单：
   // iframe 里 postMessage({type:'console-nav', target:'邮件获客'|'邮件发送'|...}) → 这里找到并点击对应菜单。
   window.addEventListener('message', function(e){
-    var d = e && e.data;
-    if(!d || d.type!=='console-nav' || !d.target) return;
-    var target = String(d.target);
-    var el = Array.prototype.find.call(document.querySelectorAll('.ni'), function(n){
-      return n.dataset.t===target || (n.textContent||'').indexOf(target)>=0;
-    });
-    if(el) el.click();
+    var d = e && e.data; if(!d) return;
+    function findNi(t){ return Array.prototype.find.call(document.querySelectorAll('.ni'), function(n){ return n.dataset.t===t || (n.textContent||'').indexOf(t)>=0; }); }
+    // 简单切菜单
+    if(d.type==='console-nav' && d.target){ var el=findNi(String(d.target)); if(el) el.click(); return; }
+    // 继续处理某一批：打开「邮件获客」并深链载入该次搜索（/flow?search=<id>）
+    if(d.type==='console-open-search' && d.searchId){
+      openFrame('/flow?search=' + encodeURIComponent(String(d.searchId)));
+      var f=findNi('邮件获客');
+      if(f){ document.querySelectorAll('.ni').forEach(function(x){ x.classList.remove('on'); }); f.classList.add('on'); }
+      return;
+    }
   });
 
   // ── 邮件发送设置：与「邮件获客」流程共用同一份本地配置（填一次，两处通用）───────────
