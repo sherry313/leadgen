@@ -8623,19 +8623,11 @@ async function confirmBulkGenerate() {
   }
 }
 
-// DIAG: relay frontend trace to backend so it appears in `docker compose logs`.
-// Fire-and-forget; never blocks UI. Remove with the /api/diag/log endpoint
-// once the push bug is confirmed fixed.
+// DIAG: browser-console trace. The backend relay (/api/diag/log) was removed —
+// it was unauthenticated and let anyone flood the server logs. Open devtools
+// and filter on [DIAG] to see these; the 13 call sites are unchanged.
 function _diagLog(tag, data) {
   try { console.log('[DIAG]', tag, data); } catch (_) {}
-  try {
-    fetch('/api/diag/log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tag, data }),
-      keepalive: true,
-    }).catch(() => {});
-  } catch (_) {}
 }
 
 // Push the given list of {i, lead} pairs to Instantly, one by one.

@@ -201,11 +201,13 @@ async function saveLeads(searchId, leads, userId) {
 // UPDATE the 10 email columns + framework/template keys for one lead row.
 // Called fire-and-forget from /api/leads/generate-emails after each AI response.
 // Keyed on (search_id, company_name) — matches the pattern used by saveLeads INSERT.
-async function updateLeadEmails(searchId, companyName, emails, frameworkKey, templateKey) {
+// userId scopes the write to the owner: search_id is guessable, so without it any
+// authenticated user could overwrite another tenant's generated email bodies.
+async function updateLeadEmails(searchId, companyName, emails, frameworkKey, templateKey, userId) {
   const db = getClient();
   if (!db || !searchId || !companyName) return;
   try {
-    const { error } = await db
+    let q = db
       .from('leads')
       .update({
         email1_subject:      emails.EMAIL_1_SUBJECT || null,
@@ -223,6 +225,8 @@ async function updateLeadEmails(searchId, companyName, emails, frameworkKey, tem
       })
       .eq('search_id',    searchId)
       .eq('company_name', companyName);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { error } = await q;
     if (error) throw error;
     console.log(`[Supabase] Emails persisted for "${companyName}" (framework=${frameworkKey})`);
   } catch (err) {
@@ -248,13 +252,18 @@ async function getLeadById(id, userId) {
 // NOTE: only email_sent_at exists on leads — an email_sent_number column was
 // never added, and including it made this whole UPDATE fail silently
 // (the "已发邮件 always 0" bug). emailNumber is kept for logging only.
-async function updateEmailSent(id, emailNumber) {
+// userId scopes the write to the owner: the caller passes a client-supplied
+// lead_id, so without it any authenticated user could mark another tenant's
+// lead as sent by enumerating ids.
+async function updateEmailSent(id, emailNumber, userId) {
   const db = getClient();
   if (!db || !id) return;
   try {
-    const { error } = await db.from('leads')
+    let q = db.from('leads')
       .update({ email_sent_at: new Date().toISOString() })
       .eq('id', id);
+    if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+    const { error } = await q;
     if (error) throw error;
     console.log(`[Supabase] Lead ${id} marked email_sent: #${emailNumber}`);
   } catch (err) {

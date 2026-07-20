@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const { Document, Packer, Paragraph, TextRun, HeadingLevel } = require('docx');
@@ -17,9 +19,63 @@ const emailFrameworks = require('./services/emailFrameworks');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Behind one nginx/Docker hop on the VPS. Without this every client looks like
+// the proxy IP, so the rate limiter below would bucket all users together.
+app.set('trust proxy', 1);
+
+// Security headers. CSP is deliberately DISABLED: the frontend carries ~1,100
+// inline style= attributes and ~330 inline onclick= handlers, so any workable
+// policy would need script-src/style-src 'unsafe-inline' — which removes the
+// XSS protection that is the whole point. Enable it once those are extracted.
+// frameguard=sameorigin (not deny): preview-console.html embeds our own pages
+// in iframes (public/preview-console.html:524) and deny would blank the console.
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  frameguard: { action: 'sameorigin' },
+}));
+
+// CORS: the API is only ever called by our own pages, so lock it to those
+// origins instead of the previous wide-open cors(). Requests with no Origin
+// header (same-origin fetches, curl, server-to-server) are still allowed.
+const ALLOWED_ORIGINS = [
+  'https://ignightlead.com',
+  'https://www.ignightlead.com',
+  `http://localhost:${process.env.PORT || 3000}`,
+  'http://127.0.0.1:3000',
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    console.warn(`[CORS] blocked origin: ${origin}`);
+    return cb(null, false);
+  },
+}));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Global API rate limit. Generous on purpose — a single scrape run fires many
+// requests and SSE streams count once each; this is a flood backstop, not a
+// per-user quota (spend caps handle that separately).
+app.use('/api/', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '请求过于频繁，请稍后再试' },
+}));
+
+// Tight limit for the two static-password gates — they compare a header against
+// an env var with no lockout, so without this they are brute-forceable.
+const passwordGateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '尝试次数过多，请 15 分钟后再试' },
+});
 
 // Page routes — explicit handlers before static so '/' isn't captured by index.html default.
 // Helper: send an HTML page with no-cache headers so the browser / CDN always
@@ -751,7 +807,7 @@ app.post('/api/leads/generate-emails', requireAuth, async (req, res) => {
         // Fire-and-forget: persist emails to DB so they survive a page reload.
         // Wrapped in .catch so a DB failure never breaks the SSE stream.
         if (searchId) {
-          updateLeadEmails(searchId, company.companyName, emails, frameworkKey, template_key)
+          updateLeadEmails(searchId, company.companyName, emails, frameworkKey, template_key, req.userId)
             .catch(e => console.warn(`[EmailGen] DB persist failed for "${company.companyName}":`, e.message));
         }
       } catch (err) {
@@ -1029,7 +1085,7 @@ app.post('/api/auto/run', requireAuth, async (req, res) => {
             sonnetOut += emails.usage?.output_tokens || 0;
             Object.assign(company, emails, { emailTemplateKey: frameworkKey });
             if (company.EMAIL_1_SUBJECT || company.EMAIL_1_BODY) emailsGenerated++;
-            updateLeadEmails(searchId, company.companyName, emails, frameworkKey, templateKey)
+            updateLeadEmails(searchId, company.companyName, emails, frameworkKey, templateKey, req.userId)
               .catch(e => console.warn(`[Auto/Emails] DB persist failed for "${company.companyName}":`, e.message));
           } catch (err) {
             console.error(`[Auto/Emails] ${company.companyName}:`, err.message);
@@ -1360,7 +1416,7 @@ app.post('/api/auto/run-from-dataset', requireAuth, async (req, res) => {
             sonnetOut += emails.usage?.output_tokens || 0;
             Object.assign(company, emails, { emailTemplateKey: frameworkKey });
             if (company.EMAIL_1_SUBJECT || company.EMAIL_1_BODY) emailsGenerated++;
-            updateLeadEmails(searchId, company.companyName, emails, frameworkKey, templateKey)
+            updateLeadEmails(searchId, company.companyName, emails, frameworkKey, templateKey, req.userId)
               .catch(e => console.warn(`[AutoDataset/Emails] DB persist failed for "${company.companyName}":`, e.message));
           } catch (err) {
             console.error(`[AutoDataset/Emails] ${company.companyName}:`, err.message);
@@ -1853,17 +1909,10 @@ app.post('/api/recommend-hs', requireAuth, async (req, res) => {
   }
 });
 
-// ── DIAG: client-side log relay ──────────────────────────────────────────────
-// POST /api/diag/log  body: { tag, data }
-// Temporary endpoint to surface frontend push-flow events in docker logs.
-// Remove once push bug is confirmed fixed.
-app.post('/api/diag/log', async (req, res) => {
-  try {
-    const { tag, data } = req.body || {};
-    console.log(`[DIAG] ${tag || '?'}:`, JSON.stringify(data));
-  } catch (_) {}
-  res.json({ ok: true });
-});
+// ── DIAG: client-side log relay — REMOVED ────────────────────────────────────
+// POST /api/diag/log was an unauthenticated relay that console.log'd arbitrary
+// client input behind a 50mb body limit (log-flood / disk-fill vector). The
+// frontend _diagLog() now logs to the browser console only.
 
 // ── SMTP test connection ─────────────────────────────────────────────────────
 // POST /api/smtp/test  body: { smtpConfig: { host, port, user, pass, ... } }
@@ -2023,7 +2072,7 @@ app.post('/api/send-email', requireAuth, async (req, res) => {
   }
 
   console.log(`[SendEmail] Queued email #${email_number} to ${to_email} (${company_name || lead_id || '?'})`);
-  if (lead_id) await updateEmailSent(lead_id, email_number);
+  if (lead_id) await updateEmailSent(lead_id, email_number, req.userId);
   res.json({ success: true });
 });
 
@@ -2431,7 +2480,7 @@ app.get('/api/quote/products', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/admin/products', requireAdminPassword, async (req, res) => {
+app.post('/api/admin/products', passwordGateLimiter, requireAdminPassword, async (req, res) => {
   if (!_productsDb) return res.status(503).json({ success: false, error: 'supabase not configured' });
   const { type, id, price_cny } = req.body || {};
   if (!['product', 'adder'].includes(type) || !id || typeof price_cny !== 'number' || price_cny < 0) {
@@ -2466,7 +2515,7 @@ function _normalizeDomain(url) {
   catch { return ''; }
 }
 
-app.post('/api/import-leads', requireImportPassword, async (req, res) => {
+app.post('/api/import-leads', passwordGateLimiter, requireImportPassword, async (req, res) => {
   if (!_productsDb) return res.status(503).json({ success: false, error: 'supabase not configured' });
   const { rows, filename } = req.body || {};
   if (!Array.isArray(rows) || rows.length === 0) {
@@ -3473,7 +3522,7 @@ app.post('/api/generate-emails', requireAuth, async (req, res) => {
         );
         if (gen?.usage) { _giSonnetIn += gen.usage.input_tokens || 0; _giSonnetOut += gen.usage.output_tokens || 0; }
         // Persist so a reload / resume-from-history keeps the paid-for emails.
-        if (searchId && companyName) updateLeadEmails(searchId, companyName, gen, framework, null);
+        if (searchId && companyName) updateLeadEmails(searchId, companyName, gen, framework, null, req.userId);
 
         // Substitute template placeholders for all 5 emails before emitting.
         // {first_name} is best-effort: the first whitespace-delimited token of
@@ -4228,7 +4277,7 @@ ${emailSlots}
         emailCols[`EMAIL_${i + 1}_SUBJECT`] = e.subject || '';
         emailCols[`EMAIL_${i + 1}_BODY`]    = e.body || '';
       });
-      updateLeadEmails(req.body.searchId, companyName, emailCols, framework || null, null);
+      updateLeadEmails(req.body.searchId, companyName, emailCols, framework || null, null, req.userId);
     }
     res.json(parsed);
   } catch(e) {
