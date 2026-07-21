@@ -2322,6 +2322,112 @@ Rules:
   }
 });
 
+// ── Quote AI: import an existing quotation (Excel/CSV/PDF/image) → structured JSON,
+//    or edit the current quotation by a natural-language instruction. Used by /quote-lens.html.
+async function _quoteSpreadsheetText(file) {
+  const buf = Buffer.from(file.dataBase64, 'base64');
+  const name = (file.name || '').toLowerCase();
+  if (name.endsWith('.csv') || file.mime === 'text/csv') return buf.toString('utf8').slice(0, 16000);
+  const ExcelJS = require('exceljs');
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buf);
+  let out = '';
+  wb.worksheets.slice(0, 2).forEach(ws => {
+    ws.eachRow((row, rn) => { if (rn > 80) return; out += row.values.slice(1).map(v => (v == null ? '' : String(v))).join(' | ') + '\n'; });
+  });
+  return out.slice(0, 16000);
+}
+// Pull embedded product images out of an .xlsx, tagged with their anchor row so we can
+// map each photo to the right product line. Returns [{row, dataUrl}] sorted by row.
+async function _quoteExtractImages(file) {
+  try {
+    const buf = Buffer.from(file.dataBase64, 'base64');
+    const ExcelJS = require('exceljs');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    const media = wb.model && wb.model.media ? wb.model.media : [];
+    const out = [];
+    wb.worksheets.forEach(ws => {
+      const imgs = (typeof ws.getImages === 'function') ? ws.getImages() : [];
+      imgs.forEach(im => {
+        const m = (typeof wb.getImage === 'function' ? wb.getImage(im.imageId) : null) || media[im.imageId];
+        if (!m || !m.buffer) return;
+        if (m.buffer.length > 3_000_000) return; // skip huge
+        const tl = im.range && im.range.tl ? im.range.tl : {};
+        const row = (tl.nativeRow != null ? tl.nativeRow : (tl.row != null ? tl.row : 0));
+        const ext = (m.extension || 'png').replace('jpeg', 'jpg');
+        out.push({ row, dataUrl: `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${m.buffer.toString('base64')}` });
+      });
+    });
+    out.sort((a, b) => a.row - b.row);
+    return out;
+  } catch (e) { return []; }
+}
+const _QUOTE_SCHEMA = `Return a JSON object EXACTLY in this shape (fill what you find, leave unknown strings "" and unknown numbers 0):
+{"docType":"quote"|"pi",
+ "company":{"coName":"","coAddr":"","coContact":"","coPhone":"","coEmail":"","coWeb":""},
+ "customer":{"cuName":"","cuContact":"","cuAddr":"","cuCountry":"","cuTel":""},
+ "doc":{"quoteNo":"","qDate":"","validity":"","incoterm":"FOB","incoPlace":"","pol":"","pod":"","origin":"","ship":"Sea","curr":"USD","payment":"","lead":""},
+ "items":[{"name":"","model":"","hs":"","spec":"","size":"","color":"","pack":"","mode":"qty"|"area"|"weight"|"length","dimW":0,"dimH":0,"dimU":"mm","per":0,"qty":0,"unit":"pcs","price":0,"perCtn":0,"nw":0,"gw":0,"L":0,"W":0,"H":0}],
+ "bank":{"bkBene":"","bkName":"","bkSwift":"","bkAcct":"","bkAddr":""},
+ "notes":""}
+Rules: price is the unit price. If a line is priced by area use mode "area" and put per-piece area in "per" (m²) or width/height in dimW/dimH with dimU. Keep numbers as numbers. Output ONLY the JSON, no markdown, no comments.`;
+
+app.post('/api/quote/ai', requireAuth, async (req, res) => {
+  const mode = req.body?.mode === 'edit' ? 'edit' : 'parse';
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    let content;
+    let sheetImages = [];
+    if (mode === 'edit') {
+      const quote = req.body?.quote || {};
+      const instruction = (req.body?.instruction || '').trim();
+      if (!instruction) return res.status(400).json({ success: false, error: 'instruction required' });
+      content = [{ type: 'text', text: `Here is a quotation as JSON:\n${JSON.stringify(quote)}\n\nApply this change requested by the seller: "${instruction}"\n\n${_QUOTE_SCHEMA}\nReturn the FULL updated JSON (all fields, not just the changed ones).` }];
+    } else {
+      const file = req.body?.file;
+      const parts = [];
+      let extracted = (req.body?.text || '');
+      if (file && file.dataBase64) {
+        const mime = file.mime || '';
+        const nm = (file.name || '').toLowerCase();
+        if (/^image\//.test(mime)) {
+          parts.push({ type: 'image', source: { type: 'base64', media_type: mime, data: file.dataBase64 } });
+        } else if (mime === 'application/pdf' || nm.endsWith('.pdf')) {
+          parts.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: file.dataBase64 } });
+        } else if (/sheet|excel|csv/i.test(mime) || /\.(xlsx|xls|csv)$/i.test(nm)) {
+          extracted = await _quoteSpreadsheetText(file);
+          if (/\.xlsx$/i.test(nm) || /sheet/i.test(mime)) sheetImages = await _quoteExtractImages(file);
+        }
+      }
+      if (!parts.length && !extracted) return res.status(400).json({ success: false, error: 'no file content' });
+      parts.push({ type: 'text', text: `Extract this quotation / price list into structured data.${extracted ? '\n\nSpreadsheet content:\n' + extracted : ''}\n\n${_QUOTE_SCHEMA}` });
+      content = parts;
+    }
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-sonnet-4-6', max_tokens: 3000,
+      messages: [{ role: 'user', content }],
+    }), 90000, 'Quote AI');
+    let txt = (response.content.find(b => b.type === 'text')?.text || '').trim();
+    txt = txt.replace(/^```(?:json)?\s*/i, '').replace(/```$/,'').trim();
+    const first = txt.indexOf('{'), last = txt.lastIndexOf('}');
+    if (first >= 0 && last > first) txt = txt.slice(first, last + 1);
+    const quote = JSON.parse(txt);
+    // Map extracted spreadsheet images onto product lines (order by anchor row). If there's
+    // exactly one extra image, it's most likely a header logo → send it as quote.logo.
+    if (sheetImages.length && Array.isArray(quote.items) && quote.items.length) {
+      let imgs = sheetImages.slice();
+      if (imgs.length === quote.items.length + 1) { quote.logo = imgs[0].dataUrl; imgs = imgs.slice(1); }
+      quote.items.forEach((it, i) => { if (imgs[i] && !it.img) it.img = imgs[i].dataUrl; });
+    }
+    res.json({ success: true, quote });
+  } catch (e) {
+    console.error('[QuoteAI]', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // ── Instantly: Campaign management proxy routes ───────────────────────────────
 
 // GET  /api/instantly/campaigns — list all campaigns

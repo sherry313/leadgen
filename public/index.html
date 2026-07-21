@@ -2623,10 +2623,11 @@
      navAccount 的 display toggle 在下方 JS 里是 null-safe 的，无需改动。 -->
 <!-- ════════ /app MODE SELECTION (shown first; .container stays hidden until a mode is chosen) ════════ -->
 <div id="appModeSelect">
-  <!-- /flow：全新进入(step≤1)时模式屏直接走手动（见下方 80ms skip 块），这里在渲染前
-       就藏掉，避免「引入产品」reload 时闪一下这屏。有进行中任务(step>1)则不藏，交给
-       _restoreStep 恢复，绝不留空白。只影响 /flow，/lens 不动。 -->
-  <script>if(location.pathname==='/flow'){try{var _st0=parseInt(localStorage.getItem('leadgen_current_step')||'1',10);if(_st0<=1){var _m0=document.getElementById('appModeSelect');if(_m0)_m0.style.display='none';}}catch(e){}}</script>
+  <!-- /flow：只剩「手动」一个模式，「选择运行模式」这屏没有意义了——渲染前就无条件藏掉，
+       直接进手动模式界面。全新进入由下方 80ms 块挂表单；进行中任务由 _restoreStep 恢复面板、
+       80ms 块顺手把容器显出来；深链(继续处理 ?search=)由末尾深链块接管。绝不留空白，不闪这屏。
+       只影响 /flow，/lens 不动。 -->
+  <script>if(location.pathname==='/flow'){try{var _m0=document.getElementById('appModeSelect');if(_m0)_m0.style.display='none';}catch(e){}}</script>
   <div style="margin-bottom:8px; font-size:10px; color:#818cf8; letter-spacing:0.15em; text-transform:uppercase;">sys · cold outreach engine v2</div>
   <div style="font-size:22px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:4px;">选择运行模式</div>
   <div style="font-size:12px; color:var(--color-text-tertiary, rgba(255,255,255,0.35)); margin-bottom:24px;">选好之后填一次信息，剩下的交给系统</div>
@@ -9661,19 +9662,24 @@ updateLoginStatus();
 checkAdminAndShow();
 setTimeout(_restoreStep, 0);     // deferred: restores in-progress session after init
 
-// /flow（控制台嵌入的获客流程）：自动模式已删，全新进入直接走手动，跳过"选择运行模式"小屏。
-// 只在真正全新进入时触发——有进行中会话(current_step>1)或深链(?search/?query)时不干预。
+// /flow（控制台嵌入的获客流程）：只剩手动一个模式，「选择运行模式」屏已在渲染前藏掉，
+// 这里直接落到手动模式界面。深链(?search/?query)由末尾深链块接管，这里不插手。
 setTimeout(function () {
   if (location.pathname !== '/flow') return;
   var _p = new URLSearchParams(location.search);
   if (_p.get('search') || _p.get('query')) return;
-  var _st = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
-  if (_st > 1 && _st <= 4) return;
   var _ms = document.getElementById('appModeSelect');
-  if (!_ms) return;
-  // 注：/flow 上模式屏一开始就被内联脚本藏起来了（防闪），所以这里不再用
-  // "display==='none' 就跳过" 判断——那会导致表单永远不挂载。全新进入(step<=1、
-  // 非深链，前面已 return)时照常自动确认手动模式、挂出表单。
+  if (_ms) _ms.style.display = 'none';   // 保险：只有一个模式，永不显示"选择运行模式"
+  var _st = parseInt(localStorage.getItem('leadgen_current_step') || '1', 10);
+  if (_st > 1 && _st <= 4) {
+    // 进行中任务：_restoreStep(0ms) 已恢复对应面板，这里只需把容器显出来，别再 goToStep(1) 重置。
+    var _ct = document.querySelector('.container');
+    if (_ct) _ct.style.display = '';
+    window._appMode = 'manual';
+    if (typeof _appPlaceBusinessInfoCard === 'function') _appPlaceBusinessInfoCard('manual');
+    return;
+  }
+  // 全新进入：确认手动模式、挂出第一步表单。
   if (typeof appSelectMode === 'function') appSelectMode('manual');
   if (typeof appConfirmMode === 'function') appConfirmMode();
 }, 80);

@@ -1,0 +1,223 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SEO / GEO 获客 · 方案预览 — 智拓客</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#030303; --panel:#0a0a0c; --card:rgba(255,255,255,0.03); --card2:rgba(255,255,255,0.05);
+    --bd:rgba(255,255,255,0.08); --bd2:rgba(255,255,255,0.12);
+    --tx:#e5e7eb; --tx2:rgba(255,255,255,0.6); --tx3:rgba(255,255,255,0.35);
+    --ac:#6366f1; --ac2:#818cf8; --acbg:rgba(99,102,241,0.14);
+    --ok:#34d399; --okbg:rgba(52,211,153,0.12); --warn:#fbbf24; --warnbg:rgba(251,191,36,0.12); --bad:#f87171;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--tx); font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 22px 80px; }
+  .top{ position:sticky; top:0; z-index:20; background:rgba(3,3,3,0.85); backdrop-filter:blur(10px); border-bottom:1px solid var(--bd); }
+  .top-in{ max-width:1080px; margin:0 auto; padding:13px 22px; display:flex; align-items:center; gap:14px; }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:700; font-size:15px; }
+  .brand .logo{ width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,var(--ac),#a5b4fc); display:flex; align-items:center; justify-content:center; color:#fff; }
+  .demo-pill{ margin-left:auto; font-size:11px; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); padding:4px 10px; border-radius:99px; }
+
+  .hero{ padding:34px 0 8px; }
+  .hero h1{ font-size:26px; font-weight:650; letter-spacing:-0.01em; }
+  .hero p{ color:var(--tx2); font-size:14px; margin-top:9px; max-width:680px; }
+  .kbox{ display:flex; gap:12px; margin-top:18px; flex-wrap:wrap; }
+  .kb{ flex:1; min-width:220px; background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:15px 17px; }
+  .kb .kh{ font-size:13px; font-weight:650; display:flex; align-items:center; gap:8px; }
+  .kb .kh i{ color:var(--ac2); }
+  .kb p{ font-size:12.5px; color:var(--tx2); margin-top:7px; }
+
+  /* scanner */
+  .scan{ margin-top:26px; background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:20px 22px; }
+  .scan h3{ font-size:15px; display:flex; align-items:center; gap:8px; }
+  .scan .sub{ font-size:12.5px; color:var(--tx3); margin-top:5px; }
+  .scan-row{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .scan-row input{ flex:1; min-width:240px; background:var(--panel); border:1px solid var(--bd2); border-radius:10px; color:var(--tx); font-size:14px; font-family:inherit; padding:12px 14px; outline:none; }
+  .scan-row input:focus{ border-color:var(--ac); box-shadow:0 0 0 3px rgba(99,102,241,.14); }
+  .btn{ font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; border-radius:10px; padding:0 20px; border:1px solid var(--bd2); background:var(--card2); color:var(--tx); transition:.14s; display:inline-flex; align-items:center; gap:7px; }
+  .btn:hover{ background:rgba(255,255,255,.07); }
+  .btn.primary{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .btn.primary:hover{ background:#4f52e0; }
+
+  .report{ margin-top:20px; display:none; }
+  .report.show{ display:block; animation:fade .4s ease; }
+  @keyframes fade{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
+  .scores{ display:flex; gap:12px; flex-wrap:wrap; }
+  .score{ flex:1; min-width:200px; background:var(--panel); border:1px solid var(--bd); border-radius:12px; padding:16px 18px; }
+  .score .st{ font-size:12px; color:var(--tx3); display:flex; align-items:center; gap:6px; }
+  .ring{ --v:0; width:96px; height:96px; border-radius:50%; margin:12px auto 6px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800;
+    background:conic-gradient(var(--rc) calc(var(--v)*1%), rgba(255,255,255,0.07) 0); position:relative; }
+  .ring::before{ content:''; position:absolute; inset:9px; background:var(--panel); border-radius:50%; }
+  .ring span{ position:relative; }
+  .score .sl{ text-align:center; font-size:12px; color:var(--tx2); }
+
+  .checks{ margin-top:16px; }
+  .chk{ display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--bd); font-size:13px; }
+  .chk i{ margin-top:1px; font-size:17px; }
+  .chk .ok{ color:var(--ok); } .chk .warn{ color:var(--warn); } .chk .bad{ color:var(--bad); }
+  .chk .cx{ color:var(--tx3); font-size:12px; margin-top:2px; }
+  .chk b{ color:var(--tx); }
+
+  .win{ margin-top:18px; background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:16px 18px; }
+  .win h4{ font-size:13.5px; color:var(--ac2); display:flex; align-items:center; gap:7px; }
+  .win ul{ margin:10px 0 0 2px; list-style:none; }
+  .win li{ font-size:13px; color:var(--tx2); padding:5px 0 5px 22px; position:relative; }
+  .win li::before{ content:'\2713'; position:absolute; left:2px; color:var(--ac2); font-weight:700; }
+
+  .plans{ margin-top:40px; }
+  .plans h2{ font-size:20px; font-weight:650; }
+  .plans .psub{ color:var(--tx2); font-size:13.5px; margin-top:6px; }
+  .plan{ background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:20px 22px; margin-top:14px; }
+  .plan .ph{ display:flex; align-items:center; gap:12px; }
+  .plan .pn{ width:34px; height:34px; border-radius:9px; background:var(--acbg); color:var(--ac2); display:flex; align-items:center; justify-content:center; font-size:19px; }
+  .plan .pt{ font-size:16px; font-weight:650; }
+  .plan .ptag{ margin-left:auto; font-size:11px; padding:4px 10px; border-radius:99px; }
+  .ptag.easy{ color:var(--ok); background:var(--okbg); border:1px solid rgba(52,211,153,.3); }
+  .ptag.mid{ color:var(--warn); background:var(--warnbg); border:1px solid rgba(251,191,36,.3); }
+  .plan .pd{ font-size:13.5px; color:var(--tx2); margin-top:12px; line-height:1.65; }
+  .plan .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px; }
+  @media(max-width:680px){ .plan .grid{ grid-template-columns:1fr; } }
+  .plan .col h5{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--tx3); margin-bottom:7px; }
+  .plan .col li{ font-size:12.5px; color:var(--tx2); list-style:none; padding:3px 0 3px 18px; position:relative; }
+  .plan .col li::before{ content:'·'; position:absolute; left:5px; color:var(--ac2); font-weight:700; }
+  .foot{ text-align:center; color:var(--tx3); font-size:12px; padding:34px 0 0; }
+</style>
+
+<div class="top"><div class="top-in">
+  <div class="brand"><span class="logo"><i class="ti ti-world-search"></i></span> 智拓客 · SEO / GEO 获客</div>
+  <span class="demo-pill">方案预览 · 先体检，再看 3 个方案</span>
+</div></div>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>让买家在 Google 和 AI 回答里，先看到你</h1>
+    <p>SEO = 在 Google 搜索里排上去；<b style="color:var(--tx)">GEO</b>（Generative Engine Optimization）= 当买家问 ChatGPT / Perplexity / Google AI「谁家做铝合金门窗靠谱」时，AI 的回答里<b style="color:var(--tx)">点名推荐你</b>。这是 2025 年之后外贸获客的新入口。下面先给你的网站做个体检，再看我们能怎么做（3 个方案）。</p>
+    <div class="kbox">
+      <div class="kb"><div class="kh"><i class="ti ti-brand-google"></i> 传统 SEO</div><p>关键词、落地页、结构化数据、外链——让 Google 自然搜索带来询盘。</p></div>
+      <div class="kb"><div class="kh"><i class="ti ti-robot"></i> GEO（AI 引用）</div><p>让 AI 问答引擎抓得到、愿意引用你的内容，回答买家问题时报你的名字。</p></div>
+      <div class="kb"><div class="kh"><i class="ti ti-target-arrow"></i> 对你的价值</div><p>买家自己找上门，比冷邮件转化高。是「邮件获客」之外的第二条进水管。</p></div>
+    </div>
+  </div>
+
+  <!-- SCANNER -->
+  <div class="scan">
+    <h3><i class="ti ti-radar" style="color:var(--ac2)"></i> AI 可见性体检（体验版）</h3>
+    <div class="sub">输入任意网址，感受一下「体检报告」长什么样。正式版会真实抓取页面 + 查 AI 引用情况。</div>
+    <div class="scan-row">
+      <input id="dom" placeholder="例：www.lens-home.com" value="www.lens-home.com">
+      <button class="btn primary" onclick="scan()"><i class="ti ti-scan"></i> 开始体检</button>
+    </div>
+    <div class="report" id="report">
+      <div class="scores">
+        <div class="score"><div class="st"><i class="ti ti-brand-google"></i> 传统 SEO 得分</div>
+          <div class="ring" id="ringSeo" style="--rc:#818cf8"><span id="seoV">0</span></div><div class="sl" id="seoL"></div></div>
+        <div class="score"><div class="st"><i class="ti ti-robot"></i> GEO / AI 可见性</div>
+          <div class="ring" id="ringGeo" style="--rc:#34d399"><span id="geoV">0</span></div><div class="sl" id="geoL"></div></div>
+        <div class="score"><div class="st"><i class="ti ti-flame"></i> 综合机会分</div>
+          <div class="ring" id="ringOpp" style="--rc:#fbbf24"><span id="oppV">0</span></div><div class="sl" id="oppL"></div></div>
+      </div>
+      <div class="checks" id="checks"></div>
+      <div class="win"><h4><i class="ti ti-bolt"></i> 马上能做的 3 件事（示例）</h4><ul id="wins"></ul></div>
+    </div>
+  </div>
+
+  <!-- PLANS -->
+  <div class="plans">
+    <h2>怎么做 —— 3 个方案</h2>
+    <div class="psub">从最快见效、最省钱，到最系统。你挑一个（或组合），我来落地。</div>
+
+    <div class="plan">
+      <div class="ph"><span class="pn"><i class="ti ti-file-text"></i></span><span class="pt">方案 A · 内容 + GEO 工厂</span><span class="ptag easy">最快 · 不烧钱</span></div>
+      <div class="pd">用你已经有的 <b style="color:var(--tx)">Anthropic (Sonnet)</b>，围绕每个产品/HS 品类，批量生成 <b style="color:var(--tx)">买家问答文章 + FAQ + 结构化数据(Schema)</b>，这些正是 AI 问答引擎最爱抓取和引用的格式。发到你的站点，AI 回答相关问题时更可能点名你。</div>
+      <div class="grid">
+        <div class="col"><h5>做什么</h5>
+          <li>每个品类一篇「买家指南 / FAQ」，AI 友好结构</li>
+          <li>自动生成 FAQ Schema、Product Schema（JSON-LD）</li>
+          <li>英文为主，覆盖买家真实提问句式</li>
+          <li>一键发布到站点 / 导出 HTML</li></div>
+        <div class="col"><h5>要新增</h5>
+          <li>复用现有 Anthropic，无新 API 成本</li>
+          <li>一个内容模板库 + 发布位</li>
+          <li>约 2-3 天可出第一版工具</li></div>
+      </div>
+    </div>
+
+    <div class="plan">
+      <div class="ph"><span class="pn"><i class="ti ti-template"></i></span><span class="pt">方案 B · 程序化落地页（Programmatic SEO）</span><span class="ptag mid">中等 · 走量</span></div>
+      <div class="pd">按「产品 × 国家 / 应用场景」批量生成成百上千个落地页（如 <i>Aluminium Windows for Australian Builders</i>），每页针对一个长尾关键词。Google 收录后，长尾询盘持续进来。和你的产品库、海关数据天然打通（哪些国家在进口 → 就为哪些国家建页）。</div>
+      <div class="grid">
+        <div class="col"><h5>做什么</h5>
+          <li>关键词矩阵：产品 × 国家 × 场景</li>
+          <li>模板化落地页，自动填充 + 内链</li>
+          <li>自动 sitemap、canonical、hreflang</li>
+          <li>用海关数据佐证「该国真在进口」</li></div>
+        <div class="col"><h5>要新增</h5>
+          <li>落地页模板 + 静态生成/路由</li>
+          <li>关键词库（可 AI 生成初稿）</li>
+          <li>见效周期：Google 收录需 4-8 周</li></div>
+      </div>
+    </div>
+
+    <div class="plan">
+      <div class="ph"><span class="pn"><i class="ti ti-link"></i></span><span class="pt">方案 C · 权威信号 + 目录铺设</span><span class="ptag mid">中等 · 打地基</span></div>
+      <div class="pd">让 AI 和 Google 更「信任」你：把公司信息以统一、结构化的方式铺到 B2B 目录、行业站点、社媒资料页；补全站点的 E-E-A-T 信号（关于我们、认证、案例、真实地址）。这些是 AI 判断「该不该引用你」的关键依据。</div>
+      <div class="grid">
+        <div class="col"><h5>做什么</h5>
+          <li>统一 NAP（名/址/电）+ 一键生成目录资料</li>
+          <li>认证/案例/媒体报道结构化上墙</li>
+          <li>Organization / Product Schema 全站铺</li>
+          <li>可对接社媒自动发帖（你已有该模块）</li></div>
+        <div class="col"><h5>要新增</h5>
+          <li>目录清单 + 资料模板</li>
+          <li>部分需人工提交（工具生成内容）</li>
+          <li>长期地基，越做越值钱</li></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">体检为体验版（本地模拟打分，同一网址结果稳定）。正式版将真实抓取页面并查询 AI 引用情况。</div>
+</div>
+
+<script>
+function h(s){ let x=0; for(let i=0;i<s.length;i++){ x=(x*31+s.charCodeAt(i))>>>0; } return x; }
+function scan(){
+  const dRaw=document.getElementById('dom').value.trim(); if(!dRaw){ return; }
+  const d=dRaw.toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,'');
+  const seed=h(d);
+  const seo=32+seed%42;          // 32-73
+  const geo=8+(seed>>3)%34;       // 8-41 (usually low — the opportunity)
+  const opp=Math.min(98, 100-Math.round((seo+geo)/2)+18);
+  animRing('ringSeo','seoV',seo); animRing('ringGeo','geoV',geo); animRing('ringOpp','oppV',opp);
+  document.getElementById('seoL').textContent = seo<50?'基础薄弱，提升空间大':'有基础，可再优化';
+  document.getElementById('geoL').textContent = geo<30?'AI 几乎看不到你':'AI 偶尔能引用';
+  document.getElementById('oppL').textContent = '优化后可增流量';
+  const items=[
+    {k:seed%3!=0, t:'页面标题 / Meta 描述', okx:'关键词布局尚可', badx:'首页标题没有目标关键词，AI 与 Google 抓不到重点'},
+    {k:false, t:'FAQ / 问答结构（GEO 关键）', okx:'', badx:'没有 FAQ Schema —— AI 问答引擎最爱引用的格式，你完全没有'},
+    {k:seed%2==0, t:'结构化数据 Schema(JSON-LD)', okx:'检测到部分 Schema', badx:'缺 Organization / Product Schema，AI 无法确认你是谁、卖什么'},
+    {k:seed%5!=0, t:'移动端与速度', okx:'移动端表现正常', badx:'首屏偏慢，影响收录与体验'},
+    {k:false, t:'针对买家问句的英文内容', okx:'', badx:'没有围绕买家真实提问（如 “best aluminium window supplier China”）的内容'},
+    {k:seed%4==0, t:'外链 / 目录权威信号', okx:'有一定外链基础', badx:'B2B 目录与权威外链稀少，AI 信任度低'},
+  ];
+  document.getElementById('checks').innerHTML=items.map(it=>{
+    const cls=it.k?'ok':(it.t.includes('GEO')||it.t.includes('买家问句')?'bad':'warn');
+    const ic=it.k?'ti-circle-check':(cls==='bad'?'ti-circle-x':'ti-alert-circle');
+    return `<div class="chk"><i class="${ic} ${cls}"></i><div><b>${it.t}</b><div class="cx">${it.k?it.okx:it.badx}</div></div></div>`;
+  }).join('');
+  document.getElementById('wins').innerHTML=[
+    '给首页 + 每个产品页加 FAQ Schema（GEO 立竿见影）',
+    '围绕 3 个买家高频问句，各写一篇英文问答页',
+    '补全 Organization Schema + 认证/案例，抬高 AI 信任度',
+  ].map(w=>`<li>${w}</li>`).join('');
+  document.getElementById('report').classList.add('show');
+}
+function animRing(ringId,valId,target){
+  const ring=document.getElementById(ringId), val=document.getElementById(valId);
+  let cur=0; const step=Math.max(1,Math.round(target/28));
+  clearInterval(ring._t);
+  ring._t=setInterval(()=>{ cur=Math.min(target,cur+step); ring.style.setProperty('--v',cur); val.textContent=cur; if(cur>=target)clearInterval(ring._t); },18);
+}
+scan();
+</script>
