@@ -1,113 +1,66 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>方案预览中心 — 智拓客</title>
+<title>智拓客 · 工具</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
 <style>
   :root{
     --bg:#030303; --panel:#0a0a0c; --card:rgba(255,255,255,0.03); --card2:rgba(255,255,255,0.05);
     --bd:rgba(255,255,255,0.08); --bd2:rgba(255,255,255,0.12);
     --tx:#e5e7eb; --tx2:rgba(255,255,255,0.6); --tx3:rgba(255,255,255,0.35);
-    --ac:#6366f1; --ac2:#818cf8; --acbg:rgba(99,102,241,0.14);
-    --ok:#34d399; --okbg:rgba(52,211,153,0.12); --warn:#fbbf24; --warnbg:rgba(251,191,36,0.12);
+    --ac:#6366f1; --ac2:#818cf8; --acbg:rgba(99,102,241,0.14); --ok:#34d399; --okbg:rgba(52,211,153,0.12);
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
   body{ background:var(--bg); color:var(--tx); font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; -webkit-font-smoothing:antialiased; line-height:1.55; }
-  .wrap{ max-width:960px; margin:0 auto; padding:0 22px 80px; }
-  .top-in{ padding:16px 22px; display:flex; align-items:center; gap:11px; max-width:960px; margin:0 auto; border-bottom:1px solid var(--bd); }
+  .wrap{ max-width:860px; margin:0 auto; padding:0 22px 80px; }
+  .top-in{ padding:16px 22px; display:flex; align-items:center; gap:11px; max-width:860px; margin:0 auto; border-bottom:1px solid var(--bd); }
   .brand{ display:flex; align-items:center; gap:9px; font-weight:700; font-size:15px; }
   .brand .logo{ width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,var(--ac),#a5b4fc); display:flex; align-items:center; justify-content:center; color:#fff; }
-
-  .hero{ padding:36px 0 12px; }
-  .hero h1{ font-size:27px; font-weight:650; letter-spacing:-.01em; }
-  .hero p{ color:var(--tx2); font-size:14px; margin-top:9px; max-width:660px; }
-
+  .hero{ padding:34px 0 6px; }
+  .hero h1{ font-size:25px; font-weight:650; letter-spacing:-.01em; }
+  .hero p{ color:var(--tx2); font-size:14px; margin-top:9px; }
   .cards{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:24px; }
-  @media(max-width:720px){ .cards{ grid-template-columns:1fr; } }
-  .card{ background:var(--card); border:1px solid var(--bd); border-radius:15px; padding:22px; transition:.15s; text-decoration:none; color:inherit; display:block; }
+  @media(max-width:640px){ .cards{ grid-template-columns:1fr; } }
+  .card{ background:var(--card); border:1px solid var(--bd); border-radius:15px; padding:24px; transition:.15s; text-decoration:none; color:inherit; display:block; }
   .card:hover{ border-color:var(--ac); background:var(--acbg); transform:translateY(-3px); }
-  .card .ci{ width:44px; height:44px; border-radius:11px; background:var(--acbg); color:var(--ac2); display:flex; align-items:center; justify-content:center; font-size:23px; }
+  .card .ci{ width:46px; height:46px; border-radius:12px; background:var(--acbg); color:var(--ac2); display:flex; align-items:center; justify-content:center; font-size:24px; }
   .card:hover .ci{ background:var(--ac); color:#fff; }
-  .card h3{ font-size:17px; font-weight:650; margin-top:14px; display:flex; align-items:center; gap:8px; }
+  .card h3{ font-size:18px; font-weight:650; margin-top:15px; display:flex; align-items:center; gap:8px; }
   .card .ready{ font-size:10.5px; color:var(--ok); background:var(--okbg); border:1px solid rgba(52,211,153,.3); padding:2px 8px; border-radius:99px; font-weight:600; }
-  .card p{ font-size:13px; color:var(--tx2); margin-top:9px; }
-  .card .chk{ font-size:12px; color:var(--tx3); margin-top:11px; }
-  .card .go{ margin-top:15px; font-size:13px; font-weight:600; color:var(--ac2); display:flex; align-items:center; gap:6px; }
-  .card.full{ grid-column:1/-1; }
-
-  .note{ margin-top:34px; }
-  .note h2{ font-size:18px; font-weight:650; display:flex; align-items:center; gap:8px; }
-  .nb{ background:var(--card); border:1px solid var(--bd); border-radius:13px; padding:16px 18px; margin-top:12px; }
-  .nb h4{ font-size:14px; font-weight:640; display:flex; align-items:center; gap:8px; }
-  .nb h4 i{ color:var(--ac2); }
-  .nb p{ font-size:13px; color:var(--tx2); margin-top:8px; }
-  .nb.warn{ background:var(--warnbg); border-color:rgba(251,191,36,.3); }
-  .nb.warn h4 i{ color:var(--warn); }
-  .nb b{ color:var(--tx); }
+  .card p{ font-size:13px; color:var(--tx2); margin-top:10px; }
+  .card .go{ margin-top:16px; font-size:13px; font-weight:600; color:var(--ac2); display:flex; align-items:center; gap:6px; }
+  .sep{ margin-top:34px; font-size:12.5px; color:var(--tx3); }
+  .sep a{ color:var(--ac2); text-decoration:none; }
   .foot{ text-align:center; color:var(--tx3); font-size:12px; padding:36px 0 0; }
 </style>
 
 <div class="top-in">
-  <div class="brand"><span class="logo"><i class="ti ti-flask"></i></span> 智拓客 · 方案预览中心</div>
-  <span style="margin-left:auto;font-size:11px;color:var(--tx3)">你出门这段时间做的 · 逐个点开体验</span>
+  <div class="brand"><span class="logo"><i class="ti ti-bolt"></i></span> 智拓客 · 工具</div>
 </div>
 
 <div class="wrap">
   <div class="hero">
-    <h1>你回来了，先从这里逐个点开</h1>
-    <p>3 个新功能我都做成了<b style="color:var(--tx)">能直接用的单独页面</b>，都是真实数据/真实排版，不是截图。每个里面有几种方案，你挑，我再植入系统。下面每张卡片点进去就能玩。</p>
+    <h1>报价 + 海关数据</h1>
+    <p>都在本地跑、连真实数据,点开直接用。</p>
   </div>
 
   <div class="cards">
     <a class="card" href="/customs-lens.html">
       <div class="ci"><i class="ti ti-ship"></i></div>
       <h3>海关数据获客 <span class="ready">可用</span></h3>
-      <p>用你上传的海关提单，按产品/HS 找全球买家。<b style="color:var(--tx2)">真实 8019 条买家记录、82 个国家</b>。</p>
-      <div class="chk">看点：3 种界面方案（目录浏览 / 搜索直达 / 我的产品智能匹配）；没数据的品类会提前告知，不让客户白搜。</div>
-      <div class="go">打开体验 <i class="ti ti-arrow-right"></i></div>
+      <p>选你的产品 → 系统转 HS 编码 → 从 <b style="color:var(--tx2)">275 万条真实买家</b>里找到进口商(110 万带邮箱)→ 交给 AI 筛选写信。</p>
+      <div class="go">打开 <i class="ti ti-arrow-right"></i></div>
     </a>
 
     <a class="card" href="/quote-lens.html">
       <div class="ci"><i class="ti ti-file-invoice"></i></div>
       <h3>报价自动化 <span class="ready">可用</span></h3>
-      <p>填公司+产品+价格+图片，右边<b style="color:var(--tx2)">实时出一张专业报价单</b>，能下载 PDF、导出 Excel。</p>
-      <div class="chk">看点：3 种模板（经典/现代/极简）随便切；已用你的门窗+橱柜产品预填好，直接改数字就行。</div>
-      <div class="go">打开体验 <i class="ti ti-arrow-right"></i></div>
-    </a>
-
-    <a class="card full" href="/seo-lens.html">
-      <div class="ci"><i class="ti ti-world-search"></i></div>
-      <h3>SEO / GEO 获客 <span class="ready">方案+体检</span></h3>
-      <p>让买家在 Google 和 AI 回答里先看到你。先给网站做个「AI 可见性体检」，再看 3 个落地方案（内容工厂 / 程序化落地页 / 权威信号）。</p>
-      <div class="chk">看点：输入网址就出一份体检报告（体验版）；下面 3 个方案标好了难度和要新增什么。</div>
-      <div class="go">打开体验 <i class="ti ti-arrow-right"></i></div>
+      <p>填公司+产品+价格+图片,右边<b style="color:var(--tx2)">实时出专业报价单/PI</b>,下载 PDF、导出 Excel;还能导入现成报价单让 AI 识别+改。</p>
+      <div class="go">打开 <i class="ti ti-arrow-right"></i></div>
     </a>
   </div>
 
-  <div class="note">
-    <h2><i class="ti ti-clipboard-text" style="color:var(--ac2)"></i> 几件要你拍板的事</h2>
+  <div class="sep"><i class="ti ti-corner-down-right"></i> SEO / GEO 单独一个链接(没并进来):<a href="/seo-lens.html">/seo-lens.html</a></div>
 
-    <div class="nb warn">
-      <h4><i class="ti ti-database"></i> 海关数据传 Supabase：还差你点一下</h4>
-      <p>你充的 25 美金没白花，但我<b>没法自己建那张表</b> —— 你 .env 里只有 anon key，建表这一步必须在 Supabase 后台点一下（或给我 service_role 密钥）。我已经把<b>建表 SQL</b> 和<b>全量上传脚本</b>都写好了，你回来给我一句话，我 1 分钟建表 + 开始把 2019 个文件全灌进去。<br>
-      在此之前，上面的「海关数据获客」页面用的是我抽出来的 <b>8019 条真实样本</b>，体验完全够 —— 界面和流程都是真的。</p>
-    </div>
-
-    <div class="nb">
-      <h4><i class="ti ti-alert-hexagon"></i> 你上传的数据，覆盖的是「别的品类」</h4>
-      <p>我翻了全部 2019 个文件：里面是<b>电子、机械、钢材、化工、医药、家具、纺织</b>等等 —— <b>不是</b>你自己的门窗/橱柜。这其实<b>正合适</b>：按你定的原则，这些数据是<b>给你的付费用户用的</b>（他们各种产品都有），不是你自己用。所以「海关获客」这个功能是拿来<b>转售赚差价</b>的，方向对。</p>
-    </div>
-
-    <div class="nb">
-      <h4><i class="ti ti-eye-check"></i> 「没数据的品类怎么办」—— 已按你的要求做好</h4>
-      <p>你说的「不能让客户搜完才发现没有」，我用<b>覆盖优先</b>解决：目录里只列有数据的品类；客户搜没有的，<b>当场如实提示「可申请补充」</b>并记录需求，绝不是一片空白。去「海关数据获客 → 方案 B」搜个 <b>xyzzy</b> 就能看到那个提示长啥样。</p>
-    </div>
-
-    <div class="nb">
-      <h4><i class="ti ti-arrow-guide"></i> 我的建议顺序</h4>
-      <p>1) 先挑<b>报价自动化</b>的模板（最独立、马上能上线，海外买家立刻用得上）；2) 定<b>海关获客</b>用哪种界面方案 + 说一声让我建表灌数据；3) SEO/GEO 挑一个方案我再排期。你挑好，我逐个植入系统并部署。</p>
-    </div>
-  </div>
-
-  <div class="foot">这些页面都在你本地跑（localhost:3000），没动线上、没动现有功能。挑好了我再合进系统。</div>
+  <div class="foot">本地预览,未接入控制台、未推线上。</div>
 </div>

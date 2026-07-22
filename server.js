@@ -2554,6 +2554,169 @@ const _productsDb = (() => {
 })();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
+// 国家别名：数据里国家名中英混用（一批文件英文 United States，一批中文 美国），
+// 用户点中文按钮时同时匹配中英文写法。key=中文规范名 → 所有可能写法。
+const CTRY_ALIAS = {
+  '美国': ['美国', 'united states', 'usa', 'u.s', 'america'],
+  '澳大利亚': ['澳大利亚', 'australia'],
+  '加拿大': ['加拿大', 'canada'],
+  '英国': ['英国', 'united kingdom', 'england', 'britain', 'uk'],
+  '德国': ['德国', 'germany'],
+  '法国': ['法国', 'france'],
+  '意大利': ['意大利', 'italy'],
+  '越南': ['越南', 'vietnam', 'viet nam'],
+  '印度': ['印度', 'india'],
+  '俄罗斯': ['俄罗斯', 'russia'],
+  '日本': ['日本', 'japan'],
+  '韩国': ['韩国', 'korea'],
+  '阿联酋': ['阿联酋', 'united arab emirates', 'uae'],
+  '沙特': ['沙特', 'saudi'],
+  '墨西哥': ['墨西哥', 'mexico'],
+  '巴西': ['巴西', 'brazil'],
+  '哥伦比亚': ['哥伦比亚', 'colombia'],
+  '阿根廷': ['阿根廷', 'argentina'],
+  '巴基斯坦': ['巴基斯坦', 'pakistan'],
+  '乌克兰': ['乌克兰', 'ukraine'],
+  '菲律宾': ['菲律宾', 'philippines'],
+  '印尼': ['印尼', 'indonesia'],
+  '泰国': ['泰国', 'thailand'],
+};
+
+// ── Customs DB: query the uploaded bill-of-lading records (public.customs_records).
+// Filters: q (product/buyer keyword), hs, chapter, country, hasEmail. Paginated. Used by /customs-lens.html.
+app.post('/api/customs/query', requireAuth, async (req, res) => {
+  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+  const b = req.body || {};
+  const clean = s => String(s == null ? '' : s).replace(/[,()%*'"\\]/g, ' ').trim();
+  const q = clean(b.q).slice(0, 60);
+  const hs = clean(b.hs).replace(/\s/g, '');
+  const chapter = clean(b.chapter).replace(/\D/g, '').slice(0, 2);
+  const country = clean(b.country).slice(0, 40);
+  const supplier = clean(b.supplier).slice(0, 60);   // 竞品反查：输对手(出口商)名 → 查他的买家
+  const minAmount = parseFloat(b.minAmount) || 0;     // 最低进口额，滤掉小单
+  const hasEmail = !!b.hasEmail;
+  const pageSize = Math.min(Math.max(parseInt(b.pageSize || 20, 10) || 20, 1), 100);
+  const page = Math.max(parseInt(b.page || 0, 10) || 0, 0);
+  const from = page * pageSize;
+  try {
+    // count:'planned' = fast planner estimate (exact-count full-scans 6M rows and times out, esp. mid-upload)
+    let query = _productsDb.from('customs_records')
+      .select('buyer,buyer_country,buyer_addr,email,phone,website,supplier,supplier_country,hs,hs_chapter,product_desc,amount,txn_date,port_disc,origin', { count: 'planned' });
+    if (chapter) query = query.eq('hs_chapter', chapter);
+    if (hs) query = query.ilike('hs', hs + '%');
+    if (country) {
+      const aliases = CTRY_ALIAS[country] || [country];
+      query = query.or(aliases.map(a => `buyer_country.ilike.%${a}%`).join(','));
+    }
+    if (supplier) query = query.ilike('supplier', '%' + supplier + '%');
+    if (minAmount > 0) query = query.gte('amount', minAmount);
+    if (hasEmail) query = query.not('email', 'is', null);
+    if (q) query = query.or(`product_desc.ilike.%${q}%,buyer.ilike.%${q}%`);
+    // NO order-by-amount: sorting a big chapter (e.g. 85, ~1M rows) by amount scans the whole
+    // set and times out. Index-order rows are fine and fast (stops early at the limit).
+    query = query.range(from, from + pageSize - 1);
+    const { data, count, error } = await withTimeout(query, 30000, 'customs query');
+    if (error) return res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true, rows: data || [], total: count || 0, page, pageSize });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// 把海关买家推进"邮件开发"流水线：按当前筛选取 N 家 → 存成 leads + 建 search_run →
+// 返回 searchId，前端跳 /flow?search=<id>&goto=tofilter，后面走原来的 AI筛选→写→发。
+app.post('/api/customs/to-pipeline', requireAuth, async (req, res) => {
+  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+  const b = req.body || {};
+  const clean = s => String(s == null ? '' : s).replace(/[,()%*'"\\]/g, ' ').trim();
+  const q = clean(b.q).slice(0, 60), hs = clean(b.hs).replace(/\s/g, ''), chapter = clean(b.chapter).replace(/\D/g, '').slice(0, 2);
+  const country = clean(b.country).slice(0, 40), supplier = clean(b.supplier).slice(0, 60);
+  const minAmount = parseFloat(b.minAmount) || 0, hasEmail = !!b.hasEmail;
+  const count = Math.min(Math.max(parseInt(b.count || 20, 10) || 20, 1), 200);
+  const label = (b.label || '海关线索').toString().slice(0, 80);
+  try {
+    let query = _productsDb.from('customs_records').select('buyer,buyer_country,buyer_addr,email,phone,website,product_desc,hs').limit(Math.min(count * 6, 1200));
+    if (chapter) query = query.eq('hs_chapter', chapter);
+    if (hs) query = query.ilike('hs', hs + '%');
+    if (country) { const al = CTRY_ALIAS[country] || [country]; query = query.or(al.map(a => `buyer_country.ilike.%${a}%`).join(',')); }
+    if (supplier) query = query.ilike('supplier', '%' + supplier + '%');
+    if (minAmount > 0) query = query.gte('amount', minAmount);
+    if (hasEmail) query = query.not('email', 'is', null);
+    if (q) query = query.or(`product_desc.ilike.%${q}%,buyer.ilike.%${q}%`);
+    const { data, error } = await withTimeout(query, 30000, 'customs to-pipeline');
+    if (error) return res.status(500).json({ success: false, error: error.message });
+    // 一个公司常有多条提单 → 按买家去重（优先留有邮箱的那条），取前 count 个不同公司
+    const seen = new Map();
+    for (const r of (data || [])) { const k = (r.buyer || '').toLowerCase().trim(); if (!k) continue; const cur = seen.get(k); if (!cur || (!cur.email && r.email)) seen.set(k, r); }
+    const distinct = [...seen.values()].slice(0, count);
+    if (!distinct.length) return res.json({ success: false, error: '没有匹配的买家' });
+    const searchId = await saveSearchRun({ query: label, location: country || '', maxResults: count, totalScraped: distinct.length }, req.userId);
+    const leads = distinct.map(r => ({ companyName: r.buyer, website: r.website || '', phone: r.phone || '', email: r.email || '', city: r.buyer_country || '' }));
+    await saveLeads(searchId, leads, req.userId);
+    res.json({ success: true, searchId, count: distinct.length });
+  } catch (e) {
+    console.error('[Customs] to-pipeline error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// 产品描述（可能含多个产品）→ 拆成几个"单一具体产品"让用户选一个（海关一次只查一个单品）。
+app.post('/api/customs/split-products', requireAuth, async (req, res) => {
+  const desc = (req.body?.product || '').toString().trim().slice(0, 500);
+  if (!desc) return res.status(400).json({ success: false, error: 'product required' });
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const r = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 320,
+      messages: [{ role: 'user', content: `外贸卖家的产品:"${desc}"。这里可能包含多个产品。把它拆成几个"单一具体产品"（每个能对应一个 HS 海关编码，用于逐个去海关数据找买家）。只返回 JSON，不要多余文字:{"products":["具体产品1","具体产品2"]}。中文，最多 8 个；若本身就是单一产品就只返回 1 个。` }],
+    }), 30000, 'customs split-products');
+    const text = (r.content?.[0]?.text || '').trim();
+    let out = {}; try { out = JSON.parse((text.match(/\{[\s\S]*\}/) || ['{}'])[0]); } catch (_) {}
+    const products = Array.isArray(out.products) ? out.products.map(p => String(p).trim()).filter(Boolean).slice(0, 8) : [];
+    res.json({ success: true, products: products.length ? products : [desc] });
+  } catch (e) {
+    console.error('[Customs] split-products error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// 产品（中文/英文）→ 海关检索项：英文品名 + HS编码 + 章 + 英文关键词。
+// 全系统"产品优先"：用户输产品，这里统一转成能查海关的编码/英文词（HS 与语言无关，中文也能查到）。
+app.post('/api/customs/product-terms', requireAuth, async (req, res) => {
+  const product = (req.body?.product || '').toString().trim().slice(0, 200);
+  if (!product) return res.status(400).json({ success: false, error: 'product required' });
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const r = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 320,
+      messages: [{ role: 'user', content: `外贸产品:"${product}"（可能是中文）。要在海关进口提单数据里检索这个产品的海外买家。只返回 JSON，不要多余文字：{"en":"英文品名","hsCode":"XXXX 或 XXXX.XX（4-6位品类级HS编码）","keywords":["3-6个英文检索词，买家报关产品描述里常出现的词"]}` }],
+    }), 30000, 'customs product-terms');
+    const text = (r.content?.[0]?.text || '').trim();
+    let out = {}; try { out = JSON.parse((text.match(/\{[\s\S]*\}/) || ['{}'])[0]); } catch (_) {}
+    const hsDigits = String(out.hsCode || '').replace(/\D/g, '');
+    res.json({ success: true, en: out.en || '', hsCode: out.hsCode || '', chapter: hsDigits.slice(0, 2), keywords: Array.isArray(out.keywords) ? out.keywords.slice(0, 6) : [] });
+  } catch (e) {
+    console.error('[Customs] product-terms error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Customs DB coverage stats: total rows + how many carry a direct email.
+app.get('/api/customs/stats', requireAuth, async (req, res) => {
+  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+  try {
+    // 可靠地判断"有没有数据"：直接取一行（planned/estimated 在表刚灌、未 ANALYZE 时会返回 0，会误判为空）
+    const { data } = await _productsDb.from('customs_records').select('id').limit(1);
+    const exists = Array.isArray(data) && data.length > 0;
+    let total = 0, withEmail = 0;
+    if (exists) {
+      total = (await _productsDb.from('customs_records').select('*', { count: 'planned', head: true })).count || 0;
+      withEmail = (await _productsDb.from('customs_records').select('*', { count: 'planned', head: true }).not('email', 'is', null)).count || 0;
+    }
+    res.json({ success: true, exists, total, withEmail });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 function requireAdminPassword(req, res, next) {
   if (!ADMIN_PASSWORD || req.headers['x-admin-password'] !== ADMIN_PASSWORD) {
     return res.status(401).json({ success: false, error: 'invalid admin password' });
