@@ -83,30 +83,63 @@
   .plan .col li{ font-size:12.5px; color:var(--tx2); list-style:none; padding:3px 0 3px 18px; position:relative; }
   .plan .col li::before{ content:'·'; position:absolute; left:5px; color:var(--ac2); font-weight:700; }
   .foot{ text-align:center; color:var(--tx3); font-size:12px; padding:34px 0 0; }
+  .help-btn{ margin-left:auto; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:99px; padding:6px 13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .help-btn:hover{ background:rgba(99,102,241,0.22); color:#fff; }
+  .gmodal{ position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(3px); z-index:60; display:none; align-items:center; justify-content:center; padding:20px; }
+  .gmodal.show{ display:flex; }
+  .gbox{ width:100%; max-width:460px; background:#0d0d10; border:1px solid var(--bd2); border-radius:14px; padding:22px 24px; }
+  .gbox h3{ font-size:16px; font-weight:650; display:flex; align-items:center; gap:8px; }
+  .gbox h3 i{ color:var(--ac2); }
+  .gbox .gx{ margin-left:auto; cursor:pointer; color:var(--tx3); }
+  .gbox .gx:hover{ color:var(--tx); }
+  .gbox p{ font-size:13px; color:var(--tx2); margin-top:12px; line-height:1.6; }
+  .gbox ol{ margin:12px 0 0 4px; padding-left:18px; }
+  .gbox li{ font-size:13.5px; color:var(--tx2); margin:9px 0; line-height:1.5; }
+  .gbox li b{ color:var(--tx); }
+  .gbox .tip{ margin-top:14px; font-size:12.5px; color:var(--tx3); background:var(--card); border:1px solid var(--bd); border-radius:9px; padding:10px 12px; }
+  .genhint{ font-size:12.5px; color:var(--tx2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:9px; padding:11px 13px; margin-bottom:12px; }
+  .genhint i{ color:var(--ac2); } .genhint b{ color:var(--tx); }
+  .genc{ margin-bottom:12px; background:var(--panel); border:1px solid var(--bd); border-radius:10px; overflow:hidden; }
+  .gch{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--tx2); padding:9px 12px; border-bottom:1px solid var(--bd); }
+  .cpb{ margin-left:auto; font-family:inherit; font-size:11.5px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:7px; padding:4px 10px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
+  .cpb:hover{ background:rgba(99,102,241,0.22); color:#fff; }
+  .genc pre{ margin:0; padding:12px; font-size:12px; line-height:1.55; color:var(--tx); white-space:pre-wrap; word-break:break-word; max-height:280px; overflow:auto; font-family:ui-monospace,'SF Mono',Menlo,monospace; }
+  .trendbox{ font-size:13px; color:var(--tx2); background:var(--okbg); border:1px solid rgba(52,211,153,0.28); border-radius:9px; padding:10px 13px; display:flex; align-items:center; gap:8px; }
+  .plan-t{ background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:16px 18px; }
+  .plan-h{ font-size:14px; font-weight:650; display:flex; align-items:center; gap:8px; }
+  .plan-note{ font-size:12px; color:var(--tx3); margin:8px 0 12px; }
+  .plan-row{ display:flex; gap:14px; padding:10px 0; border-top:1px solid var(--bd); }
+  .plan-row .pw{ flex-shrink:0; width:78px; font-size:12.5px; font-weight:600; color:var(--ac2); }
+  .plan-row .pc b{ font-size:13.5px; } .plan-row .pd{ font-size:12.5px; color:var(--tx2); margin-top:3px; }
+  .pub{ margin-top:14px; background:var(--card); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:15px 16px; }
+  .pubh{ font-size:13.5px; font-weight:650; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .wphelp-t{ margin-left:auto; font-size:11.5px; color:var(--tx3); cursor:pointer; text-decoration:underline; }
+  #wpHelp{ font-size:11.5px; color:var(--tx3); margin:9px 0; line-height:1.6; background:var(--panel); border:1px solid var(--bd); border-radius:8px; padding:9px 11px; }
+  .pub input{ width:100%; background:var(--panel); border:1px solid var(--bd2); border-radius:9px; color:var(--tx); font-size:13px; font-family:inherit; padding:9px 11px; outline:none; margin-top:9px; }
+  .pub input:focus{ border-color:var(--ac); }
+  .pub2{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .pub .btn{ margin-top:11px; }
+  #pubResult{ margin-top:9px; }
+  .connbox{ display:flex; gap:9px; margin-top:10px; flex-wrap:wrap; }
+  .connbox input{ flex:1; min-width:200px; background:var(--panel); border:1px solid var(--bd2); border-radius:9px; color:var(--tx); font-size:13px; font-family:inherit; padding:9px 11px; outline:none; }
+  .connsteps{ margin-top:10px; font-size:12.5px; color:var(--tx2); line-height:1.7; }
+  .connsteps div{ margin:4px 0; } .connsteps b{ color:var(--tx); }
+  .connsteps code{ background:var(--panel); border:1px solid var(--bd2); border-radius:5px; padding:1px 6px; font-size:11.5px; color:var(--ac2); }
+  .connsteps code.keyc{ color:var(--ok); word-break:break-all; }
 </style>
 
 <div class="top"><div class="top-in">
   <div class="brand"><span class="logo"><i class="ti ti-world-search"></i></span> 智拓客 · SEO / GEO 获客</div>
-  <span class="demo-pill">方案预览 · 先体检，再看 3 个方案</span>
+  <button class="help-btn" onclick="toggleGuide(1)"><i class="ti ti-help-circle"></i> 使用指引</button>
 </div></div>
 
 <div class="wrap">
-  <div class="hero">
-    <h1>让买家在 Google 和 AI 回答里，先看到你</h1>
-    <p>SEO = 在 Google 搜索里排上去；<b style="color:var(--tx)">GEO</b>（Generative Engine Optimization）= 当买家问 ChatGPT / Perplexity / Google AI「谁家做铝合金门窗靠谱」时，AI 的回答里<b style="color:var(--tx)">点名推荐你</b>。这是 2025 年之后外贸获客的新入口。下面先给你的网站做个体检，再看我们能怎么做（3 个方案）。</p>
-    <div class="kbox">
-      <div class="kb"><div class="kh"><i class="ti ti-brand-google"></i> 传统 SEO</div><p>关键词、落地页、结构化数据、外链——让 Google 自然搜索带来询盘。</p></div>
-      <div class="kb"><div class="kh"><i class="ti ti-robot"></i> GEO（AI 引用）</div><p>让 AI 问答引擎抓得到、愿意引用你的内容，回答买家问题时报你的名字。</p></div>
-      <div class="kb"><div class="kh"><i class="ti ti-target-arrow"></i> 对你的价值</div><p>买家自己找上门，比冷邮件转化高。是「邮件获客」之外的第二条进水管。</p></div>
-    </div>
-  </div>
-
   <!-- SCANNER -->
   <div class="scan">
     <h3><i class="ti ti-radar" style="color:var(--ac2)"></i> AI 可见性体检（体验版）</h3>
     <div class="sub">输入任意网址，感受一下「体检报告」长什么样。正式版会真实抓取页面 + 查 AI 引用情况。</div>
     <div class="scan-row">
-      <input id="dom" placeholder="例：www.lens-home.com" value="www.lens-home.com">
+      <input id="dom" placeholder="输入你的官网网址，如 www.your-company.com" value="">
       <button class="btn primary" onclick="scan()"><i class="ti ti-scan"></i> 开始体检</button>
     </div>
     <div class="report" id="report">
@@ -118,61 +151,13 @@
         <div class="score"><div class="st"><i class="ti ti-flame"></i> 综合机会分</div>
           <div class="ring" id="ringOpp" style="--rc:#fbbf24"><span id="oppV">0</span></div><div class="sl" id="oppL"></div></div>
       </div>
+      <div id="trend" style="margin:12px 0"></div>
       <div class="checks" id="checks"></div>
-      <div class="win"><h4><i class="ti ti-bolt"></i> 马上能做的 3 件事（示例）</h4><ul id="wins"></ul></div>
-    </div>
-  </div>
-
-  <!-- PLANS -->
-  <div class="plans">
-    <h2>怎么做 —— 3 个方案</h2>
-    <div class="psub">从最快见效、最省钱，到最系统。你挑一个（或组合），我来落地。</div>
-
-    <div class="plan">
-      <div class="ph"><span class="pn"><i class="ti ti-file-text"></i></span><span class="pt">方案 A · 内容 + GEO 工厂</span><span class="ptag easy">最快 · 不烧钱</span></div>
-      <div class="pd">用你已经有的 <b style="color:var(--tx)">Anthropic (Sonnet)</b>，围绕每个产品/HS 品类，批量生成 <b style="color:var(--tx)">买家问答文章 + FAQ + 结构化数据(Schema)</b>，这些正是 AI 问答引擎最爱抓取和引用的格式。发到你的站点，AI 回答相关问题时更可能点名你。</div>
-      <div class="grid">
-        <div class="col"><h5>做什么</h5>
-          <li>每个品类一篇「买家指南 / FAQ」，AI 友好结构</li>
-          <li>自动生成 FAQ Schema、Product Schema（JSON-LD）</li>
-          <li>英文为主，覆盖买家真实提问句式</li>
-          <li>一键发布到站点 / 导出 HTML</li></div>
-        <div class="col"><h5>要新增</h5>
-          <li>复用现有 Anthropic，无新 API 成本</li>
-          <li>一个内容模板库 + 发布位</li>
-          <li>约 2-3 天可出第一版工具</li></div>
-      </div>
-    </div>
-
-    <div class="plan">
-      <div class="ph"><span class="pn"><i class="ti ti-template"></i></span><span class="pt">方案 B · 程序化落地页（Programmatic SEO）</span><span class="ptag mid">中等 · 走量</span></div>
-      <div class="pd">按「产品 × 国家 / 应用场景」批量生成成百上千个落地页（如 <i>Aluminium Windows for Australian Builders</i>），每页针对一个长尾关键词。Google 收录后，长尾询盘持续进来。和你的产品库、海关数据天然打通（哪些国家在进口 → 就为哪些国家建页）。</div>
-      <div class="grid">
-        <div class="col"><h5>做什么</h5>
-          <li>关键词矩阵：产品 × 国家 × 场景</li>
-          <li>模板化落地页，自动填充 + 内链</li>
-          <li>自动 sitemap、canonical、hreflang</li>
-          <li>用海关数据佐证「该国真在进口」</li></div>
-        <div class="col"><h5>要新增</h5>
-          <li>落地页模板 + 静态生成/路由</li>
-          <li>关键词库（可 AI 生成初稿）</li>
-          <li>见效周期：Google 收录需 4-8 周</li></div>
-      </div>
-    </div>
-
-    <div class="plan">
-      <div class="ph"><span class="pn"><i class="ti ti-link"></i></span><span class="pt">方案 C · 权威信号 + 目录铺设</span><span class="ptag mid">中等 · 打地基</span></div>
-      <div class="pd">让 AI 和 Google 更「信任」你：把公司信息以统一、结构化的方式铺到 B2B 目录、行业站点、社媒资料页；补全站点的 E-E-A-T 信号（关于我们、认证、案例、真实地址）。这些是 AI 判断「该不该引用你」的关键依据。</div>
-      <div class="grid">
-        <div class="col"><h5>做什么</h5>
-          <li>统一 NAP（名/址/电）+ 一键生成目录资料</li>
-          <li>认证/案例/媒体报道结构化上墙</li>
-          <li>Organization / Product Schema 全站铺</li>
-          <li>可对接社媒自动发帖（你已有该模块）</li></div>
-        <div class="col"><h5>要新增</h5>
-          <li>目录清单 + 资料模板</li>
-          <li>部分需人工提交（工具生成内容）</li>
-          <li>长期地基，越做越值钱</li></div>
+      <div class="win"><h4><i class="ti ti-bolt"></i> 马上能做的 3 件事</h4><ul id="wins"></ul></div>
+      <div id="planBlock" style="margin-top:16px"></div>
+      <div id="genBlock" style="margin-top:16px;display:none">
+        <button class="btn primary" onclick="genContent()"><i class="ti ti-wand"></i> 下一步：AI 帮你生成缺的英文内容 + 代码</button>
+        <div id="genResult" style="margin-top:14px"></div>
       </div>
     </div>
   </div>
@@ -180,38 +165,157 @@
   <div class="foot">体检为体验版（本地模拟打分，同一网址结果稳定）。正式版将真实抓取页面并查询 AI 引用情况。</div>
 </div>
 
+<div class="gmodal" id="guide">
+  <div class="gbox">
+    <h3><i class="ti ti-help-circle"></i> SEO / GEO 怎么用 <span class="gx" onclick="toggleGuide(0)"><i class="ti ti-x"></i></span></h3>
+    <p><b style="color:var(--tx)">先搞清楚:</b>SEO = 让你官网在谷歌被搜到;GEO = 让 AI 回答问题时推荐你官网。<b style="color:var(--tx)">前提是你有官网。</b></p>
+    <ol>
+      <li><b>输入你的官网网址</b> → 点「开始体检」</li>
+      <li>看三个分:<b>传统 SEO</b>、<b>AI 可见性(GEO)</b>、<b>综合机会分</b> —— 分越低,能提升的空间越大</li>
+      <li>下面会列出<b>哪里不足</b> + <b>马上能做的 3 件事</b></li>
+    </ol>
+    <div class="tip">正式版会真实抓取你官网、查 AI 有没有引用你,并能一键生成<b style="color:var(--tx2)">英文</b>买家问答内容,贴到官网提升排名。</div>
+  </div>
+</div>
+
 <script>
-function h(s){ let x=0; for(let i=0;i<s.length;i++){ x=(x*31+s.charCodeAt(i))>>>0; } return x; }
-function scan(){
-  const dRaw=document.getElementById('dom').value.trim(); if(!dRaw){ return; }
-  const d=dRaw.toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,'');
-  const seed=h(d);
-  const seo=32+seed%42;          // 32-73
-  const geo=8+(seed>>3)%34;       // 8-41 (usually low — the opportunity)
-  const opp=Math.min(98, 100-Math.round((seo+geo)/2)+18);
-  animRing('ringSeo','seoV',seo); animRing('ringGeo','geoV',geo); animRing('ringOpp','oppV',opp);
-  document.getElementById('seoL').textContent = seo<50?'基础薄弱，提升空间大':'有基础，可再优化';
-  document.getElementById('geoL').textContent = geo<30?'AI 几乎看不到你':'AI 偶尔能引用';
-  document.getElementById('oppL').textContent = '优化后可增流量';
-  const items=[
-    {k:seed%3!=0, t:'页面标题 / Meta 描述', okx:'关键词布局尚可', badx:'首页标题没有目标关键词，AI 与 Google 抓不到重点'},
-    {k:false, t:'FAQ / 问答结构（GEO 关键）', okx:'', badx:'没有 FAQ Schema —— AI 问答引擎最爱引用的格式，你完全没有'},
-    {k:seed%2==0, t:'结构化数据 Schema(JSON-LD)', okx:'检测到部分 Schema', badx:'缺 Organization / Product Schema，AI 无法确认你是谁、卖什么'},
-    {k:seed%5!=0, t:'移动端与速度', okx:'移动端表现正常', badx:'首屏偏慢，影响收录与体验'},
-    {k:false, t:'针对买家问句的英文内容', okx:'', badx:'没有围绕买家真实提问（如 “best aluminium window supplier China”）的内容'},
-    {k:seed%4==0, t:'外链 / 目录权威信号', okx:'有一定外链基础', badx:'B2B 目录与权威外链稀少，AI 信任度低'},
+function toggleGuide(on){ document.getElementById('guide').classList.toggle('show', !!on); }
+function getToken(){ try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+async function scan(){
+  const url=document.getElementById('dom').value.trim(); if(!url) return;
+  const rep=document.getElementById('report'), checksEl=document.getElementById('checks'), winsEl=document.getElementById('wins'), scores=document.querySelector('.scores');
+  rep.classList.add('show'); winsEl.innerHTML='';
+  const gb=document.getElementById('genBlock'); if(gb){ gb.style.display='none'; document.getElementById('genResult').innerHTML=''; } _siteInfo=null;
+  const tok=getToken();
+  if(!tok){ scores.style.opacity='.3'; checksEl.innerHTML='<div class="chk"><i class="ti ti-alert-circle warn"></i><div><b>需要先在主站登录</b><div class="cx">体检要真抓你的官网，登录后才能用。</div></div></div>'; return; }
+  scores.style.opacity='.4';
+  checksEl.innerHTML='<div class="chk"><i class="ti ti-loader-2 warn"></i><div><b>正在抓取并检查你的官网…</b><div class="cx">'+esc(url)+'</div></div></div>';
+  try{
+    const j=await fetch('/api/seo/check',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({url})}).then(r=>r.json());
+    if(!j.success) throw new Error(j.error||'体检失败');
+    scores.style.opacity='1';
+    animRing('ringSeo','seoV',j.seo); animRing('ringGeo','geoV',j.geo); animRing('ringOpp','oppV',j.opp);
+    document.getElementById('seoL').textContent = j.seo<50?'基础薄弱，提升空间大':'有基础，可再优化';
+    document.getElementById('geoL').textContent = j.geo<30?'AI 几乎看不到你':'AI 能引用你';
+    document.getElementById('oppL').textContent = '优化后可增流量';
+    checksEl.innerHTML=(j.checks||[]).map(it=>{
+      const cls=it.ok?'ok':(it.sev==='bad'?'bad':'warn');
+      const ic=it.ok?'ti ti-circle-check':(cls==='bad'?'ti ti-circle-x':'ti ti-alert-circle');
+      return `<div class="chk"><i class="${ic} ${cls}"></i><div><b>${esc(it.t)}</b><div class="cx">${esc(it.ok?it.okx:it.badx)}</div></div></div>`;
+    }).join('');
+    winsEl.innerHTML=(j.wins||[]).map(w=>`<li>${esc(w)}</li>`).join('');
+    _siteInfo=j.siteInfo||null; if(_siteInfo&&gb) gb.style.display='';
+    renderTrend(url, j.seo, j.geo);
+    document.getElementById('planBlock').innerHTML=renderPlan(j.checks||[]);
+  }catch(e){ scores.style.opacity='.3'; checksEl.innerHTML='<div class="chk"><i class="ti ti-circle-x bad"></i><div><b>体检失败</b><div class="cx">'+esc(e.message)+'</div></div></div>'; document.getElementById('trend').innerHTML=''; document.getElementById('planBlock').innerHTML=''; }
+}
+function histKey(url){ return 'seoHist_'+String(url).toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,''); }
+function renderTrend(url, seo, geo){
+  const el=document.getElementById('trend'), k=histKey(url);
+  let hist=[]; try{ hist=JSON.parse(localStorage.getItem(k)||'[]'); }catch{}
+  const prev=hist[hist.length-1];
+  hist.push({ d:new Date().toISOString().slice(0,10), seo, geo }); try{ localStorage.setItem(k, JSON.stringify(hist.slice(-12))); }catch{}
+  if(!prev){ el.innerHTML='<div class="trendbox"><i class="ti ti-flag"></i> 首次体检，已记下基准分。<b style="color:var(--tx)">贴内容后再来体检，就能看到分数涨。</b></div>'; return; }
+  const arrow=d=> d>0?`<span style="color:var(--ok)">+${d} 📈</span>`:d<0?`<span style="color:#f87171">${d}</span>`:'持平';
+  el.innerHTML=`<div class="trendbox"><i class="ti ti-trending-up" style="color:var(--ok)"></i> 较上次(${prev.d})：SEO ${prev.seo}→${seo} ${arrow(seo-prev.seo)} · GEO ${prev.geo}→${geo} ${arrow(geo-prev.geo)}</div>`;
+}
+function renderPlan(checks){
+  const miss=checks.filter(c=>!c.ok).map(c=>c.t), has=t=>miss.some(m=>m.includes(t));
+  const w1=[]; if(has('Meta'))w1.push('补首页 Meta 描述'); if(has('FAQ'))w1.push('加 FAQ Schema'); if(has('结构化')&&!has('FAQ'))w1.push('加 Organization Schema'); if(has('移动端'))w1.push('修移动端 viewport'); if(!w1.length)w1.push('检查各页标题/描述关键词');
+  const rows=[
+    ['第 1 周','补基础（点上面「AI 生成」出代码，贴到官网）', w1.join('、')],
+    ['第 2–3 周','写内容', '发布 5 篇英文买家问答页'+(has('英文内容')?'（你英文内容偏少，重点补）':'')],
+    ['第 4 周','复检 + 迭代', '重新体检，看分涨了没，再补新内容'],
+    ['每周持续','保持', '每周更新 1–2 篇新内容，AI 引用才稳'],
   ];
-  document.getElementById('checks').innerHTML=items.map(it=>{
-    const cls=it.k?'ok':(it.t.includes('GEO')||it.t.includes('买家问句')?'bad':'warn');
-    const ic=it.k?'ti-circle-check':(cls==='bad'?'ti-circle-x':'ti-alert-circle');
-    return `<div class="chk"><i class="${ic} ${cls}"></i><div><b>${it.t}</b><div class="cx">${it.k?it.okx:it.badx}</div></div></div>`;
-  }).join('');
-  document.getElementById('wins').innerHTML=[
-    '给首页 + 每个产品页加 FAQ Schema（GEO 立竿见影）',
-    '围绕 3 个买家高频问句，各写一篇英文问答页',
-    '补全 Organization Schema + 认证/案例，抬高 AI 信任度',
-  ].map(w=>`<li>${w}</li>`).join('');
-  document.getElementById('report').classList.add('show');
+  return `<div class="plan-t"><div class="plan-h"><i class="ti ti-calendar-stats" style="color:var(--ac2)"></i> 你的 SEO / GEO 提升计划</div>
+    <div class="plan-note">SEO/GEO 是马拉松，<b style="color:var(--tx2)">持续做 3–6 个月</b>才见明显效果。照这个计划一周一步走。</div>
+    ${rows.map(r=>`<div class="plan-row"><div class="pw">${r[0]}</div><div class="pc"><b>${esc(r[1])}</b><div class="pd">${esc(r[2])}</div></div></div>`).join('')}</div>`;
+}
+let _siteInfo=null;
+async function genContent(){
+  const tok=getToken(); if(!tok)return;
+  const gr=document.getElementById('genResult');
+  gr.innerHTML='<div class="chk"><i class="ti ti-loader-2 warn"></i><div><b>AI 正在生成英文买家内容 + Schema 代码…（十几秒）</b></div></div>';
+  try{
+    const j=await fetch('/api/seo/generate',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({siteInfo:_siteInfo})}).then(r=>r.json());
+    if(!j.success) throw new Error(j.error||'生成失败');
+    _gen=j; gr.innerHTML=renderGen(j);
+  }catch(e){ gr.innerHTML='<div class="chk"><i class="ti ti-circle-x bad"></i><div><b>生成失败</b><div class="cx">'+esc(e.message)+'</div></div></div>'; }
+}
+let _cp=0;
+function copyBox(label, text){
+  const id='cp'+(++_cp);
+  window['_t_'+id]=text;
+  return `<div class="genc"><div class="gch">${esc(label)}<button class="cpb" onclick="doCopy('${id}',this)"><i class="ti ti-copy"></i> 复制</button></div><pre id="${id}">${esc(text)}</pre></div>`;
+}
+function doCopy(id,btn){ const t=window['_t_'+id]||''; navigator.clipboard.writeText(t).then(()=>{ btn.innerHTML='<i class="ti ti-check"></i> 已复制'; setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> 复制',1500); }); }
+function renderGen(j){
+  let html='<div class="genwrap"><div class="genhint"><i class="ti ti-info-circle"></i> 下面都是生成好的<b>英文</b>内容/代码，点「复制」贴到你官网对应位置。发布后过几周谷歌会重新收录，分数会涨。</div>';
+  if(j.metaDescription) html+=copyBox('Meta 描述（放进首页 <head>）', j.metaDescription);
+  if(Array.isArray(j.faqs)&&j.faqs.length){
+    const faqText=j.faqs.map(f=>'Q: '+f.q+'\nA: '+f.a).join('\n\n');
+    html+=copyBox('买家常见问答 FAQ（发成一个 FAQ 页面）', faqText);
+  }
+  if(j.faqSchema) html+=copyBox('FAQ Schema 代码（贴进 FAQ 页 <head>，GEO 关键）', j.faqSchema);
+  if(j.orgSchema) html+=copyBox('Organization Schema 代码（贴进首页 <head>）', j.orgSchema);
+  html+=`<div class="pub" style="border-color:rgba(52,211,153,0.35)">
+    <div class="pubh"><i class="ti ti-plug-connected" style="color:var(--ok)"></i> 推荐：装一次插件，以后点发布全自动（首页 Schema/Meta 都不用复制）</div>
+    <div class="connbox"><input id="connDomain" placeholder="你的官网网址，如 www.your-site.com"><button class="btn primary" onclick="connectSite()"><i class="ti ti-link"></i> 连接官网</button></div>
+    <div id="connResult"></div>
+  </div>`;
+  const pu=(function(){try{return localStorage.getItem('wpUrl')||''}catch{return''}})(), pus=(function(){try{return localStorage.getItem('wpUser')||''}catch{return''}})();
+  html+=`<div class="pub">
+    <div class="pubh"><i class="ti ti-rocket" style="color:var(--ac2)"></i> 或：直接在官网建一个 FAQ 页（WordPress，不用装插件）
+      <span class="wphelp-t" onclick="toggleWpHelp()">应用密码怎么拿？</span></div>
+    <div id="wpHelp" style="display:none">WordPress 后台 → 用户 → 个人资料 → 拉到最下「应用程序密码」→ 输个名字点新建 → 复制生成的那串（<b style="color:var(--tx2)">不是登录密码</b>）填进下面。</div>
+    <input id="wpUrl" placeholder="官网网址，如 www.your-site.com" value="${esc(pu)}">
+    <div class="pub2"><input id="wpUser" placeholder="WP 用户名" value="${esc(pus)}"><input id="wpPass" type="password" placeholder="应用密码"></div>
+    <button class="btn primary" onclick="publishWp()"><i class="ti ti-rocket"></i> 一键发布到官网</button>
+    <div id="pubResult"></div>
+  </div>`;
+  html+='<button class="btn" style="margin-top:12px" onclick="scan()"><i class="ti ti-refresh"></i> 贴好后 → 重新体检看分涨了没</button></div>';
+  return html;
+}
+let _gen=null;
+function toggleWpHelp(){ const h=document.getElementById('wpHelp'); h.style.display=h.style.display==='none'?'':'none'; }
+async function connectSite(){
+  const tok=getToken(); if(!tok)return;
+  const domain=document.getElementById('connDomain').value.trim(), cr=document.getElementById('connResult');
+  cr.innerHTML='<span style="color:var(--tx3);font-size:12px"><i class="ti ti-loader-2"></i> 连接中…</span>';
+  try{
+    const j=await fetch('/api/seo/connect',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({domain})}).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'连接失败');
+    cr.innerHTML=`<div class="connsteps">
+      <div><b>① 下载插件</b> → <a href="/download/wp-plugin" style="color:var(--ac2)">zhituoke-seo.php</a>，WP 后台「插件 → 安装 → 上传」装上并激活</div>
+      <div><b>② WP 后台 设置 → 智拓客SEO</b>：智拓客网址填 <code>${esc(location.origin)}</code>；站点密钥填 <code class="keyc">${esc(j.siteKey)}</code></div>
+      <div><b>③ 回来点下面「发布」</b>，以后每次生成完点一下就自动同步到官网</div>
+      <button class="btn primary" style="margin-top:11px" onclick="saveSite()"><i class="ti ti-cloud-upload"></i> 发布（自动上线到官网）</button><span id="saveResult"></span>
+    </div>`;
+  }catch(e){ cr.innerHTML='<span style="color:#f87171;font-size:12px"><i class="ti ti-x"></i> '+esc(e.message)+'</span>'; }
+}
+async function saveSite(){
+  const tok=getToken(); if(!tok||!_gen)return;
+  const sr=document.getElementById('saveResult'); sr.innerHTML=' <span style="color:var(--tx3);font-size:12px"><i class="ti ti-loader-2"></i> 同步中…</span>';
+  try{
+    const j=await fetch('/api/seo/save-site',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({metaDescription:_gen.metaDescription,orgSchema:_gen.orgSchema,faqSchema:_gen.faqSchema,faqs:_gen.faqs})}).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'失败');
+    sr.innerHTML=' <span style="color:var(--ok);font-size:12.5px"><i class="ti ti-check"></i> 已同步！插件会自动更新你官网（约 1 小时内生效）</span>';
+  }catch(e){ sr.innerHTML=' <span style="color:#f87171;font-size:12px">'+esc(e.message)+'</span>'; }
+}
+async function publishWp(){
+  const tok=getToken(); if(!tok||!_gen)return;
+  const g=id=>document.getElementById(id).value.trim();
+  const wpUrl=g('wpUrl'), wpUser=g('wpUser'), wpPass=g('wpPass'), pr=document.getElementById('pubResult');
+  if(!wpUrl||!wpUser||!wpPass){ pr.innerHTML='<span style="color:#fbbf24;font-size:12px">网址 / 用户名 / 应用密码都要填</span>'; return; }
+  try{ localStorage.setItem('wpUrl',wpUrl); localStorage.setItem('wpUser',wpUser); }catch{}
+  pr.innerHTML='<span style="color:var(--tx3);font-size:12px"><i class="ti ti-loader-2"></i> 正在发布到你的官网…</span>';
+  try{
+    const j=await fetch('/api/seo/publish',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({wpUrl,wpUser,wpPass,faqs:_gen.faqs,faqSchema:_gen.faqSchema,title:'FAQ — Buyer Questions'})}).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'发布失败');
+    pr.innerHTML='<span style="color:var(--ok);font-size:12.5px"><i class="ti ti-check"></i> 已发布到你官网！ <a href="'+esc(j.link)+'" target="_blank" style="color:var(--ac2)">查看页面 →</a></span>';
+  }catch(e){ pr.innerHTML='<span style="color:#f87171;font-size:12px"><i class="ti ti-x"></i> '+esc(e.message)+'</span>'; }
 }
 function animRing(ringId,valId,target){
   const ring=document.getElementById(ringId), val=document.getElementById(valId);
@@ -219,5 +323,4 @@ function animRing(ringId,valId,target){
   clearInterval(ring._t);
   ring._t=setInterval(()=>{ cur=Math.min(target,cur+step); ring.style.setProperty('--v',cur); val.textContent=cur; if(cur>=target)clearInterval(ring._t); },18);
 }
-scan();
 </script>

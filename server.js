@@ -125,6 +125,13 @@ app.get('/quote.html', (req, res) => {
 // Static middleware — apply no-cache to HTML files (login.html, pricing.html,
 // dashboard.html, quote.html, /tools/*.html, etc.) so the same anti-stale
 // guarantee covers everything served from public/.
+// 下载 WordPress 插件（连接器）
+app.get('/download/wp-plugin', (req, res) => {
+  res.set('Content-Disposition', 'attachment; filename="zhituoke-seo.php"');
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.sendFile(path.join(__dirname, 'public', 'zhituoke-seo-plugin.php'));
+});
+
 app.use(express.static(path.join(__dirname, 'public'), {
   index: false,
   setHeaders: (res, filePath) => {
@@ -2715,6 +2722,158 @@ app.get('/api/customs/stats', requireAuth, async (req, res) => {
     }
     res.json({ success: true, exists, total, withEmail });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// SEO/GEO 真实体检：抓用户官网 HTML → 检查 5 项（标题/Meta、FAQ+Schema、JSON-LD、移动端、英文内容）。
+// 不做"打开速度"和"外链"（要接付费数据）。用于 /seo-lens.html。
+app.post('/api/seo/check', requireAuth, async (req, res) => {
+  let url = (req.body?.url || '').toString().trim();
+  if (!url) return res.status(400).json({ success: false, error: 'url required' });
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  let host = '';
+  try { const u = new URL(url); if (!/^https?:$/.test(u.protocol)) throw 0; host = u.hostname;
+    if (/^(localhost|127\.|0\.0\.0\.0|::1|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return res.status(400).json({ success: false, error: '无效网址' });
+  } catch { return res.status(400).json({ success: false, error: '网址格式不对' }); }
+  try {
+    const axios = require('axios');
+    const r = await withTimeout(axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ZhituokeSEO/1.0)' }, timeout: 15000, maxContentLength: 4_000_000, maxRedirects: 3 }), 20000, 'SEO fetch');
+    const html = String(r.data || '');
+    const noTags = html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ');
+    const title = ((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '').trim();
+    const metaDesc = ((html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["']/i) || html.match(/<meta[^>]+content=["']([^"']*)["'][^>]*name=["']description["']/i) || [])[1] || '').trim();
+    const hasViewport = /<meta[^>]+name=["']viewport["']/i.test(html);
+    const ld = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
+    const hasSchema = ld.length > 0;
+    const hasFaqSchema = ld.some(b => /"@type"\s*:\s*"?faqpage/i.test(b)) || /faqpage/i.test(html);
+    const hasFaqText = /frequently asked|\bfaq\b|常见问题/i.test(noTags);
+    const enWords = (noTags.match(/[A-Za-z]{3,}/g) || []).length;
+    const hasEnglishContent = enWords > 250;
+
+    // 真实打分
+    let seo = 0; if (title) seo += 20; if (title.length > 10) seo += 8; if (metaDesc) seo += 17; if (hasViewport) seo += 15; if (hasSchema) seo += 15; if (hasEnglishContent) seo += 25; seo = Math.min(100, seo);
+    let geo = 0; if (hasFaqSchema) geo += 38; if (hasFaqText) geo += 12; if (hasSchema) geo += 20; if (hasEnglishContent) geo += 25; geo = Math.min(100, geo);
+    const opp = Math.max(10, Math.min(98, 100 - Math.round((seo + geo) / 2) + 8));
+
+    const checks = [
+      { t: '页面标题 / Meta 描述', ok: !!(title && metaDesc), okx: `标题「${title.slice(0, 40)}」+ 描述都有`, badx: title ? '有标题但缺 Meta 描述' : '首页没读到标题/描述' },
+      { t: 'FAQ / 问答结构（GEO 关键）', ok: hasFaqSchema, sev: 'bad', okx: '检测到 FAQ Schema', badx: '没有 FAQ Schema —— AI 问答引擎最爱引用的格式，你完全没有' },
+      { t: '结构化数据 Schema(JSON-LD)', ok: hasSchema, okx: `检测到 ${ld.length} 段结构化数据`, badx: '没有 JSON-LD 结构化数据，AI 无法确认你是谁、卖什么' },
+      { t: '移动端适配', ok: hasViewport, okx: '有移动端 viewport 设置', badx: '没有 viewport，手机上会错乱、被谷歌降权' },
+      { t: '针对买家问句的英文内容', ok: hasEnglishContent, sev: 'bad', okx: `检测到较充实的英文内容`, badx: '英文内容偏少，没有围绕买家真实提问的页面' },
+    ];
+    const wins = [];
+    if (!hasFaqSchema) wins.push('给首页 + 每个产品页加 FAQ Schema（GEO 立竿见影）');
+    if (!hasEnglishContent) wins.push('围绕 3 个买家高频英文问句，各写一篇问答页');
+    if (!hasSchema) wins.push('加 Organization / Product Schema，让 AI 认得你');
+    if (!metaDesc) wins.push('给首页补一段带关键词的 Meta 描述');
+    while (wins.length < 3) wins.push('持续产出英文买家问答内容，积累 AI 引用');
+
+    const siteInfo = { title, snippet: noTags.replace(/\s+/g, ' ').trim().slice(0, 700) };
+    res.json({ success: true, url, seo, geo, opp, checks, wins: wins.slice(0, 3), siteInfo });
+  } catch (e) {
+    const msg = /timeout|ETIMEDOUT|ENOTFOUND|ECONNREFUSED/i.test(e.message) ? '抓不到这个网站（打不开或超时），检查网址是否正确' : e.message;
+    res.status(500).json({ success: false, error: msg });
+  }
+});
+
+// SEO 连接器（配合 WP 插件）：给用户官网发一个 site_key，存/取该站要注入的 SEO 配置。
+// 需要表 public.seo_sites（见项目根 seo_sites.sql，用户在 Supabase 跑一次）。
+app.post('/api/seo/connect', requireAuth, async (req, res) => {
+  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+  const domain = String(req.body?.domain || '').trim().slice(0, 120);
+  try {
+    const ex = await _productsDb.from('seo_sites').select('site_key').eq('user_id', req.userId).limit(1);
+    if (ex.error) throw ex.error;
+    let key = ex.data && ex.data[0] ? ex.data[0].site_key : null;
+    if (!key) { key = require('crypto').randomBytes(16).toString('hex'); const ins = await _productsDb.from('seo_sites').insert({ user_id: req.userId, site_key: key, domain }); if (ins.error) throw ins.error; }
+    else if (domain) { await _productsDb.from('seo_sites').update({ domain }).eq('site_key', key); }
+    res.json({ success: true, siteKey: key });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+// 工具里点"发布(自动上线)"：把生成的内容存进该用户的站记录，插件下次拉取就注入了。
+app.post('/api/seo/save-site', requireAuth, async (req, res) => {
+  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+  const b = req.body || {};
+  try {
+    const ex = await _productsDb.from('seo_sites').select('site_key').eq('user_id', req.userId).limit(1);
+    if (ex.error) throw ex.error;
+    if (!ex.data || !ex.data[0]) return res.json({ success: false, error: '还没连接官网，先在上面「连接官网」拿密钥、装插件' });
+    const upd = await _productsDb.from('seo_sites').update({ meta_description: String(b.metaDescription || ''), org_schema: String(b.orgSchema || ''), faq_schema: String(b.faqSchema || ''), faqs: Array.isArray(b.faqs) ? b.faqs : [], updated_at: new Date().toISOString() }).eq('site_key', ex.data[0].site_key);
+    if (upd.error) throw upd.error;
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+// 公开：WP 插件按 site_key 拉取要注入的配置（无需登录，插件在客户公开站上跑）。
+app.get('/api/seo/site-config', async (req, res) => {
+  if (!_productsDb) return res.json({ success: false });
+  const key = String(req.query.key || '').trim();
+  if (!key || key.length < 8) return res.json({ success: false });
+  try {
+    const r = await _productsDb.from('seo_sites').select('meta_description,org_schema,faq_schema').eq('site_key', key).limit(1);
+    const row = r.data && r.data[0];
+    if (!row) return res.json({ success: false });
+    res.set('Cache-Control', 'public, max-age=1800');
+    res.json({ success: true, metaDescription: row.meta_description || '', orgSchema: row.org_schema || '', faqSchema: row.faq_schema || '' });
+  } catch (e) { res.json({ success: false }); }
+});
+
+// SEO/GEO 一键发布到客户的 WordPress：客户给 网址+用户名+应用密码，系统用 WP REST API
+// 直接建一个 FAQ 页(含内联 Schema)。凭据只随本次请求传，不落库。
+app.post('/api/seo/publish', requireAuth, async (req, res) => {
+  const b = req.body || {};
+  const wpUser = String(b.wpUser || '').trim(), wpPass = String(b.wpPass || '').trim();
+  let base = '';
+  try { const u = new URL(/^https?:\/\//i.test(b.wpUrl || '') ? b.wpUrl : 'https://' + (b.wpUrl || '')); base = u.origin;
+    if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(u.hostname)) throw 0; } catch { return res.status(400).json({ success: false, error: '官网网址不对' }); }
+  if (!wpUser || !wpPass) return res.status(400).json({ success: false, error: '缺少 WordPress 用户名或应用密码' });
+  const faqs = Array.isArray(b.faqs) ? b.faqs : [];
+  const faqHtml = faqs.map(f => `<h3>${String(f.q || '').replace(/</g, '&lt;')}</h3>\n<p>${String(f.a || '').replace(/</g, '&lt;')}</p>`).join('\n');
+  const content = faqHtml + '\n' + (b.faqSchema || '');
+  if (!content.trim()) return res.status(400).json({ success: false, error: '没有可发布的内容' });
+  try {
+    const axios = require('axios');
+    const auth = Buffer.from(`${wpUser}:${wpPass}`).toString('base64');
+    const r = await withTimeout(axios.post(base + '/wp-json/wp/v2/pages',
+      { title: b.title || 'FAQ — Buyer Questions', content, status: 'publish' },
+      { headers: { Authorization: 'Basic ' + auth, 'Content-Type': 'application/json' }, timeout: 20000 }
+    ), 25000, 'WP publish');
+    res.json({ success: true, link: r.data?.link || `${base}/?page_id=${r.data?.id}`, id: r.data?.id });
+  } catch (e) {
+    const st = e.response?.status;
+    const msg = (st === 401 || st === 403) ? '用户名或应用密码不对（要用 WordPress「应用密码」，不是登录密码）'
+      : st === 404 ? '这个网址不是 WordPress，或没开 REST API'
+      : (e.response?.data?.message || (/timeout|ENOTFOUND/i.test(e.message) ? '连不上这个网站' : e.message));
+    res.status(500).json({ success: false, error: msg });
+  }
+});
+
+// SEO/GEO 内容工厂：体检查出缺内容后，AI 生成英文买家 FAQ + Schema 代码，用户贴到官网。
+app.post('/api/seo/generate', requireAuth, async (req, res) => {
+  const si = req.body?.siteInfo || {};
+  const title = String(si.title || '').slice(0, 200);
+  const snippet = String(si.snippet || '').slice(0, 800);
+  const product = String(req.body?.product || '').slice(0, 200);
+  if (!title && !snippet && !product) return res.status(400).json({ success: false, error: '缺少网站信息' });
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const r = await withTimeout(client.messages.create({
+      model: 'claude-sonnet-4-6', max_tokens: 2600,
+      messages: [{ role: 'user', content: `A foreign-trade company's website. Title: "${title}". Content: "${snippet}". ${product ? ('They mainly sell: ' + product + '. ') : ''}Generate SEO/GEO content in ENGLISH to help this company get found on Google and cited by AI answer engines. Return ONLY JSON, no markdown:
+{"metaDescription":"a ~150-char English meta description with target keywords",
+ "faqs":[{"q":"...","a":"..."}],
+ "faqSchema":"a full <script type=\\"application/ld+json\\"> FAQPage JSON-LD block covering the FAQs",
+ "orgSchema":"a full <script type=\\"application/ld+json\\"> Organization JSON-LD block"}
+The "faqs" must be 5 questions REAL overseas B2B buyers would actually search/ask (e.g. "best <product> supplier in China", "<product> price per unit", "how to import <product> from China", "is <product> MOQ negotiable", "<product> certifications"). Answers concise and helpful. Output ONLY the JSON.` }],
+    }), 90000, 'SEO generate');
+    let txt = (r.content.find(b => b.type === 'text')?.text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/, '');
+    const first = txt.indexOf('{'), last = txt.lastIndexOf('}'); if (first >= 0 && last > first) txt = txt.slice(first, last + 1);
+    const out = JSON.parse(txt);
+    res.json({ success: true, metaDescription: out.metaDescription || '', faqs: Array.isArray(out.faqs) ? out.faqs : [], faqSchema: out.faqSchema || '', orgSchema: out.orgSchema || '' });
+  } catch (e) {
+    console.error('[SEO] generate error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 function requireAdminPassword(req, res, next) {

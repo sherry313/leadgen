@@ -123,6 +123,20 @@
   .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0; background:#111214; border:1px solid var(--bd2); color:var(--tx); padding:11px 18px; border-radius:11px; font-size:13.5px; box-shadow:0 12px 40px rgba(0,0,0,.5); transition:.24s; z-index:50; display:flex; align-items:center; gap:9px; pointer-events:none; }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .toast i{ color:var(--ok); }
+  .help-fab{ position:fixed; top:14px; right:18px; z-index:40; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:99px; padding:7px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .help-fab:hover{ background:rgba(99,102,241,0.22); color:#fff; }
+  .gmodal{ position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(3px); z-index:60; display:none; align-items:center; justify-content:center; padding:20px; }
+  .gmodal.show{ display:flex; }
+  .gbox{ width:100%; max-width:440px; background:#0d0d10; border:1px solid var(--bd2); border-radius:14px; padding:22px 24px; }
+  .gbox h3{ font-size:16px; font-weight:650; display:flex; align-items:center; gap:8px; }
+  .gbox h3 i{ color:var(--ac2); }
+  .gbox .gx{ margin-left:auto; cursor:pointer; color:var(--tx3); }
+  .gbox .gx:hover{ color:var(--tx); }
+  .gbox ol{ margin:14px 0 0 4px; padding-left:18px; }
+  .gbox li{ font-size:13.5px; color:var(--tx2); margin:9px 0; line-height:1.5; }
+  .gbox li b{ color:var(--tx); }
+  .gbox .tip{ margin-top:14px; font-size:12.5px; color:var(--tx3); background:var(--card); border:1px solid var(--bd); border-radius:9px; padding:10px 12px; }
+  .gbox .tip b{ color:var(--ok); }
   .loading{ text-align:center; padding:40px; color:var(--tx3); }
   .foot{ text-align:center; color:var(--tx3); font-size:12px; padding:30px 0 0; }
 </style>
@@ -185,6 +199,19 @@
   <div id="results"></div>
 </div>
 
+<button class="help-fab" onclick="toggleGuide(1)"><i class="ti ti-help-circle"></i> 使用指引</button>
+<div class="gmodal" id="guide">
+  <div class="gbox">
+    <h3><i class="ti ti-help-circle"></i> 怎么用海关数据获客 <span class="gx" onclick="toggleGuide(0)"><i class="ti ti-x"></i></span></h3>
+    <ol>
+      <li><b>选你的产品</b> —— 上面下拉选现有产品,或直接输一个(中文也行,如"浴室柜")</li>
+      <li><b>选一个具体产品</b> —— AI 会把它拆成几个单品,点一个;系统自动转成 HS 编码去库里找买家</li>
+      <li><b>选目标国家 + 找多少家</b>(10/20/50/100)</li>
+      <li><b>点「交给 AI 筛选+写信」</b> —— 这些买家自动进「邮件获客」,后面 AI 筛选打分 → 写开发信 → 发送</li>
+    </ol>
+    <div class="tip"><b>小贴士:</b>带绿标「自带邮箱」的买家可以直接发信,没有的系统会自动补邮箱。</div>
+  </div>
+</div>
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
 
 <script>
@@ -200,6 +227,7 @@ function initials(n){ const w=String(n).replace(/[^A-Za-z一-龥 ]/g,' ').trim()
 function fmtAmt(a){ if(!a) return ''; if(a>=1e6)return '$'+(a/1e6).toFixed(1)+'M'; if(a>=1e3)return '$'+(a/1e3).toFixed(0)+'k'; return '$'+a; }
 function toast(m){ const t=$('toast'); $('toastMsg').textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
 function getToken(){ try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
+function toggleGuide(on){ $('guide').classList.toggle('show', !!on); }
 function maskEmail(e){ if(!e)return''; const [u,d]=e.split('@'); if(!d)return e; return (u[0]||'')+'***@'+d; }
 function norm(r){ return { buyer:r.buyer||'', country:r.buyer_country||r.buyerCountry||'', addr:r.buyer_addr||r.buyerAddr||'', email:r.email||'', phone:r.phone||'', website:r.website||'', supplier:r.supplier||'', hs:r.hs||'', desc:r.product_desc||r.desc||'', amount:+r.amount||0, date:(r.txn_date||r.date||'').slice(0,10), port:r.port_disc||r.portDisc||'', origin:r.origin||'' }; }
 function setQty(n,custom){ QTY=Math.min(Math.max(parseInt(n)||20,1),100); document.querySelectorAll('.qchip').forEach(c=>c.classList.toggle('on',!custom && +c.dataset.n===QTY)); if(!custom)$('qCustom').value=''; }
