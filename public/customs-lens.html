@@ -67,8 +67,11 @@
   .chk input{ width:auto; }
 
   /* derived terms */
+  .hidestep{ display:none !important; }
+  .stepno{ display:inline-block; min-width:18px; height:18px; line-height:18px; text-align:center; border-radius:5px; background:var(--ac); color:#fff; font-size:11px; font-weight:700; margin-right:6px; }
   .derived{ margin-top:12px; background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:10px; padding:11px 13px; font-size:12.5px; color:var(--tx2); display:none; }
   .derived.show{ display:block; }
+  .kwhint{ font-size:11.5px; color:var(--tx3); margin-bottom:6px; }
   .derived b{ color:var(--tx); }
   .derived .kw{ display:inline-block; font-size:11.5px; background:var(--panel); border:1px solid var(--bd2); border-radius:6px; padding:2px 8px; margin:3px 4px 0 0; cursor:pointer; color:var(--tx2); }
   .derived .kw:hover,.derived .kw.on{ border-color:var(--ac); color:var(--tx); }
@@ -159,7 +162,7 @@
       <div class="orline">— 或直接输入 —</div>
       <div class="srow">
         <div class="sin"><i class="ti ti-box"></i><input id="pq" placeholder="例：浴室柜、铝合金门窗、锂电池…（中文/英文都行）"></div>
-        <button class="btn primary" onclick="productSearch()"><i class="ti ti-search"></i> 找买家</button>
+        <button class="btn primary" onclick="productSearch()"><i class="ti ti-arrow-right"></i> 下一步</button>
       </div>
       <div id="choices"></div>
       <div class="derived" id="derived"></div>
@@ -174,25 +177,28 @@
       </div>
     </div>
 
-    <!-- 目标国家/地区（和邮件获客一样，先选市场）-->
-    <div class="ctry-sec">
-      <div class="lbl">目标国家 / 地区</div>
+    <!-- ③ 目标国家/地区（选完关键词后才出现）-->
+    <div class="ctry-sec hidestep" id="stepCtry">
+      <div class="lbl"><span class="stepno">3</span>目标国家 / 地区</div>
       <div class="qchips" id="ctryChips"></div>
     </div>
-    <!-- shared filters + qty -->
-    <div class="filters" id="sharedFilters">
-      <input id="fMin" type="number" placeholder="最低进口额 $" style="width:130px">
-      <label class="chk"><input type="checkbox" id="fEmail"> 只看自带邮箱</label>
-    </div>
-    <div class="qty">
-      <div class="ql">找 <b>多少家</b>？</div>
-      <div class="qchips" id="qchips">
-        <span class="qchip" data-n="10" onclick="setQty(10)">10 家</span>
-        <span class="qchip on" data-n="20" onclick="setQty(20)">20 家</span>
-        <span class="qchip" data-n="50" onclick="setQty(50)">50 家</span>
-        <span class="qchip" data-n="100" onclick="setQty(100)">100 家</span>
-        <input type="number" id="qCustom" placeholder="自定义" oninput="setQty(this.value,true)">
+    <!-- ④ 找多少家 + 过滤 + 开始查（选完国家后才出现）-->
+    <div class="hidestep" id="stepQty">
+      <div class="qty">
+        <div class="ql"><span class="stepno">4</span>找 <b>多少家</b>？</div>
+        <div class="qchips" id="qchips">
+          <span class="qchip" data-n="10" onclick="setQty(10)">10 家</span>
+          <span class="qchip on" data-n="20" onclick="setQty(20)">20 家</span>
+          <span class="qchip" data-n="50" onclick="setQty(50)">50 家</span>
+          <span class="qchip" data-n="100" onclick="setQty(100)">100 家</span>
+          <input type="number" id="qCustom" placeholder="自定义" oninput="setQty(this.value,true)">
+        </div>
       </div>
+      <div class="filters" id="sharedFilters">
+        <input id="fMin" type="number" placeholder="最低进口额 $" style="width:130px">
+        <label class="chk"><input type="checkbox" id="fEmail"> 只看自带邮箱</label>
+      </div>
+      <button class="btn primary big" id="goSearchBtn" onclick="goSearch()" style="margin-top:14px;width:100%"><i class="ti ti-search"></i> 查海关买家 →</button>
     </div>
   </div>
 
@@ -204,9 +210,10 @@
   <div class="gbox">
     <h3><i class="ti ti-help-circle"></i> 怎么用海关数据获客 <span class="gx" onclick="toggleGuide(0)"><i class="ti ti-x"></i></span></h3>
     <ol>
-      <li><b>选你的产品</b> —— 上面下拉选现有产品,或直接输一个(中文也行,如"浴室柜")</li>
-      <li><b>选一个具体产品</b> —— AI 会把它拆成几个单品,点一个;系统自动转成 HS 编码去库里找买家</li>
-      <li><b>选目标国家 + 找多少家</b>(10/20/50/100)</li>
+      <li><b>① 选/输产品,点「下一步」</b> —— 下拉选现有产品或直接输(中文也行,如"浴室柜");AI 会把它拆成单品,点一个</li>
+      <li><b>② 选关键词</b> —— 系统识别出几个英文检索词,点一个(越具体越准,可换)</li>
+      <li><b>③ 选目标国家</b>(可选"全部")</li>
+      <li><b>④ 选找多少家,点「查海关买家」</b>(10/20/50/100)</li>
       <li><b>点「交给 AI 筛选+写信」</b> —— 这些买家自动进「邮件获客」,后面 AI 筛选打分 → 写开发信 → 发送</li>
     </ol>
     <div class="tip"><b>小贴士:</b>带绿标「自带邮箱」的买家可以直接发信,没有的系统会自动补邮箱。</div>
@@ -218,9 +225,14 @@
 const HS_CH={'03':'水产/海鲜','06':'花卉苗木','15':'油脂','16':'肉鱼制品','19':'谷物制品','20':'蔬果制品','21':'杂项食品','22':'饮料酒','25':'盐石料','27':'矿物燃料','28':'无机化工','29':'有机化工','30':'医药','32':'颜料涂料','33':'香精化妆','34':'洗涤','38':'杂项化工','39':'塑料','40':'橡胶','42':'皮具箱包','44':'木制品','48':'纸','61':'针织服装','62':'梭织服装','63':'纺织制品','64':'鞋靴','68':'石料水泥','69':'陶瓷','70':'玻璃','72':'钢铁','73':'钢铁制品','74':'铜','76':'铝','82':'工具刀具','83':'贱金属杂项','84':'机械设备','85':'电子电气','87':'车辆汽配','90':'光学医疗仪器','91':'钟表','94':'家具灯具','95':'玩具运动','96':'杂项制品'};
 let TAB='product', SAMPLE=null, TOKEN='', USING='', QTY=20, PRODUCTS=[], _terms=null, _lastLabel='', _curKw='';
 const CTRY=['美国','越南','印度','英国','德国','加拿大','澳大利亚','墨西哥','巴西','俄罗斯','阿联酋','日本','菲律宾','巴基斯坦'];
-function buildCtry(){ $('ctryChips').innerHTML='<span class="cchip on" onclick="setCtry(this,\'\')">全部</span>'+CTRY.map(c=>`<span class="cchip" onclick="setCtry(this,'${c}')">${c}</span>`).join('')+'<input id="fCountry" placeholder="其他国家" oninput="onCtryInput()">'; }
-function setCtry(el,c){ document.querySelectorAll('.cchip').forEach(x=>x.classList.remove('on')); el.classList.add('on'); $('fCountry').value=c; if(_terms&&TAB==='product') runFromTerms(); }
-function onCtryInput(){ document.querySelectorAll('.cchip').forEach(x=>x.classList.remove('on')); }
+function buildCtry(){ $('ctryChips').innerHTML='<span class="cchip" onclick="setCtry(this,\'\')">全部</span>'+CTRY.map(c=>`<span class="cchip" onclick="setCtry(this,'${c}')">${c}</span>`).join('')+'<input id="fCountry" placeholder="其他国家" oninput="onCtryInput()">'; }
+function setCtry(el,c){ document.querySelectorAll('.cchip').forEach(x=>x.classList.remove('on')); el.classList.add('on'); $('fCountry').value=c; if(TAB==='product'){ revealStep('stepQty'); scrollToStep('stepQty'); } }
+function onCtryInput(){ document.querySelectorAll('.cchip').forEach(x=>x.classList.remove('on')); if(TAB==='product') revealStep('stepQty'); }
+// —— 分步显示：选完上一步才露出下一步 ——
+function revealStep(id){ const e=$(id); if(e) e.classList.remove('hidestep'); }
+function hideStep(id){ const e=$(id); if(e) e.classList.add('hidestep'); }
+function resetSteps(){ hideStep('stepCtry'); hideStep('stepQty'); $('results').innerHTML=''; }
+function scrollToStep(id){ const e=$(id); if(e) setTimeout(()=>e.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
 const $=id=>document.getElementById(id);
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 function initials(n){ const w=String(n).replace(/[^A-Za-z一-龥 ]/g,' ').trim().split(/\s+/); return ((w[0]||'?')[0]+((w[1]||'')[0]||'')).toUpperCase(); }
@@ -257,6 +269,8 @@ function setTab(m){
   $('paneProduct').style.display=m==='product'?'':'none';
   $('paneRival').style.display=m==='rival'?'':'none';
   $('results').innerHTML='';
+  if(m==='rival'){ revealStep('stepCtry'); revealStep('stepQty'); const b=$('goSearchBtn'); if(b) b.style.display='none'; }  // 反查：直接给国家+数量，用反查按钮查
+  else { const b=$('goSearchBtn'); if(b) b.style.display=''; resetSteps(); }
 }
 
 /* ---- product-first: 引入/输入产品 → AI 拆成单品让用户选一个 → 转 HS → 查 ---- */
@@ -264,7 +278,7 @@ let _choiceList=[];
 function onProdSelect(){ const i=$('prodSel').value; if(i==='')return; const p=PRODUCTS[+i]; if(!p)return; splitAndChoose(p.name); }
 function productSearch(){ const prod=$('pq').value.trim(); if(!prod)return; splitAndChoose(prod); }
 async function splitAndChoose(prod){
-  _terms=null; $('derived').classList.remove('show'); $('results').innerHTML='';
+  _terms=null; $('derived').classList.remove('show'); resetSteps();
   if(USING!=='db' || !TOKEN){ $('choices').innerHTML=''; sampleTerms(prod); return; }  // 样本：不拆，当单品
   $('choices').innerHTML='<div class="loading" style="padding:14px"><i class="ti ti-loader-2"></i> AI 正在识别产品…</div>';
   try{
@@ -280,28 +294,32 @@ function pickProduct(prod, idx){
   document.querySelectorAll('.pchoice').forEach((c,i)=>c.classList.toggle('on', i===idx));
   productTermsSearch(prod);
 }
-function sampleTerms(prod){ _terms={ en:prod, hsCode:'', chapter:'', keywords:[prod], label:prod }; showDerived(); runFromTerms(); }
+function sampleTerms(prod){ _terms={ en:prod, hsCode:'', chapter:'', keywords:[prod], label:prod }; showDerived(); _curKw=prod; revealStep('stepCtry'); scrollToStep('stepCtry'); }
 async function productTermsSearch(prod){
   $('results').innerHTML='<div class="loading"><i class="ti ti-loader-2"></i> 正在把「'+esc(prod)+'」转成 HS 编码…</div>';
   try{
     const t=await fetch('/api/customs/product-terms',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+TOKEN},body:JSON.stringify({product:prod})}).then(r=>r.json());
     if(!t.success) throw new Error(t.error||'转换失败');
     _terms={ en:t.en||prod, hsCode:t.hsCode||'', chapter:t.chapter||'', keywords:(t.keywords&&t.keywords.length?t.keywords:[t.en||prod]), label:prod };
-    showDerived(); runFromTerms();
+    showDerived(); _curKw=(_terms.keywords[0]||_terms.en||''); $('results').innerHTML='';
+    revealStep('stepCtry'); scrollToStep('stepCtry');   // ② 关键词已出→露出 ③ 国家，等用户选完再查
   }catch(e){ $('results').innerHTML='<div class="empty" style="color:#f87171">转换出错：'+esc(e.message)+'</div>'; }
 }
 function showDerived(){
   if(!_terms){ $('derived').classList.remove('show'); return; }
   const chName=HS_CH[_terms.chapter]?`（${HS_CH[_terms.chapter]}）`:'';
-  $('derived').innerHTML=`<b>${esc(_terms.label)}</b> → `
+  $('derived').innerHTML=`<div class="kwhint"><span class="stepno">2</span>选一个检索关键词（可换，越具体越准）</div>`
+    +`<b>${esc(_terms.label)}</b> → `
     +(_terms.hsCode?`HS <b>${esc(_terms.hsCode)}</b>${chName} · `:'')
     +_terms.keywords.map((k,i)=>`<span class="kw${i===0?' on':''}" onclick="pickKw(this,'${esc(k)}')">${esc(k)}</span>`).join('');
   $('derived').classList.add('show');
 }
-function pickKw(el,kw){ document.querySelectorAll('.derived .kw').forEach(k=>k.classList.remove('on')); el.classList.add('on'); runFromTerms(kw); }
+function pickKw(el,kw){ document.querySelectorAll('.derived .kw').forEach(k=>k.classList.remove('on')); el.classList.add('on'); _curKw=kw; revealStep('stepCtry'); }
+// ④ 全部选完，点「查海关买家」才真正查
+function goSearch(){ if(!_terms){ toast('先在上面选一个产品'); return; } runFromTerms(_curKw||undefined); scrollToStep('results'); }
 function runFromTerms(kw){
   if(!_terms)return;
-  const keyword=kw || _terms.keywords[0] || _terms.en;
+  const keyword=kw || _curKw || _terms.keywords[0] || _terms.en;
   // 不再按 HS 章硬过滤：强绑一个章会把大量匹配买家(尤其自带邮箱的)挡在外面。
   // 只用关键词在报关描述里匹配，池子大得多；相关性交给后面的 AI 筛选把关。
   const params={};
