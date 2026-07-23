@@ -2621,10 +2621,20 @@ app.post('/api/customs/query', requireAuth, async (req, res) => {
     if (q) query = query.or(`product_desc.ilike.%${q}%,buyer.ilike.%${q}%`);
     // NO order-by-amount: sorting a big chapter (e.g. 85, ~1M rows) by amount scans the whole
     // set and times out. Index-order rows are fine and fast (stops early at the limit).
-    query = query.range(from, from + pageSize - 1);
+    // Over-fetch then dedup by buyer: one company often has many shipments, so N raw rows
+    // collapse to far fewer distinct companies. Pull a big window so we can still return
+    // ~pageSize DISTINCT buyers (prefer the row that carries an email).
+    const overFetch = Math.min(Math.max(pageSize * 12, 200), 3000);
+    query = query.range(from, from + overFetch - 1);
     const { data, count, error } = await withTimeout(query, 30000, 'customs query');
     if (error) return res.status(500).json({ success: false, error: error.message });
-    res.json({ success: true, rows: data || [], total: count || 0, page, pageSize });
+    const seen = new Map();
+    for (const r of (data || [])) {
+      const k = (r.buyer || '').toLowerCase().trim(); if (!k) continue;
+      const cur = seen.get(k); if (!cur || (!cur.email && r.email)) seen.set(k, r);
+    }
+    const distinct = [...seen.values()].slice(0, pageSize);
+    res.json({ success: true, rows: distinct, total: count || 0, page, pageSize });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 

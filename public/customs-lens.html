@@ -302,8 +302,9 @@ function pickKw(el,kw){ document.querySelectorAll('.derived .kw').forEach(k=>k.c
 function runFromTerms(kw){
   if(!_terms)return;
   const keyword=kw || _terms.keywords[0] || _terms.en;
+  // 不再按 HS 章硬过滤：强绑一个章会把大量匹配买家(尤其自带邮箱的)挡在外面。
+  // 只用关键词在报关描述里匹配，池子大得多；相关性交给后面的 AI 筛选把关。
   const params={};
-  if(_terms.chapter) params.chapter=_terms.chapter;
   if(keyword) params.q=keyword;
   doQuery(params, `${_terms.label} 的买家`);
 }
