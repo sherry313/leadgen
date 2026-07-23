@@ -50,3 +50,5 @@ scripts/
 *.csv
 emails-dump.txt
 *-dump.txt
+
+data/seo-sites.json

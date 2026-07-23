@@ -2777,40 +2777,56 @@ app.post('/api/seo/check', requireAuth, async (req, res) => {
 });
 
 // SEO 连接器（配合 WP 插件）：给用户官网发一个 site_key，存/取该站要注入的 SEO 配置。
-// 需要表 public.seo_sites（见项目根 seo_sites.sql，用户在 Supabase 跑一次）。
-app.post('/api/seo/connect', requireAuth, async (req, res) => {
-  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+// 存在服务器本地文件（data/seo-sites.json），免建 Supabase 表。数据量极小（每站一条）。
+// 注：Docker 重建若无挂载卷会丢失，用户在工具里再点一次「发布」即可重建；日后可迁到表求持久。
+const _seoStorePath = require('path').join(__dirname, 'data', 'seo-sites.json');
+function _seoLoad() {
+  try { return JSON.parse(require('fs').readFileSync(_seoStorePath, 'utf8')); } catch { return {}; }
+}
+function _seoSave(store) {
+  const fs = require('fs'), p = require('path');
+  fs.mkdirSync(p.dirname(_seoStorePath), { recursive: true });
+  fs.writeFileSync(_seoStorePath, JSON.stringify(store));
+}
+function _seoKeyForUser(store, userId) {
+  for (const k in store) if (store[k].user_id === userId) return k;
+  return null;
+}
+app.post('/api/seo/connect', requireAuth, (req, res) => {
   const domain = String(req.body?.domain || '').trim().slice(0, 120);
   try {
-    const ex = await _productsDb.from('seo_sites').select('site_key').eq('user_id', req.userId).limit(1);
-    if (ex.error) throw ex.error;
-    let key = ex.data && ex.data[0] ? ex.data[0].site_key : null;
-    if (!key) { key = require('crypto').randomBytes(16).toString('hex'); const ins = await _productsDb.from('seo_sites').insert({ user_id: req.userId, site_key: key, domain }); if (ins.error) throw ins.error; }
-    else if (domain) { await _productsDb.from('seo_sites').update({ domain }).eq('site_key', key); }
+    const store = _seoLoad();
+    let key = _seoKeyForUser(store, req.userId);
+    if (!key) {
+      key = require('crypto').randomBytes(16).toString('hex');
+      store[key] = { user_id: req.userId, domain, meta_description: '', org_schema: '', faq_schema: '', faqs: [], updated_at: new Date().toISOString() };
+    } else if (domain) { store[key].domain = domain; }
+    _seoSave(store);
     res.json({ success: true, siteKey: key });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 // 工具里点"发布(自动上线)"：把生成的内容存进该用户的站记录，插件下次拉取就注入了。
-app.post('/api/seo/save-site', requireAuth, async (req, res) => {
-  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+app.post('/api/seo/save-site', requireAuth, (req, res) => {
   const b = req.body || {};
   try {
-    const ex = await _productsDb.from('seo_sites').select('site_key').eq('user_id', req.userId).limit(1);
-    if (ex.error) throw ex.error;
-    if (!ex.data || !ex.data[0]) return res.json({ success: false, error: '还没连接官网，先在上面「连接官网」拿密钥、装插件' });
-    const upd = await _productsDb.from('seo_sites').update({ meta_description: String(b.metaDescription || ''), org_schema: String(b.orgSchema || ''), faq_schema: String(b.faqSchema || ''), faqs: Array.isArray(b.faqs) ? b.faqs : [], updated_at: new Date().toISOString() }).eq('site_key', ex.data[0].site_key);
-    if (upd.error) throw upd.error;
+    const store = _seoLoad();
+    const key = _seoKeyForUser(store, req.userId);
+    if (!key) return res.json({ success: false, error: '还没连接官网，先在上面「连接官网」拿密钥、装插件' });
+    Object.assign(store[key], {
+      meta_description: String(b.metaDescription || ''), org_schema: String(b.orgSchema || ''),
+      faq_schema: String(b.faqSchema || ''), faqs: Array.isArray(b.faqs) ? b.faqs : [],
+      updated_at: new Date().toISOString()
+    });
+    _seoSave(store);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 // 公开：WP 插件按 site_key 拉取要注入的配置（无需登录，插件在客户公开站上跑）。
-app.get('/api/seo/site-config', async (req, res) => {
-  if (!_productsDb) return res.json({ success: false });
+app.get('/api/seo/site-config', (req, res) => {
   const key = String(req.query.key || '').trim();
   if (!key || key.length < 8) return res.json({ success: false });
   try {
-    const r = await _productsDb.from('seo_sites').select('meta_description,org_schema,faq_schema').eq('site_key', key).limit(1);
-    const row = r.data && r.data[0];
+    const row = _seoLoad()[key];
     if (!row) return res.json({ success: false });
     res.set('Cache-Control', 'public, max-age=1800');
     res.json({ success: true, metaDescription: row.meta_description || '', orgSchema: row.org_schema || '', faqSchema: row.faq_schema || '' });
