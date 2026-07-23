@@ -9834,7 +9834,13 @@ setTimeout(function _restoreAppState() {
 function _appJumpToStage(goto){
   if (!goto) return;
   try {
-    if (goto === 'tofilter') { if (typeof showAppStep3View === 'function') showAppStep3View('filter'); return; }
+    if (goto === 'tofilter') {
+      // 外部数据源(海关等)整批交接、还没勾选任何客户 → 默认全选整批，AI 直接筛这一批
+      if (typeof window._appSelectedCount === 'function' && !window._appSelectedCount()
+          && typeof window.appSelectAllLeads === 'function') window.appSelectAllLeads();
+      if (typeof showAppStep3View === 'function') showAppStep3View('filter');
+      return;
+    }
     if (goto === 'towrite')  { if (typeof showAppStep3View === 'function') showAppStep3View('email');  return; }
     if (goto === 'tosend') {
       // 先切到邮件步（隐藏上面的筛选/线索列表），再把写好的邮件重建进发送面板
@@ -9891,6 +9897,19 @@ function _appJumpToStage(goto){
     if (_ct) _ct.style.display = '';
     window._appMode = 'manual';
     if (typeof _appPlaceBusinessInfoCard === 'function') _appPlaceBusinessInfoCard('manual');
+    // 从海关等外部数据源交接来的产品名 → 若用户还没填过业务信息，用它自动补上产品和目标客户，
+    // 否则「筛选」会因无业务信息而拒跑、「写信」也没产品可写。只补空字段，绝不覆盖用户已填的。
+    const _prod = (p.get('product') || '').trim().slice(0, 120);
+    if (_prod) {
+      try {
+        const _K = 'appBusinessInfo';
+        let _bi = {}; try { _bi = JSON.parse(localStorage.getItem(_K)) || {}; } catch (_) { _bi = {}; }
+        if (!(_bi.product || '').trim())        _bi.product = _prod;
+        if (!(_bi.targetCustomer || '').trim()) _bi.targetCustomer = '进口 / 采购「' + _prod + '」的海外买家、经销商或品牌商';
+        localStorage.setItem(_K, JSON.stringify(_bi));
+        window._appBusinessInfo = _bi;
+      } catch (_) {}
+    }
     const _goto = p.get('goto');   // 邮件线索管理「继续处理」带来的目标步骤
     loadSearchById(sid).then(function(){ if (typeof _appJumpToStage === 'function') _appJumpToStage(_goto); }).catch(function(){});
   } else if (q && loc) {
@@ -12645,6 +12664,8 @@ async function biPolishField(textareaId, kind, btn) {
     (window._appLeads || []).forEach((l, i) => selected.add(i));
     renderLeadList();
   };
+  // 有没有勾选客户（供外部数据源交接判断是否要默认全选整批）。
+  window._appSelectedCount = function () { return selected.size; };
 
   // Select only the leads matching a predicate — used by the history restore to
   // pre-check the AI-recommended leads so the user can go straight to email gen.

@@ -570,6 +570,7 @@
     if(d.type==='console-open-search' && d.searchId){
       var u = '/flow?search=' + encodeURIComponent(String(d.searchId));
       if(d.goto) u += '&goto=' + encodeURIComponent(String(d.goto));   // 按批次状态跳到对应步骤
+      if(d.product) u += '&product=' + encodeURIComponent(String(d.product));   // 海关来的产品名 → 邮件获客据此填业务信息
       openFrame(u);
       var f=findNi('邮件获客');
       if(f){ document.querySelectorAll('.ni').forEach(function(x){ x.classList.remove('on'); }); f.classList.add('on'); }

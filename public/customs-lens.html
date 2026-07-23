@@ -384,8 +384,9 @@ async function toPipeline(n){
     const j=await fetch('/api/customs/to-pipeline',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+TOKEN},body:JSON.stringify(params)}).then(r=>r.json());
     if(!j.success) throw new Error(j.error||'失败');
     toast('已存 '+j.count+' 家，进入邮件获客…');
-    if(window.parent && window.parent!==window){ window.parent.postMessage({type:'console-open-search', searchId:j.searchId, goto:'tofilter'}, '*'); }
-    else { setTimeout(()=>{ location.href='/flow?search='+encodeURIComponent(j.searchId)+'&goto=tofilter'; }, 500); }
+    const prod=(_terms&&_terms.label)||_lastLabel||'';   // 把选中的产品带过去，邮件获客据此填「业务信息」，筛选/写信才有依据
+    if(window.parent && window.parent!==window){ window.parent.postMessage({type:'console-open-search', searchId:j.searchId, goto:'tofilter', product:prod}, '*'); }
+    else { setTimeout(()=>{ location.href='/flow?search='+encodeURIComponent(j.searchId)+'&goto=tofilter'+(prod?'&product='+encodeURIComponent(prod):''); }, 500); }
   }catch(e){ toast('失败：'+e.message); }
 }
 document.addEventListener('keydown',e=>{ if(e.key!=='Enter')return; const a=document.activeElement; if(a&&a.id==='pq')productSearch(); else if(a&&a.id==='rq')doQuery({supplier:$('rq').value.trim()},'买这家货的买家'); });
