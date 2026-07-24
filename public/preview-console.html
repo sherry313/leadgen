@@ -792,6 +792,22 @@
         }).join(''); }
       }
     }).catch(function(){});
+
+    // 邮件战况：把 Instantly 各 campaign 的发送/打开/回复/退信汇总，填进「发送率」「打开率」卡
+    fetch('/api/instantly/analytics-summary',{headers:H}).then(function(r){return r.json();}).then(function(j){
+      if(!j||!j.success||!j.available) return;
+      function card(id){ var v=document.getElementById(id); return { v:v, d:(v&&v.parentNode)?v.parentNode.querySelector('.d'):null }; }
+      function put(c,val,sub){ if(c.v){ c.v.textContent=val; c.v.style.fontSize='26px'; c.v.style.color='var(--tx)'; } if(c.d&&sub!=null) c.d.textContent=sub; }
+      var pct=function(x){ return Math.round(x*100)+'%'; };
+      var sr=card('kpiSendRate'), or=card('kpiOpenRate');
+      // 发送率 = 送达率(已发-退信)/已发；副标题给绝对数
+      if(j.sent>0){ put(sr, j.deliver_rate!=null?pct(j.deliver_rate):'—', '已发 '+j.sent+' 封 · 退信 '+j.bounced); }
+      else { put(sr, '暂无', '开始发送后显示'); }
+      // 打开率 = 打开/已联系；打开为0多半是没开追踪，副标题改提示回复数
+      if(j.contacted>0 && j.opens>0){ put(or, pct(j.open_rate), '回复 '+j.replies+' 家'); }
+      else if(j.sent>0){ put(or, '0%', '回复 '+j.replies+' 家 · 打开追踪未开'); }
+      else { put(or, '暂无', '开始发送后显示'); }
+    }).catch(function(){});
   })();
 
 </script>

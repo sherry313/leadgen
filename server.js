@@ -2532,7 +2532,10 @@ app.get('/api/instantly/campaign/:id/analytics', requireAuth, async (req, res) =
       params: { id: req.params.id },
       headers: instantlyHeaders(),
     });
-    const d = r.data || {};
+    // Instantly returns an ARRAY (one row per campaign) even when id is passed —
+    // reading it as an object gave every field undefined → always 0.
+    const raw = r.data;
+    const d = Array.isArray(raw) ? (raw.find(x => x && x.campaign_id === req.params.id) || raw[0] || {}) : (raw || {});
     const contacted = d.contacted_count || 0;
     const analytics = {
       emails_sent_count:   d.emails_sent_count   || 0,
@@ -2549,6 +2552,35 @@ app.get('/api/instantly/campaign/:id/analytics', requireAuth, async (req, res) =
   } catch (err) {
     const reason = err.response?.data?.message || err.response?.data || err.message;
     console.warn(`[Instantly] analytics failed for ${req.params.id}:`, reason);
+    res.json({ success: true, available: false, reason: String(reason).slice(0, 200) });
+  }
+});
+
+// GET /api/instantly/analytics-summary — sum sent/open/reply/bounce across ALL
+// campaigns in one call (the /campaigns/analytics endpoint returns an array of
+// per-campaign rows). Powers the 获客大盘 邮件战况 cards.
+app.get('/api/instantly/analytics-summary', requireAuth, async (req, res) => {
+  try {
+    const axios = require('axios');
+    const r = await axios.get(`${INSTANTLY_BASE}/campaigns/analytics`, { headers: instantlyHeaders() });
+    const rows = Array.isArray(r.data) ? r.data : (r.data ? [r.data] : []);
+    const s = rows.reduce((a, d) => ({
+      leads:     a.leads     + (d.leads_count       || 0),
+      contacted: a.contacted + (d.contacted_count   || 0),
+      sent:      a.sent      + (d.emails_sent_count || 0),
+      opens:     a.opens     + (d.open_count        || 0),
+      replies:   a.replies   + (d.reply_count       || 0),
+      bounced:   a.bounced   + (d.bounced_count     || 0),
+    }), { leads: 0, contacted: 0, sent: 0, opens: 0, replies: 0, bounced: 0 });
+    res.json({
+      success: true, available: true, campaigns: rows.length, ...s,
+      open_rate:    s.contacted > 0 ? s.opens / s.contacted : null,
+      reply_rate:   s.contacted > 0 ? s.replies / s.contacted : null,
+      deliver_rate: s.sent > 0 ? (s.sent - s.bounced) / s.sent : null,
+    });
+  } catch (err) {
+    const reason = err.response?.data?.message || err.response?.data || err.message;
+    console.warn('[Instantly] analytics-summary failed:', reason);
     res.json({ success: true, available: false, reason: String(reason).slice(0, 200) });
   }
 });
