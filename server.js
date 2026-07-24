@@ -2656,7 +2656,7 @@ app.post('/api/customs/query', requireAuth, async (req, res) => {
     // Over-fetch then dedup by buyer: one company often has many shipments, so N raw rows
     // collapse to far fewer distinct companies. Pull a big window so we can still return
     // ~pageSize DISTINCT buyers (prefer the row that carries an email).
-    const overFetch = Math.min(Math.max(pageSize * 12, 200), 3000);
+    const overFetch = Math.min(Math.max(pageSize * 6, 150), 1200);
     query = query.range(from, from + overFetch - 1);
     const { data, count, error } = await withTimeout(query, 30000, 'customs query');
     if (error) return res.status(500).json({ success: false, error: error.message });
