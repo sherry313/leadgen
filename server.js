@@ -13,7 +13,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany, searchWebsite, scrapeHtml } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getProductAllLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getExistingBuyerSet, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getProductAllLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -2638,35 +2638,41 @@ app.post('/api/customs/query', requireAuth, async (req, res) => {
   const page = Math.max(parseInt(b.page || 0, 10) || 0, 0);
   const from = page * pageSize;
   try {
-    // count:'planned' = fast planner estimate (exact-count full-scans 6M rows and times out, esp. mid-upload)
-    let query = _productsDb.from('customs_records')
-      .select('buyer,buyer_country,buyer_addr,email,phone,website,supplier,supplier_country,hs,hs_chapter,product_desc,amount,txn_date,port_disc,origin', { count: 'planned' });
-    if (chapter) query = query.eq('hs_chapter', chapter);
-    if (hs) query = query.ilike('hs', hs + '%');
-    if (country) {
-      const aliases = CTRY_ALIAS[country] || [country];
-      query = query.or(aliases.map(a => `buyer_country.ilike.%${a}%`).join(','));
-    }
-    if (supplier) query = query.ilike('supplier', '%' + supplier + '%');
-    if (minAmount > 0) query = query.gte('amount', minAmount);
-    if (hasEmail) query = query.not('email', 'is', null);
-    if (q) query = query.or(`product_desc.ilike.%${q}%,buyer.ilike.%${q}%`);
-    // NO order-by-amount: sorting a big chapter (e.g. 85, ~1M rows) by amount scans the whole
-    // set and times out. Index-order rows are fine and fast (stops early at the limit).
-    // Over-fetch then dedup by buyer: one company often has many shipments, so N raw rows
-    // collapse to far fewer distinct companies. Pull a big window so we can still return
-    // ~pageSize DISTINCT buyers (prefer the row that carries an email).
-    const overFetch = Math.min(Math.max(pageSize * 6, 150), 1200);
-    query = query.range(from, from + overFetch - 1);
-    const { data, count, error } = await withTimeout(query, 30000, 'customs query');
-    if (error) return res.status(500).json({ success: false, error: error.message });
+    // 查询工厂：每翻一页要重建（Supabase 构建器执行后不可复用）。count:'planned'=快速估算（exact 全表扫会超时）。
+    const mkQuery = (withCount) => {
+      let query = _productsDb.from('customs_records')
+        .select('buyer,buyer_country,buyer_addr,email,phone,website,supplier,supplier_country,hs,hs_chapter,product_desc,amount,txn_date,port_disc,origin', withCount ? { count: 'planned' } : {});
+      if (chapter) query = query.eq('hs_chapter', chapter);
+      if (hs) query = query.ilike('hs', hs + '%');
+      if (country) { const aliases = CTRY_ALIAS[country] || [country]; query = query.or(aliases.map(a => `buyer_country.ilike.%${a}%`).join(',')); }
+      if (supplier) query = query.ilike('supplier', '%' + supplier + '%');
+      if (minAmount > 0) query = query.gte('amount', minAmount);
+      if (hasEmail) query = query.not('email', 'is', null);
+      if (q) query = query.ilike('product_desc', '%' + q + '%');   // 关键词只匹配报关品名（比 .or 双列快很多，也更准）
+      return query;   // NO order-by-amount（大章排序会全表扫超时）；索引序足够快。
+    };
+    // 自动跳过已拉过的：排除该用户线索库里已有的买家(公司名/邮箱)，每次只给没见过的新买家。
+    // 一家公司常有多条提单 → 边翻边按买家去重；扫够行以跨过已拉过的那批。
+    const existing = await getExistingBuyerSet(req.userId);
     const seen = new Map();
-    for (const r of (data || [])) {
-      const k = (r.buyer || '').toLowerCase().trim(); if (!k) continue;
-      const cur = seen.get(k); if (!cur || (!cur.email && r.email)) seen.set(k, r);
+    let total = 0, qErr = null;
+    const WIN = 1000, MAX_ROWS = 4000;
+    for (let off = from; off < from + MAX_ROWS && seen.size < pageSize; off += WIN) {
+      const r = await withTimeout(mkQuery(off === from).range(off, off + WIN - 1), 30000, 'customs query');
+      if (r.error) { qErr = r.error; break; }
+      if (off === from) total = r.count || 0;
+      const rows = r.data || [];
+      for (const row of rows) {
+        const k = (row.buyer || '').toLowerCase().trim(); if (!k) continue;
+        if (existing.names.has(k)) continue;
+        if (row.email && existing.emails.has(String(row.email).toLowerCase().trim())) continue;
+        const cur = seen.get(k); if (!cur || (!cur.email && row.email)) seen.set(k, row);
+      }
+      if (rows.length < WIN) break;   // 没有更多行了
     }
+    if (qErr) return res.status(500).json({ success: false, error: qErr.message });
     const distinct = [...seen.values()].slice(0, pageSize);
-    res.json({ success: true, rows: distinct, total: count || 0, page, pageSize });
+    res.json({ success: true, rows: distinct, total, page, pageSize, fresh: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -2682,21 +2688,35 @@ app.post('/api/customs/to-pipeline', requireAuth, async (req, res) => {
   const count = Math.min(Math.max(parseInt(b.count || 20, 10) || 20, 1), 200);
   const label = (b.label || '海关线索').toString().slice(0, 80);
   try {
-    let query = _productsDb.from('customs_records').select('buyer,buyer_country,buyer_addr,email,phone,website,product_desc,hs').limit(Math.min(count * 6, 1200));
-    if (chapter) query = query.eq('hs_chapter', chapter);
-    if (hs) query = query.ilike('hs', hs + '%');
-    if (country) { const al = CTRY_ALIAS[country] || [country]; query = query.or(al.map(a => `buyer_country.ilike.%${a}%`).join(',')); }
-    if (supplier) query = query.ilike('supplier', '%' + supplier + '%');
-    if (minAmount > 0) query = query.gte('amount', minAmount);
-    if (hasEmail) query = query.not('email', 'is', null);
-    if (q) query = query.or(`product_desc.ilike.%${q}%,buyer.ilike.%${q}%`);
-    const { data, error } = await withTimeout(query, 30000, 'customs to-pipeline');
-    if (error) return res.status(500).json({ success: false, error: error.message });
-    // 一个公司常有多条提单 → 按买家去重（优先留有邮箱的那条），取前 count 个不同公司
+    const mkQuery = () => {
+      let query = _productsDb.from('customs_records').select('buyer,buyer_country,buyer_addr,email,phone,website,product_desc,hs');
+      if (chapter) query = query.eq('hs_chapter', chapter);
+      if (hs) query = query.ilike('hs', hs + '%');
+      if (country) { const al = CTRY_ALIAS[country] || [country]; query = query.or(al.map(a => `buyer_country.ilike.%${a}%`).join(',')); }
+      if (supplier) query = query.ilike('supplier', '%' + supplier + '%');
+      if (minAmount > 0) query = query.gte('amount', minAmount);
+      if (hasEmail) query = query.not('email', 'is', null);
+      if (q) query = query.ilike('product_desc', '%' + q + '%');
+      return query;
+    };
+    // 自动跳过已拉过的：只存没见过的新买家（与展示查询同一口径，边翻边按买家去重）
+    const existing = await getExistingBuyerSet(req.userId);
     const seen = new Map();
-    for (const r of (data || [])) { const k = (r.buyer || '').toLowerCase().trim(); if (!k) continue; const cur = seen.get(k); if (!cur || (!cur.email && r.email)) seen.set(k, r); }
+    const WIN = 1000, MAX_ROWS = 4000;
+    for (let off = 0; off < MAX_ROWS && seen.size < count; off += WIN) {
+      const r = await withTimeout(mkQuery().range(off, off + WIN - 1), 30000, 'customs to-pipeline');
+      if (r.error) return res.status(500).json({ success: false, error: r.error.message });
+      const rows = r.data || [];
+      for (const row of rows) {
+        const k = (row.buyer || '').toLowerCase().trim(); if (!k) continue;
+        if (existing.names.has(k)) continue;
+        if (row.email && existing.emails.has(String(row.email).toLowerCase().trim())) continue;
+        const cur = seen.get(k); if (!cur || (!cur.email && row.email)) seen.set(k, row);
+      }
+      if (rows.length < WIN) break;
+    }
     const distinct = [...seen.values()].slice(0, count);
-    if (!distinct.length) return res.json({ success: false, error: '没有匹配的买家' });
+    if (!distinct.length) return res.json({ success: false, error: '没有新的买家了 —— 这个产品在当前条件下的买家已经拉完，换个关键词或国家再试' });
     const searchId = await saveSearchRun({ query: label, location: country || '', maxResults: count, totalScraped: distinct.length }, req.userId);
     const leads = distinct.map(r => ({ companyName: r.buyer, website: r.website || '', phone: r.phone || '', email: r.email || '', city: r.buyer_country || '' }));
     await saveLeads(searchId, leads, req.userId);

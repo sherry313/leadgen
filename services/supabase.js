@@ -796,4 +796,28 @@ async function getSentEmailStats(userId) {
   }
 }
 
-module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getProductAllLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch };
+// 海关"自动跳过已拉过的"：取该用户已存进线索库的买家名 + 邮箱集合，用来排除。
+async function getExistingBuyerSet(userId) {
+  const db = getClient();
+  const out = { names: new Set(), emails: new Set() };
+  if (!db) return out;
+  try {
+    const PAGE = 1000, MAX_PAGES = 30;   // 最多 3 万条，够用又不至于拖慢
+    for (let p = 0; p < MAX_PAGES; p++) {
+      const from = p * PAGE;
+      let q = db.from('leads').select('company_name, email').range(from, from + PAGE - 1);
+      if (userId && userId !== 'legacy') q = q.eq('user_id', userId);
+      const { data, error } = await q;
+      if (error) throw error;
+      if (!data || !data.length) break;
+      for (const r of data) {
+        if (r.company_name) out.names.add(String(r.company_name).toLowerCase().trim());
+        if (r.email) out.emails.add(String(r.email).toLowerCase().trim());
+      }
+      if (data.length < PAGE) break;
+    }
+  } catch (e) { console.warn('[Supabase] getExistingBuyerSet failed:', e.message); }
+  return out;
+}
+
+module.exports = { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getExistingBuyerSet, getSearchHistory, getLeadsForSearch, getLeadById, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getProductAllLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch };

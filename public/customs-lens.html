@@ -358,11 +358,13 @@ async function doQuery(extra, label){
 }
 function renderResults(rows,total){
   if(!rows.length){
-    $('results').innerHTML=`<div class="nocov"><h3><i class="ti ti-search-off"></i> 这个词近期没匹配到进口记录</h3><p>换个说法、或点上面识别出的<b style="color:var(--tx2)">其他关键词</b>再试；也可以放宽「最低进口额 / 国家」条件。</p></div>`; return;
+    $('results').innerHTML=`<div class="nocov"><h3><i class="ti ti-search-off"></i> 没有新买家了</h3><p>这个词的买家可能你<b style="color:var(--tx2)">已经全拉过了</b>（系统会自动跳过拉过的）。换个<b style="color:var(--tx2)">关键词</b>、换个<b style="color:var(--tx2)">国家</b>、或放宽「最低进口额」再试，就能挖到更多。</p></div>`; return;
   }
   const emCount=rows.filter(r=>r.email).length;
+  const low = rows.length < QTY;   // 没凑够要的数量 = 新买家快用完
   $('results').innerHTML=`
-    <div class="res-head"><div class="rt">${esc(_lastLabel)}</div><div class="rc">约 ${(+total).toLocaleString()} 家匹配，已取前 ${rows.length} 家</div></div>
+    <div class="res-head"><div class="rt">${esc(_lastLabel)}</div><div class="rc">约 ${(+total).toLocaleString()} 家匹配 · 取到 <b style="color:var(--ok)">${rows.length}</b> 家没拉过的新买家</div></div>
+    ${low?`<div style="background:var(--warnbg);border:1px solid rgba(251,191,36,0.3);border-radius:9px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:var(--warn)"><i class="ti ti-bulb"></i> 只凑到 ${rows.length} 家新买家，这个产品的买家快拉完了 —— 换个关键词或国家能挖到更多。</div>`:''}
     <div class="handoff">
       <div class="ht"><b>选中 ${rows.length} 家</b>${emCount?`<div><span style="color:var(--ok)">${emCount} 家自带邮箱</span></div>`:''}</div>
       <button class="btn primary big" onclick="toPipeline(${rows.length})"><i class="ti ti-player-play"></i> 交给 AI 筛选 + 写信</button>
