@@ -12909,12 +12909,29 @@ async function biPolishField(textareaId, kind, btn) {
     const leads = window._appLeads || [];
     const pickedAll = [...selected].sort((a, b) => a - b).map(i => leads[i]).filter(Boolean);
     // No sendable address → no generation. Same validity gate as the send loops.
-    const picked = pickedAll.filter(l => appIsValidEmail((l.email || l.raw?.email || '').toString().trim()));
+    let picked = pickedAll.filter(l => appIsValidEmail((l.email || l.raw?.email || '').toString().trim()));
     const droppedNoEmail = pickedAll.length - picked.length;
     if (!picked.length) {
       if (pickedAll.length) alert(`所选 ${droppedNoEmail} 家客户都没有可用的收件邮箱，无法生成邮件。请选择有邮箱的客户。`);
       return;
     }
+    // 硬闸：写信只对「筛选通过」的客户写。没筛的 / 淘汰的一律不写（想写先去 AI 筛选）。
+    // 判定与后台一致：'pass' 或分数≥5 才算通过；空(没筛)/'fail'(淘汰) 都不写。
+    const _passed = (l) => {
+      let v = (l._verdict === 'pass' || l._verdict === 'fail') ? l._verdict
+            : (l.raw && (l.raw.icp_score === 'pass' || l.raw.icp_score === 'fail')) ? l.raw.icp_score
+            : (l.raw ? l.raw.icp_score : l.icp_score);
+      v = String(v == null ? '' : v).trim().toLowerCase();
+      if (v === 'pass') return true; if (v === 'fail') return false;
+      const n = parseFloat(v); return !isNaN(n) ? n >= 5 : false;   // 没筛 → 不写
+    };
+    const passedPicked = picked.filter(_passed);
+    const droppedNotPassed = picked.length - passedPicked.length;
+    if (!passedPicked.length) {
+      alert('所选客户里没有「筛选通过」的。写信只对通过筛选的客户；没筛的请先去 AI 筛选，淘汰的不写。');
+      return;
+    }
+    picked = passedPicked;
     const framework = panel.querySelector('#appFrameworkSelect')?.value || '';
 
     const btn        = panel.querySelector('#appGenerateBtn');
@@ -12935,7 +12952,9 @@ async function biPolishField(textareaId, kind, btn) {
     statusEl.style.display = 'block';
     statusEl.style.background = 'rgba(99,102,241,0.08)';
     statusEl.style.color = '#a5b4fc';
-    statusEl.textContent = '正在生成邮件，请稍候...' + (droppedNoEmail ? `（已跳过 ${droppedNoEmail} 家无邮箱客户）` : '');
+    statusEl.textContent = '正在生成邮件，请稍候...'
+      + (droppedNoEmail ? `（跳过 ${droppedNoEmail} 家无邮箱）` : '')
+      + (droppedNotPassed ? `（跳过 ${droppedNotPassed} 家未通过筛选，只给通过的写）` : '');
     resultsEl.style.display = 'none';
     resultsEl.innerHTML = '';
 

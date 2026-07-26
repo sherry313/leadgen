@@ -120,25 +120,40 @@
   // 一个批次(每次爬的)的单一状态 = 它卡在哪一步。
   // 判定：这批只要有任何"筛过/写过/发过"的痕迹，就算已处理过；完全没痕迹 = 待筛选。
   // （未爬完暂时测不出来——数据库没记爬取完成标记；以后加了标记再支持。）
-  const STAGE = { tofilter:{lbl:'待筛选', icon:'ti-filter',       cls:'tofilter', hint:'爬完了还没筛，去筛一遍'},
-                  towrite: {lbl:'待写邮件', icon:'ti-pencil',      cls:'towrite',  hint:'筛过通过了，还没写开发信'},
-                  tosend:  {lbl:'待发送',  icon:'ti-mail-forward', cls:'tosend',   hint:'邮件写好了，还没发出去'},
-                  done:    {lbl:'已完成',  icon:'ti-checks',       cls:'done',     hint:'写完也发完了'} };
-  function batchStage(leads){
-    let sent=0, written=0, verdict=0, passNoEmail=0;
+  const STAGE = { tofilter:  {lbl:'待筛选',     icon:'ti-filter',       cls:'tofilter', hint:'爬完了还没筛，去筛一遍'},
+                  filtering: {lbl:'筛选未完成', icon:'ti-filter',       cls:'tofilter', hint:'筛了一部分，还有没筛的，点继续接着筛'},
+                  towrite:   {lbl:'待写邮件',   icon:'ti-pencil',       cls:'towrite',  hint:'筛过通过了，还没写开发信'},
+                  writing:   {lbl:'写邮件未完成',icon:'ti-pencil',      cls:'towrite',  hint:'通过的写了一部分，还有没写的，点继续接着写'},
+                  tosend:    {lbl:'待发送',     icon:'ti-mail-forward', cls:'tosend',   hint:'邮件写好了，还没发出去'},
+                  done:      {lbl:'已完成',     icon:'ti-checks',       cls:'done',     hint:'写完也发完了'},
+                  nofit:     {lbl:'无合适客户', icon:'ti-user-off',     cls:'done',     hint:'筛完了，这批没有合适的客户'} };
+  // 继续处理 → 跳到 app 的哪一步（筛/写/发）
+  const GOTO = { tofilter:'tofilter', filtering:'tofilter', towrite:'towrite', writing:'towrite', tosend:'tosend' };
+  // 一个批次的单一状态 = 卡在最早的未完成那步。淘汰(筛没过)的一律不算、不显示。
+  function analyzeBatch(leads){
+    const total = leads.length;
+    let scored=0, passed=0, passWritten=0, passSent=0, passUnwritten=0;
     leads.forEach(l=>{
-      const w = hasEmail(l), v = passedFilter(l.icp_score);
-      if (l.email_sent_at) sent++;
-      if (w) written++;
-      if (v!==null) verdict++;
-      if (v===true && !w) passNoEmail++;
+      const scoredYes = String(l.icp_score==null?'':l.icp_score).trim()!=='';
+      if (scoredYes) scored++;
+      const v = passedFilter(l.icp_score);   // true=通过 / false=淘汰 / null=没筛
+      if (v===true){
+        passed++;
+        if (hasEmail(l)){ passWritten++; if (l.email_sent_at) passSent++; }
+        else passUnwritten++;
+      }
+      // v===false（淘汰）→ 忽略
     });
-    const processed = verdict>0 || written>0 || sent>0;   // 有任何处理痕迹
-    const unsentWritten = written - sent;
-    if (!processed) return 'tofilter';       // 爬完没动过 → 待筛选
-    if (unsentWritten>0) return 'tosend';    // 有写好没发的 → 优先待发送
-    if (passNoEmail>0) return 'towrite';     // 没有待发、但有筛过没写的 → 待写
-    return 'done';                            // 写的都发了、没有待写 → 已完成
+    const unscored = total - scored;
+    const effective = passed + unscored;   // 去掉淘汰后还要关心的条数
+    let stage;
+    if (scored===0)            stage='tofilter';   // 一条没筛
+    else if (unscored>0)       stage='filtering';  // 筛了一部分
+    else if (passed===0)       stage='nofit';      // 全筛完，没通过的
+    else if (passUnwritten>0)  stage = passWritten>0 ? 'writing' : 'towrite';
+    else if (passWritten - passSent > 0) stage='tosend';
+    else                       stage='done';
+    return { stage, effective, total };
   }
 
   let _pipeCache = {};   // pid -> {leads, searches}
@@ -183,46 +198,51 @@
     const arr = Object.keys(g).map(k=>{
       const leads=g[k], m=meta[k]||{};
       const ts = m.created_at || (leads[0]&&leads[0].created_at) || null;
-      return { key:k, ts, count:leads.length, stage:batchStage(leads) };
+      const a = analyzeBatch(leads);
+      return { key:k, ts, count:a.effective, total:a.total, stage:a.stage };
     });
     arr.sort((a,b)=> (new Date(b.ts||0)) - (new Date(a.ts||0)));
     return arr;
   }
 
   // 统计一个产品各阶段的"待办任务数"（批次数）
+  const PENDING_STAGES = ['tofilter','filtering','towrite','writing','tosend'];
   function stageCounts(pid){
-    const c = { tofilter:0, towrite:0, tosend:0, done:0 };
+    const c = { tofilter:0, filtering:0, towrite:0, writing:0, tosend:0, done:0, nofit:0 };
     batchesOf(pid).forEach(b=> c[b.stage]++);
     return c;
   }
+  function pendingTotal(c){ return PENDING_STAGES.reduce((s,k)=>s+(c[k]||0),0); }
 
   function updateProdSummary(pid){
     const el = document.getElementById('ts-'+pid); if(!el) return;
     const c = stageCounts(pid);
-    const pending = c.tofilter + c.towrite + c.tosend;
     if (!batchesOf(pid).length){ el.className='tsum'; el.textContent='还没爬到线索'; return; }
-    if (pending===0){ el.className='tsum clear'; el.innerHTML='<i class="ti ti-circle-check"></i> 都处理完了'; return; }
+    if (pendingTotal(c)===0){ el.className='tsum clear'; el.innerHTML='<i class="ti ti-circle-check"></i> 都处理完了'; return; }
     const parts=[];
-    if(c.tofilter) parts.push('待筛 <b>'+c.tofilter+'</b>');
-    if(c.towrite)  parts.push('待写 <b>'+c.towrite+'</b>');
-    if(c.tosend)   parts.push('待发 <b>'+c.tosend+'</b>');
-    if(c.done)     parts.push('<span style="color:var(--done)">已完成 '+c.done+'</span>');
+    if(c.tofilter)  parts.push('待筛 <b>'+c.tofilter+'</b>');
+    if(c.filtering) parts.push('筛未完 <b>'+c.filtering+'</b>');
+    if(c.towrite)   parts.push('待写 <b>'+c.towrite+'</b>');
+    if(c.writing)   parts.push('写未完 <b>'+c.writing+'</b>');
+    if(c.tosend)    parts.push('待发 <b>'+c.tosend+'</b>');
+    if(c.done)      parts.push('<span style="color:var(--done)">已完成 '+c.done+'</span>');
     el.className='tsum'; el.innerHTML = parts.join(' · ') + ' 批';
   }
 
   function renderAggregate(){
     const loaded = _productList.filter(p=> _pipeCache[p.id]);
     if (loaded.length < _productList.length) return;
-    let t={tofilter:0,towrite:0,tosend:0,done:0};
-    loaded.forEach(p=>{ const c=stageCounts(p.id); t.tofilter+=c.tofilter; t.towrite+=c.towrite; t.tosend+=c.tosend; t.done+=c.done; });
+    let t={tofilter:0,filtering:0,towrite:0,writing:0,tosend:0,done:0,nofit:0};
+    loaded.forEach(p=>{ const c=stageCounts(p.id); Object.keys(t).forEach(k=> t[k]+=c[k]); });
     const b = document.getElementById('banner');
-    const pending = t.tofilter+t.towrite+t.tosend;
     let html = '<span class="bt">全部产品 · 待办任务</span>';
-    if (!pending){ html += '<span class="allclear"><i class="ti ti-circle-check"></i> 全部处理完了</span>'; }
+    if (!pendingTotal(t)){ html += '<span class="allclear"><i class="ti ti-circle-check"></i> 全部处理完了</span>'; }
     else {
-      if(t.tofilter) html += '<span class="pill filt"><i class="ti ti-filter"></i>'+t.tofilter+' 批待筛选</span>';
-      if(t.towrite)  html += '<span class="pill write"><i class="ti ti-pencil"></i>'+t.towrite+' 批待写邮件</span>';
-      if(t.tosend)   html += '<span class="pill send"><i class="ti ti-mail-forward"></i>'+t.tosend+' 批待发送</span>';
+      if(t.tofilter)  html += '<span class="pill filt"><i class="ti ti-filter"></i>'+t.tofilter+' 批待筛选</span>';
+      if(t.filtering) html += '<span class="pill filt"><i class="ti ti-filter"></i>'+t.filtering+' 批筛选未完成</span>';
+      if(t.towrite)   html += '<span class="pill write"><i class="ti ti-pencil"></i>'+t.towrite+' 批待写邮件</span>';
+      if(t.writing)   html += '<span class="pill write"><i class="ti ti-pencil"></i>'+t.writing+' 批写邮件未完成</span>';
+      if(t.tosend)    html += '<span class="pill send"><i class="ti ti-mail-forward"></i>'+t.tosend+' 批待发送</span>';
     }
     if(t.done) html += '<span class="pill done"><i class="ti ti-checks"></i>'+t.done+' 批已完成</span>';
     b.innerHTML = html; b.style.display = 'flex';
@@ -239,17 +259,18 @@
       box.innerHTML = '<div class="empty"><i class="ti ti-inbox"></i>这个产品还没爬到线索<br><span style="font-size:.78rem">去「邮件获客」搜一批客户回来</span></div>';
       return;
     }
-    // 待办在前（按时间），已完成排在最后（灰、无按钮）
-    const pending = all.filter(b=> b.stage!=='done');
-    const done    = all.filter(b=> b.stage==='done');
-    box.innerHTML = pending.concat(done).map(b=>{
+    // 待办在前（按时间），已完成/无合适客户排最后（灰、无按钮）
+    const settledSet = { done:1, nofit:1 };
+    const pending = all.filter(b=> !settledSet[b.stage]);
+    const settled = all.filter(b=>  settledSet[b.stage]);
+    box.innerHTML = pending.concat(settled).map(b=>{
       const s = STAGE[b.stage];
-      const isDone = b.stage==='done';
-      return '<div class="task'+(isDone?' taskdone':'')+'">'
+      const isSettled = !!settledSet[b.stage];
+      return '<div class="task'+(isSettled?' taskdone':'')+'">'
         + '<span class="st '+s.cls+'"><i class="ti '+s.icon+'"></i>'+s.lbl+'</span>'
         + '<div class="info"><div class="tt">'+fmtDT(b.ts)+' · '+b.count+' 条线索</div>'
         + (s.hint?('<div class="td">'+s.hint+'</div>'):'')+'</div>'
-        + (!isDone && b.key!=='__none__' ? '<button class="bcont" onclick="goSearch(\''+esc(b.key)+'\',\''+b.stage+'\')"><i class="ti ti-player-play"></i> 继续处理</button>' : '')
+        + (!isSettled && b.key!=='__none__' ? '<button class="bcont" onclick="goSearch(\''+esc(b.key)+'\',\''+(GOTO[b.stage]||'')+'\')"><i class="ti ti-player-play"></i> 继续处理</button>' : '')
         + '</div>';
     }).join('');
   }
