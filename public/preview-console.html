@@ -329,7 +329,7 @@
         <div class="kpi"><div class="t">总客户数 <i class="ti ti-users"></i></div><div class="v" id="kpiCustomers">—</div><div class="d">累计客户</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,24 20,22 40,23 60,16 80,18 100,11 120,7 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,24 20,22 40,23 60,16 80,18 100,11 120,7" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
         <div class="kpi"><div class="t">邮件发送 <i class="ti ti-mail"></i></div><div class="v" id="kpiEmails">—</div><div class="d">累计发出</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,25 20,23 40,20 60,21 80,14 100,12 120,6 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,25 20,23 40,20 60,21 80,14 100,12 120,6" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
         <div class="kpi"><div class="t">发送率 <i class="ti ti-send"></i></div><div class="v" id="kpiSendRate" style="font-size:19px;color:var(--tx3)">接入中</div><div class="d">接 Instantly 后显示</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polyline points="0,20 20,20 40,20 60,20 80,20 100,20 120,20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
-        <div class="kpi"><div class="t">回复率 <i class="ti ti-corner-up-left"></i></div><div class="v" id="kpiOpenRate" style="font-size:19px;color:var(--tx3)">接入中</div><div class="d">接 Instantly 后显示</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polyline points="0,20 20,20 40,20 60,20 80,20 100,20 120,20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">收到回复 <i class="ti ti-corner-up-left"></i></div><div class="v" id="kpiOpenRate" style="font-size:19px;color:var(--tx3)">接入中</div><div class="d">接 Instantly 后显示</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polyline points="0,20 20,20 40,20 60,20 80,20 100,20 120,20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
       </div>
 
       <div class="qs-h" style="margin:28px 0 12px">获客转化</div>
@@ -797,8 +797,8 @@
       // 发送率 = 送达率(已发-退信)/已发；副标题给绝对数
       if(j.sent>0){ put(sr, j.deliver_rate!=null?pct(j.deliver_rate):'—', '已发 '+j.sent+' 封 · 退信 '+j.bounced); }
       else { put(sr, '暂无', '开始发送后显示'); }
-      // 回复率 = 回复/已联系（冷邮件真正的成效指标；打开追踪按建议不开）
-      if(j.contacted>0){ put(or, pct(j.reply_rate), '回复 '+j.replies+' 家 · 已发 '+j.sent+' 封'); }
+      // 冷邮件真正的成效指标是回复(打开追踪按建议不开)：头条显示回复家数，副标题给回复率
+      if(j.sent>0){ put(or, j.replies+' 家', '回复率 '+(j.reply_rate!=null?(j.reply_rate*100).toFixed(1)+'%':'—')+' · 已发 '+j.sent+' 封'); }
       else { put(or, '暂无', '开始发送后显示'); }
     }).catch(function(){});
   })();
