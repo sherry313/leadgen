@@ -136,7 +136,7 @@
       '<div class="tpl">'
       + '<div class="ico">'+(f.icon||'📧')+'</div>'
       + '<div class="nm">'+esc(f.name)+'</div>'
-      + '<div class="en">'+esc((f.structure&&f.structure.length)?f.structure.join(' → '):(f.en_name||''))+'</div>'
+      + '<div class="en">'+esc((f.structure&&f.structure.length)?f.structure.map(s=>(s&&typeof s==='object')?(s.stage||s.name||s.label||''):s).filter(Boolean).join(' → '):(f.en_name||''))+'</div>'
       + (f.best_for?'<div class="best">适合:<b>'+esc(f.best_for)+'</b></div>':'')
       + '<div class="acts">'+(f.sample_email_body?'<button class="b" onclick="showSample('+i+')"><i class="ti ti-eye"></i> 看示例</button>':'')+'</div>'
       + '</div>').join('');

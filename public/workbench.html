@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>获客工作台 - 智拓客</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<style>
+  :root{ --bg:#030303; --bd:rgba(255,255,255,0.08); --tx:#e5e7eb; --tx2:rgba(255,255,255,0.55);
+    --tx3:rgba(255,255,255,0.38); --ac:#6366f1; --ac2:#818cf8; --acbg:rgba(99,102,241,0.14); }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{ background:var(--bg); color:var(--tx); font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+    display:flex; flex-direction:column; }
+  .hd{ padding:20px 28px 0; flex-shrink:0; }
+  .hd h1{ font-size:1.25rem; font-weight:800; display:flex; align-items:center; gap:9px; }
+  .hd h1 .ti{ color:var(--ac2); }
+  .hd .flow{ font-size:.76rem; color:var(--tx3); margin-top:6px; }
+  .hd .flow b{ color:var(--tx2); }
+  .hd .flow .ti{ font-size:13px; vertical-align:-2px; margin:0 2px; color:var(--tx3); }
+  /* 标签栏 */
+  .tabs{ display:flex; gap:4px; padding:16px 28px 0; flex-shrink:0; flex-wrap:wrap; border-bottom:1px solid var(--bd); }
+  .tab{ display:inline-flex; align-items:center; gap:7px; font-size:.9rem; font-weight:700; color:var(--tx3);
+    padding:11px 18px; border-radius:10px 10px 0 0; cursor:pointer; border:1px solid transparent; border-bottom:none;
+    position:relative; top:1px; transition:.13s; white-space:nowrap; }
+  .tab .ti{ font-size:17px; }
+  .tab:hover{ color:var(--tx2); background:rgba(255,255,255,0.03); }
+  .tab.on{ color:var(--tx); background:var(--acbg); border-color:var(--bd); }
+  .tab.on::after{ content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--ac); }
+  .tab .num{ font-size:.66rem; font-weight:800; color:var(--ac2); background:rgba(99,102,241,0.18);
+    width:16px; height:16px; line-height:16px; text-align:center; border-radius:5px; }
+  .tab .tag{ font-size:.64rem; font-weight:700; color:var(--tx3); border:1px solid var(--bd); border-radius:5px; padding:1px 5px; }
+  /* 内容区：每个标签一个 iframe，切换只显隐、不重载 */
+  .stage{ flex:1; min-height:0; position:relative; }
+  .pane{ position:absolute; inset:0; display:none; }
+  .pane.on{ display:block; }
+  .pane iframe{ width:100%; height:100%; border:0; display:block; background:var(--bg); }
+  .placeholder{ display:flex; align-items:center; justify-content:center; height:100%; color:var(--tx3); font-size:.85rem; }
+</style>
+</head>
+<body>
+  <div class="hd">
+    <h1><i class="ti ti-layout-grid"></i> 获客工作台</h1>
+    <div class="flow">一条线跑到底：<b>产品</b><i class="ti ti-arrow-right"></i><b>线索</b><i class="ti ti-arrow-right"></i><b>客户</b>；<b>模板</b>和<b>邮件发送</b>随时可提前设好、也可到那步再弄。</div>
+  </div>
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-k="product"  data-src="/products.html"><span class="num">1</span><i class="ti ti-package"></i> 产品</div>
+    <div class="tab"    data-k="leads"    data-src="/emails.html"><span class="num">2</span><i class="ti ti-mail"></i> 线索</div>
+    <div class="tab"    data-k="customer" data-src="/customers.html"><span class="num">3</span><i class="ti ti-users"></i> 客户</div>
+    <div class="tab"    data-k="template" data-src="/templates.html"><i class="ti ti-template"></i> 模板 <span class="tag">每次都用</span></div>
+    <div class="tab"    data-k="send"     data-src="/send-settings.html"><i class="ti ti-send"></i> 邮件发送 <span class="tag">每次都用</span></div>
+  </div>
+  <div class="stage" id="stage"></div>
+<script>
+  var stage = document.getElementById('stage');
+  var panes = {};   // key -> {pane, loaded}
+  function openTab(k){
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('on', t.dataset.k===k); });
+    Object.keys(panes).forEach(function(x){ panes[x].pane.classList.toggle('on', x===k); });
+    var t = document.querySelector('.tab[data-k="'+k+'"]');
+    if(!panes[k]){
+      var pane = document.createElement('div'); pane.className='pane on';
+      var f = document.createElement('iframe'); f.src = t.dataset.src; f.title = k;
+      pane.appendChild(f); stage.appendChild(pane);
+      panes[k] = { pane:pane, loaded:true };
+    }
+  }
+  document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click', function(){ openTab(t.dataset.k); }); });
+  openTab('product');   // 默认落在「产品」
+
+  // 内嵌页(线索管理等)点「继续处理」时向上发消息，这里透传给控制台，让它打开「邮件获客」深链
+  window.addEventListener('message', function(e){
+    var d = e && e.data; if(!d || !d.type) return;
+    if((d.type==='console-open-search' || d.type==='console-nav') && window.parent && window.parent!==window){
+      window.parent.postMessage(d, '*');
+    }
+  });
+</script>
+</body>
+</html>
