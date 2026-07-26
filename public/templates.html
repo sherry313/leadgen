@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>模板管理 - 智拓客</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="/vendor/tabler/tabler-icons.min.css">
 <style>
   :root{
     --bg:#030303; --card:rgba(255,255,255,0.03); --card2:rgba(255,255,255,0.05);
@@ -138,14 +138,29 @@
       + '<div class="nm">'+esc(f.name)+'</div>'
       + '<div class="en">'+esc((f.structure&&f.structure.length)?f.structure.map(s=>(s&&typeof s==='object')?(s.stage||s.name||s.label||''):s).filter(Boolean).join(' → '):(f.en_name||''))+'</div>'
       + (f.best_for?'<div class="best">适合:<b>'+esc(f.best_for)+'</b></div>':'')
-      + '<div class="acts">'+(f.sample_email_body?'<button class="b" onclick="showSample('+i+')"><i class="ti ti-eye"></i> 看示例</button>':'')+'</div>'
+      + '<div class="acts"><button class="b" onclick="showSample('+i+')"><i class="ti ti-eye"></i> 看示例</button></div>'
       + '</div>').join('');
   }
   function showSample(i){
     const f=_presets[i];
     document.getElementById('sampleTitle').textContent = f.name;
-    document.getElementById('sampleSub').textContent = f.sample_subject ? ('主题:'+f.sample_subject) : '';
-    document.getElementById('sampleBody').textContent = f.sample_email_body || '（无示例）';
+    document.getElementById('sampleSub').textContent = f.best_for ? ('适合:'+f.best_for) : '';
+    // 中文说明：这个框架每封信怎么写（结构 + 每步用途，都是中文）
+    const struct = (f.structure&&f.structure.length)
+      ? f.structure.map((s,n)=>{
+          const stage = (s&&typeof s==='object')?(s.stage||s.name||s.label||''):s;
+          const purpose = (s&&typeof s==='object')?(s.purpose||''):'';
+          return '<div style="margin:7px 0"><b style="color:var(--ac2)">第'+(n+1)+'步 · '+esc(stage)+'</b>'
+               + (purpose?'<div style="color:var(--tx2);font-size:.8rem;margin-top:2px;line-height:1.5">'+esc(purpose)+'</div>':'')+'</div>';
+        }).join('')
+      : '<div style="color:var(--tx3)">（无结构说明）</div>';
+    const en = f.sample_email_body
+      ? '<div style="margin-top:16px;padding-top:13px;border-top:1px solid var(--bd)">'
+        + '<div style="font-size:.72rem;color:var(--tx3);margin-bottom:7px">英文示例（实际发给海外客户的样子 · AI 会按你的产品和优势自动改写）</div>'
+        + '<div style="white-space:pre-wrap;color:var(--tx2);font-size:.8rem;line-height:1.6">'+esc(f.sample_email_body)+'</div></div>'
+      : '';
+    document.getElementById('sampleBody').innerHTML =
+      '<div style="font-size:.76rem;color:var(--tx3);margin-bottom:6px">这个框架每封信的写法：</div>' + struct + en;
     document.getElementById('sampleOv').classList.add('show');
   }
 
