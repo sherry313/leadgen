@@ -96,12 +96,14 @@
   #paper table.q td.c{ text-align:center; } #paper table.q td.r{ text-align:right; white-space:nowrap; }
   #paper .muted{ color:#6b7280; }
   #paper .qimg{ width:58px; height:44px; object-fit:cover; border-radius:3px; background:#f1f1f1; display:block; margin:0 auto; }
-  /* 就地编辑：预览里可点改的格子 */
-  #paper .ied{ cursor:text; border-radius:3px; transition:background .1s; }
-  #paper .ied:hover{ background:rgba(99,102,241,.12); box-shadow:0 0 0 1px rgba(99,102,241,.35); }
-  #paper .ied.empty{ color:#c0392b; opacity:.75; }
-  #paper .ied-input{ font:inherit; color:#111; background:#fff; border:1px solid #6366f1; border-radius:4px; padding:1px 4px; outline:none; min-width:32px; box-shadow:0 2px 8px rgba(99,102,241,.25); }
-  @media print{ #paper .ied.empty{ visibility:hidden; } #paper .ied:hover{ background:none; box-shadow:none; } }
+  /* 编辑模式：格子里的输入框 */
+  #paper .ied-box{ font:inherit; color:#111; background:#fff; border:1px solid #a5b4fc; border-radius:4px; padding:1px 5px; outline:none; min-width:44px; max-width:210px; }
+  #paper .ied-box:focus{ border-color:#6366f1; box-shadow:0 0 0 2px rgba(99,102,241,.2); }
+  #paper .ied-box::placeholder{ color:#b8bcc4; }
+  .paper-wrap.editing #paper{ box-shadow:0 0 0 2px #6366f1, 0 20px 60px rgba(0,0,0,.5); }
+  .btn.edit-toggle{ flex-shrink:0; }
+  .btn.edit-toggle.editing{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  @media print{ #paper .ied-box{ border:none; background:none; padding:0; } }
   #paper .noimg{ width:58px; height:44px; border-radius:3px; background:#f1f1f1; display:flex; align-items:center; justify-content:center; color:#c3c3c3; font-size:16px; margin:0 auto; }
   #paper tr.tot td{ background:#f3f4f6; font-weight:700; }
   #paper .terms{ font-size:11px; }
@@ -302,8 +304,11 @@
 
   <!-- ============ PREVIEW ============ -->
   <div class="prev-col">
-    <div class="phint" style="font-size:12px;color:var(--tx3);margin-bottom:12px;display:flex;align-items:center;gap:7px"><i class="ti ti-click"></i> <span><b style="color:var(--ac2)">单子上的格子可以直接点着改</b>（产品名/型号/规格/数量/单价等，改完回车）· 金额/合计自动算 · 「下载 PDF」出口全表用横向 A4。</span></div>
-    <div class="paper-wrap"><div id="paper"></div></div>
+    <div class="ptools" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn edit-toggle" id="editToggle" onclick="toggleEdit()"><i class="ti ti-edit"></i> 编辑单子</button>
+      <span class="phint" style="font-size:12px;color:var(--tx3);flex:1;min-width:180px">点「编辑单子」→ 单子上能改的格子变成输入框，直接改；金额/合计自动算。改完点「完成」看干净的单子。</span>
+    </div>
+    <div class="paper-wrap" id="paperWrap"><div id="paper"></div></div>
   </div>
 </div>
 
@@ -508,15 +513,15 @@ function exportTable(A){
   const t=totals(), C=cols(), cur=$('curr').value, inco=$('incoterm').value;
   const rows=ITEMS.map((it,i)=>{ const c=comp(it);
     const idbits=[];
-    if(it.model) idbits.push('Model: '+ecell('model',it.model,i));
-    if(it.hs) idbits.push('HS: '+ecell('hs',it.hs,i));
+    if(EDIT_MODE||it.model) idbits.push('Model: '+ecell('model',it.model,i,{ph:'型号'}));
+    if(EDIT_MODE||it.hs) idbits.push('HS: '+ecell('hs',it.hs,i,{ph:'HS编码'}));
     const idcell=idbits.join(' · ');
     return `<tr>
       <td class="c">${i+1}</td>
-      <td><b>${ecell('name',it.name,i,{ph:'产品名'})}</b>${idcell?`<div class="muted">${idcell}</div>`:''}${it.spec?`<div class="muted">${ecell('spec',it.spec,i)}</div>`:''}</td>
+      <td><b>${ecell('name',it.name,i,{ph:'产品名'})}</b>${idcell?`<div class="muted">${idcell}</div>`:''}${(EDIT_MODE||it.spec)?`<div class="muted">${ecell('spec',it.spec,i,{ph:'规格'})}</div>`:''}</td>
       <td>${it.img?`<img class="qimg" src="${it.img}">`:'<div class="noimg"><i class="ti ti-photo"></i></div>'}</td>
       <td class="c">${sizeCell(it)}</td>
-      <td class="c">${ecell('color',it.color,i)}</td>
+      <td class="c">${ecell('color',it.color,i,{ph:'颜色',ed:''})}</td>
       <td class="c">${ecell('qty',it.qty,i,{num:1,disp:fmtN(it.qty)})} ${ecell('unit',it.unit,i)}${c.measure?`<div class="muted">${fmtN(c.measure,2)} ${c.mu}</div>`:''}</td>
       ${C.ctn?`<td class="c">${ecell('perCtn',it.perCtn,i,{num:1,ph:'—'})}</td><td class="c">${c.ctns||'—'}</td>`:''}
       ${C.nw?`<td class="r">${c.tnw?fmtN(c.tnw,1):'—'}</td>`:''}
@@ -590,36 +595,34 @@ function statements(){
   return `<div class="stmt">We hereby certify that this Proforma Invoice is true and correct. Country of origin: ${esc($('origin').value)||'China'}.</div>`;
 }
 
-/* ---- 就地编辑：右边预览的格子点一下变输入框，改完写回同一份数据(左边也跟着变) ---- */
+/* ---- 编辑开关：点「编辑单子」→ 能改的格子变输入框；点「完成」→ 干净单子。改完写回同一份数据，左边也跟着变。 ---- */
+let EDIT_MODE=false;
+function toggleEdit(){
+  EDIT_MODE=!EDIT_MODE;
+  const b=$('editToggle');
+  if(b){ b.innerHTML = EDIT_MODE?'<i class="ti ti-check"></i> 完成':'<i class="ti ti-edit"></i> 编辑单子'; b.classList.toggle('editing',EDIT_MODE); }
+  const w=$('paperWrap'); if(w) w.classList.toggle('editing',EDIT_MODE);
+  render();
+}
+// 编辑模式：格子渲染成输入框；非编辑模式：纯显示。opts.ph=编辑时占位提示；opts.ed=非编辑时空值显示(默认 —)
 function ecell(field, val, i, opts){
   opts=opts||{};
   const empty=(val===''||val==null);
-  const disp = opts.disp!=null ? opts.disp : (empty ? (opts.ph||'—') : esc(String(val)));
-  const attrs='data-e="'+field+'"'+(i!=null?(' data-i="'+i+'"'):'')+(opts.num?' data-num="1"':'');
-  return '<span class="ied'+(empty?' empty':'')+'" '+attrs+' data-raw="'+esc(String(empty?'':val))+'">'+disp+'</span>';
+  if(EDIT_MODE){
+    const attrs='data-e="'+field+'"'+(i!=null?(' data-i="'+i+'"'):'')+(opts.num?' data-num="1"':'');
+    const s=String(empty?'':val);
+    const w=Math.max(48,Math.min(210,(s.length||(opts.ph?opts.ph.length:4))*8+22));
+    return '<input class="ied-box" '+attrs+' value="'+esc(s)+'" placeholder="'+esc(opts.ph||'')+'" style="width:'+w+'px" '
+      + 'onchange="_iedCommit(this)" onkeydown="if(event.key===&quot;Enter&quot;){event.preventDefault();this.blur();}">';
+  }
+  if(opts.disp!=null) return opts.disp;
+  return empty ? (opts.ed!=null?opts.ed:'—') : esc(String(val));
 }
-function _bindInlineEdit(){
-  const paper=$('paper'); if(!paper||paper._iedBound) return; paper._iedBound=true;
-  paper.addEventListener('click', function(e){
-    const el=e.target.closest('.ied'); if(!el||el.querySelector('input')) return;
-    e.stopPropagation();
-    const field=el.dataset.e, i=el.dataset.i, isNum=el.dataset.num==='1', raw=el.dataset.raw||'';
-    const inp=document.createElement('input'); inp.className='ied-input'; inp.value=raw;
-    inp.style.width=Math.max(40,Math.min(320,(raw.length||5)*8+18))+'px';
-    el.textContent=''; el.appendChild(inp); inp.focus(); inp.select();
-    let done=false;
-    const commit=()=>{ if(done)return; done=true;
-      const v=inp.value;
-      if(i!=null&&i!==''){ const idx=+i; if(ITEMS[idx]) ITEMS[idx][field]= isNum? num(v) : v; }
-      else if($(field)){ $(field).value=v; }
-      itemsUI(); render();
-    };
-    inp.addEventListener('blur', commit);
-    inp.addEventListener('keydown', function(ev){
-      if(ev.key==='Enter'){ ev.preventDefault(); inp.blur(); }
-      else if(ev.key==='Escape'){ done=true; render(); }
-    });
-  });
+function _iedCommit(el){
+  const field=el.dataset.e, i=el.dataset.i, isNum=el.dataset.num==='1', v=el.value;
+  if(i!=null&&i!==''){ const idx=+i; if(ITEMS[idx]) ITEMS[idx][field]= isNum? num(v): v; }
+  else if($(field)){ $(field).value=v; }
+  render();
 }
 
 function render(){
@@ -685,7 +688,6 @@ function render(){
     </div>`;
   }
   $('paper').innerHTML=html;
-  _bindInlineEdit();
 }
 
 function validate(){
