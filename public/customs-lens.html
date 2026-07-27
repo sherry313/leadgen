@@ -1,0 +1,415 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>海关数据获客 · 方案预览 — 智拓客</title>
+<link rel="stylesheet" href="/vendor/tabler/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#030303; --panel:#0a0a0c; --card:rgba(255,255,255,0.03); --card2:rgba(255,255,255,0.05);
+    --bd:rgba(255,255,255,0.08); --bd2:rgba(255,255,255,0.12);
+    --tx:#e5e7eb; --tx2:rgba(255,255,255,0.6); --tx3:rgba(255,255,255,0.35);
+    --ac:#6366f1; --ac2:#818cf8; --acbg:rgba(99,102,241,0.14);
+    --ok:#34d399; --okbg:rgba(52,211,153,0.12); --warn:#fbbf24; --warnbg:rgba(251,191,36,0.12);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--tx); font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; -webkit-font-smoothing:antialiased; line-height:1.55; }
+  a{ color:inherit; text-decoration:none; }
+  .wrap{ max-width:960px; margin:0 auto; padding:0 22px 80px; }
+  .top{ position:sticky; top:0; z-index:20; background:rgba(3,3,3,0.82); backdrop-filter:blur(10px); border-bottom:1px solid var(--bd); }
+  .top-in{ max-width:960px; margin:0 auto; padding:14px 22px; display:flex; align-items:center; gap:14px; }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:700; font-size:15px; }
+  .brand .logo{ width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,var(--ac),#a5b4fc); display:flex; align-items:center; justify-content:center; color:#fff; }
+  .demo-pill{ margin-left:auto; font-size:11px; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); padding:4px 10px; border-radius:99px; }
+
+  .hero{ padding:26px 0 6px; }
+  .hero h1{ font-size:24px; font-weight:650; letter-spacing:-0.01em; }
+  .hero p{ color:var(--tx2); font-size:14px; margin-top:8px; }
+  .cov{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  .cov-card{ background:var(--card); border:1px solid var(--bd); border-radius:11px; padding:10px 15px; }
+  .cov-card .n{ font-size:18px; font-weight:700; color:#fff; }
+  .cov-card .l{ font-size:11.5px; color:var(--tx3); margin-top:1px; }
+  .cov-card.em .n{ color:var(--ok); }
+
+  .flow{ display:flex; align-items:center; gap:6px; margin:18px 0 4px; flex-wrap:wrap; background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:12px 14px; }
+  .flow .step{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--tx); font-weight:600; }
+  .flow .step .b{ width:24px; height:24px; border-radius:7px; background:var(--acbg); color:var(--ac2); display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .flow .step.on .b{ background:var(--ac); color:#fff; }
+  .flow .ar{ color:var(--tx3); font-size:14px; }
+  .flow .usd{ margin-left:auto; font-size:11px; color:var(--tx3); }
+
+  .sbox{ background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:16px 18px; margin-top:18px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .tab{ flex:1; min-width:150px; text-align:left; background:var(--panel); border:1px solid var(--bd); border-radius:10px; padding:11px 13px; cursor:pointer; transition:.14s; }
+  .tab:hover{ border-color:var(--bd2); }
+  .tab.on{ border-color:var(--ac); background:var(--acbg); box-shadow:0 0 0 1px var(--ac); }
+  .tab .th{ font-size:13px; font-weight:640; display:flex; align-items:center; gap:7px; }
+  .tab .th i{ color:var(--ac2); }
+  .tab .td{ font-size:11px; color:var(--tx3); margin-top:5px; }
+
+  select,.sin input,.filters input{ background:var(--panel); border:1px solid var(--bd2); border-radius:10px; color:var(--tx); font-size:14px; font-family:inherit; outline:none; transition:.14s; }
+  select{ width:100%; padding:11px 13px; font-size:13.5px; }
+  select:focus,.sin input:focus{ border-color:var(--ac); box-shadow:0 0 0 3px rgba(99,102,241,.14); }
+  .lbl{ font-size:12px; color:var(--tx3); margin:0 0 6px; }
+  .orline{ text-align:center; font-size:11.5px; color:var(--tx3); margin:9px 0; }
+  .srow{ display:flex; gap:9px; flex-wrap:wrap; }
+  .sin{ flex:1; min-width:220px; position:relative; }
+  .sin input{ width:100%; padding:12px 14px 12px 40px; }
+  .sin i{ position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--tx3); font-size:17px; }
+  .btn{ font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; border-radius:10px; padding:0 18px; border:1px solid var(--bd2); background:var(--card2); color:var(--tx); transition:.14s; display:inline-flex; align-items:center; gap:7px; }
+  .btn:hover{ background:rgba(255,255,255,.07); }
+  .btn.primary{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .btn.primary:hover{ background:#4f52e0; }
+  .btn.sm{ font-size:12px; padding:6px 11px; border-radius:8px; }
+  .btn.big{ padding:12px 20px; font-size:14px; border-radius:11px; }
+  .filters{ display:flex; gap:9px; flex-wrap:wrap; margin-top:11px; align-items:center; }
+  .filters input{ font-size:12.5px; padding:8px 11px; color:var(--tx2); }
+  .chk{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--tx2); cursor:pointer; user-select:none; }
+  .chk input{ width:auto; }
+
+  /* derived terms */
+  .hidestep{ display:none !important; }
+  .stepno{ display:inline-block; min-width:18px; height:18px; line-height:18px; text-align:center; border-radius:5px; background:var(--ac); color:#fff; font-size:11px; font-weight:700; margin-right:6px; }
+  .derived{ margin-top:12px; background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:10px; padding:11px 13px; font-size:12.5px; color:var(--tx2); display:none; }
+  .derived.show{ display:block; }
+  .kwhint{ font-size:11.5px; color:var(--tx3); margin-bottom:6px; }
+  .derived b{ color:var(--tx); }
+  .derived .kw{ display:inline-block; font-size:11.5px; background:var(--panel); border:1px solid var(--bd2); border-radius:6px; padding:2px 8px; margin:3px 4px 0 0; cursor:pointer; color:var(--tx2); }
+  .derived .kw:hover,.derived .kw.on{ border-color:var(--ac); color:var(--tx); }
+  #choices{ margin-top:12px; }
+  #choices .lbl{ margin-bottom:8px; }
+  .pchoices{ display:flex; gap:8px; flex-wrap:wrap; }
+  .pchoice{ font-size:13px; color:var(--tx2); background:var(--panel); border:1px solid var(--bd2); border-radius:9px; padding:9px 15px; cursor:pointer; transition:.13s; }
+  .pchoice:hover,.pchoice.on{ border-color:var(--ac); background:var(--acbg); color:var(--tx); }
+  .ctry-sec{ margin-top:14px; padding-top:13px; border-top:1px solid var(--bd); }
+  .ctry-sec .lbl{ margin-bottom:8px; }
+  #ctryChips{ display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+  .cchip{ font-size:12.5px; color:var(--tx2); background:var(--panel); border:1px solid var(--bd2); border-radius:8px; padding:6px 12px; cursor:pointer; transition:.12s; }
+  .cchip:hover,.cchip.on{ border-color:var(--ac); background:var(--acbg); color:var(--tx); }
+  #ctryChips input{ width:110px; background:var(--panel); border:1px solid var(--bd2); border-radius:8px; color:var(--tx); font-size:12.5px; padding:6px 10px; outline:none; }
+
+  .qty{ margin-top:14px; padding-top:13px; border-top:1px solid var(--bd); }
+  .qty .ql{ font-size:12.5px; color:var(--tx2); margin-bottom:8px; }
+  .qty .ql b{ color:var(--tx); }
+  .qchips{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .qchip{ font-size:13px; color:var(--tx2); background:var(--panel); border:1px solid var(--bd2); border-radius:9px; padding:8px 15px; cursor:pointer; font-weight:600; }
+  .qchip:hover{ border-color:var(--ac); color:var(--tx); }
+  .qchip.on{ border-color:var(--ac); background:var(--acbg); color:#fff; box-shadow:0 0 0 1px var(--ac); }
+  .qchips input{ width:90px; background:var(--panel); border:1px solid var(--bd2); border-radius:9px; color:var(--tx); font-size:13px; padding:8px 11px; outline:none; }
+
+  .cat-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:9px; margin-top:6px; }
+  .cat-card{ background:var(--panel); border:1px solid var(--bd); border-radius:10px; padding:12px 13px; cursor:pointer; transition:.14s; }
+  .cat-card:hover{ border-color:var(--ac); background:var(--acbg); }
+  .cat-card .cc-nm{ font-size:13.5px; font-weight:600; }
+  .cat-card .cc-mt{ font-size:11.5px; color:var(--tx2); margin-top:5px; }
+
+  .res-head{ display:flex; align-items:center; gap:10px; margin:20px 0 12px; flex-wrap:wrap; }
+  .res-head .rt{ font-size:15px; font-weight:650; }
+  .res-head .rc{ font-size:12.5px; color:var(--tx3); }
+  .handoff{ background:linear-gradient(120deg,rgba(99,102,241,0.16),rgba(99,102,241,0.05)); border:1px solid rgba(99,102,241,0.4); border-radius:13px; padding:16px 18px; margin:16px 0; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .handoff .ht{ flex:1; min-width:240px; }
+  .handoff .ht b{ font-size:14px; } .handoff .ht div{ font-size:12px; color:var(--tx2); margin-top:4px; }
+
+  .lead{ background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:13px 15px; margin-bottom:8px; display:flex; gap:13px; align-items:flex-start; }
+  .lead .av{ width:36px; height:36px; border-radius:9px; background:var(--acbg); color:var(--ac2); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; }
+  .lead .main{ flex:1; min-width:0; }
+  .lead .nm{ font-size:14px; font-weight:640; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .lead .cc{ font-size:11px; color:var(--tx2); background:var(--card2); border:1px solid var(--bd); border-radius:6px; padding:1px 7px; }
+  .lead .badge-em{ font-size:10.5px; color:var(--ok); background:var(--okbg); border:1px solid rgba(52,211,153,.3); border-radius:6px; padding:1px 7px; font-weight:600; }
+  .lead .sub{ font-size:12.5px; color:var(--tx2); margin-top:5px; }
+  .lead .sub .k{ color:var(--tx3); }
+  .lead .meta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:6px; font-size:11.5px; color:var(--tx3); }
+  .empty{ text-align:center; padding:40px 20px; color:var(--tx3); }
+  .nocov{ background:var(--warnbg); border:1px solid rgba(251,191,36,0.32); border-radius:13px; padding:20px 22px; margin-top:16px; }
+  .nocov h3{ font-size:14.5px; color:var(--warn); display:flex; align-items:center; gap:8px; }
+  .nocov p{ font-size:13px; color:var(--tx2); margin-top:8px; }
+
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0; background:#111214; border:1px solid var(--bd2); color:var(--tx); padding:11px 18px; border-radius:11px; font-size:13.5px; box-shadow:0 12px 40px rgba(0,0,0,.5); transition:.24s; z-index:50; display:flex; align-items:center; gap:9px; pointer-events:none; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast i{ color:var(--ok); }
+  .help-fab{ position:fixed; top:14px; right:18px; z-index:40; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:99px; padding:7px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .help-fab:hover{ background:rgba(99,102,241,0.22); color:#fff; }
+  .gmodal{ position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(3px); z-index:60; display:none; align-items:center; justify-content:center; padding:20px; }
+  .gmodal.show{ display:flex; }
+  .gbox{ width:100%; max-width:440px; background:#0d0d10; border:1px solid var(--bd2); border-radius:14px; padding:22px 24px; }
+  .gbox h3{ font-size:16px; font-weight:650; display:flex; align-items:center; gap:8px; }
+  .gbox h3 i{ color:var(--ac2); }
+  .gbox .gx{ margin-left:auto; cursor:pointer; color:var(--tx3); }
+  .gbox .gx:hover{ color:var(--tx); }
+  .gbox ol{ margin:14px 0 0 4px; padding-left:18px; }
+  .gbox li{ font-size:13.5px; color:var(--tx2); margin:9px 0; line-height:1.5; }
+  .gbox li b{ color:var(--tx); }
+  .gbox .tip{ margin-top:14px; font-size:12.5px; color:var(--tx3); background:var(--card); border:1px solid var(--bd); border-radius:9px; padding:10px 12px; }
+  .gbox .tip b{ color:var(--ok); }
+  .loading{ text-align:center; padding:40px; color:var(--tx3); }
+  .foot{ text-align:center; color:var(--tx3); font-size:12px; padding:30px 0 0; }
+</style>
+
+<div class="wrap">
+  <div class="sbox" style="margin-top:22px">
+    <div class="tabs">
+      <div class="tab on" data-mode="product" onclick="setTab('product')">
+        <div class="th"><i class="ti ti-package"></i> 我的产品找买家</div>
+      </div>
+      <div class="tab" data-mode="rival" onclick="setTab('rival')">
+        <div class="th"><i class="ti ti-target-arrow"></i> 竞品客户反查</div>
+      </div>
+    </div>
+
+    <!-- PRODUCT mode -->
+    <div id="paneProduct">
+      <div class="lbl">引入现有产品</div>
+      <select id="prodSel" onchange="onProdSelect()"><option value="">— 选择你的产品 —</option></select>
+      <div class="orline">— 或直接输入 —</div>
+      <div class="srow">
+        <div class="sin"><i class="ti ti-box"></i><input id="pq" placeholder="例：浴室柜、铝合金门窗、锂电池…（中文/英文都行）"></div>
+        <button class="btn primary" onclick="productSearch()"><i class="ti ti-arrow-right"></i> 下一步</button>
+      </div>
+      <div id="choices"></div>
+      <div class="derived" id="derived"></div>
+    </div>
+
+    <!-- RIVAL mode -->
+    <div id="paneRival" style="display:none">
+      <div class="lbl">竞争对手公司名</div>
+      <div class="srow">
+        <div class="sin"><i class="ti ti-target-arrow"></i><input id="rq" placeholder="如 SUMITOMO、Foshan XX Co…"></div>
+        <button class="btn primary" onclick="doQuery({supplier:$('rq').value.trim()},'买这家货的买家')"><i class="ti ti-search"></i> 反查买家</button>
+      </div>
+    </div>
+
+    <!-- ③ 目标国家/地区（选完关键词后才出现）-->
+    <div class="ctry-sec hidestep" id="stepCtry">
+      <div class="lbl"><span class="stepno">3</span>目标国家 / 地区</div>
+      <div class="qchips" id="ctryChips"></div>
+    </div>
+    <!-- ④ 找多少家 + 过滤 + 开始查（选完国家后才出现）-->
+    <div class="hidestep" id="stepQty">
+      <div class="qty">
+        <div class="ql"><span class="stepno">4</span>找 <b>多少家</b>？</div>
+        <div class="qchips" id="qchips">
+          <span class="qchip" data-n="10" onclick="setQty(10)">10 家</span>
+          <span class="qchip on" data-n="20" onclick="setQty(20)">20 家</span>
+          <span class="qchip" data-n="50" onclick="setQty(50)">50 家</span>
+          <span class="qchip" data-n="100" onclick="setQty(100)">100 家</span>
+          <input type="number" id="qCustom" placeholder="自定义" oninput="setQty(this.value,true)">
+        </div>
+      </div>
+      <div class="filters" id="sharedFilters">
+        <input id="fMin" type="number" placeholder="最低进口额 $" style="width:130px">
+        <label class="chk"><input type="checkbox" id="fEmail"> 只看自带邮箱</label>
+      </div>
+      <button class="btn primary big" id="goSearchBtn" onclick="goSearch()" style="margin-top:14px;width:100%"><i class="ti ti-search"></i> 查海关买家 →</button>
+    </div>
+  </div>
+
+  <div id="results"></div>
+</div>
+
+<button class="help-fab" onclick="toggleGuide(1)"><i class="ti ti-help-circle"></i> 使用指引</button>
+<div class="gmodal" id="guide">
+  <div class="gbox">
+    <h3><i class="ti ti-help-circle"></i> 怎么用海关数据获客 <span class="gx" onclick="toggleGuide(0)"><i class="ti ti-x"></i></span></h3>
+    <ol>
+      <li><b>① 选/输产品,点「下一步」</b> —— 下拉选现有产品或直接输(中文也行,如"浴室柜");AI 会把它拆成单品,点一个</li>
+      <li><b>② 选关键词</b> —— 系统识别出几个英文检索词,点一个(越具体越准,可换)</li>
+      <li><b>③ 选目标国家</b>(可选"全部")</li>
+      <li><b>④ 选找多少家,点「查海关买家」</b>(10/20/50/100)</li>
+      <li><b>点「交给 AI 筛选+写信」</b> —— 这些买家自动进「邮件获客」,后面 AI 筛选打分 → 写开发信 → 发送</li>
+    </ol>
+    <div class="tip"><b>小贴士:</b>带绿标「自带邮箱」的买家可以直接发信,没有的系统会自动补邮箱。</div>
+  </div>
+</div>
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
+
+<script>
+const HS_CH={'03':'水产/海鲜','06':'花卉苗木','15':'油脂','16':'肉鱼制品','19':'谷物制品','20':'蔬果制品','21':'杂项食品','22':'饮料酒','25':'盐石料','27':'矿物燃料','28':'无机化工','29':'有机化工','30':'医药','32':'颜料涂料','33':'香精化妆','34':'洗涤','38':'杂项化工','39':'塑料','40':'橡胶','42':'皮具箱包','44':'木制品','48':'纸','61':'针织服装','62':'梭织服装','63':'纺织制品','64':'鞋靴','68':'石料水泥','69':'陶瓷','70':'玻璃','72':'钢铁','73':'钢铁制品','74':'铜','76':'铝','82':'工具刀具','83':'贱金属杂项','84':'机械设备','85':'电子电气','87':'车辆汽配','90':'光学医疗仪器','91':'钟表','94':'家具灯具','95':'玩具运动','96':'杂项制品'};
+let TAB='product', SAMPLE=null, TOKEN='', USING='', QTY=20, PRODUCTS=[], _terms=null, _lastLabel='', _curKw='';
+const CTRY=['美国','越南','印度','英国','德国','加拿大','澳大利亚','墨西哥','巴西','俄罗斯','阿联酋','日本','菲律宾','巴基斯坦'];
+function buildCtry(){ $('ctryChips').innerHTML='<span class="cchip" onclick="setCtry(this,\'\')">全部</span>'+CTRY.map(c=>`<span class="cchip" onclick="setCtry(this,'${c}')">${c}</span>`).join('')+'<input id="fCountry" placeholder="其他国家" oninput="onCtryInput()">'; }
+function setCtry(el,c){ document.querySelectorAll('.cchip').forEach(x=>x.classList.remove('on')); el.classList.add('on'); $('fCountry').value=c; if(TAB==='product'){ revealStep('stepQty'); scrollToStep('stepQty'); } }
+function onCtryInput(){ document.querySelectorAll('.cchip').forEach(x=>x.classList.remove('on')); if(TAB==='product') revealStep('stepQty'); }
+// —— 分步显示：选完上一步才露出下一步 ——
+function revealStep(id){ const e=$(id); if(e) e.classList.remove('hidestep'); }
+function hideStep(id){ const e=$(id); if(e) e.classList.add('hidestep'); }
+function resetSteps(){ hideStep('stepCtry'); hideStep('stepQty'); $('results').innerHTML=''; }
+function scrollToStep(id){ const e=$(id); if(e) setTimeout(()=>e.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+const $=id=>document.getElementById(id);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+function initials(n){ const w=String(n).replace(/[^A-Za-z一-龥 ]/g,' ').trim().split(/\s+/); return ((w[0]||'?')[0]+((w[1]||'')[0]||'')).toUpperCase(); }
+function fmtAmt(a){ if(!a) return ''; if(a>=1e6)return '$'+(a/1e6).toFixed(1)+'M'; if(a>=1e3)return '$'+(a/1e3).toFixed(0)+'k'; return '$'+a; }
+function toast(m){ const t=$('toast'); $('toastMsg').textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+function getToken(){ try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
+function toggleGuide(on){ $('guide').classList.toggle('show', !!on); }
+function maskEmail(e){ if(!e)return''; const [u,d]=e.split('@'); if(!d)return e; return (u[0]||'')+'***@'+d; }
+function norm(r){ return { buyer:r.buyer||'', country:r.buyer_country||r.buyerCountry||'', addr:r.buyer_addr||r.buyerAddr||'', email:r.email||'', phone:r.phone||'', website:r.website||'', supplier:r.supplier||'', hs:r.hs||'', desc:r.product_desc||r.desc||'', amount:+r.amount||0, date:(r.txn_date||r.date||'').slice(0,10), port:r.port_disc||r.portDisc||'', origin:r.origin||'' }; }
+function setQty(n,custom){ QTY=Math.min(Math.max(parseInt(n)||20,1),100); document.querySelectorAll('.qchip').forEach(c=>c.classList.toggle('on',!custom && +c.dataset.n===QTY)); if(!custom)$('qCustom').value=''; }
+
+async function boot(){
+  buildCtry();
+  TOKEN=getToken();
+  // load user's products (product-first)
+  if(TOKEN){
+    try{ const p=await fetch('/api/products',{headers:{Authorization:'Bearer '+TOKEN}}).then(r=>r.json());
+      if(p.success && Array.isArray(p.profiles)){ PRODUCTS=p.profiles; fillProducts(); } }catch(e){}
+  }
+  try{
+    if(TOKEN){
+      const s=await fetch('/api/customs/stats',{headers:{Authorization:'Bearer '+TOKEN}}).then(r=>r.json());
+      if(s.success && s.exists){ USING='db'; return; }
+    }
+  }catch(e){}
+  USING='sample';
+  const s=await fetch('/data/customs-sample.json').then(r=>r.json()); SAMPLE=s.records.map(norm);
+}
+function fillProducts(){
+  const sel=$('prodSel'); sel.innerHTML='<option value="">— 选择你的产品 —</option>'+PRODUCTS.map((p,i)=>`<option value="${i}">${esc(p.name||'(未命名)')}</option>`).join('');
+}
+function setTab(m){
+  TAB=m; document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.mode===m));
+  $('paneProduct').style.display=m==='product'?'':'none';
+  $('paneRival').style.display=m==='rival'?'':'none';
+  $('results').innerHTML='';
+  if(m==='rival'){ revealStep('stepCtry'); revealStep('stepQty'); const b=$('goSearchBtn'); if(b) b.style.display='none'; }  // 反查：直接给国家+数量，用反查按钮查
+  else { const b=$('goSearchBtn'); if(b) b.style.display=''; resetSteps(); }
+}
+
+/* ---- product-first: 引入/输入产品 → AI 拆成单品让用户选一个 → 转 HS → 查 ---- */
+let _choiceList=[];
+function onProdSelect(){ const i=$('prodSel').value; if(i==='')return; const p=PRODUCTS[+i]; if(!p)return; splitAndChoose(p.name); }
+function productSearch(){ const prod=$('pq').value.trim(); if(!prod)return; splitAndChoose(prod); }
+async function splitAndChoose(prod){
+  _terms=null; $('derived').classList.remove('show'); resetSteps();
+  if(USING!=='db' || !TOKEN){ $('choices').innerHTML=''; sampleTerms(prod); return; }  // 样本：不拆，当单品
+  $('choices').innerHTML='<div class="loading" style="padding:14px"><i class="ti ti-loader-2"></i> AI 正在识别产品…</div>';
+  try{
+    const r=await fetch('/api/customs/split-products',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+TOKEN},body:JSON.stringify({product:prod})}).then(r=>r.json());
+    _choiceList=(r.success&&r.products&&r.products.length)?r.products:[prod];
+    if(_choiceList.length===1){ $('choices').innerHTML=''; pickProduct(_choiceList[0]); return; }
+    $('choices').innerHTML='<div class="lbl">选一个具体产品（海关一次查一个单品）</div><div class="pchoices">'
+      +_choiceList.map((p,i)=>`<span class="pchoice" onclick="pickProductIdx(${i})">${esc(p)}</span>`).join('')+'</div>';
+  }catch(e){ $('choices').innerHTML=''; pickProduct(prod); }
+}
+function pickProductIdx(i){ pickProduct(_choiceList[i], i); }
+function pickProduct(prod, idx){
+  document.querySelectorAll('.pchoice').forEach((c,i)=>c.classList.toggle('on', i===idx));
+  productTermsSearch(prod);
+}
+function sampleTerms(prod){ _terms={ en:prod, hsCode:'', chapter:'', keywords:[prod], label:prod }; showDerived(); _curKw=prod; revealStep('stepCtry'); scrollToStep('stepCtry'); }
+async function productTermsSearch(prod){
+  $('results').innerHTML='<div class="loading"><i class="ti ti-loader-2"></i> 正在把「'+esc(prod)+'」转成 HS 编码…</div>';
+  try{
+    const t=await fetch('/api/customs/product-terms',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+TOKEN},body:JSON.stringify({product:prod})}).then(r=>r.json());
+    if(!t.success) throw new Error(t.error||'转换失败');
+    _terms={ en:t.en||prod, hsCode:t.hsCode||'', chapter:t.chapter||'', keywords:(t.keywords&&t.keywords.length?t.keywords:[t.en||prod]), label:prod };
+    showDerived(); _curKw=(_terms.keywords[0]||_terms.en||''); $('results').innerHTML='';
+    revealStep('stepCtry'); scrollToStep('stepCtry');   // ② 关键词已出→露出 ③ 国家，等用户选完再查
+  }catch(e){ $('results').innerHTML='<div class="empty" style="color:#f87171">转换出错：'+esc(e.message)+'</div>'; }
+}
+function showDerived(){
+  if(!_terms){ $('derived').classList.remove('show'); return; }
+  const chName=HS_CH[_terms.chapter]?`（${HS_CH[_terms.chapter]}）`:'';
+  $('derived').innerHTML=`<div class="kwhint"><span class="stepno">2</span>选一个检索关键词（可换，越具体越准）</div>`
+    +`<b>${esc(_terms.label)}</b> → `
+    +(_terms.hsCode?`HS <b>${esc(_terms.hsCode)}</b>${chName} · `:'')
+    +_terms.keywords.map((k,i)=>`<span class="kw${i===0?' on':''}" onclick="pickKw(this,'${esc(k)}')">${esc(k)}</span>`).join('');
+  $('derived').classList.add('show');
+}
+function pickKw(el,kw){ document.querySelectorAll('.derived .kw').forEach(k=>k.classList.remove('on')); el.classList.add('on'); _curKw=kw; revealStep('stepCtry'); }
+// ④ 全部选完，点「查海关买家」才真正查
+function goSearch(){ if(!_terms){ toast('先在上面选一个产品'); return; } runFromTerms(_curKw||undefined); scrollToStep('results'); }
+function runFromTerms(kw){
+  if(!_terms)return;
+  const keyword=kw || _curKw || _terms.keywords[0] || _terms.en;
+  // 不再按 HS 章硬过滤：强绑一个章会把大量匹配买家(尤其自带邮箱的)挡在外面。
+  // 只用关键词在报关描述里匹配，池子大得多；相关性交给后面的 AI 筛选把关。
+  const params={};
+  if(keyword) params.q=keyword;
+  doQuery(params, `${_terms.label} 的买家`);
+}
+
+/* ---- unified query ---- */
+async function doQuery(extra, label){
+  extra=extra||{}; _lastLabel=label||'买家';
+  const params=Object.assign({ page:0, pageSize:QTY,
+    country:$('fCountry').value.trim(), minAmount:$('fMin').value||0, hasEmail:$('fEmail').checked }, extra);
+  if(!params.q && !params.chapter && !params.supplier){ return; }
+  $('results').innerHTML='<div class="loading"><i class="ti ti-loader-2"></i> 查询中…</div>';
+  let rows=[], total=0;
+  try{
+    if(USING==='db' && TOKEN){
+      const j=await fetch('/api/customs/query',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+TOKEN},body:JSON.stringify(params)}).then(r=>r.json());
+      if(!j.success) throw new Error(j.error||'查询失败'); rows=(j.rows||[]).map(norm); total=j.total||0;
+    } else {
+      if(!SAMPLE){ try{ const sj=await fetch('/data/customs-sample.json').then(r=>r.json()); SAMPLE=sj.records.map(norm); }catch(_){ SAMPLE=[]; } }
+      let f=SAMPLE.slice();
+      if(params.q){ const k=params.q.toLowerCase(); f=f.filter(r=>r.desc.toLowerCase().includes(k)||r.buyer.toLowerCase().includes(k)); }
+      if(params.supplier){ const k=params.supplier.toLowerCase(); f=f.filter(r=>r.supplier.toLowerCase().includes(k)); }
+      if(params.chapter) f=f.filter(r=>(r.hs||'').replace(/\D/g,'').slice(0,2)===params.chapter);
+      if(params.country){ const k=params.country.toLowerCase(); f=f.filter(r=>r.country.toLowerCase().includes(k)); }
+      if(params.minAmount>0) f=f.filter(r=>r.amount>=+params.minAmount);
+      if(params.hasEmail) f=f.filter(r=>r.email);
+      total=f.length; rows=f.slice(0,QTY);
+    }
+  }catch(e){ $('results').innerHTML='<div class="empty" style="color:#f87171">出错：'+esc(e.message)+'</div>'; return; }
+  // 同公司多条提单 → 显示时按公司去重（优先留有邮箱的）
+  const _seen=new Map(); rows.forEach(r=>{ const k=(r.buyer||'').toLowerCase().trim(); if(!k)return; const cur=_seen.get(k); if(!cur||(!cur.email&&r.email))_seen.set(k,r); });
+  rows=[...(_seen.size?_seen.values():rows)];
+  renderResults(rows,total);
+}
+function renderResults(rows,total){
+  if(!rows.length){
+    $('results').innerHTML=`<div class="nocov"><h3><i class="ti ti-search-off"></i> 没有新买家了</h3><p>这个词的买家可能你<b style="color:var(--tx2)">已经全拉过了</b>（系统会自动跳过拉过的）。换个<b style="color:var(--tx2)">关键词</b>、换个<b style="color:var(--tx2)">国家</b>、或放宽「最低进口额」再试，就能挖到更多。</p></div>`; return;
+  }
+  const emCount=rows.filter(r=>r.email).length;
+  const low = rows.length < QTY;   // 没凑够要的数量 = 新买家快用完
+  $('results').innerHTML=`
+    <div class="res-head"><div class="rt">${esc(_lastLabel)}</div><div class="rc">约 ${(+total).toLocaleString()} 家匹配 · 取到 <b style="color:var(--ok)">${rows.length}</b> 家没拉过的新买家</div></div>
+    ${low?`<div style="background:var(--warnbg);border:1px solid rgba(251,191,36,0.3);border-radius:9px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:var(--warn)"><i class="ti ti-bulb"></i> 只凑到 ${rows.length} 家新买家，这个产品的买家快拉完了 —— 换个关键词或国家能挖到更多。</div>`:''}
+    <div class="handoff">
+      <div class="ht"><b>选中 ${rows.length} 家</b>${emCount?`<div><span style="color:var(--ok)">${emCount} 家自带邮箱</span></div>`:''}</div>
+      <button class="btn primary big" onclick="toPipeline(${rows.length})"><i class="ti ti-player-play"></i> 交给 AI 筛选 + 写信</button>
+    </div>
+    ${rows.map(leadRow).join('')}`;
+}
+function webHost(u){ try{ return u.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0]; }catch{ return u; } }
+function leadRow(r){
+  const ch=(r.hs||'').replace(/\D/g,'').slice(0,2);
+  const contact=[];
+  if(r.email) contact.push(`<span><i class="ti ti-mail" style="color:var(--ok)"></i> ${esc(maskEmail(r.email))}</span>`);
+  if(r.website) contact.push(`<span><i class="ti ti-world"></i> ${esc(webHost(r.website))}</span>`);
+  if(r.phone) contact.push(`<span><i class="ti ti-phone"></i> ${esc(String(r.phone).slice(0,20))}</span>`);
+  const trade=[];
+  if(r.supplier) trade.push(`<span><i class="ti ti-building"></i> 现供应商：${esc(r.supplier.slice(0,30))}</span>`);
+  if(r.origin) trade.push(`<span><i class="ti ti-map-2"></i> 原产：${esc(r.origin)}</span>`);
+  if(r.port) trade.push(`<span><i class="ti ti-anchor"></i> ${esc(r.port)}</span>`);
+  if(r.date) trade.push(`<span><i class="ti ti-calendar"></i> ${esc(r.date)}</span>`);
+  if(r.amount) trade.push(`<span><i class="ti ti-cash"></i> ${fmtAmt(r.amount)}</span>`);
+  return `<div class="lead">
+    <div class="av">${initials(r.buyer)}</div>
+    <div class="main">
+      <div class="nm">${esc(r.buyer)} ${r.country?`<span class="cc"><i class="ti ti-map-pin" style="font-size:11px"></i> ${esc(r.country)}</span>`:''} ${r.email?'<span class="badge-em">自带邮箱</span>':''}</div>
+      <div class="sub"><span class="k">采购：</span>${esc(r.desc||HS_CH[ch]||'—')} ${r.hs?`<span class="k">· HS</span> ${esc(String(r.hs).slice(0,10))}`:''}</div>
+      ${r.addr?`<div class="sub"><span class="k">地址：</span>${esc(r.addr.slice(0,90))}</div>`:''}
+      ${contact.length?`<div class="meta" style="margin-top:6px">${contact.join('')}</div>`:''}
+      ${trade.length?`<div class="meta">${trade.join('')}</div>`:''}
+    </div>
+  </div>`;
+}
+// 交给 AI：把当前筛选下的买家存成线索 + 建搜索批次 → 跳进邮件获客的 AI 筛选步（接回老系统）
+async function toPipeline(n){
+  if(USING!=='db' || !TOKEN){ toast('这步要真库数据 + 登录才行'); return; }
+  const p=(_last&&_last.params)?_last.params:{};
+  const params={ q:p.q||'', hs:p.hs||'', chapter:p.chapter||'', country:$('fCountry').value.trim(), supplier:p.supplier||'', minAmount:$('fMin').value||0, hasEmail:$('fEmail').checked, count:QTY, label:(_terms&&_terms.label)||_lastLabel||'海关线索' };
+  toast('正在把这 '+(n||QTY)+' 家存进你的线索库…');
+  try{
+    const j=await fetch('/api/customs/to-pipeline',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+TOKEN},body:JSON.stringify(params)}).then(r=>r.json());
+    if(!j.success) throw new Error(j.error||'失败');
+    toast('已存 '+j.count+' 家，进入邮件获客…');
+    const prod=(_terms&&_terms.label)||_lastLabel||'';   // 把选中的产品带过去，邮件获客据此填「业务信息」，筛选/写信才有依据
+    if(window.parent && window.parent!==window){ window.parent.postMessage({type:'console-open-search', searchId:j.searchId, goto:'tofilter', product:prod}, '*'); }
+    else { setTimeout(()=>{ location.href='/flow?search='+encodeURIComponent(j.searchId)+'&goto=tofilter'+(prod?'&product='+encodeURIComponent(prod):''); }, 500); }
+  }catch(e){ toast('失败：'+e.message); }
+}
+document.addEventListener('keydown',e=>{ if(e.key!=='Enter')return; const a=document.activeElement; if(a&&a.id==='pq')productSearch(); else if(a&&a.id==='rq')doQuery({supplier:$('rq').value.trim()},'买这家货的买家'); });
+boot();
+</script>

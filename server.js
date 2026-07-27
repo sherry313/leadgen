@@ -13,7 +13,7 @@ const { searchGoogleSearch }        = require('./services/googleSearch');
 const { crawlWebsite, filterCompany, searchWebsite, scrapeHtml } = require('./services/firecrawl');
 const { analyzeICP, generateEmails, preFilterLead, templateKeyFromQuery, generateIcp } = require('./services/aiEnrich');
 const { createRunSheet, queueLead, finalizeSheets } = require('./services/googleSheets');
-const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getProductAllLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
+const { saveSearchRun, updateSearchRunCosts, appendSearchRunCosts, updateLeadFilterResult, saveLeads, updateLeadEmails, getExistingLeadKeys, getExistingBuyerSet, getSearchHistory, getLeadsForSearch, updateEmailSent, markLeadEmailedByEmail, getSentCountsBySearch, resetSearchQualified, getCostSummary, getEmailsSentCount, getUserQuotaUsd, deleteSearchRun, listProductProfiles, createProductProfile, ensureProductProfile, updateProductProfile, deleteProductProfile, appendProductSearch, getProductSentLeads, getProductAllLeads, getSentEmailStats, getAdminUsersOverview, setUserQuotaUsd, getWrittenCountsBySearch } = require('./services/supabase');
 const emailFrameworks = require('./services/emailFrameworks');
 
 const app = express();
@@ -125,6 +125,13 @@ app.get('/quote.html', (req, res) => {
 // Static middleware — apply no-cache to HTML files (login.html, pricing.html,
 // dashboard.html, quote.html, /tools/*.html, etc.) so the same anti-stale
 // guarantee covers everything served from public/.
+// 下载 WordPress 插件（连接器）
+app.get('/download/wp-plugin', (req, res) => {
+  res.set('Content-Disposition', 'attachment; filename="zhituoke-seo.php"');
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.sendFile(path.join(__dirname, 'public', 'zhituoke-seo-plugin.php'));
+});
+
 app.use(express.static(path.join(__dirname, 'public'), {
   index: false,
   setHeaders: (res, filePath) => {
@@ -2322,6 +2329,112 @@ Rules:
   }
 });
 
+// ── Quote AI: import an existing quotation (Excel/CSV/PDF/image) → structured JSON,
+//    or edit the current quotation by a natural-language instruction. Used by /quote-lens.html.
+async function _quoteSpreadsheetText(file) {
+  const buf = Buffer.from(file.dataBase64, 'base64');
+  const name = (file.name || '').toLowerCase();
+  if (name.endsWith('.csv') || file.mime === 'text/csv') return buf.toString('utf8').slice(0, 16000);
+  const ExcelJS = require('exceljs');
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buf);
+  let out = '';
+  wb.worksheets.slice(0, 2).forEach(ws => {
+    ws.eachRow((row, rn) => { if (rn > 80) return; out += row.values.slice(1).map(v => (v == null ? '' : String(v))).join(' | ') + '\n'; });
+  });
+  return out.slice(0, 16000);
+}
+// Pull embedded product images out of an .xlsx, tagged with their anchor row so we can
+// map each photo to the right product line. Returns [{row, dataUrl}] sorted by row.
+async function _quoteExtractImages(file) {
+  try {
+    const buf = Buffer.from(file.dataBase64, 'base64');
+    const ExcelJS = require('exceljs');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    const media = wb.model && wb.model.media ? wb.model.media : [];
+    const out = [];
+    wb.worksheets.forEach(ws => {
+      const imgs = (typeof ws.getImages === 'function') ? ws.getImages() : [];
+      imgs.forEach(im => {
+        const m = (typeof wb.getImage === 'function' ? wb.getImage(im.imageId) : null) || media[im.imageId];
+        if (!m || !m.buffer) return;
+        if (m.buffer.length > 3_000_000) return; // skip huge
+        const tl = im.range && im.range.tl ? im.range.tl : {};
+        const row = (tl.nativeRow != null ? tl.nativeRow : (tl.row != null ? tl.row : 0));
+        const ext = (m.extension || 'png').replace('jpeg', 'jpg');
+        out.push({ row, dataUrl: `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${m.buffer.toString('base64')}` });
+      });
+    });
+    out.sort((a, b) => a.row - b.row);
+    return out;
+  } catch (e) { return []; }
+}
+const _QUOTE_SCHEMA = `Return a JSON object EXACTLY in this shape (fill what you find, leave unknown strings "" and unknown numbers 0):
+{"docType":"quote"|"pi",
+ "company":{"coName":"","coAddr":"","coContact":"","coPhone":"","coEmail":"","coWeb":""},
+ "customer":{"cuName":"","cuContact":"","cuAddr":"","cuCountry":"","cuTel":""},
+ "doc":{"quoteNo":"","qDate":"","validity":"","incoterm":"FOB","incoPlace":"","pol":"","pod":"","origin":"","ship":"Sea","curr":"USD","payment":"","lead":""},
+ "items":[{"name":"","model":"","hs":"","spec":"","size":"","color":"","pack":"","mode":"qty"|"area"|"weight"|"length","dimW":0,"dimH":0,"dimU":"mm","per":0,"qty":0,"unit":"pcs","price":0,"perCtn":0,"nw":0,"gw":0,"L":0,"W":0,"H":0}],
+ "bank":{"bkBene":"","bkName":"","bkSwift":"","bkAcct":"","bkAddr":""},
+ "notes":""}
+Rules: price is the unit price. If a line is priced by area use mode "area" and put per-piece area in "per" (m²) or width/height in dimW/dimH with dimU. Keep numbers as numbers. Output ONLY the JSON, no markdown, no comments.`;
+
+app.post('/api/quote/ai', requireAuth, async (req, res) => {
+  const mode = req.body?.mode === 'edit' ? 'edit' : 'parse';
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    let content;
+    let sheetImages = [];
+    if (mode === 'edit') {
+      const quote = req.body?.quote || {};
+      const instruction = (req.body?.instruction || '').trim();
+      if (!instruction) return res.status(400).json({ success: false, error: 'instruction required' });
+      content = [{ type: 'text', text: `Here is a quotation as JSON:\n${JSON.stringify(quote)}\n\nApply this change requested by the seller: "${instruction}"\n\n${_QUOTE_SCHEMA}\nReturn the FULL updated JSON (all fields, not just the changed ones).` }];
+    } else {
+      const file = req.body?.file;
+      const parts = [];
+      let extracted = (req.body?.text || '');
+      if (file && file.dataBase64) {
+        const mime = file.mime || '';
+        const nm = (file.name || '').toLowerCase();
+        if (/^image\//.test(mime)) {
+          parts.push({ type: 'image', source: { type: 'base64', media_type: mime, data: file.dataBase64 } });
+        } else if (mime === 'application/pdf' || nm.endsWith('.pdf')) {
+          parts.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: file.dataBase64 } });
+        } else if (/sheet|excel|csv/i.test(mime) || /\.(xlsx|xls|csv)$/i.test(nm)) {
+          extracted = await _quoteSpreadsheetText(file);
+          if (/\.xlsx$/i.test(nm) || /sheet/i.test(mime)) sheetImages = await _quoteExtractImages(file);
+        }
+      }
+      if (!parts.length && !extracted) return res.status(400).json({ success: false, error: 'no file content' });
+      parts.push({ type: 'text', text: `Extract this quotation / price list into structured data.${extracted ? '\n\nSpreadsheet content:\n' + extracted : ''}\n\n${_QUOTE_SCHEMA}` });
+      content = parts;
+    }
+    const response = await withTimeout(client.messages.create({
+      model: 'claude-sonnet-4-6', max_tokens: 3000,
+      messages: [{ role: 'user', content }],
+    }), 90000, 'Quote AI');
+    let txt = (response.content.find(b => b.type === 'text')?.text || '').trim();
+    txt = txt.replace(/^```(?:json)?\s*/i, '').replace(/```$/,'').trim();
+    const first = txt.indexOf('{'), last = txt.lastIndexOf('}');
+    if (first >= 0 && last > first) txt = txt.slice(first, last + 1);
+    const quote = JSON.parse(txt);
+    // Map extracted spreadsheet images onto product lines (order by anchor row). If there's
+    // exactly one extra image, it's most likely a header logo → send it as quote.logo.
+    if (sheetImages.length && Array.isArray(quote.items) && quote.items.length) {
+      let imgs = sheetImages.slice();
+      if (imgs.length === quote.items.length + 1) { quote.logo = imgs[0].dataUrl; imgs = imgs.slice(1); }
+      quote.items.forEach((it, i) => { if (imgs[i] && !it.img) it.img = imgs[i].dataUrl; });
+    }
+    res.json({ success: true, quote });
+  } catch (e) {
+    console.error('[QuoteAI]', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // ── Instantly: Campaign management proxy routes ───────────────────────────────
 
 // GET  /api/instantly/campaigns — list all campaigns
@@ -2419,7 +2532,10 @@ app.get('/api/instantly/campaign/:id/analytics', requireAuth, async (req, res) =
       params: { id: req.params.id },
       headers: instantlyHeaders(),
     });
-    const d = r.data || {};
+    // Instantly returns an ARRAY (one row per campaign) even when id is passed —
+    // reading it as an object gave every field undefined → always 0.
+    const raw = r.data;
+    const d = Array.isArray(raw) ? (raw.find(x => x && x.campaign_id === req.params.id) || raw[0] || {}) : (raw || {});
     const contacted = d.contacted_count || 0;
     const analytics = {
       emails_sent_count:   d.emails_sent_count   || 0,
@@ -2440,6 +2556,35 @@ app.get('/api/instantly/campaign/:id/analytics', requireAuth, async (req, res) =
   }
 });
 
+// GET /api/instantly/analytics-summary — sum sent/open/reply/bounce across ALL
+// campaigns in one call (the /campaigns/analytics endpoint returns an array of
+// per-campaign rows). Powers the 获客大盘 邮件战况 cards.
+app.get('/api/instantly/analytics-summary', requireAuth, async (req, res) => {
+  try {
+    const axios = require('axios');
+    const r = await axios.get(`${INSTANTLY_BASE}/campaigns/analytics`, { headers: instantlyHeaders() });
+    const rows = Array.isArray(r.data) ? r.data : (r.data ? [r.data] : []);
+    const s = rows.reduce((a, d) => ({
+      leads:     a.leads     + (d.leads_count       || 0),
+      contacted: a.contacted + (d.contacted_count   || 0),
+      sent:      a.sent      + (d.emails_sent_count || 0),
+      opens:     a.opens     + (d.open_count        || 0),
+      replies:   a.replies   + (d.reply_count       || 0),
+      bounced:   a.bounced   + (d.bounced_count     || 0),
+    }), { leads: 0, contacted: 0, sent: 0, opens: 0, replies: 0, bounced: 0 });
+    res.json({
+      success: true, available: true, campaigns: rows.length, ...s,
+      open_rate:    s.contacted > 0 ? s.opens / s.contacted : null,
+      reply_rate:   s.contacted > 0 ? s.replies / s.contacted : null,
+      deliver_rate: s.sent > 0 ? (s.sent - s.bounced) / s.sent : null,
+    });
+  } catch (err) {
+    const reason = err.response?.data?.message || err.response?.data || err.message;
+    console.warn('[Instantly] analytics-summary failed:', reason);
+    res.json({ success: true, available: false, reason: String(reason).slice(0, 200) });
+  }
+});
+
 // ── Products (public read + admin-password-gated edit) ───────────────────────
 const _productsDb = (() => {
   const { createClient } = require('@supabase/supabase-js');
@@ -2447,6 +2592,367 @@ const _productsDb = (() => {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 })();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+// 国家别名：数据里国家名中英混用（一批文件英文 United States，一批中文 美国），
+// 用户点中文按钮时同时匹配中英文写法。key=中文规范名 → 所有可能写法。
+const CTRY_ALIAS = {
+  '美国': ['美国', 'united states', 'usa', 'u.s', 'america'],
+  '澳大利亚': ['澳大利亚', 'australia'],
+  '加拿大': ['加拿大', 'canada'],
+  '英国': ['英国', 'united kingdom', 'england', 'britain', 'uk'],
+  '德国': ['德国', 'germany'],
+  '法国': ['法国', 'france'],
+  '意大利': ['意大利', 'italy'],
+  '越南': ['越南', 'vietnam', 'viet nam'],
+  '印度': ['印度', 'india'],
+  '俄罗斯': ['俄罗斯', 'russia'],
+  '日本': ['日本', 'japan'],
+  '韩国': ['韩国', 'korea'],
+  '阿联酋': ['阿联酋', 'united arab emirates', 'uae'],
+  '沙特': ['沙特', 'saudi'],
+  '墨西哥': ['墨西哥', 'mexico'],
+  '巴西': ['巴西', 'brazil'],
+  '哥伦比亚': ['哥伦比亚', 'colombia'],
+  '阿根廷': ['阿根廷', 'argentina'],
+  '巴基斯坦': ['巴基斯坦', 'pakistan'],
+  '乌克兰': ['乌克兰', 'ukraine'],
+  '菲律宾': ['菲律宾', 'philippines'],
+  '印尼': ['印尼', 'indonesia'],
+  '泰国': ['泰国', 'thailand'],
+};
+
+// ── Customs DB: query the uploaded bill-of-lading records (public.customs_records).
+// Filters: q (product/buyer keyword), hs, chapter, country, hasEmail. Paginated. Used by /customs-lens.html.
+app.post('/api/customs/query', requireAuth, async (req, res) => {
+  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+  const b = req.body || {};
+  const clean = s => String(s == null ? '' : s).replace(/[,()%*'"\\]/g, ' ').trim();
+  const q = clean(b.q).slice(0, 60);
+  const hs = clean(b.hs).replace(/\s/g, '');
+  const chapter = clean(b.chapter).replace(/\D/g, '').slice(0, 2);
+  const country = clean(b.country).slice(0, 40);
+  const supplier = clean(b.supplier).slice(0, 60);   // 竞品反查：输对手(出口商)名 → 查他的买家
+  const minAmount = parseFloat(b.minAmount) || 0;     // 最低进口额，滤掉小单
+  const hasEmail = !!b.hasEmail;
+  const pageSize = Math.min(Math.max(parseInt(b.pageSize || 20, 10) || 20, 1), 100);
+  const page = Math.max(parseInt(b.page || 0, 10) || 0, 0);
+  const from = page * pageSize;
+  try {
+    // 查询工厂：每翻一页要重建（Supabase 构建器执行后不可复用）。count:'planned'=快速估算（exact 全表扫会超时）。
+    const mkQuery = (withCount) => {
+      let query = _productsDb.from('customs_records')
+        .select('buyer,buyer_country,buyer_addr,email,phone,website,supplier,supplier_country,hs,hs_chapter,product_desc,amount,txn_date,port_disc,origin', withCount ? { count: 'planned' } : {});
+      if (chapter) query = query.eq('hs_chapter', chapter);
+      if (hs) query = query.ilike('hs', hs + '%');
+      if (country) { const aliases = CTRY_ALIAS[country] || [country]; query = query.or(aliases.map(a => `buyer_country.ilike.%${a}%`).join(',')); }
+      if (supplier) query = query.ilike('supplier', '%' + supplier + '%');
+      if (minAmount > 0) query = query.gte('amount', minAmount);
+      if (hasEmail) query = query.not('email', 'is', null);
+      if (q) query = query.ilike('product_desc', '%' + q + '%');   // 关键词只匹配报关品名（比 .or 双列快很多，也更准）
+      return query;   // NO order-by-amount（大章排序会全表扫超时）；索引序足够快。
+    };
+    // 自动跳过已拉过的：排除该用户线索库里已有的买家(公司名/邮箱)，每次只给没见过的新买家。
+    // 一家公司常有多条提单 → 边翻边按买家去重；扫够行以跨过已拉过的那批。
+    const existing = await getExistingBuyerSet(req.userId);
+    const seen = new Map();
+    let total = 0, qErr = null;
+    const WIN = 1000, MAX_ROWS = 4000;
+    for (let off = from; off < from + MAX_ROWS && seen.size < pageSize; off += WIN) {
+      const r = await withTimeout(mkQuery(off === from).range(off, off + WIN - 1), 30000, 'customs query');
+      if (r.error) { qErr = r.error; break; }
+      if (off === from) total = r.count || 0;
+      const rows = r.data || [];
+      for (const row of rows) {
+        const k = (row.buyer || '').toLowerCase().trim(); if (!k) continue;
+        if (existing.names.has(k)) continue;
+        if (row.email && existing.emails.has(String(row.email).toLowerCase().trim())) continue;
+        const cur = seen.get(k); if (!cur || (!cur.email && row.email)) seen.set(k, row);
+      }
+      if (rows.length < WIN) break;   // 没有更多行了
+    }
+    if (qErr) return res.status(500).json({ success: false, error: qErr.message });
+    const distinct = [...seen.values()].slice(0, pageSize);
+    res.json({ success: true, rows: distinct, total, page, pageSize, fresh: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// 把海关买家推进"邮件开发"流水线：按当前筛选取 N 家 → 存成 leads + 建 search_run →
+// 返回 searchId，前端跳 /flow?search=<id>&goto=tofilter，后面走原来的 AI筛选→写→发。
+app.post('/api/customs/to-pipeline', requireAuth, async (req, res) => {
+  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+  const b = req.body || {};
+  const clean = s => String(s == null ? '' : s).replace(/[,()%*'"\\]/g, ' ').trim();
+  const q = clean(b.q).slice(0, 60), hs = clean(b.hs).replace(/\s/g, ''), chapter = clean(b.chapter).replace(/\D/g, '').slice(0, 2);
+  const country = clean(b.country).slice(0, 40), supplier = clean(b.supplier).slice(0, 60);
+  const minAmount = parseFloat(b.minAmount) || 0, hasEmail = !!b.hasEmail;
+  const count = Math.min(Math.max(parseInt(b.count || 20, 10) || 20, 1), 200);
+  const label = (b.label || '海关线索').toString().slice(0, 80);
+  try {
+    const mkQuery = () => {
+      let query = _productsDb.from('customs_records').select('buyer,buyer_country,buyer_addr,email,phone,website,product_desc,hs');
+      if (chapter) query = query.eq('hs_chapter', chapter);
+      if (hs) query = query.ilike('hs', hs + '%');
+      if (country) { const al = CTRY_ALIAS[country] || [country]; query = query.or(al.map(a => `buyer_country.ilike.%${a}%`).join(',')); }
+      if (supplier) query = query.ilike('supplier', '%' + supplier + '%');
+      if (minAmount > 0) query = query.gte('amount', minAmount);
+      if (hasEmail) query = query.not('email', 'is', null);
+      if (q) query = query.ilike('product_desc', '%' + q + '%');
+      return query;
+    };
+    // 自动跳过已拉过的：只存没见过的新买家（与展示查询同一口径，边翻边按买家去重）
+    const existing = await getExistingBuyerSet(req.userId);
+    const seen = new Map();
+    const WIN = 1000, MAX_ROWS = 4000;
+    for (let off = 0; off < MAX_ROWS && seen.size < count; off += WIN) {
+      const r = await withTimeout(mkQuery().range(off, off + WIN - 1), 30000, 'customs to-pipeline');
+      if (r.error) return res.status(500).json({ success: false, error: r.error.message });
+      const rows = r.data || [];
+      for (const row of rows) {
+        const k = (row.buyer || '').toLowerCase().trim(); if (!k) continue;
+        if (existing.names.has(k)) continue;
+        if (row.email && existing.emails.has(String(row.email).toLowerCase().trim())) continue;
+        const cur = seen.get(k); if (!cur || (!cur.email && row.email)) seen.set(k, row);
+      }
+      if (rows.length < WIN) break;
+    }
+    const distinct = [...seen.values()].slice(0, count);
+    if (!distinct.length) return res.json({ success: false, error: '没有新的买家了 —— 这个产品在当前条件下的买家已经拉完，换个关键词或国家再试' });
+    const searchId = await saveSearchRun({ query: label, location: country || '', maxResults: count, totalScraped: distinct.length }, req.userId);
+    const leads = distinct.map(r => ({ companyName: r.buyer, website: r.website || '', phone: r.phone || '', email: r.email || '', city: r.buyer_country || '' }));
+    await saveLeads(searchId, leads, req.userId);
+    res.json({ success: true, searchId, count: distinct.length });
+  } catch (e) {
+    console.error('[Customs] to-pipeline error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// 产品描述（可能含多个产品）→ 拆成几个"单一具体产品"让用户选一个（海关一次只查一个单品）。
+app.post('/api/customs/split-products', requireAuth, async (req, res) => {
+  const desc = (req.body?.product || '').toString().trim().slice(0, 500);
+  if (!desc) return res.status(400).json({ success: false, error: 'product required' });
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const r = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 320,
+      messages: [{ role: 'user', content: `外贸卖家的产品:"${desc}"。这里可能包含多个产品。把它拆成几个"单一具体产品"（每个能对应一个 HS 海关编码，用于逐个去海关数据找买家）。只返回 JSON，不要多余文字:{"products":["具体产品1","具体产品2"]}。中文，最多 8 个；若本身就是单一产品就只返回 1 个。` }],
+    }), 30000, 'customs split-products');
+    const text = (r.content?.[0]?.text || '').trim();
+    let out = {}; try { out = JSON.parse((text.match(/\{[\s\S]*\}/) || ['{}'])[0]); } catch (_) {}
+    const products = Array.isArray(out.products) ? out.products.map(p => String(p).trim()).filter(Boolean).slice(0, 8) : [];
+    res.json({ success: true, products: products.length ? products : [desc] });
+  } catch (e) {
+    console.error('[Customs] split-products error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// 产品（中文/英文）→ 海关检索项：英文品名 + HS编码 + 章 + 英文关键词。
+// 全系统"产品优先"：用户输产品，这里统一转成能查海关的编码/英文词（HS 与语言无关，中文也能查到）。
+app.post('/api/customs/product-terms', requireAuth, async (req, res) => {
+  const product = (req.body?.product || '').toString().trim().slice(0, 200);
+  if (!product) return res.status(400).json({ success: false, error: 'product required' });
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const r = await withTimeout(client.messages.create({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 320,
+      messages: [{ role: 'user', content: `外贸产品:"${product}"（可能是中文）。要在海关进口提单数据里检索这个产品的海外买家。只返回 JSON，不要多余文字：{"en":"英文品名","hsCode":"XXXX 或 XXXX.XX（4-6位品类级HS编码）","keywords":["3-6个英文检索词，买家报关产品描述里常出现的词"]}` }],
+    }), 30000, 'customs product-terms');
+    const text = (r.content?.[0]?.text || '').trim();
+    let out = {}; try { out = JSON.parse((text.match(/\{[\s\S]*\}/) || ['{}'])[0]); } catch (_) {}
+    const hsDigits = String(out.hsCode || '').replace(/\D/g, '');
+    res.json({ success: true, en: out.en || '', hsCode: out.hsCode || '', chapter: hsDigits.slice(0, 2), keywords: Array.isArray(out.keywords) ? out.keywords.slice(0, 6) : [] });
+  } catch (e) {
+    console.error('[Customs] product-terms error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Customs DB coverage stats: total rows + how many carry a direct email.
+app.get('/api/customs/stats', requireAuth, async (req, res) => {
+  if (!_productsDb) return res.status(500).json({ success: false, error: 'db not configured' });
+  try {
+    // 可靠地判断"有没有数据"：直接取一行（planned/estimated 在表刚灌、未 ANALYZE 时会返回 0，会误判为空）
+    const { data } = await _productsDb.from('customs_records').select('id').limit(1);
+    const exists = Array.isArray(data) && data.length > 0;
+    let total = 0, withEmail = 0;
+    if (exists) {
+      total = (await _productsDb.from('customs_records').select('*', { count: 'planned', head: true })).count || 0;
+      withEmail = (await _productsDb.from('customs_records').select('*', { count: 'planned', head: true }).not('email', 'is', null)).count || 0;
+    }
+    res.json({ success: true, exists, total, withEmail });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// SEO/GEO 真实体检：抓用户官网 HTML → 检查 5 项（标题/Meta、FAQ+Schema、JSON-LD、移动端、英文内容）。
+// 不做"打开速度"和"外链"（要接付费数据）。用于 /seo-lens.html。
+app.post('/api/seo/check', requireAuth, async (req, res) => {
+  let url = (req.body?.url || '').toString().trim();
+  if (!url) return res.status(400).json({ success: false, error: 'url required' });
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  let host = '';
+  try { const u = new URL(url); if (!/^https?:$/.test(u.protocol)) throw 0; host = u.hostname;
+    if (/^(localhost|127\.|0\.0\.0\.0|::1|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return res.status(400).json({ success: false, error: '无效网址' });
+  } catch { return res.status(400).json({ success: false, error: '网址格式不对' }); }
+  try {
+    const axios = require('axios');
+    const r = await withTimeout(axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ZhituokeSEO/1.0)' }, timeout: 15000, maxContentLength: 4_000_000, maxRedirects: 3 }), 20000, 'SEO fetch');
+    const html = String(r.data || '');
+    const noTags = html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ');
+    const title = ((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '').trim();
+    const metaDesc = ((html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["']/i) || html.match(/<meta[^>]+content=["']([^"']*)["'][^>]*name=["']description["']/i) || [])[1] || '').trim();
+    const hasViewport = /<meta[^>]+name=["']viewport["']/i.test(html);
+    const ld = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
+    const hasSchema = ld.length > 0;
+    const hasFaqSchema = ld.some(b => /"@type"\s*:\s*"?faqpage/i.test(b)) || /faqpage/i.test(html);
+    const hasFaqText = /frequently asked|\bfaq\b|常见问题/i.test(noTags);
+    const enWords = (noTags.match(/[A-Za-z]{3,}/g) || []).length;
+    const hasEnglishContent = enWords > 250;
+
+    // 真实打分
+    let seo = 0; if (title) seo += 20; if (title.length > 10) seo += 8; if (metaDesc) seo += 17; if (hasViewport) seo += 15; if (hasSchema) seo += 15; if (hasEnglishContent) seo += 25; seo = Math.min(100, seo);
+    let geo = 0; if (hasFaqSchema) geo += 38; if (hasFaqText) geo += 12; if (hasSchema) geo += 20; if (hasEnglishContent) geo += 25; geo = Math.min(100, geo);
+    const opp = Math.max(10, Math.min(98, 100 - Math.round((seo + geo) / 2) + 8));
+
+    const checks = [
+      { t: '页面标题 / Meta 描述', ok: !!(title && metaDesc), okx: `标题「${title.slice(0, 40)}」+ 描述都有`, badx: title ? '有标题但缺 Meta 描述' : '首页没读到标题/描述' },
+      { t: 'FAQ / 问答结构（GEO 关键）', ok: hasFaqSchema, sev: 'bad', okx: '检测到 FAQ Schema', badx: '没有 FAQ Schema —— AI 问答引擎最爱引用的格式，你完全没有' },
+      { t: '结构化数据 Schema(JSON-LD)', ok: hasSchema, okx: `检测到 ${ld.length} 段结构化数据`, badx: '没有 JSON-LD 结构化数据，AI 无法确认你是谁、卖什么' },
+      { t: '移动端适配', ok: hasViewport, okx: '有移动端 viewport 设置', badx: '没有 viewport，手机上会错乱、被谷歌降权' },
+      { t: '针对买家问句的英文内容', ok: hasEnglishContent, sev: 'bad', okx: `检测到较充实的英文内容`, badx: '英文内容偏少，没有围绕买家真实提问的页面' },
+    ];
+    const wins = [];
+    if (!hasFaqSchema) wins.push('给首页 + 每个产品页加 FAQ Schema（GEO 立竿见影）');
+    if (!hasEnglishContent) wins.push('围绕 3 个买家高频英文问句，各写一篇问答页');
+    if (!hasSchema) wins.push('加 Organization / Product Schema，让 AI 认得你');
+    if (!metaDesc) wins.push('给首页补一段带关键词的 Meta 描述');
+    while (wins.length < 3) wins.push('持续产出英文买家问答内容，积累 AI 引用');
+
+    const siteInfo = { title, snippet: noTags.replace(/\s+/g, ' ').trim().slice(0, 700) };
+    res.json({ success: true, url, seo, geo, opp, checks, wins: wins.slice(0, 3), siteInfo });
+  } catch (e) {
+    const msg = /timeout|ETIMEDOUT|ENOTFOUND|ECONNREFUSED/i.test(e.message) ? '抓不到这个网站（打不开或超时），检查网址是否正确' : e.message;
+    res.status(500).json({ success: false, error: msg });
+  }
+});
+
+// SEO 连接器（配合 WP 插件）：给用户官网发一个 site_key，存/取该站要注入的 SEO 配置。
+// 存在服务器本地文件（data/seo-sites.json），免建 Supabase 表。数据量极小（每站一条）。
+// 注：Docker 重建若无挂载卷会丢失，用户在工具里再点一次「发布」即可重建；日后可迁到表求持久。
+const _seoStorePath = require('path').join(__dirname, 'data', 'seo-sites.json');
+function _seoLoad() {
+  try { return JSON.parse(require('fs').readFileSync(_seoStorePath, 'utf8')); } catch { return {}; }
+}
+function _seoSave(store) {
+  const fs = require('fs'), p = require('path');
+  fs.mkdirSync(p.dirname(_seoStorePath), { recursive: true });
+  fs.writeFileSync(_seoStorePath, JSON.stringify(store));
+}
+function _seoKeyForUser(store, userId) {
+  for (const k in store) if (store[k].user_id === userId) return k;
+  return null;
+}
+app.post('/api/seo/connect', requireAuth, (req, res) => {
+  const domain = String(req.body?.domain || '').trim().slice(0, 120);
+  try {
+    const store = _seoLoad();
+    let key = _seoKeyForUser(store, req.userId);
+    if (!key) {
+      key = require('crypto').randomBytes(16).toString('hex');
+      store[key] = { user_id: req.userId, domain, meta_description: '', org_schema: '', faq_schema: '', faqs: [], updated_at: new Date().toISOString() };
+    } else if (domain) { store[key].domain = domain; }
+    _seoSave(store);
+    res.json({ success: true, siteKey: key });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+// 工具里点"发布(自动上线)"：把生成的内容存进该用户的站记录，插件下次拉取就注入了。
+app.post('/api/seo/save-site', requireAuth, (req, res) => {
+  const b = req.body || {};
+  try {
+    const store = _seoLoad();
+    const key = _seoKeyForUser(store, req.userId);
+    if (!key) return res.json({ success: false, error: '还没连接官网，先在上面「连接官网」拿密钥、装插件' });
+    Object.assign(store[key], {
+      meta_description: String(b.metaDescription || ''), org_schema: String(b.orgSchema || ''),
+      faq_schema: String(b.faqSchema || ''), faqs: Array.isArray(b.faqs) ? b.faqs : [],
+      updated_at: new Date().toISOString()
+    });
+    _seoSave(store);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+// 公开：WP 插件按 site_key 拉取要注入的配置（无需登录，插件在客户公开站上跑）。
+app.get('/api/seo/site-config', (req, res) => {
+  const key = String(req.query.key || '').trim();
+  if (!key || key.length < 8) return res.json({ success: false });
+  try {
+    const row = _seoLoad()[key];
+    if (!row) return res.json({ success: false });
+    res.set('Cache-Control', 'public, max-age=1800');
+    res.json({ success: true, metaDescription: row.meta_description || '', orgSchema: row.org_schema || '', faqSchema: row.faq_schema || '' });
+  } catch (e) { res.json({ success: false }); }
+});
+
+// SEO/GEO 一键发布到客户的 WordPress：客户给 网址+用户名+应用密码，系统用 WP REST API
+// 直接建一个 FAQ 页(含内联 Schema)。凭据只随本次请求传，不落库。
+app.post('/api/seo/publish', requireAuth, async (req, res) => {
+  const b = req.body || {};
+  const wpUser = String(b.wpUser || '').trim(), wpPass = String(b.wpPass || '').trim();
+  let base = '';
+  try { const u = new URL(/^https?:\/\//i.test(b.wpUrl || '') ? b.wpUrl : 'https://' + (b.wpUrl || '')); base = u.origin;
+    if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(u.hostname)) throw 0; } catch { return res.status(400).json({ success: false, error: '官网网址不对' }); }
+  if (!wpUser || !wpPass) return res.status(400).json({ success: false, error: '缺少 WordPress 用户名或应用密码' });
+  const faqs = Array.isArray(b.faqs) ? b.faqs : [];
+  const faqHtml = faqs.map(f => `<h3>${String(f.q || '').replace(/</g, '&lt;')}</h3>\n<p>${String(f.a || '').replace(/</g, '&lt;')}</p>`).join('\n');
+  const content = faqHtml + '\n' + (b.faqSchema || '');
+  if (!content.trim()) return res.status(400).json({ success: false, error: '没有可发布的内容' });
+  try {
+    const axios = require('axios');
+    const auth = Buffer.from(`${wpUser}:${wpPass}`).toString('base64');
+    const r = await withTimeout(axios.post(base + '/wp-json/wp/v2/pages',
+      { title: b.title || 'FAQ — Buyer Questions', content, status: 'publish' },
+      { headers: { Authorization: 'Basic ' + auth, 'Content-Type': 'application/json' }, timeout: 20000 }
+    ), 25000, 'WP publish');
+    res.json({ success: true, link: r.data?.link || `${base}/?page_id=${r.data?.id}`, id: r.data?.id });
+  } catch (e) {
+    const st = e.response?.status;
+    const msg = (st === 401 || st === 403) ? '用户名或应用密码不对（要用 WordPress「应用密码」，不是登录密码）'
+      : st === 404 ? '这个网址不是 WordPress，或没开 REST API'
+      : (e.response?.data?.message || (/timeout|ENOTFOUND/i.test(e.message) ? '连不上这个网站' : e.message));
+    res.status(500).json({ success: false, error: msg });
+  }
+});
+
+// SEO/GEO 内容工厂：体检查出缺内容后，AI 生成英文买家 FAQ + Schema 代码，用户贴到官网。
+app.post('/api/seo/generate', requireAuth, async (req, res) => {
+  const si = req.body?.siteInfo || {};
+  const title = String(si.title || '').slice(0, 200);
+  const snippet = String(si.snippet || '').slice(0, 800);
+  const product = String(req.body?.product || '').slice(0, 200);
+  if (!title && !snippet && !product) return res.status(400).json({ success: false, error: '缺少网站信息' });
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const r = await withTimeout(client.messages.create({
+      model: 'claude-sonnet-4-6', max_tokens: 2600,
+      messages: [{ role: 'user', content: `A foreign-trade company's website. Title: "${title}". Content: "${snippet}". ${product ? ('They mainly sell: ' + product + '. ') : ''}Generate SEO/GEO content in ENGLISH to help this company get found on Google and cited by AI answer engines. Return ONLY JSON, no markdown:
+{"metaDescription":"a ~150-char English meta description with target keywords",
+ "faqs":[{"q":"...","a":"..."}],
+ "faqSchema":"a full <script type=\\"application/ld+json\\"> FAQPage JSON-LD block covering the FAQs",
+ "orgSchema":"a full <script type=\\"application/ld+json\\"> Organization JSON-LD block"}
+The "faqs" must be 5 questions REAL overseas B2B buyers would actually search/ask (e.g. "best <product> supplier in China", "<product> price per unit", "how to import <product> from China", "is <product> MOQ negotiable", "<product> certifications"). Answers concise and helpful. Output ONLY the JSON.` }],
+    }), 90000, 'SEO generate');
+    let txt = (r.content.find(b => b.type === 'text')?.text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/, '');
+    const first = txt.indexOf('{'), last = txt.lastIndexOf('}'); if (first >= 0 && last > first) txt = txt.slice(first, last + 1);
+    const out = JSON.parse(txt);
+    res.json({ success: true, metaDescription: out.metaDescription || '', faqs: Array.isArray(out.faqs) ? out.faqs : [], faqSchema: out.faqSchema || '', orgSchema: out.orgSchema || '' });
+  } catch (e) {
+    console.error('[SEO] generate error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 function requireAdminPassword(req, res, next) {
   if (!ADMIN_PASSWORD || req.headers['x-admin-password'] !== ADMIN_PASSWORD) {

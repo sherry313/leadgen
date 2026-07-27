@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>智拓客 · 拓客这件事，交给 AI 就好</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="/vendor/tabler/tabler-icons.min.css">
 <style>
   :root{
     --bg:#030303; --panel:#0a0a0c; --card:rgba(255,255,255,0.03); --card2:rgba(255,255,255,0.05);
@@ -271,20 +271,13 @@
 
     <div class="grp">获客 · 找客户</div>
     <div class="ni" data-view="dev" data-t="邮件获客"><i class="ti ti-mail-forward"></i> 邮件获客 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="SGO 独立站获客"><i class="ti ti-search"></i> SGO 独立站获客 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="海关数据"><i class="ti ti-ship"></i> 海关数据 <span class="st on"></span></div>
     <div class="ni" data-view="dev" data-t="社媒自动发帖"><i class="ti ti-share"></i> 社媒自动发帖 <span class="st on"></span></div>
-    <div class="ni" data-view="customs"><i class="ti ti-ship"></i> 海关数据 <span class="st on"></span></div>
-    <div class="ni" data-view="dev" data-t="领英获客"><i class="ti ti-brand-linkedin"></i> 领英获客 <span class="st dev"></span></div>
-    <div class="ni" data-view="dev" data-t="展会采购商"><i class="ti ti-building-store"></i> 展会采购商 <span class="st dev"></span></div>
-    <div class="ni" data-view="dev" data-t="WhatsApp 采购商"><i class="ti ti-brand-whatsapp"></i> WhatsApp 采购商 <span class="st dev"></span></div>
-    <div class="ni" data-view="dev" data-t="SEO / GEO 获客"><i class="ti ti-search"></i> SEO / GEO 获客 <span class="st dev"></span></div>
 
     <div class="grp">转化工具</div>
-    <div class="ni" data-view="dev" data-t="客户管理"><i class="ti ti-users"></i> 客户管理 <span class="st on"></span></div>
-    <div class="ni" data-view="dev" data-t="邮件线索管理"><i class="ti ti-mail"></i> 邮件线索管理 <span class="st on"></span></div>
-    <div class="ni" data-view="send"><i class="ti ti-send"></i> 邮件发送 <span class="st on"></span></div>
-    <div class="ni" data-view="dev" data-t="模板管理"><i class="ti ti-template"></i> 模板管理 <span class="st on"></span></div>
-    <div class="ni" data-view="dev" data-t="产品管理"><i class="ti ti-package"></i> 产品管理 <span class="st on"></span></div>
-    <div class="ni" data-view="dev" data-t="报价自动化"><i class="ti ti-file-invoice"></i> 报价自动化 <span class="st dev"></span></div>
+    <div class="ni" data-view="dev" data-t="获客工作台"><i class="ti ti-layout-grid"></i> 获客工作台 <span class="st on"></span></div>
+    <div class="ni" data-view="dev" data-t="报价自动化"><i class="ti ti-file-invoice"></i> 报价自动化 <span class="st on"></span></div>
     <div class="ni" data-view="dev" data-t="AI 客服"><i class="ti ti-message-chatbot"></i> AI 客服 <span class="st dev"></span></div>
     <div class="ni" data-view="dev" data-t="任务管理"><i class="ti ti-checklist"></i> 任务管理 <span class="st dev"></span></div>
 
@@ -327,7 +320,7 @@
         </div>
         <div class="cta">
           <button class="primary" data-go="邮件获客"><i class="ti ti-rocket"></i> 开始找客户</button>
-          <button data-go="客户管理"><i class="ti ti-users"></i> 看客户</button>
+          <button data-go="获客工作台"><i class="ti ti-users"></i> 看客户</button>
         </div>
       </div>
 
@@ -336,7 +329,7 @@
         <div class="kpi"><div class="t">总客户数 <i class="ti ti-users"></i></div><div class="v" id="kpiCustomers">—</div><div class="d">累计客户</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,24 20,22 40,23 60,16 80,18 100,11 120,7 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,24 20,22 40,23 60,16 80,18 100,11 120,7" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
         <div class="kpi"><div class="t">邮件发送 <i class="ti ti-mail"></i></div><div class="v" id="kpiEmails">—</div><div class="d">累计发出</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polygon points="0,30 0,25 20,23 40,20 60,21 80,14 100,12 120,6 120,30" fill="rgba(129,140,248,0.13)"/><polyline points="0,25 20,23 40,20 60,21 80,14 100,12 120,6" fill="none" stroke="#818cf8" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
         <div class="kpi"><div class="t">发送率 <i class="ti ti-send"></i></div><div class="v" id="kpiSendRate" style="font-size:19px;color:var(--tx3)">接入中</div><div class="d">接 Instantly 后显示</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polyline points="0,20 20,20 40,20 60,20 80,20 100,20 120,20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
-        <div class="kpi"><div class="t">打开率 <i class="ti ti-eye"></i></div><div class="v" id="kpiOpenRate" style="font-size:19px;color:var(--tx3)">接入中</div><div class="d">接 Instantly 后显示</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polyline points="0,20 20,20 40,20 60,20 80,20 100,20 120,20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
+        <div class="kpi"><div class="t">收到回复 <i class="ti ti-corner-up-left"></i></div><div class="v" id="kpiOpenRate" style="font-size:19px;color:var(--tx3)">接入中</div><div class="d">接 Instantly 后显示</div><svg class="spark" viewBox="0 0 120 30" preserveAspectRatio="none"><polyline points="0,20 20,20 40,20 60,20 80,20 100,20 120,20" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>
       </div>
 
       <div class="qs-h" style="margin:28px 0 12px">获客转化</div>
@@ -510,8 +503,10 @@
 
   // 已上线功能 → 用 iframe 嵌进右边（仅导航，不改目标页/API）
   const HREF = {
-    '邮件获客':'/flow', '社媒自动发帖':'/autopost', '客户管理':'/customers.html',
+    '邮件获客':'/flow', '海关数据':'/customs-lens.html', '社媒自动发帖':'/autopost', '客户管理':'/customers.html',
     '邮件线索管理':'/emails.html', '模板管理':'/templates.html', '产品管理':'/products.html',
+    '获客工作台':'/workbench.html',
+    '报价自动化':'/quote-lens.html', 'SGO 独立站获客':'/seo-lens.html',
     'DNS 记录生成器':'/tools/dns-generator.html', 'Spam 敏感词检查':'/tools/spam-word-checker.html',
     '定价 / 套餐':'/pricing.html'
   };
@@ -569,6 +564,7 @@
     if(d.type==='console-open-search' && d.searchId){
       var u = '/flow?search=' + encodeURIComponent(String(d.searchId));
       if(d.goto) u += '&goto=' + encodeURIComponent(String(d.goto));   // 按批次状态跳到对应步骤
+      if(d.product) u += '&product=' + encodeURIComponent(String(d.product));   // 海关来的产品名 → 邮件获客据此填业务信息
       openFrame(u);
       var f=findNi('邮件获客');
       if(f){ document.querySelectorAll('.ni').forEach(function(x){ x.classList.remove('on'); }); f.classList.add('on'); }
@@ -789,6 +785,21 @@
           return '<div class="act"><div class="ic"><i class="ti ti-search"></i></div><div><div class="nm">'+esc(nm)+'</div><div class="mt">'+lc+' 条线索</div></div><span class="tm">'+ago(h.created_at)+'</span></div>';
         }).join(''); }
       }
+    }).catch(function(){});
+
+    // 邮件战况：把 Instantly 各 campaign 的发送/打开/回复/退信汇总，填进「发送率」「打开率」卡
+    fetch('/api/instantly/analytics-summary',{headers:H}).then(function(r){return r.json();}).then(function(j){
+      if(!j||!j.success||!j.available) return;
+      function card(id){ var v=document.getElementById(id); return { v:v, d:(v&&v.parentNode)?v.parentNode.querySelector('.d'):null }; }
+      function put(c,val,sub){ if(c.v){ c.v.textContent=val; c.v.style.fontSize='26px'; c.v.style.color='var(--tx)'; } if(c.d&&sub!=null) c.d.textContent=sub; }
+      var pct=function(x){ return Math.round(x*100)+'%'; };
+      var sr=card('kpiSendRate'), or=card('kpiOpenRate');
+      // 发送率 = 送达率(已发-退信)/已发；副标题给绝对数
+      if(j.sent>0){ put(sr, j.deliver_rate!=null?pct(j.deliver_rate):'—', '已发 '+j.sent+' 封 · 退信 '+j.bounced); }
+      else { put(sr, '暂无', '开始发送后显示'); }
+      // 冷邮件真正的成效指标是回复(打开追踪按建议不开)：头条显示回复家数，副标题给回复率
+      if(j.sent>0){ put(or, j.replies+' 家', '回复率 '+(j.reply_rate!=null?(j.reply_rate*100).toFixed(1)+'%':'—')+' · 已发 '+j.sent+' 封'); }
+      else { put(or, '暂无', '开始发送后显示'); }
     }).catch(function(){});
   })();
 

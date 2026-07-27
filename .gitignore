@@ -50,7 +50,12 @@ scripts/
 *.csv
 emails-dump.txt
 *-dump.txt
+<<<<<<< HEAD
 .gstack/
 
 # Generated knowledge-graph output
 graphify-out/
+=======
+
+data/seo-sites.json
+>>>>>>> bd16961e09111f4e689bfb0736d39516c1f1347e

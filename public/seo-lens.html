@@ -1,0 +1,326 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SEO / GEO 获客 · 方案预览 — 智拓客</title>
+<link rel="stylesheet" href="/vendor/tabler/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#030303; --panel:#0a0a0c; --card:rgba(255,255,255,0.03); --card2:rgba(255,255,255,0.05);
+    --bd:rgba(255,255,255,0.08); --bd2:rgba(255,255,255,0.12);
+    --tx:#e5e7eb; --tx2:rgba(255,255,255,0.6); --tx3:rgba(255,255,255,0.35);
+    --ac:#6366f1; --ac2:#818cf8; --acbg:rgba(99,102,241,0.14);
+    --ok:#34d399; --okbg:rgba(52,211,153,0.12); --warn:#fbbf24; --warnbg:rgba(251,191,36,0.12); --bad:#f87171;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--tx); font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 22px 80px; }
+  .top{ position:sticky; top:0; z-index:20; background:rgba(3,3,3,0.85); backdrop-filter:blur(10px); border-bottom:1px solid var(--bd); }
+  .top-in{ max-width:1080px; margin:0 auto; padding:13px 22px; display:flex; align-items:center; gap:14px; }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:700; font-size:15px; }
+  .brand .logo{ width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,var(--ac),#a5b4fc); display:flex; align-items:center; justify-content:center; color:#fff; }
+  .demo-pill{ margin-left:auto; font-size:11px; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); padding:4px 10px; border-radius:99px; }
+
+  .hero{ padding:34px 0 8px; }
+  .hero h1{ font-size:26px; font-weight:650; letter-spacing:-0.01em; }
+  .hero p{ color:var(--tx2); font-size:14px; margin-top:9px; max-width:680px; }
+  .kbox{ display:flex; gap:12px; margin-top:18px; flex-wrap:wrap; }
+  .kb{ flex:1; min-width:220px; background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:15px 17px; }
+  .kb .kh{ font-size:13px; font-weight:650; display:flex; align-items:center; gap:8px; }
+  .kb .kh i{ color:var(--ac2); }
+  .kb p{ font-size:12.5px; color:var(--tx2); margin-top:7px; }
+
+  /* scanner */
+  .scan{ margin-top:26px; background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:20px 22px; }
+  .scan h3{ font-size:15px; display:flex; align-items:center; gap:8px; }
+  .scan .sub{ font-size:12.5px; color:var(--tx3); margin-top:5px; }
+  .scan-row{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .scan-row input{ flex:1; min-width:240px; background:var(--panel); border:1px solid var(--bd2); border-radius:10px; color:var(--tx); font-size:14px; font-family:inherit; padding:12px 14px; outline:none; }
+  .scan-row input:focus{ border-color:var(--ac); box-shadow:0 0 0 3px rgba(99,102,241,.14); }
+  .btn{ font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; border-radius:10px; padding:0 20px; border:1px solid var(--bd2); background:var(--card2); color:var(--tx); transition:.14s; display:inline-flex; align-items:center; gap:7px; }
+  .btn:hover{ background:rgba(255,255,255,.07); }
+  .btn.primary{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .btn.primary:hover{ background:#4f52e0; }
+
+  .report{ margin-top:20px; display:none; }
+  .report.show{ display:block; animation:fade .4s ease; }
+  @keyframes fade{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
+  .scores{ display:flex; gap:12px; flex-wrap:wrap; }
+  .score{ flex:1; min-width:200px; background:var(--panel); border:1px solid var(--bd); border-radius:12px; padding:16px 18px; }
+  .score .st{ font-size:12px; color:var(--tx3); display:flex; align-items:center; gap:6px; }
+  .ring{ --v:0; width:96px; height:96px; border-radius:50%; margin:12px auto 6px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800;
+    background:conic-gradient(var(--rc) calc(var(--v)*1%), rgba(255,255,255,0.07) 0); position:relative; }
+  .ring::before{ content:''; position:absolute; inset:9px; background:var(--panel); border-radius:50%; }
+  .ring span{ position:relative; }
+  .score .sl{ text-align:center; font-size:12px; color:var(--tx2); }
+
+  .checks{ margin-top:16px; }
+  .chk{ display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--bd); font-size:13px; }
+  .chk i{ margin-top:1px; font-size:17px; }
+  .chk .ok{ color:var(--ok); } .chk .warn{ color:var(--warn); } .chk .bad{ color:var(--bad); }
+  .chk .cx{ color:var(--tx3); font-size:12px; margin-top:2px; }
+  .chk b{ color:var(--tx); }
+
+  .win{ margin-top:18px; background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:16px 18px; }
+  .win h4{ font-size:13.5px; color:var(--ac2); display:flex; align-items:center; gap:7px; }
+  .win ul{ margin:10px 0 0 2px; list-style:none; }
+  .win li{ font-size:13px; color:var(--tx2); padding:5px 0 5px 22px; position:relative; }
+  .win li::before{ content:'\2713'; position:absolute; left:2px; color:var(--ac2); font-weight:700; }
+
+  .plans{ margin-top:40px; }
+  .plans h2{ font-size:20px; font-weight:650; }
+  .plans .psub{ color:var(--tx2); font-size:13.5px; margin-top:6px; }
+  .plan{ background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:20px 22px; margin-top:14px; }
+  .plan .ph{ display:flex; align-items:center; gap:12px; }
+  .plan .pn{ width:34px; height:34px; border-radius:9px; background:var(--acbg); color:var(--ac2); display:flex; align-items:center; justify-content:center; font-size:19px; }
+  .plan .pt{ font-size:16px; font-weight:650; }
+  .plan .ptag{ margin-left:auto; font-size:11px; padding:4px 10px; border-radius:99px; }
+  .ptag.easy{ color:var(--ok); background:var(--okbg); border:1px solid rgba(52,211,153,.3); }
+  .ptag.mid{ color:var(--warn); background:var(--warnbg); border:1px solid rgba(251,191,36,.3); }
+  .plan .pd{ font-size:13.5px; color:var(--tx2); margin-top:12px; line-height:1.65; }
+  .plan .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px; }
+  @media(max-width:680px){ .plan .grid{ grid-template-columns:1fr; } }
+  .plan .col h5{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--tx3); margin-bottom:7px; }
+  .plan .col li{ font-size:12.5px; color:var(--tx2); list-style:none; padding:3px 0 3px 18px; position:relative; }
+  .plan .col li::before{ content:'·'; position:absolute; left:5px; color:var(--ac2); font-weight:700; }
+  .foot{ text-align:center; color:var(--tx3); font-size:12px; padding:34px 0 0; }
+  .help-btn{ margin-left:auto; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:99px; padding:6px 13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .help-btn:hover{ background:rgba(99,102,241,0.22); color:#fff; }
+  .gmodal{ position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(3px); z-index:60; display:none; align-items:center; justify-content:center; padding:20px; }
+  .gmodal.show{ display:flex; }
+  .gbox{ width:100%; max-width:460px; background:#0d0d10; border:1px solid var(--bd2); border-radius:14px; padding:22px 24px; }
+  .gbox h3{ font-size:16px; font-weight:650; display:flex; align-items:center; gap:8px; }
+  .gbox h3 i{ color:var(--ac2); }
+  .gbox .gx{ margin-left:auto; cursor:pointer; color:var(--tx3); }
+  .gbox .gx:hover{ color:var(--tx); }
+  .gbox p{ font-size:13px; color:var(--tx2); margin-top:12px; line-height:1.6; }
+  .gbox ol{ margin:12px 0 0 4px; padding-left:18px; }
+  .gbox li{ font-size:13.5px; color:var(--tx2); margin:9px 0; line-height:1.5; }
+  .gbox li b{ color:var(--tx); }
+  .gbox .tip{ margin-top:14px; font-size:12.5px; color:var(--tx3); background:var(--card); border:1px solid var(--bd); border-radius:9px; padding:10px 12px; }
+  .genhint{ font-size:12.5px; color:var(--tx2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:9px; padding:11px 13px; margin-bottom:12px; }
+  .genhint i{ color:var(--ac2); } .genhint b{ color:var(--tx); }
+  .genc{ margin-bottom:12px; background:var(--panel); border:1px solid var(--bd); border-radius:10px; overflow:hidden; }
+  .gch{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--tx2); padding:9px 12px; border-bottom:1px solid var(--bd); }
+  .cpb{ margin-left:auto; font-family:inherit; font-size:11.5px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:7px; padding:4px 10px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
+  .cpb:hover{ background:rgba(99,102,241,0.22); color:#fff; }
+  .genc pre{ margin:0; padding:12px; font-size:12px; line-height:1.55; color:var(--tx); white-space:pre-wrap; word-break:break-word; max-height:280px; overflow:auto; font-family:ui-monospace,'SF Mono',Menlo,monospace; }
+  .trendbox{ font-size:13px; color:var(--tx2); background:var(--okbg); border:1px solid rgba(52,211,153,0.28); border-radius:9px; padding:10px 13px; display:flex; align-items:center; gap:8px; }
+  .plan-t{ background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:16px 18px; }
+  .plan-h{ font-size:14px; font-weight:650; display:flex; align-items:center; gap:8px; }
+  .plan-note{ font-size:12px; color:var(--tx3); margin:8px 0 12px; }
+  .plan-row{ display:flex; gap:14px; padding:10px 0; border-top:1px solid var(--bd); }
+  .plan-row .pw{ flex-shrink:0; width:78px; font-size:12.5px; font-weight:600; color:var(--ac2); }
+  .plan-row .pc b{ font-size:13.5px; } .plan-row .pd{ font-size:12.5px; color:var(--tx2); margin-top:3px; }
+  .pub{ margin-top:14px; background:var(--card); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:15px 16px; }
+  .pubh{ font-size:13.5px; font-weight:650; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .wphelp-t{ margin-left:auto; font-size:11.5px; color:var(--tx3); cursor:pointer; text-decoration:underline; }
+  #wpHelp{ font-size:11.5px; color:var(--tx3); margin:9px 0; line-height:1.6; background:var(--panel); border:1px solid var(--bd); border-radius:8px; padding:9px 11px; }
+  .pub input{ width:100%; background:var(--panel); border:1px solid var(--bd2); border-radius:9px; color:var(--tx); font-size:13px; font-family:inherit; padding:9px 11px; outline:none; margin-top:9px; }
+  .pub input:focus{ border-color:var(--ac); }
+  .pub2{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .pub .btn{ margin-top:11px; }
+  #pubResult{ margin-top:9px; }
+  .connbox{ display:flex; gap:9px; margin-top:10px; flex-wrap:wrap; }
+  .connbox input{ flex:1; min-width:200px; background:var(--panel); border:1px solid var(--bd2); border-radius:9px; color:var(--tx); font-size:13px; font-family:inherit; padding:9px 11px; outline:none; }
+  .connsteps{ margin-top:10px; font-size:12.5px; color:var(--tx2); line-height:1.7; }
+  .connsteps div{ margin:4px 0; } .connsteps b{ color:var(--tx); }
+  .connsteps code{ background:var(--panel); border:1px solid var(--bd2); border-radius:5px; padding:1px 6px; font-size:11.5px; color:var(--ac2); }
+  .connsteps code.keyc{ color:var(--ok); word-break:break-all; }
+</style>
+
+<div class="top"><div class="top-in">
+  <div class="brand"><span class="logo"><i class="ti ti-world-search"></i></span> 智拓客 · SEO / GEO 获客</div>
+  <button class="help-btn" onclick="toggleGuide(1)"><i class="ti ti-help-circle"></i> 使用指引</button>
+</div></div>
+
+<div class="wrap">
+  <!-- SCANNER -->
+  <div class="scan">
+    <h3><i class="ti ti-radar" style="color:var(--ac2)"></i> AI 可见性体检（体验版）</h3>
+    <div class="sub">输入任意网址，感受一下「体检报告」长什么样。正式版会真实抓取页面 + 查 AI 引用情况。</div>
+    <div class="scan-row">
+      <input id="dom" placeholder="输入你的官网网址，如 www.your-company.com" value="">
+      <button class="btn primary" onclick="scan()"><i class="ti ti-scan"></i> 开始体检</button>
+    </div>
+    <div class="report" id="report">
+      <div class="scores">
+        <div class="score"><div class="st"><i class="ti ti-brand-google"></i> 传统 SEO 得分</div>
+          <div class="ring" id="ringSeo" style="--rc:#818cf8"><span id="seoV">0</span></div><div class="sl" id="seoL"></div></div>
+        <div class="score"><div class="st"><i class="ti ti-robot"></i> GEO / AI 可见性</div>
+          <div class="ring" id="ringGeo" style="--rc:#34d399"><span id="geoV">0</span></div><div class="sl" id="geoL"></div></div>
+        <div class="score"><div class="st"><i class="ti ti-flame"></i> 综合机会分</div>
+          <div class="ring" id="ringOpp" style="--rc:#fbbf24"><span id="oppV">0</span></div><div class="sl" id="oppL"></div></div>
+      </div>
+      <div id="trend" style="margin:12px 0"></div>
+      <div class="checks" id="checks"></div>
+      <div class="win"><h4><i class="ti ti-bolt"></i> 马上能做的 3 件事</h4><ul id="wins"></ul></div>
+      <div id="planBlock" style="margin-top:16px"></div>
+      <div id="genBlock" style="margin-top:16px;display:none">
+        <button class="btn primary" onclick="genContent()"><i class="ti ti-wand"></i> 下一步：AI 帮你生成缺的英文内容 + 代码</button>
+        <div id="genResult" style="margin-top:14px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">体检为体验版（本地模拟打分，同一网址结果稳定）。正式版将真实抓取页面并查询 AI 引用情况。</div>
+</div>
+
+<div class="gmodal" id="guide">
+  <div class="gbox">
+    <h3><i class="ti ti-help-circle"></i> SEO / GEO 怎么用 <span class="gx" onclick="toggleGuide(0)"><i class="ti ti-x"></i></span></h3>
+    <p><b style="color:var(--tx)">先搞清楚:</b>SEO = 让你官网在谷歌被搜到;GEO = 让 AI 回答问题时推荐你官网。<b style="color:var(--tx)">前提是你有官网。</b></p>
+    <ol>
+      <li><b>输入你的官网网址</b> → 点「开始体检」</li>
+      <li>看三个分:<b>传统 SEO</b>、<b>AI 可见性(GEO)</b>、<b>综合机会分</b> —— 分越低,能提升的空间越大</li>
+      <li>下面会列出<b>哪里不足</b> + <b>马上能做的 3 件事</b></li>
+    </ol>
+    <div class="tip">正式版会真实抓取你官网、查 AI 有没有引用你,并能一键生成<b style="color:var(--tx2)">英文</b>买家问答内容,贴到官网提升排名。</div>
+  </div>
+</div>
+
+<script>
+function toggleGuide(on){ document.getElementById('guide').classList.toggle('show', !!on); }
+function getToken(){ try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+async function scan(){
+  const url=document.getElementById('dom').value.trim(); if(!url) return;
+  const rep=document.getElementById('report'), checksEl=document.getElementById('checks'), winsEl=document.getElementById('wins'), scores=document.querySelector('.scores');
+  rep.classList.add('show'); winsEl.innerHTML='';
+  const gb=document.getElementById('genBlock'); if(gb){ gb.style.display='none'; document.getElementById('genResult').innerHTML=''; } _siteInfo=null;
+  const tok=getToken();
+  if(!tok){ scores.style.opacity='.3'; checksEl.innerHTML='<div class="chk"><i class="ti ti-alert-circle warn"></i><div><b>需要先在主站登录</b><div class="cx">体检要真抓你的官网，登录后才能用。</div></div></div>'; return; }
+  scores.style.opacity='.4';
+  checksEl.innerHTML='<div class="chk"><i class="ti ti-loader-2 warn"></i><div><b>正在抓取并检查你的官网…</b><div class="cx">'+esc(url)+'</div></div></div>';
+  try{
+    const j=await fetch('/api/seo/check',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({url})}).then(r=>r.json());
+    if(!j.success) throw new Error(j.error||'体检失败');
+    scores.style.opacity='1';
+    animRing('ringSeo','seoV',j.seo); animRing('ringGeo','geoV',j.geo); animRing('ringOpp','oppV',j.opp);
+    document.getElementById('seoL').textContent = j.seo<50?'基础薄弱，提升空间大':'有基础，可再优化';
+    document.getElementById('geoL').textContent = j.geo<30?'AI 几乎看不到你':'AI 能引用你';
+    document.getElementById('oppL').textContent = '优化后可增流量';
+    checksEl.innerHTML=(j.checks||[]).map(it=>{
+      const cls=it.ok?'ok':(it.sev==='bad'?'bad':'warn');
+      const ic=it.ok?'ti ti-circle-check':(cls==='bad'?'ti ti-circle-x':'ti ti-alert-circle');
+      return `<div class="chk"><i class="${ic} ${cls}"></i><div><b>${esc(it.t)}</b><div class="cx">${esc(it.ok?it.okx:it.badx)}</div></div></div>`;
+    }).join('');
+    winsEl.innerHTML=(j.wins||[]).map(w=>`<li>${esc(w)}</li>`).join('');
+    _siteInfo=j.siteInfo||null; if(_siteInfo&&gb) gb.style.display='';
+    renderTrend(url, j.seo, j.geo);
+    document.getElementById('planBlock').innerHTML=renderPlan(j.checks||[]);
+  }catch(e){ scores.style.opacity='.3'; checksEl.innerHTML='<div class="chk"><i class="ti ti-circle-x bad"></i><div><b>体检失败</b><div class="cx">'+esc(e.message)+'</div></div></div>'; document.getElementById('trend').innerHTML=''; document.getElementById('planBlock').innerHTML=''; }
+}
+function histKey(url){ return 'seoHist_'+String(url).toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,''); }
+function renderTrend(url, seo, geo){
+  const el=document.getElementById('trend'), k=histKey(url);
+  let hist=[]; try{ hist=JSON.parse(localStorage.getItem(k)||'[]'); }catch{}
+  const prev=hist[hist.length-1];
+  hist.push({ d:new Date().toISOString().slice(0,10), seo, geo }); try{ localStorage.setItem(k, JSON.stringify(hist.slice(-12))); }catch{}
+  if(!prev){ el.innerHTML='<div class="trendbox"><i class="ti ti-flag"></i> 首次体检，已记下基准分。<b style="color:var(--tx)">贴内容后再来体检，就能看到分数涨。</b></div>'; return; }
+  const arrow=d=> d>0?`<span style="color:var(--ok)">+${d} 📈</span>`:d<0?`<span style="color:#f87171">${d}</span>`:'持平';
+  el.innerHTML=`<div class="trendbox"><i class="ti ti-trending-up" style="color:var(--ok)"></i> 较上次(${prev.d})：SEO ${prev.seo}→${seo} ${arrow(seo-prev.seo)} · GEO ${prev.geo}→${geo} ${arrow(geo-prev.geo)}</div>`;
+}
+function renderPlan(checks){
+  const miss=checks.filter(c=>!c.ok).map(c=>c.t), has=t=>miss.some(m=>m.includes(t));
+  const w1=[]; if(has('Meta'))w1.push('补首页 Meta 描述'); if(has('FAQ'))w1.push('加 FAQ Schema'); if(has('结构化')&&!has('FAQ'))w1.push('加 Organization Schema'); if(has('移动端'))w1.push('修移动端 viewport'); if(!w1.length)w1.push('检查各页标题/描述关键词');
+  const rows=[
+    ['第 1 周','补基础（点上面「AI 生成」出代码，贴到官网）', w1.join('、')],
+    ['第 2–3 周','写内容', '发布 5 篇英文买家问答页'+(has('英文内容')?'（你英文内容偏少，重点补）':'')],
+    ['第 4 周','复检 + 迭代', '重新体检，看分涨了没，再补新内容'],
+    ['每周持续','保持', '每周更新 1–2 篇新内容，AI 引用才稳'],
+  ];
+  return `<div class="plan-t"><div class="plan-h"><i class="ti ti-calendar-stats" style="color:var(--ac2)"></i> 你的 SEO / GEO 提升计划</div>
+    <div class="plan-note">SEO/GEO 是马拉松，<b style="color:var(--tx2)">持续做 3–6 个月</b>才见明显效果。照这个计划一周一步走。</div>
+    ${rows.map(r=>`<div class="plan-row"><div class="pw">${r[0]}</div><div class="pc"><b>${esc(r[1])}</b><div class="pd">${esc(r[2])}</div></div></div>`).join('')}</div>`;
+}
+let _siteInfo=null;
+async function genContent(){
+  const tok=getToken(); if(!tok)return;
+  const gr=document.getElementById('genResult');
+  gr.innerHTML='<div class="chk"><i class="ti ti-loader-2 warn"></i><div><b>AI 正在生成英文买家内容 + Schema 代码…（十几秒）</b></div></div>';
+  try{
+    const j=await fetch('/api/seo/generate',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({siteInfo:_siteInfo})}).then(r=>r.json());
+    if(!j.success) throw new Error(j.error||'生成失败');
+    _gen=j; gr.innerHTML=renderGen(j);
+  }catch(e){ gr.innerHTML='<div class="chk"><i class="ti ti-circle-x bad"></i><div><b>生成失败</b><div class="cx">'+esc(e.message)+'</div></div></div>'; }
+}
+let _cp=0;
+function copyBox(label, text){
+  const id='cp'+(++_cp);
+  window['_t_'+id]=text;
+  return `<div class="genc"><div class="gch">${esc(label)}<button class="cpb" onclick="doCopy('${id}',this)"><i class="ti ti-copy"></i> 复制</button></div><pre id="${id}">${esc(text)}</pre></div>`;
+}
+function doCopy(id,btn){ const t=window['_t_'+id]||''; navigator.clipboard.writeText(t).then(()=>{ btn.innerHTML='<i class="ti ti-check"></i> 已复制'; setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> 复制',1500); }); }
+function renderGen(j){
+  let html='<div class="genwrap"><div class="genhint"><i class="ti ti-info-circle"></i> 下面都是生成好的<b>英文</b>内容/代码，点「复制」贴到你官网对应位置。发布后过几周谷歌会重新收录，分数会涨。</div>';
+  if(j.metaDescription) html+=copyBox('Meta 描述（放进首页 <head>）', j.metaDescription);
+  if(Array.isArray(j.faqs)&&j.faqs.length){
+    const faqText=j.faqs.map(f=>'Q: '+f.q+'\nA: '+f.a).join('\n\n');
+    html+=copyBox('买家常见问答 FAQ（发成一个 FAQ 页面）', faqText);
+  }
+  if(j.faqSchema) html+=copyBox('FAQ Schema 代码（贴进 FAQ 页 <head>，GEO 关键）', j.faqSchema);
+  if(j.orgSchema) html+=copyBox('Organization Schema 代码（贴进首页 <head>）', j.orgSchema);
+  html+=`<div class="pub" style="border-color:rgba(52,211,153,0.35)">
+    <div class="pubh"><i class="ti ti-plug-connected" style="color:var(--ok)"></i> 推荐：装一次插件，以后点发布全自动（首页 Schema/Meta 都不用复制）</div>
+    <div class="connbox"><input id="connDomain" placeholder="你的官网网址，如 www.your-site.com"><button class="btn primary" onclick="connectSite()"><i class="ti ti-link"></i> 连接官网</button></div>
+    <div id="connResult"></div>
+  </div>`;
+  const pu=(function(){try{return localStorage.getItem('wpUrl')||''}catch{return''}})(), pus=(function(){try{return localStorage.getItem('wpUser')||''}catch{return''}})();
+  html+=`<div class="pub">
+    <div class="pubh"><i class="ti ti-rocket" style="color:var(--ac2)"></i> 或：直接在官网建一个 FAQ 页（WordPress，不用装插件）
+      <span class="wphelp-t" onclick="toggleWpHelp()">应用密码怎么拿？</span></div>
+    <div id="wpHelp" style="display:none">WordPress 后台 → 用户 → 个人资料 → 拉到最下「应用程序密码」→ 输个名字点新建 → 复制生成的那串（<b style="color:var(--tx2)">不是登录密码</b>）填进下面。</div>
+    <input id="wpUrl" placeholder="官网网址，如 www.your-site.com" value="${esc(pu)}">
+    <div class="pub2"><input id="wpUser" placeholder="WP 用户名" value="${esc(pus)}"><input id="wpPass" type="password" placeholder="应用密码"></div>
+    <button class="btn primary" onclick="publishWp()"><i class="ti ti-rocket"></i> 一键发布到官网</button>
+    <div id="pubResult"></div>
+  </div>`;
+  html+='<button class="btn" style="margin-top:12px" onclick="scan()"><i class="ti ti-refresh"></i> 贴好后 → 重新体检看分涨了没</button></div>';
+  return html;
+}
+let _gen=null;
+function toggleWpHelp(){ const h=document.getElementById('wpHelp'); h.style.display=h.style.display==='none'?'':'none'; }
+async function connectSite(){
+  const tok=getToken(); if(!tok)return;
+  const domain=document.getElementById('connDomain').value.trim(), cr=document.getElementById('connResult');
+  cr.innerHTML='<span style="color:var(--tx3);font-size:12px"><i class="ti ti-loader-2"></i> 连接中…</span>';
+  try{
+    const j=await fetch('/api/seo/connect',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({domain})}).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'连接失败');
+    cr.innerHTML=`<div class="connsteps">
+      <div><b>① 下载插件</b> → <a href="/download/wp-plugin" style="color:var(--ac2)">zhituoke-seo.php</a>，WP 后台「插件 → 安装 → 上传」装上并激活</div>
+      <div><b>② WP 后台 设置 → 智拓客SEO</b>：智拓客网址填 <code>${esc(location.origin)}</code>；站点密钥填 <code class="keyc">${esc(j.siteKey)}</code></div>
+      <div><b>③ 回来点下面「发布」</b>，以后每次生成完点一下就自动同步到官网</div>
+      <button class="btn primary" style="margin-top:11px" onclick="saveSite()"><i class="ti ti-cloud-upload"></i> 发布（自动上线到官网）</button><span id="saveResult"></span>
+    </div>`;
+  }catch(e){ cr.innerHTML='<span style="color:#f87171;font-size:12px"><i class="ti ti-x"></i> '+esc(e.message)+'</span>'; }
+}
+async function saveSite(){
+  const tok=getToken(); if(!tok||!_gen)return;
+  const sr=document.getElementById('saveResult'); sr.innerHTML=' <span style="color:var(--tx3);font-size:12px"><i class="ti ti-loader-2"></i> 同步中…</span>';
+  try{
+    const j=await fetch('/api/seo/save-site',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({metaDescription:_gen.metaDescription,orgSchema:_gen.orgSchema,faqSchema:_gen.faqSchema,faqs:_gen.faqs})}).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'失败');
+    sr.innerHTML=' <span style="color:var(--ok);font-size:12.5px"><i class="ti ti-check"></i> 已同步！插件会自动更新你官网（约 1 小时内生效）</span>';
+  }catch(e){ sr.innerHTML=' <span style="color:#f87171;font-size:12px">'+esc(e.message)+'</span>'; }
+}
+async function publishWp(){
+  const tok=getToken(); if(!tok||!_gen)return;
+  const g=id=>document.getElementById(id).value.trim();
+  const wpUrl=g('wpUrl'), wpUser=g('wpUser'), wpPass=g('wpPass'), pr=document.getElementById('pubResult');
+  if(!wpUrl||!wpUser||!wpPass){ pr.innerHTML='<span style="color:#fbbf24;font-size:12px">网址 / 用户名 / 应用密码都要填</span>'; return; }
+  try{ localStorage.setItem('wpUrl',wpUrl); localStorage.setItem('wpUser',wpUser); }catch{}
+  pr.innerHTML='<span style="color:var(--tx3);font-size:12px"><i class="ti ti-loader-2"></i> 正在发布到你的官网…</span>';
+  try{
+    const j=await fetch('/api/seo/publish',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({wpUrl,wpUser,wpPass,faqs:_gen.faqs,faqSchema:_gen.faqSchema,title:'FAQ — Buyer Questions'})}).then(r=>r.json());
+    if(!j.success)throw new Error(j.error||'发布失败');
+    pr.innerHTML='<span style="color:var(--ok);font-size:12.5px"><i class="ti ti-check"></i> 已发布到你官网！ <a href="'+esc(j.link)+'" target="_blank" style="color:var(--ac2)">查看页面 →</a></span>';
+  }catch(e){ pr.innerHTML='<span style="color:#f87171;font-size:12px"><i class="ti ti-x"></i> '+esc(e.message)+'</span>'; }
+}
+function animRing(ringId,valId,target){
+  const ring=document.getElementById(ringId), val=document.getElementById(valId);
+  let cur=0; const step=Math.max(1,Math.round(target/28));
+  clearInterval(ring._t);
+  ring._t=setInterval(()=>{ cur=Math.min(target,cur+step); ring.style.setProperty('--v',cur); val.textContent=cur; if(cur>=target)clearInterval(ring._t); },18);
+}
+</script>
