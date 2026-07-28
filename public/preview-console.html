@@ -365,11 +365,12 @@
       <div class="row2">
         <div class="box">
           <h3>获客漏斗</h3>
-          <div class="bs">从扫描到发信，每一步剩下多少（真实数据）</div>
+          <div class="bs" id="fnSub">从扫描到发信，每一步剩下多少</div>
+          <!-- 初始宽度必须是 0：在数据回来之前画出任何长度都是在编数字。 -->
           <div class="funnel">
-            <div class="fn-row"><span class="lbl">扫描公司</span><div class="fn-track"><div class="fn-fill" id="fnScanFill" style="width:100%"></div></div><span class="cnt" id="fnScan">—</span></div>
-            <div class="fn-row"><span class="lbl">精准客户</span><div class="fn-track"><div class="fn-fill" id="fnCustFill" style="width:40%"></div></div><span class="cnt" id="fnCust">—</span></div>
-            <div class="fn-row"><span class="lbl">已发开发信</span><div class="fn-track"><div class="fn-fill" id="fnMailFill" style="width:30%"></div></div><span class="cnt" id="fnMail">—</span></div>
+            <div class="fn-row"><span class="lbl">扫描公司</span><div class="fn-track"><div class="fn-fill" id="fnScanFill" style="width:0"></div></div><span class="cnt" id="fnScan">—</span></div>
+            <div class="fn-row"><span class="lbl">精准客户</span><div class="fn-track"><div class="fn-fill" id="fnCustFill" style="width:0"></div></div><span class="cnt" id="fnCust">—</span></div>
+            <div class="fn-row"><span class="lbl">已发开发信</span><div class="fn-track"><div class="fn-fill" id="fnMailFill" style="width:0"></div></div><span class="cnt" id="fnMail">—</span></div>
           </div>
         </div>
         <div class="box">
@@ -780,10 +781,18 @@
 
   // 大盘 + 个人中心：接真实数据（替换演示数字；没数据显示空态/—）
   (function(){
-    var tk = getStoredToken(); if(!tk) return;
+    var tk = getStoredToken();
+    if(!tk){ var s=document.getElementById('fnSub'); if(s) s.textContent='未登录 —— 登录后显示你的真实数据'; return; }
     var H = { 'Authorization':'Bearer '+tk };
     function setTxt(id,v){ var e=document.getElementById(id); if(e!=null&&v!=null) e.textContent=v; }
     function esc(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+    // 漏斗柱：0 就是 0 宽。只有非 0 才给 4% 下限，保证小数值仍看得见一点。
+    function setFn(id,val,max){ var f=document.getElementById(id); if(!f) return;
+      f.style.width = val>0 ? Math.max(4,Math.round(val/max*100))+'%' : '0'; }
+    // 数据没到位时把柱子归零并说明原因 —— 空着比画个假比例强。
+    function fnFail(msg){ ['fnScanFill','fnCustFill','fnMailFill'].forEach(function(id){
+        var f=document.getElementById(id); if(f) f.style.width='0'; });
+      setTxt('fnSub', msg); }
     function ago(ts){ if(!ts) return ''; var d=(Date.now()-new Date(ts).getTime())/1000; if(d<3600) return Math.max(1,Math.round(d/60))+' 分钟前'; if(d<86400) return Math.round(d/3600)+' 小时前'; return Math.round(d/86400)+' 天前'; }
 
     fetch('/api/me',{headers:H}).then(function(r){return r.json();}).then(function(j){
@@ -793,18 +802,19 @@
     }).catch(function(){});
 
     fetch('/api/history',{headers:H}).then(function(r){return r.json();}).then(function(j){
-      if(!j||!j.success) return;
+      if(!j||!j.success){ fnFail('数据没取到 —— 刷新一下，还是不行就是后端出问题了'); return; }
       var hist=j.history||[], ss=j.sentStats||{};
       setTxt('kpiCustomers', ss.customers!=null?ss.customers:0);
       setTxt('kpiEmails', ss.emails!=null?ss.emails:0);
       if(j.quotaUsd!=null){ setTxt('accQuotaLeft', '$'+Math.max(0,j.quotaUsd-(j.spentUsd||0)).toFixed(2)); setTxt('accQuotaUsed', '$'+(j.spentUsd||0).toFixed(2)); }
       var scan=hist.reduce(function(s,r){return s+(r.total_scraped||0);},0);
       var qual=hist.reduce(function(s,r){return s+(r.total_qualified||0);},0);
-      var mail=ss.emails!=null?ss.emails:0, mx=Math.max(scan,qual,mail,1), f;
+      var mail=ss.emails!=null?ss.emails:0, mx=Math.max(scan,qual,mail,1);
       setTxt('fnScan',scan); setTxt('fnCust',qual); setTxt('fnMail',mail);
-      if(f=document.getElementById('fnScanFill')) f.style.width='100%';
-      if(f=document.getElementById('fnCustFill')) f.style.width=Math.max(6,Math.round(qual/mx*100))+'%';
-      if(f=document.getElementById('fnMailFill')) f.style.width=Math.max(6,Math.round(mail/mx*100))+'%';
+      // 0 必须画成 0 宽。原本 fnScanFill 无条件写死 100%，另外两条又有 Math.max(6,…)
+      // 的下限，结果「一家都没扫到」也会画出满格 + 两截 6% 的柱子。
+      setFn('fnScanFill', scan, mx); setFn('fnCustFill', qual, mx); setFn('fnMailFill', mail, mx);
+      if(!scan && !qual && !mail) setTxt('fnSub','还没有数据 —— 去「邮件获客」跑一次就会出现');
       var box=document.getElementById('dashRecent');
       if(box){
         if(!hist.length){ box.innerHTML='<div class="act" style="color:var(--tx3);border:none">还没有搜索记录 —— 去「邮件获客」跑一次</div>'; }
@@ -814,7 +824,7 @@
           return '<div class="act"><div class="ic"><i class="ti ti-search"></i></div><div><div class="nm">'+esc(nm)+'</div><div class="mt">'+lc+' 条线索</div></div><span class="tm">'+ago(h.created_at)+'</span></div>';
         }).join(''); }
       }
-    }).catch(function(){});
+    }).catch(function(){ fnFail('数据没取到 —— 检查网络后刷新'); });
 
     // 邮件战况：把 Instantly 各 campaign 的发送/打开/回复/退信汇总，填进「发送率」「打开率」卡
     fetch('/api/instantly/analytics-summary',{headers:H}).then(function(r){return r.json();}).then(function(j){
