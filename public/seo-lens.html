@@ -180,7 +180,7 @@
 
 <script>
 function toggleGuide(on){ document.getElementById('guide').classList.toggle('show', !!on); }
-function getToken(){ try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
+function getToken(){ try{ const s=localStorage.getItem('leadgen_supabase_session'); if(s){ const o=JSON.parse(s); if(o&&o.access_token) return o.access_token; } }catch(e){} try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 async function scan(){
   const url=document.getElementById('dom').value.trim(); if(!url) return;

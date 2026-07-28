@@ -238,7 +238,7 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;',
 function initials(n){ const w=String(n).replace(/[^A-Za-z一-龥 ]/g,' ').trim().split(/\s+/); return ((w[0]||'?')[0]+((w[1]||'')[0]||'')).toUpperCase(); }
 function fmtAmt(a){ if(!a) return ''; if(a>=1e6)return '$'+(a/1e6).toFixed(1)+'M'; if(a>=1e3)return '$'+(a/1e3).toFixed(0)+'k'; return '$'+a; }
 function toast(m){ const t=$('toast'); $('toastMsg').textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
-function getToken(){ try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
+function getToken(){ try{ const s=localStorage.getItem('leadgen_supabase_session'); if(s){ const o=JSON.parse(s); if(o&&o.access_token) return o.access_token; } }catch(e){} try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
 function toggleGuide(on){ $('guide').classList.toggle('show', !!on); }
 function maskEmail(e){ if(!e)return''; const [u,d]=e.split('@'); if(!d)return e; return (u[0]||'')+'***@'+d; }
 function norm(r){ return { buyer:r.buyer||'', country:r.buyer_country||r.buyerCountry||'', addr:r.buyer_addr||r.buyerAddr||'', email:r.email||'', phone:r.phone||'', website:r.website||'', supplier:r.supplier||'', hs:r.hs||'', desc:r.product_desc||r.desc||'', amount:+r.amount||0, date:(r.txn_date||r.date||'').slice(0,10), port:r.port_disc||r.portDisc||'', origin:r.origin||'' }; }

@@ -727,7 +727,7 @@ function doCSV(){
   toast('已导出 Excel(CSV)');
 }
 /* ---- AI: 导入报价单识别 + 一句话修改 ---- */
-function getToken(){ try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
+function getToken(){ try{ const s=localStorage.getItem('leadgen_supabase_session'); if(s){ const o=JSON.parse(s); if(o&&o.access_token) return o.access_token; } }catch(e){} try{ return localStorage.getItem('leadgen_accessToken')||''; }catch{ return ''; } }
 function fileToB64(file,cb){ const r=new FileReader(); r.onload=e=>cb(String(e.target.result).split(',')[1]||''); r.readAsDataURL(file); }
 function currentQuoteJSON(){ const g=id=>$(id)?$(id).value:'';
   return { docType:DOC,
