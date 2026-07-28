@@ -26,14 +26,30 @@
   .brand .lg{ width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,#6366f1,#4f46e5);
     display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 4px 14px rgba(99,102,241,0.4); }
   .brand b{ font-size:15px; }
-  .grp{ font-size:11px; font-weight:700; color:var(--tx3); letter-spacing:0.12em; padding:14px 18px 6px; }
-  .ni{ display:flex; align-items:center; gap:11px; font-size:13.5px; color:var(--tx2);
+  /* 分组标题是结构地标，不该比它统领的菜单项还暗。0.52 alpha = 5.69:1，
+     再加一条发丝线，让分组靠结构读出来，而不是只靠颜色深浅。 */
+  .grp{ font-size:11px; font-weight:700; color:rgba(255,255,255,0.52); letter-spacing:0.14em;
+    padding:18px 18px 7px; border-top:1px solid rgba(255,255,255,0.06); margin-top:6px; }
+  .grp:first-of-type{ border-top:none; margin-top:0; }
+  /* 菜单项只分三档，每档都对应用户能理解的含义：
+     主入口(白/700) > 可用(0.75 = 11.06:1) > 开发中(0.46 = 4.66:1)。
+     图标一律继承文字色，靛蓝只留给「当前页」和「主入口」—— 图标颜色是强调手段，
+     不是每项都该有的装饰。 */
+  .ni{ display:flex; align-items:center; gap:11px; font-size:13.5px; color:rgba(255,255,255,0.75);
     padding:9px 16px; margin:1px 8px; border-radius:9px; cursor:pointer; position:relative; transition:.13s; }
-  .ni i{ font-size:18px; width:20px; text-align:center; opacity:.9; }
-  .ni:hover{ background:var(--card); color:var(--tx); }
+  .ni i{ font-size:18px; width:20px; text-align:center; color:inherit; }
+  .ni:hover{ background:var(--card); color:#fff; }
   .ni.on{ background:var(--acbg); color:#c7d2fe; font-weight:600; }
   .ni.on i{ color:var(--ac2); }
   .ni.on::before{ content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; border-radius:3px; background:var(--ac); }
+  /* 主入口：整个侧栏原本每一项权重相同，唯一差异是 .on(当前页)，没有东西标记
+     「这是主要去处」。给获客工作台一档独立的强调，且必须让 .on 仍能压过它。 */
+  .ni[data-t="获客工作台"]{ color:#fff; font-weight:700; margin:5px 8px;
+    background:linear-gradient(90deg, rgba(99,102,241,0.16), rgba(99,102,241,0.03));
+    border:1px solid rgba(99,102,241,0.28); }
+  .ni[data-t="获客工作台"] i{ color:#a5b4fc; opacity:1; }
+  .ni[data-t="获客工作台"]:hover{ background:linear-gradient(90deg, rgba(99,102,241,0.24), rgba(99,102,241,0.06)); }
+  .ni.on[data-t="获客工作台"]{ background:var(--acbg); border-color:transparent; color:#c7d2fe; }
   .tag{ margin-left:auto; font-size:10px; font-weight:700; padding:2px 7px; border-radius:6px; white-space:nowrap; }
   .tag.live{ color:#6ee7b7; background:rgba(16,185,129,0.14); }
   .tag.dev{ color:#fcd34d; background:rgba(234,179,8,0.14); }
@@ -49,7 +65,10 @@
   .topbar .flag{ font-size:11px; color:var(--tx3); background:var(--card); border:1px solid var(--bd); padding:5px 11px; border-radius:20px; }
   .topbar .sp{ flex:1; }
   .topbar .btn{ font-size:12.5px; font-weight:600; color:var(--tx2); background:var(--card); border:1px solid var(--bd); padding:7px 13px; border-radius:9px; cursor:pointer; display:inline-flex; gap:6px; align-items:center; }
-  .topbar .btn.up{ color:#fff; background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; }
+  /* 顶栏常驻可见，它原本用的实心渐变会跟每一页的主操作抢焦点。降成描边：
+     升级套餐是营收入口，不是任务入口，不该盖过用户当前想做的事。 */
+  .topbar .btn.up{ color:#a5b4fc; background:rgba(99,102,241,0.10); border:1px solid rgba(99,102,241,0.38); }
+  .topbar .btn.up:hover{ color:#fff; background:rgba(99,102,241,0.22); border-color:rgba(99,102,241,0.6); }
   .wrap{ padding:26px 28px 60px; max-width:1180px; }
   .ph{ font-size:22px; font-weight:750; } .psub{ font-size:13px; color:var(--tx3); margin-top:5px; }
 
@@ -143,7 +162,8 @@
   .fld textarea{ font-family:inherit; font-size:13px; color:var(--tx); background:var(--bg); border:1px solid var(--bd); border-radius:9px; padding:10px 12px; outline:none; width:100%; resize:vertical; line-height:1.6; }
   .fld textarea:focus{ border-color:var(--ac); } .fld textarea::placeholder{ color:var(--tx3); }
   .fld-row{ display:flex; gap:12px; }
-  .sc-btn{ font-family:inherit; margin-top:2px; font-size:13px; font-weight:650; color:#fff; background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; border-radius:10px; padding:11px; cursor:pointer; }
+  /* 平色实心（非渐变）：仍是本页主操作，但让出「渐变」这一档给大盘的开始找客户 */
+  .sc-btn{ font-family:inherit; margin-top:2px; font-size:13px; font-weight:650; color:#fff; background:var(--ac); border:none; border-radius:10px; padding:11px; cursor:pointer; }
   .sc-btn.ghost{ background:var(--card2); color:var(--tx2); border:1px solid var(--bd); }
   .sc-btn:hover{ filter:brightness(1.08); }
   .send-note{ margin-top:16px; font-size:12.5px; color:var(--tx2); background:var(--card); border:1px solid var(--bd); border-radius:11px; padding:12px 16px; display:flex; gap:8px; align-items:flex-start; }
@@ -165,7 +185,7 @@
   .cs-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
   @media(max-width:900px){ .cs-grid{ grid-template-columns:1fr; } }
   .fld select{ font-family:inherit; font-size:13px; color:var(--tx); background:var(--bg); border:1px solid var(--bd); border-radius:9px; padding:9px 12px; outline:none; width:100%; }
-  .cs-search{ font-family:inherit; margin-top:16px; font-size:13.5px; font-weight:650; color:#fff; background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; border-radius:10px; padding:11px 22px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
+  .cs-search{ font-family:inherit; margin-top:16px; font-size:13.5px; font-weight:650; color:#fff; background:var(--ac); border:none; border-radius:10px; padding:11px 22px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
   .cs-search:hover{ filter:brightness(1.08); }
   .cs-add{ font-family:inherit; font-size:12px; font-weight:600; color:var(--ac2); background:var(--acbg); border:1px solid rgba(99,102,241,0.3); border-radius:7px; padding:5px 11px; cursor:pointer; white-space:nowrap; }
   .cs-add:hover{ color:#fff; background:rgba(99,102,241,0.28); }
@@ -185,15 +205,24 @@
   #view-frame{ height:calc(100vh - 62px); }
   #view-frame iframe{ width:100%; height:100%; border:0; display:block; background:var(--bg); }
 
-  /* ── 状态点：已上线=发光绿点(图标亮)，开发中=空心暗点(整行调暗) ── */
+  /* ── 状态标记：只标「开发中」，可用的不标 ── */
   .st{ margin-left:auto; width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-  .st.on{ background:#34d399; box-shadow:0 0 7px rgba(52,211,153,.85); }
-  .st.dev{ background:transparent; border:1.5px solid rgba(255,255,255,.26); box-shadow:none; }
-  .ni:has(.st.on) i{ color:var(--ac2); opacity:1; }
-  .ni:has(.st.on){ color:var(--tx); }
-  .ni:has(.st.dev){ opacity:.42; }
-  .ni:has(.st.dev):hover{ opacity:.8; }
-  .ni.on{ opacity:1 !important; }
+  /* 绿点原本表示「已上线」，但在「开发中」有了明确文字徽章之后它就没信息量了：
+     带绿点和不带绿点的项都能正常点，用户读不出差别，只剩视觉噪音。
+     用 display:none 隐藏而不是删元素 —— JS 里 el.querySelector('.st.on') 仍靠它
+     判断占位页该显示「已上线」还是「开发中」文案。 */
+  .st.on{ display:none; }
+  /* 开发中：原本是 opacity:.42 压整行 —— opacity 连图标一起压，实测对比度只有
+     2.17:1（低于 UI 组件 3:1 底线）。改成直接给颜色，0.46 alpha = 4.66:1 过 AA，
+     仍明显暗于可用项的 0.6（7.30:1），层级读得出来但不至于读不清。 */
+  .st.dev{ width:auto; height:auto; background:rgba(234,179,8,0.14); border:none; border-radius:6px;
+    box-shadow:none; font-size:11px; font-weight:700; line-height:1.5; padding:1px 7px; color:#fcd34d; }
+  .st.dev::after{ content:'开发中'; }
+  /* 原本这里靠 :has(.st.on) 把「带绿点的项」提亮并染成靛蓝 —— 但绿点只表示
+     「功能已上线」，跟能不能点无关，结果同样可点的项分成了两种亮度，看起来像
+     有些禁用了。删掉，可用项统一由 .ni 基础色决定。 */
+  .ni:has(.st.dev){ color:rgba(255,255,255,0.46); cursor:default; }
+  .ni:has(.st.dev):hover{ background:transparent; color:rgba(255,255,255,0.46); }
 
   /* ── 开头封面 ── */
   #cover{ position:fixed; inset:0; z-index:50; background:var(--bg);
