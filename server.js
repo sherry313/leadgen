@@ -4922,6 +4922,20 @@ app.post('/api/smtp-send-batch', requireAuth, async (req, res) => {
   let sent = 0, failed = 0;
   const errors = [];
 
+  // Keep the complete SMTP failure context in the server log without logging
+  // credentials or message bodies. Nodemailer exposes these fields as
+  // non-enumerable properties, so logging only err.message (or JSON.stringify)
+  // hides the information needed to diagnose authentication and relay errors.
+  const smtpErrorDetails = err => ({
+    name:         err?.name,
+    message:      err?.message,
+    code:         err?.code,
+    command:      err?.command,
+    responseCode: err?.responseCode,
+    response:     err?.response,
+    stack:        err?.stack,
+  });
+
   try {
     console.log(`[SmtpSendBatch] sending ${emails.length} from ${from}`);
     for (let i = 0; i < emails.length; i++) {
@@ -4955,12 +4969,12 @@ app.post('/api/smtp-send-batch', requireAuth, async (req, res) => {
       } catch (err) {
         failed++;
         errors.push({ index: i, recipient: to, error: err.message });
-        console.warn(`[SmtpSendBatch] ${to}: ${err.message}`);
+        console.error(`[SmtpSendBatch] sendMail failed for recipient=${to}`, smtpErrorDetails(err));
       }
     }
     if (!aborted) sse({ type: 'done', sent, failed, errors });
   } catch (err) {
-    console.error('[SmtpSendBatch] error:', err.message);
+    console.error('[SmtpSendBatch] batch failed', smtpErrorDetails(err));
     if (!aborted) sse({ type: 'error', error: err.message || '发送失败' });
   } finally {
     clearInterval(heartbeat);
