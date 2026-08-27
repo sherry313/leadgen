@@ -56,3 +56,6 @@ emails-dump.txt
 graphify-out/
 
 data/seo-sites.json
+
+# Internal handover doc — kept locally, not published
+PROJECT_HANDOVER.md
