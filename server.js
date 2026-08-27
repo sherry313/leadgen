@@ -1971,6 +1971,14 @@ app.post('/api/smtp/send-batch', requireAuth, async (req, res) => {
     );
     const sent   = results.filter(r => r.status === 'sent').length;
     const failed = results.filter(r => r.status === 'failed').length;
+    // 回写 email_sent_at：没有这一步，自建 SMTP 发出去的信不会计入「获客大盘」的
+    // 邮件发送 / 总客户数（Instantly 路径在 add-lead 里已经回写了）。
+    // 单独 try：数据库出问题不该让已经发出去的信显示成发送失败。
+    try {
+      for (const r of results) {
+        if (r.status === 'sent') await markLeadEmailedByEmail(r.email, req.userId, null);
+      }
+    } catch (e) { console.warn('[SmtpSendBatch] mark sent failed:', e.message); }
     sse({ type: 'done', sent, failed });
   } catch (err) {
     sse({ type: 'error', message: err.message });
@@ -4966,6 +4974,9 @@ app.post('/api/smtp-send-batch', requireAuth, async (req, res) => {
           html:    String(e.body || '').replace(/\n/g, '<br>'),
         });
         sent++;
+        // 同上：回写 email_sent_at。单独 try，数据库出问题不影响发送计数。
+        try { await markLeadEmailedByEmail(to, req.userId, null); }
+        catch (e) { console.warn('[SmtpSendBatch] mark sent failed:', e.message); }
       } catch (err) {
         failed++;
         errors.push({ index: i, recipient: to, error: err.message });
