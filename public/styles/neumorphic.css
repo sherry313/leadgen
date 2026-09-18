@@ -321,6 +321,15 @@ body.neu-theme {
   background: var(--neu-surface);
   box-shadow: var(--neu-shadow-raised);
 }
+.site-preferences.is-inline {
+  position: static;
+  z-index: auto;
+  flex: 0 0 auto;
+  margin-left: 0;
+  padding: 4px;
+  box-shadow: var(--neu-shadow-inset-small);
+}
+.site-language { display: flex; gap: 3px; }
 .site-preferences button {
   min-width: 44px !important;
   min-height: 44px !important;
@@ -336,6 +345,12 @@ body.neu-theme {
   box-shadow: var(--neu-shadow-inset-small) !important;
   font: 700 13px/1 system-ui, sans-serif;
   cursor: pointer;
+}
+.site-preferences .site-language button { min-width: 48px !important; }
+.site-preferences button.is-active {
+  background: var(--neu-accent) !important;
+  color: #fff !important;
+  box-shadow: var(--neu-shadow-accent-pressed) !important;
 }
 .site-preferences button:hover { color: var(--neu-accent) !important; transform: translateY(-1px); }
 .site-preferences button:active { transform: translateY(.5px); box-shadow: var(--neu-shadow-inset-deep) !important; }

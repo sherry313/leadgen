@@ -94,12 +94,28 @@
     if (!wrap) return;
     const lang = root.dataset.lang;
     const theme = root.dataset.theme;
-    const langBtn = wrap.querySelector('[data-pref-lang]');
+    const zhBtn = wrap.querySelector('[data-set-lang="zh"]');
+    const enBtn = wrap.querySelector('[data-set-lang="en"]');
     const themeBtn = wrap.querySelector('[data-pref-theme]');
-    langBtn.innerHTML = '<i class="ti ti-language" aria-hidden="true"></i><span>' + (lang === 'en' ? '中文' : 'EN') + '</span>';
-    langBtn.setAttribute('aria-label', lang === 'en' ? '切换到中文' : 'Switch to English');
+    zhBtn.classList.toggle('is-active', lang === 'zh');
+    enBtn.classList.toggle('is-active', lang === 'en');
+    zhBtn.setAttribute('aria-pressed', String(lang === 'zh'));
+    enBtn.setAttribute('aria-pressed', String(lang === 'en'));
     themeBtn.innerHTML = '<i class="ti ' + (theme === 'dark' ? 'ti-sun' : 'ti-moon') + '" aria-hidden="true"></i>';
     themeBtn.setAttribute('aria-label', theme === 'dark' ? (lang === 'en' ? 'Switch to light mode' : '切换到日间模式') : (lang === 'en' ? 'Switch to dark mode' : '切换到夜间模式'));
+  }
+
+  function placeControls(wrap) {
+    const cover = document.getElementById('cover');
+    const topbar = document.querySelector('.topbar');
+    const showCover = cover && !cover.classList.contains('gone');
+    if (topbar && !showCover) {
+      if (wrap.parentElement !== topbar) topbar.appendChild(wrap);
+      wrap.classList.add('is-inline');
+    } else {
+      if (wrap.parentElement !== document.body) document.body.appendChild(wrap);
+      wrap.classList.remove('is-inline');
+    }
   }
 
   function mountControls() {
@@ -107,10 +123,14 @@
     const wrap = document.createElement('div');
     wrap.id = 'sitePreferences';
     wrap.className = 'site-preferences';
-    wrap.innerHTML = '<button type="button" data-pref-lang></button><button type="button" data-pref-theme></button>';
+    wrap.setAttribute('aria-label', 'Language and appearance');
+    wrap.innerHTML = '<div class="site-language" role="group" aria-label="Language"><button type="button" data-set-lang="zh" aria-label="中文">中文</button><button type="button" data-set-lang="en" aria-label="English">EN</button></div><button type="button" data-pref-theme></button>';
     document.body.appendChild(wrap);
-    wrap.querySelector('[data-pref-lang]').addEventListener('click', () => setLanguage(root.dataset.lang === 'en' ? 'zh' : 'en'));
+    wrap.querySelectorAll('[data-set-lang]').forEach(button => button.addEventListener('click', () => setLanguage(button.dataset.setLang)));
     wrap.querySelector('[data-pref-theme]').addEventListener('click', () => setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'));
+    placeControls(wrap);
+    const cover = document.getElementById('cover');
+    if (cover) new MutationObserver(() => placeControls(wrap)).observe(cover, {attributes:true, attributeFilter:['class']});
     updateControls();
   }
 
