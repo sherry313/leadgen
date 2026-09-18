@@ -290,12 +290,23 @@
   .neu-theme .shell,.neu-theme .main,.neu-theme #view-frame iframe{background:#e0e5ec}
   .neu-theme .side{background:#e0e5ec;border-right:0;box-shadow:10px 0 24px rgba(163,177,198,.52);position:relative;z-index:7}
   .neu-theme .brand .lg,.neu-theme .userbox .av,.neu-theme .acc-hero .big{background:#6c63ff;box-shadow:var(--neu-shadow-raised);border-radius:16px}
-  .neu-theme .grp{color:#596473;border-color:rgba(108,99,255,.12)}
+  .neu-theme .grp{
+    display:flex;
+    align-items:center;
+    min-height:44px;
+    margin:6px 8px 0;
+    padding:0 16px;
+    color:#596473 !important;
+    border:0 !important;
+    border-radius:16px !important;
+    box-shadow:var(--neu-shadow-inset-small) !important;
+  }
+  .neu-theme .grp:first-of-type{margin:0 8px}
   .neu-theme .ni{min-height:44px;color:#596473;border-radius:16px;transition:transform var(--neu-transition),box-shadow var(--neu-transition),color var(--neu-transition)}
   .neu-theme .ni:hover{background:#e0e5ec;color:#3d4852;transform:translateY(-1px);box-shadow:var(--neu-shadow-raised)}
   .neu-theme .ni.on,.neu-theme .ni.on[data-t="获客工作台"]{background:rgba(108,99,255,.14) !important;color:#564de8 !important;border-color:transparent;box-shadow:var(--neu-shadow-inset-small)}
   .neu-theme .ni.on::before{background:#6c63ff}
-  .neu-theme .ni[data-t="获客工作台"]{background:#e0e5ec;color:#3d4852;border:0;box-shadow:var(--neu-shadow-raised)}
+  .neu-theme .ni[data-t="获客工作台"]{margin:1px 8px;background:transparent;color:#3d4852;border:0;box-shadow:none}
   .neu-theme .ni:has(.st.dev),.neu-theme .ni:has(.st.dev):hover{color:#6b7280;background:#e0e5ec}
   .neu-theme .userbox,.neu-theme .tag,.neu-theme .rtag,.neu-theme .sc-badge{background:#e0e5ec;border:0;box-shadow:var(--neu-shadow-inset-small);color:#596473}
   .neu-theme .topbar .flag{background:rgba(108,99,255,.14) !important;border:0;box-shadow:var(--neu-shadow-inset-small);color:#564de8 !important}
