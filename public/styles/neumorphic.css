@@ -326,9 +326,9 @@ body.neu-theme {
   min-width: 18px !important;
   min-height: 18px !important;
   padding: 0 !important;
-  border: 0 !important;
+  border: 2px solid var(--neu-accent) !important;
   border-radius: 4px !important;
-  background-color: var(--neu-accent) !important;
+  background-color: var(--neu-surface) !important;
   box-shadow: none !important;
   transform: none !important;
   accent-color: var(--neu-accent);
