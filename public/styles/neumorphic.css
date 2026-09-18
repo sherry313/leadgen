@@ -1,0 +1,639 @@
+:root {
+  --neu-bg: #e0e5ec;
+  --neu-surface: #e0e5ec;
+  --neu-text: #3d4852;
+  --neu-muted: #6b7280;
+  --neu-placeholder: #a0aec0;
+  --neu-accent: #6c63ff;
+  --neu-accent-strong: #564de8;
+  --neu-danger: #c2414b;
+  --neu-success: #287a59;
+  --neu-shadow-raised: 10px 10px 22px rgba(163, 177, 198, 0.62), -10px -10px 22px rgba(255, 255, 255, 0.78);
+  --neu-shadow-raised-hover: 14px 14px 28px rgba(163, 177, 198, 0.68), -14px -14px 28px rgba(255, 255, 255, 0.86);
+  --neu-shadow-inset: inset 6px 6px 12px rgba(163, 177, 198, 0.62), inset -6px -6px 12px rgba(255, 255, 255, 0.58);
+  --neu-shadow-inset-deep: inset 10px 10px 20px rgba(163, 177, 198, 0.7), inset -10px -10px 20px rgba(255, 255, 255, 0.6);
+  --neu-shadow-inset-small: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5);
+  --neu-shadow-accent-pressed: inset 4px 4px 9px rgba(57, 48, 190, 0.55), inset -4px -4px 9px rgba(255, 255, 255, 0.2);
+  --neu-radius-control: 16px;
+  --neu-radius-card: 32px;
+  --neu-transition: 300ms ease-out;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body.neu-theme {
+  background: var(--neu-bg) !important;
+  color: var(--neu-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Safe compatibility layer for the existing application pages.  These
+   selectors intentionally reuse their DOM hooks without renaming them. */
+.neu-theme {
+  --bg: var(--neu-bg) !important;
+  --panel: var(--neu-surface) !important;
+  --card: var(--neu-surface) !important;
+  --card2: var(--neu-surface) !important;
+  --bd: rgba(108, 99, 255, 0.16) !important;
+  --bd2: rgba(108, 99, 255, 0.28) !important;
+  --tx: var(--neu-text) !important;
+  --tx2: var(--neu-muted) !important;
+  --tx3: var(--neu-muted) !important;
+  --ac: var(--neu-accent) !important;
+  --ac2: var(--neu-accent-strong) !important;
+  --acbg: rgba(108, 99, 255, 0.12) !important;
+}
+
+.neu-theme :where(.main, .wrap, .layout, .body, .scroll) {
+  color: var(--neu-text);
+}
+
+.neu-theme :where(.panel, .box, .prod, .col, .banner, .gbox, .sbox, .rc, .lead,
+  .form-col, .paper-wrap, .modal-box, .acc, .pchoice, .acct-chip, .result-list) {
+  background: var(--neu-surface) !important;
+  border-color: transparent !important;
+  border-radius: var(--neu-radius-card) !important;
+  box-shadow: var(--neu-shadow-raised) !important;
+  color: var(--neu-text) !important;
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition) !important;
+}
+
+.neu-theme :where(.panel, .box, .prod, .col, .gbox, .sbox, .rc, .pchoice):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--neu-shadow-raised-hover) !important;
+}
+
+.neu-theme :where(button, .btn, .b, .mbtn, .add, .pb, .cat, .item, .tab, .s,
+  .chip, .cchip, .qchip, .kw, .pchoice, .help-fab, .modal-x, .del) {
+  border-color: transparent !important;
+  border-radius: var(--neu-radius-control) !important;
+  background-color: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-raised) !important;
+  color: var(--neu-text) !important;
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition), background-color var(--neu-transition) !important;
+}
+
+.neu-theme :where(button, .btn, .b, .mbtn, .add, .pb, .cat, .item, .tab, .s,
+  .chip, .cchip, .qchip, .kw, .pchoice, .help-fab, .modal-x, .del):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--neu-shadow-raised-hover) !important;
+}
+
+.neu-theme :where(button, .btn, .b, .mbtn, .add, .pb, .cat, .item, .tab, .s,
+  .chip, .cchip, .qchip, .kw, .pchoice, .help-fab, .modal-x, .del):active,
+.neu-theme :where(.on, .active, .selected) {
+  transform: translateY(0.5px);
+  box-shadow: var(--neu-shadow-inset-small) !important;
+}
+
+.neu-theme :where(.primary, button.primary, .btn.primary, .mbtn.primary) {
+  background: var(--neu-accent) !important;
+  color: #fff !important;
+}
+
+.neu-theme :where(.primary, button.primary, .btn.primary, .mbtn.primary):active {
+  box-shadow: var(--neu-shadow-accent-pressed) !important;
+}
+
+.neu-theme :where(input, select, textarea, .in, .sin, .field) {
+  border-color: transparent !important;
+  border-radius: var(--neu-radius-control) !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-inset) !important;
+  color: var(--neu-text) !important;
+  transition: box-shadow var(--neu-transition) !important;
+}
+
+.neu-theme :where(input, select, textarea, .in, .sin):focus {
+  box-shadow: var(--neu-shadow-inset-deep) !important;
+}
+
+.neu-theme :where(input, textarea)::placeholder { color: var(--neu-placeholder) !important; }
+.neu-theme :where(.sub, .meta, .hint, .muted, .msub, .page-sub, .lbl, .fl) { color: var(--neu-muted) !important; }
+.neu-theme :where(.ico, .ci, .av, .logo, .stepno) {
+  background: var(--neu-surface) !important;
+  border-color: transparent !important;
+  border-radius: var(--neu-radius-control) !important;
+  box-shadow: var(--neu-shadow-inset-deep) !important;
+  color: var(--neu-accent) !important;
+}
+.neu-theme :where(.top, .hd) {
+  background: rgba(224, 229, 236, 0.88) !important;
+  border-color: rgba(108, 99, 255, 0.14) !important;
+  color: var(--neu-text) !important;
+  backdrop-filter: blur(14px);
+}
+.neu-theme :where(.modal, .ov) { background: rgba(61, 72, 82, 0.28) !important; }
+
+.neu-theme,
+.neu-theme * {
+  box-sizing: border-box;
+}
+
+.neu-theme h1,
+.neu-theme h2,
+.neu-theme h3,
+.neu-theme h4 {
+  color: var(--neu-text);
+  text-wrap: balance;
+}
+
+.neu-theme p,
+.neu-theme .subtitle,
+.neu-theme .muted,
+.neu-theme .sub {
+  text-wrap: pretty;
+}
+
+.neu-theme .neu-card {
+  background: var(--neu-surface);
+  border: 0;
+  border-radius: var(--neu-radius-card);
+  box-shadow: var(--neu-shadow-raised);
+  color: var(--neu-text);
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition);
+}
+
+.neu-theme .neu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--neu-shadow-raised-hover);
+}
+
+.neu-theme .neu-well,
+.neu-theme .neu-icon-well {
+  background: var(--neu-surface);
+  border: 0;
+  box-shadow: var(--neu-shadow-inset-deep);
+}
+
+.neu-theme .neu-icon-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: var(--neu-radius-control);
+  color: var(--neu-accent);
+}
+
+.neu-theme .neu-button,
+.neu-theme button.neu-button,
+.neu-theme a.neu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.75rem 1.25rem;
+  border: 0;
+  border-radius: var(--neu-radius-control);
+  background: var(--neu-surface);
+  box-shadow: var(--neu-shadow-raised);
+  color: var(--neu-text);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition), color var(--neu-transition), background-color var(--neu-transition);
+}
+
+.neu-theme .neu-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--neu-shadow-raised-hover);
+}
+
+.neu-theme .neu-button:active,
+.neu-theme .neu-button[aria-pressed="true"],
+.neu-theme .neu-button.is-active {
+  transform: translateY(0.5px);
+  box-shadow: var(--neu-shadow-inset-small);
+}
+
+.neu-theme .neu-button--primary {
+  background: var(--neu-accent);
+  color: #fff;
+  box-shadow: 8px 8px 18px rgba(163, 177, 198, 0.72), -8px -8px 18px rgba(255, 255, 255, 0.78);
+}
+
+.neu-theme .neu-button--primary:hover {
+  background: var(--neu-accent-strong);
+}
+
+.neu-theme .neu-button--primary:active,
+.neu-theme .neu-button--primary[aria-pressed="true"] {
+  box-shadow: var(--neu-shadow-accent-pressed);
+}
+
+.neu-theme .neu-input,
+.neu-theme input.neu-input,
+.neu-theme select.neu-input,
+.neu-theme textarea.neu-input {
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--neu-radius-control);
+  background: var(--neu-surface);
+  box-shadow: var(--neu-shadow-inset);
+  color: var(--neu-text);
+  font: inherit;
+  font-size: 1rem;
+  transition: box-shadow var(--neu-transition), outline-color var(--neu-transition);
+}
+
+.neu-theme .neu-input::placeholder {
+  color: var(--neu-placeholder);
+}
+
+.neu-theme .neu-input:focus {
+  box-shadow: var(--neu-shadow-inset-deep);
+}
+
+.neu-theme :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--neu-accent) !important;
+  outline-offset: 2px !important;
+}
+
+.neu-theme .neu-pill,
+.neu-theme .neu-track {
+  border: 0;
+  border-radius: 999px;
+  background: var(--neu-surface);
+  box-shadow: var(--neu-shadow-inset-small);
+  color: var(--neu-text);
+}
+
+.neu-theme .neu-container {
+  width: min(100% - 2rem, 80rem);
+  margin-inline: auto;
+}
+
+.neu-theme .neu-decoration {
+  border-radius: 50%;
+  background: var(--neu-surface);
+  box-shadow: var(--neu-shadow-raised);
+  animation: neu-float 3s ease-in-out infinite;
+  transition: transform 500ms ease-out, box-shadow 500ms ease-out;
+}
+
+.neu-theme .neu-decoration:hover {
+  transform: scale(1.05) rotate(180deg);
+}
+
+@keyframes neu-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@media (max-width: 767px) {
+  .neu-theme .neu-card {
+    border-radius: 24px;
+  }
+
+  .neu-theme :where(button, [role="button"], a.neu-button) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .neu-theme *,
+  .neu-theme *::before,
+  .neu-theme *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .neu-theme .neu-card,
+  .neu-theme .neu-button,
+  .neu-theme .neu-input,
+  .neu-theme .neu-well,
+  .neu-theme .neu-icon-well {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* Safe compatibility layer for existing app pages. */
+body.neu-theme {
+  --bg: var(--neu-bg); --panel: var(--neu-surface); --card: var(--neu-surface); --card2: var(--neu-surface);
+  --border: rgba(107, 114, 128, 0.22); --bd: rgba(107, 114, 128, 0.2); --bd2: rgba(107, 114, 128, 0.3);
+  --text: var(--neu-text); --tx: var(--neu-text); --tx2: var(--neu-muted); --tx3: var(--neu-muted);
+  --sub: var(--neu-muted); --sub2: var(--neu-muted);
+  --accent: var(--neu-accent); --ac: var(--neu-accent); --ac2: var(--neu-accent); --acbg: rgba(108, 99, 255, 0.12);
+  min-height: 100vh;
+}
+
+.neu-theme :where(.hd, .top, nav) {
+  background: rgba(224, 229, 236, 0.88) !important;
+  border-color: rgba(107, 114, 128, 0.2) !important;
+  color: var(--neu-text) !important;
+  backdrop-filter: blur(18px);
+}
+
+.neu-theme :where(.wrap, .main, .top-in) { width: min(100% - 2rem, 80rem); margin-inline: auto; }
+
+.neu-theme :where(.prod, .banner, .item, .task, .panel, .card, .tpl, .box, .acct-chip, .sbox, .tab, .derived, .qty, .lead, .handoff, .nocov, .scan, .score, .chk, .win, .plan, .plan-t, .pub, .genc, .trendbox, .result-list, .modal, .gbox, .locked) {
+  background: var(--neu-surface) !important;
+  border-color: transparent !important;
+  border-radius: var(--neu-radius-card) !important;
+  box-shadow: var(--neu-shadow-raised);
+  color: var(--neu-text);
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition), background-color var(--neu-transition);
+}
+
+@media (hover: hover) {
+  .neu-theme :where(.prod, .card, .tpl, .scan, .score, .lead, .acct-chip):hover { transform: translateY(-2px); box-shadow: var(--neu-shadow-raised-hover); }
+}
+
+.neu-theme :where(.ico, .icon, .ci, .pn, .logo, .av, .ring) {
+  background: var(--neu-surface) !important;
+  border-color: transparent !important;
+  box-shadow: var(--neu-shadow-inset-deep);
+  color: var(--neu-accent) !important;
+}
+
+.neu-theme :where(button, .btn, .b, .add, .save, .pb, .mbtn, .help-btn, .help-fab, .cpb, .nav-back) {
+  min-height: 44px;
+  border: 0 !important;
+  border-radius: var(--neu-radius-control) !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-raised);
+  color: var(--neu-text) !important;
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition), background-color var(--neu-transition), color var(--neu-transition) !important;
+}
+
+@media (hover: hover) {
+  .neu-theme :where(button, .btn, .b, .add, .save, .pb, .mbtn, .help-btn, .help-fab, .cpb, .nav-back):hover { transform: translateY(-1px); box-shadow: var(--neu-shadow-raised-hover); }
+}
+
+.neu-theme :where(button, .btn, .b, .add, .save, .pb, .mbtn, .help-btn, .help-fab, .cpb, .nav-back):active { transform: translateY(0.5px); box-shadow: var(--neu-shadow-inset-small); }
+
+.neu-theme :where(.primary, .use, .save, button.add:first-child) {
+  background: var(--neu-accent) !important;
+  color: #fff !important;
+  box-shadow: 8px 8px 18px rgba(163, 177, 198, 0.72), -8px -8px 18px rgba(255, 255, 255, 0.78);
+}
+
+.neu-theme :where(.primary, .use, .save, button.add:first-child):active { box-shadow: var(--neu-shadow-accent-pressed); }
+
+.neu-theme :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  min-height: 44px;
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius-control) !important;
+  box-shadow: var(--neu-shadow-inset);
+  color: var(--neu-text) !important;
+  transition: box-shadow var(--neu-transition), outline-color var(--neu-transition);
+}
+
+.neu-theme :where(input, textarea)::placeholder { color: var(--neu-placeholder) !important; opacity: 1; }
+.neu-theme :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus { box-shadow: var(--neu-shadow-inset-deep) !important; }
+
+.neu-theme :where(.pill, .badge, .chip, .qchip, .cchip, .pchoice, .kw, .demo-pill, .ptag, .res-chip, .stepno, .seg .s) {
+  border-color: transparent !important;
+  border-radius: 999px !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-inset-small);
+}
+
+.neu-theme :where(.on, .active, .selected, [aria-selected="true"]) { color: var(--neu-accent) !important; }
+.neu-theme :where(.tab.on, .qchip.on, .cchip.on, .pchoice.on, .kw.on, .acct-chip.on, .prod.active) { box-shadow: var(--neu-shadow-inset-deep) !important; }
+.neu-theme :where(.ov, .gmodal) { background: rgba(61, 72, 82, 0.28) !important; }
+
+.neu-theme :where(.toast) {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius-control) !important;
+  box-shadow: var(--neu-shadow-raised-hover);
+  color: var(--neu-text) !important;
+}
+
+.neu-theme :where(.tx, .nm, .tt, .ch, .pt, .rt, .brand, .page-title) { color: var(--neu-text); }
+.neu-theme :where(.sub, .page-sub, .hint, .meta, .st, .cd, .msub, .foot, .char-n, .col-h, label) { color: var(--neu-muted); }
+.neu-theme button:disabled { box-shadow: var(--neu-shadow-inset-small); cursor: not-allowed; opacity: 0.58; transform: none; }
+
+@media (max-width: 767px) {
+  .neu-theme :where(.wrap, .main, .top-in) { width: min(100% - 1.25rem, 80rem); }
+  .neu-theme :where(.prod, .banner, .item, .task, .panel, .card, .tpl, .box, .sbox, .scan, .modal, .gbox) { border-radius: 24px !important; }
+  .neu-theme :where(button, [role="button"], .btn, .b, .add, .save, .pb, .mbtn, .help-btn, .help-fab, .cpb, .nav-back, .qchip, .cchip, .pchoice, .kw) { min-width: 44px; min-height: 44px; }
+}
+
+/* Safe compatibility layer for the legacy pages opted into this theme. */
+.neu-theme :where(nav, header, footer, .header, .nav, .navbar, .acct-bar) {
+  background: rgba(224, 229, 236, 0.9) !important;
+  color: var(--neu-text) !important;
+  border-color: rgba(108, 99, 255, 0.14) !important;
+  backdrop-filter: blur(16px);
+}
+.neu-theme :where(.panel, .gate-card, .card, .h-card, .stat-tile, .note-card, .tool-card, .section, .steps-card, .result-card, .preview-card, .word-list-card, .seq-panel, .pw-panel, .p-card, .prod-detail, .lead-panel, .grp, .drop, .file-info, .ready) {
+  background: var(--neu-surface) !important; color: var(--neu-text) !important; border-color: transparent !important;
+  border-radius: var(--neu-radius-card) !important; box-shadow: var(--neu-shadow-raised) !important;
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition) !important;
+}
+.neu-theme :where(.h-card, .note-card, .tool-card, .card, .p-card):hover { transform: translateY(-2px); box-shadow: var(--neu-shadow-raised-hover) !important; }
+.neu-theme :where(button, .btn, .btn-primary, .btn-new, .btn-s, .lp-btn, .h-btn, .pg-btn, .auth-btn, .seq-save-btn, .copy-btn, .gen-btn, .run-btn, .gate-btn, .nav-cta, .nav-back, .header-link, .go, .filter-clear, .expand-btn) {
+  min-height: 44px; border-color: transparent !important; border-radius: var(--neu-radius-control) !important;
+  background: var(--neu-surface) !important; color: var(--neu-text) !important; box-shadow: var(--neu-shadow-raised) !important;
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition), background-color var(--neu-transition) !important;
+}
+.neu-theme :where(.btn-primary, .btn-new, .h-btn.primary, .auth-btn, .seq-save-btn, .gen-btn, .run-btn, .gate-btn, .nav-cta, .go) { background: var(--neu-accent) !important; color: #fff !important; }
+.neu-theme :where(button, .btn, .btn-primary, .btn-new, .btn-s, .lp-btn, .h-btn, .pg-btn, .auth-btn, .seq-save-btn, .copy-btn, .gen-btn, .run-btn, .gate-btn, .nav-cta, .nav-back, .header-link, .go, .filter-clear, .expand-btn):hover { transform: translateY(-1px); box-shadow: var(--neu-shadow-raised-hover) !important; }
+.neu-theme :where(button, .btn, .btn-primary, .btn-new, .btn-s, .lp-btn, .h-btn, .pg-btn, .auth-btn, .seq-save-btn, .copy-btn, .gen-btn, .run-btn, .gate-btn, .nav-cta, .nav-back, .header-link, .go, .filter-clear, .expand-btn):active { transform: translateY(0.5px); box-shadow: var(--neu-shadow-inset-small) !important; }
+.neu-theme :where(input, select, textarea, .search-box, .lp-search, .gate-input, .price-input, .map-select, .input, .textarea, .val) {
+  min-height: 44px; background: var(--neu-surface) !important; color: var(--neu-text) !important; border-color: transparent !important;
+  border-radius: var(--neu-radius-control) !important; box-shadow: var(--neu-shadow-inset) !important;
+}
+.neu-theme :where(input, textarea)::placeholder { color: var(--neu-placeholder) !important; }
+.neu-theme :where(input, select, textarea):focus { box-shadow: var(--neu-shadow-inset-deep) !important; }
+.neu-theme :where(.tool-icon, .h-icon, .drop-icon, .icon, .avatar, .company-avatar, .step-num, .ci, .nav-icon) {
+  background: var(--neu-surface) !important; color: var(--neu-accent) !important; border-color: transparent !important;
+  border-radius: var(--neu-radius-control) !important; box-shadow: var(--neu-shadow-inset-deep) !important;
+}
+.neu-theme :where(.filter-select, .email-tab, .field-tag, .intent-badge, .cost-badge, .sent-chip, .note-tag, .result-badge, .card-opt, .nav-user-btn, .nav-email-btn) {
+  border-color: transparent !important; background: var(--neu-surface) !important; color: var(--neu-text) !important;
+  border-radius: var(--neu-radius-control) !important; box-shadow: var(--neu-shadow-inset-small) !important;
+}
+.neu-theme :where(.muted, .sub, .desc, .help, .header-sub, .panel-sub, .footer-sub, .page-sub, .note-desc, .meta, .label, .drop-sub, .card-opt-sub) { color: var(--neu-muted) !important; }
+.neu-theme :where(.nav-links, .nav-dropdown-menu, .menu-pop, .sidebar, .table-header, .lead-row, .result-row, .grp-head, .prod-head, .lp-head, .email-tabs) { background-color: var(--neu-surface) !important; color: var(--neu-text) !important; border-color: rgba(108, 99, 255, 0.12) !important; }
+@media (max-width: 767px) {
+  .neu-theme :where(.hamburger, .more, .copy-btn, .expand-btn, .nav-user-btn, .nav-email-btn) { min-width: 44px !important; min-height: 44px !important; }
+}
+
+/* Legacy public-site compatibility layer. Kept namespaced to the opted-in pages. */
+.neu-theme {
+  --bg: var(--neu-bg);
+  --bg-dark: var(--neu-bg);
+  --bg-mid: var(--neu-bg);
+  --text-white: var(--neu-text);
+  --text-gray: var(--neu-muted);
+  --text-muted: var(--neu-muted);
+  --blue-primary: var(--neu-accent);
+  --blue-dark: var(--neu-accent-strong);
+  --indigo: var(--neu-accent);
+  --indigo-bright: var(--neu-accent);
+  --border-subtle: rgba(108, 99, 255, 0.12);
+  background-image: none !important;
+}
+
+.neu-theme :where(nav, footer, section, .section, .about-hero, .values-section,
+  .contact-section, .mission-section, .faq-section, .pr-section, .login-page,
+  .cta-wrap, .four-step-section, .mx-section) {
+  background-color: var(--neu-bg) !important;
+  background-image: none !important;
+  color: var(--neu-text);
+}
+
+.neu-theme :where(nav, .nav) {
+  background: rgba(224, 229, 236, 0.88) !important;
+  border-bottom: 0 !important;
+  box-shadow: 0 8px 22px rgba(163, 177, 198, 0.35);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.neu-theme :where(.nav-links a, .nav-link, footer a, .footer a) { color: var(--neu-muted) !important; }
+.neu-theme :where(.nav-links a, .nav-link):hover { color: var(--neu-accent) !important; }
+.neu-theme :where(.nav-logo, .footer-logo, .card-logo-text) {
+  color: var(--neu-text) !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.neu-theme :where(.hero-title, .about-title, .section-title, .pr-title, .faq-title,
+  .cta-title, h1, h2, h3) {
+  color: var(--neu-text) !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.neu-theme :where(.hero-sub, .section-sub, .about-sub, .footer-copy, .footer-sub,
+  .card-logo-sub, .faq-a-inner, .value-desc, .contact-row-text, p) {
+  color: var(--neu-muted);
+}
+
+.neu-theme :where(.service-card, .tool-card, .value-card, .contact-card,
+  .mission-visual, .mv-item, .strip-stat, .login-card, .pr-card, .faq-item,
+  .mx-card, .fs-card, .hero-mockup, .cta-card) {
+  background: var(--neu-surface) !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius-card) !important;
+  box-shadow: var(--neu-shadow-raised) !important;
+  color: var(--neu-text) !important;
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition), opacity 500ms ease-out !important;
+}
+
+.neu-theme :where(.service-card, .tool-card, .value-card, .contact-card,
+  .pr-card, .mx-card, .fs-card, .faq-item):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--neu-shadow-raised-hover) !important;
+}
+
+.neu-theme :where(.btn-primary, .btn-nav, .btn-login, .pr-cta, .contact-cta) {
+  min-height: 44px;
+  border: 0 !important;
+  border-radius: var(--neu-radius-control) !important;
+  background: var(--neu-accent) !important;
+  background-image: none !important;
+  box-shadow: 8px 8px 18px rgba(163, 177, 198, 0.72), -8px -8px 18px rgba(255, 255, 255, 0.78) !important;
+  color: #fff !important;
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition), background-color var(--neu-transition) !important;
+}
+
+.neu-theme :where(.btn-primary, .btn-nav, .btn-login, .pr-cta, .contact-cta):hover {
+  background: var(--neu-accent-strong) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--neu-shadow-raised-hover) !important;
+}
+
+.neu-theme :where(.btn-primary, .btn-nav, .btn-login, .pr-cta, .contact-cta):active {
+  transform: translateY(0.5px);
+  box-shadow: var(--neu-shadow-accent-pressed) !important;
+}
+
+.neu-theme :where(.btn-outline, .btn-ghost, .auth-tab, .pr-toggle button, .hamburger) {
+  min-height: 44px;
+  border: 0 !important;
+  border-radius: var(--neu-radius-control) !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-raised) !important;
+  color: var(--neu-text) !important;
+  transition: transform var(--neu-transition), box-shadow var(--neu-transition) !important;
+}
+
+.neu-theme :where(.btn-outline, .btn-ghost, .auth-tab, .pr-toggle button, .hamburger):active,
+.neu-theme :where(.auth-tab.active, .pr-toggle button.active) {
+  transform: translateY(0.5px);
+  box-shadow: var(--neu-shadow-inset-small) !important;
+  color: var(--neu-accent) !important;
+}
+
+.neu-theme :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  min-height: 44px;
+  border: 0 !important;
+  border-radius: var(--neu-radius-control) !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-inset) !important;
+  color: var(--neu-text) !important;
+}
+
+.neu-theme :where(input, select, textarea):focus {
+  box-shadow: var(--neu-shadow-inset-deep) !important;
+}
+
+.neu-theme :where(input, textarea)::placeholder { color: var(--neu-placeholder) !important; }
+.neu-theme :where(.hero-badge, .about-badge, .pr-badge, .pr-discount, .pill, .tag) {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  box-shadow: var(--neu-shadow-inset-small) !important;
+  color: var(--neu-accent) !important;
+}
+
+.neu-theme :where(.mv-icon, .contact-row-icon, .service-icon, .tool-icon, .fs-icon, .mx-icon) {
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius-control) !important;
+  box-shadow: var(--neu-shadow-inset-deep) !important;
+  color: var(--neu-accent) !important;
+}
+
+.neu-theme .hamburger {
+  width: 48px;
+  min-width: 48px;
+  padding: 12px !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.neu-theme .hamburger span { background: var(--neu-text) !important; }
+.neu-theme .legal-shell {
+  width: min(calc(100% - 2rem), 52rem);
+  margin: 5rem auto;
+  padding: clamp(2rem, 6vw, 4rem);
+  border-radius: var(--neu-radius-card);
+  background: var(--neu-surface);
+  box-shadow: var(--neu-shadow-raised);
+}
+.neu-theme .legal-shell :where(.highlight, .danger) {
+  border: 0 !important;
+  border-radius: var(--neu-radius-control) !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-inset-small);
+}
+
+@media (max-width: 767px) {
+  .neu-theme .nav-links.open {
+    background: rgba(224, 229, 236, 0.97) !important;
+    border: 0 !important;
+    box-shadow: var(--neu-shadow-raised) !important;
+  }
+  .neu-theme :where(.service-card, .tool-card, .value-card, .contact-card,
+    .mission-visual, .login-card, .pr-card, .mx-card, .fs-card) {
+    padding: 2rem !important;
+  }
+}

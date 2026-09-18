@@ -143,6 +143,8 @@
   .loading{ text-align:center; padding:40px; color:var(--tx3); }
   .foot{ text-align:center; color:var(--tx3); font-size:12px; padding:30px 0 0; }
 </style>
+<link rel="stylesheet" href="/styles/neumorphic.css">
+<body class="neu-theme">
 
 <div class="wrap">
   <div class="sbox" style="margin-top:22px">
@@ -413,3 +415,4 @@ async function toPipeline(n){
 document.addEventListener('keydown',e=>{ if(e.key!=='Enter')return; const a=document.activeElement; if(a&&a.id==='pq')productSearch(); else if(a&&a.id==='rq')doQuery({supplier:$('rq').value.trim()},'买这家货的买家'); });
 boot();
 </script>
+</body>

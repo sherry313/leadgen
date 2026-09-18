@@ -142,6 +142,8 @@
     @page{ size:A4 landscape; margin:8mm; }
   }
 </style>
+<link rel="stylesheet" href="/styles/neumorphic.css">
+<body class="neu-theme">
 
 <div class="top"><div class="top-in">
   <div class="brand"><span class="logo"><i class="ti ti-file-invoice"></i></span> 智拓客 · 报价 / 形式发票 <span style="font-size:11px;font-weight:500;color:var(--tx3)">通用版</span></div>
@@ -765,3 +767,4 @@ if($('quoteNo') && !$('quoteNo').value) $('quoteNo').value=genQuoteNo();
 if($('qDate') && !$('qDate').value) $('qDate').value=today();
 refreshCoProfiles(); setupDnD(); itemsUI(); render();
 </script>
+</body>

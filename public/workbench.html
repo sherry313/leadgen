@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>获客工作台 - 智拓客</title>
 <link rel="stylesheet" href="/vendor/tabler/tabler-icons.min.css">
+<link rel="stylesheet" href="/styles/neumorphic.css">
 <style>
   :root{ --bg:#030303; --bd:rgba(255,255,255,0.08); --tx:#e5e7eb; --tx2:rgba(255,255,255,0.55);
     --tx3:rgba(255,255,255,0.5); --ac:#6366f1; --ac2:#818cf8; --acbg:rgba(99,102,241,0.14); }
@@ -37,8 +38,32 @@
   .pane iframe{ width:100%; height:100%; border:0; display:block; background:var(--bg); }
   .placeholder{ display:flex; align-items:center; justify-content:center; height:100%; color:var(--tx3); font-size:.85rem; }
 </style>
+<style>
+  body.neu-theme{
+    --bg:#e0e5ec;--bd:rgba(108,99,255,.16);--tx:#3d4852;--tx2:#596473;
+    --tx3:#6b7280;--ac:#6c63ff;--ac2:#6c63ff;--acbg:rgba(108,99,255,.12);
+    background:#e0e5ec !important;color:#3d4852;
+  }
+  .neu-theme .hd{padding:24px 28px 10px;background:#e0e5ec}
+  .neu-theme .hd h1 .ti{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:16px;background:#e0e5ec;color:#6c63ff;box-shadow:var(--neu-shadow-inset-deep)}
+  .neu-theme .tabs{gap:10px;padding:16px 28px;border:0;background:#e0e5ec;box-shadow:0 10px 22px rgba(163,177,198,.3)}
+  .neu-theme .tab{top:0;min-height:44px;padding:11px 18px;border:0;border-radius:16px;background:#e0e5ec;color:#596473;box-shadow:var(--neu-shadow-raised);transition:transform var(--neu-transition),box-shadow var(--neu-transition),color var(--neu-transition)}
+  .neu-theme .tab:hover{color:#3d4852;background:#e0e5ec;transform:translateY(-1px);box-shadow:var(--neu-shadow-raised-hover)}
+  .neu-theme .tab:active{transform:translateY(.5px);box-shadow:var(--neu-shadow-inset-small)}
+  .neu-theme .tab.on{color:#6c63ff;background:#e0e5ec;box-shadow:var(--neu-shadow-inset-small)}
+  .neu-theme .tab.on::after{display:none}
+  .neu-theme .tab .num,.neu-theme .tab .tag{border:0;background:#e0e5ec;color:#6c63ff;box-shadow:var(--neu-shadow-inset-small);border-radius:999px}
+  .neu-theme .stage,.neu-theme .pane iframe{background:#e0e5ec}
+  @media(max-width:767px){
+    .neu-theme .hd{padding:18px 16px 8px}
+    .neu-theme .tabs{padding:12px 16px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+    .neu-theme .tabs::-webkit-scrollbar{display:none}
+    .neu-theme .tab{flex:0 0 auto;min-height:44px}
+    .neu-theme .hd .flow{line-height:1.65}
+  }
+</style>
 </head>
-<body>
+<body class="neu-theme">
   <div class="hd">
     <h1><i class="ti ti-layout-grid"></i> 获客工作台</h1>
     <div class="flow">一条线跑到底：<b>产品</b><i class="ti ti-arrow-right"></i><b>线索</b><i class="ti ti-arrow-right"></i><b>客户</b>；<b>模板</b>和<b>邮件发送</b>随时可提前设好、也可到那步再弄。</div>

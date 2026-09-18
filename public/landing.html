@@ -583,8 +583,9 @@
     "inLanguage": "zh-CN"
   }
   </script>
+  <link rel="stylesheet" href="/styles/neumorphic.css">
 </head>
-<body>
+<body class="neu-theme">
 
 <!-- NAV -->
 <nav id="navbar">
@@ -597,9 +598,9 @@
     <li><a href="/tools/">免费工具</a></li>
     <li><a href="login.html" class="btn-nav">申请试用</a></li>
   </ul>
-  <div class="hamburger" id="hamburger" aria-label="菜单">
+  <button type="button" class="hamburger" id="hamburger" aria-label="菜单" aria-controls="navLinks" aria-expanded="false">
     <span></span><span></span><span></span>
-  </div>
+  </button>
 </nav>
 
 <!-- HERO -->
@@ -1078,8 +1079,12 @@ const hamburger = document.getElementById('hamburger');
 const navLinks = document.getElementById('navLinks');
 hamburger.addEventListener('click', () => {
   navLinks.classList.toggle('open');
+  hamburger.setAttribute('aria-expanded', String(navLinks.classList.contains('open')));
 });
-navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+  navLinks.classList.remove('open');
+  hamburger.setAttribute('aria-expanded', 'false');
+}));
 
 /* ── INTERSECTION OBSERVER ── */
 const io = new IntersectionObserver((entries) => {

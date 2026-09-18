@@ -10,6 +10,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🏗️</text></svg>">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="/vendor/tabler/tabler-icons.min.css">
+  <link rel="stylesheet" href="/styles/neumorphic.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2585,8 +2586,113 @@
     .auto-submit-btn { width:100%; padding:13px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; font-family:inherit; pointer-events:auto; position:relative; z-index:10; transition:background 0.15s; }
     .auto-submit-btn:hover { background:#4f52d4; }
   </style>
+  <style id="neumorphic-app-overrides">
+    body.neu-theme {
+      --blue: #6c63ff;
+      --blue-dark: #564de8;
+      --blue-light: #817aff;
+      --blue-bg: rgba(108, 99, 255, 0.12);
+      --bg: #e0e5ec;
+      --card: #e0e5ec;
+      --text: #3d4852;
+      --sub: #6b7280;
+      --border: rgba(107, 114, 128, 0.18);
+      background: #e0e5ec !important;
+      color: #3d4852 !important;
+    }
+    .neu-theme nav,
+    .neu-theme .navbar {
+      background: rgba(224, 229, 236, 0.88) !important;
+      border-color: rgba(107, 114, 128, 0.16) !important;
+      box-shadow: 0 8px 24px rgba(163,177,198,.38), 0 -8px 24px rgba(255,255,255,.55) !important;
+      backdrop-filter: blur(18px);
+    }
+    .neu-theme :where(.container, .wizard-panel, .step-section, .section-card, .result-card, .result-panel, .drawer, .modal-content, .panel, .settings-card, .history-card, .email-preview, .app-mode-card, .tcard, .fwcard, .bulk-fwcard, .hub-panel, .account-item, .stat-card, .lead-card) {
+      background: #e0e5ec !important;
+      border-color: transparent !important;
+      border-radius: 32px !important;
+      box-shadow: var(--neu-shadow-raised) !important;
+      color: #3d4852 !important;
+    }
+    .neu-theme :where(.select-card, .country-card, .type-card, .mode-card, .src-btn, .dseg-btn, .tcard, .fwcard, .bulk-fwcard, .account-item, .keyword-tag, .kw-tag, .icpb-pill, .fw-pill, .pill-country) {
+      background: #e0e5ec !important;
+      border-color: transparent !important;
+      border-radius: 16px !important;
+      box-shadow: var(--neu-shadow-raised) !important;
+      color: #3d4852 !important;
+      transition: transform 300ms ease-out, box-shadow 300ms ease-out !important;
+    }
+    .neu-theme :where(.select-card, .country-card, .type-card, .mode-card, .src-btn, .dseg-btn, .tcard, .fwcard, .bulk-fwcard, .account-item, .keyword-tag, .kw-tag, .icpb-pill, .fw-pill, .pill-country):hover {
+      transform: translateY(-1px);
+      box-shadow: var(--neu-shadow-raised-hover) !important;
+    }
+    .neu-theme :where(.selected, .active, .on)[class] {
+      border-color: transparent !important;
+    }
+    .neu-theme :where(.select-card.selected, .country-card.selected, .type-card.selected, .mode-card.selected, .src-btn.selected, .dseg-btn.selected, .tcard.selected, .fwcard.selected, .bulk-fwcard.selected, .account-item.selected, .keyword-tag.selected, .kw-tag.selected, .icpb-pill.on, .fw-pill.on, .pill-country.on) {
+      background: #e0e5ec !important;
+      color: #564de8 !important;
+      box-shadow: var(--neu-shadow-inset-small) !important;
+      transform: translateY(.5px);
+    }
+    .neu-theme :where(input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="url"], input[type="search"], textarea, select, .cfw-input, .cfw-textarea, .bem-select, .hub-select) {
+      min-height: 44px;
+      background: #e0e5ec !important;
+      border: 0 !important;
+      border-radius: 16px !important;
+      box-shadow: var(--neu-shadow-inset) !important;
+      color: #3d4852 !important;
+      font-size: 1rem;
+    }
+    .neu-theme :where(input, textarea)::placeholder { color: #a0aec0 !important; }
+    .neu-theme :where(input, textarea, select):focus {
+      box-shadow: var(--neu-shadow-inset-deep) !important;
+    }
+    .neu-theme :where(.btn-nav, .btn-hub-trigger, .btn-primary, .btn-ghost, .btn-start, .btn-dl, .btn-sm, .btn-load-history, .btn-send-instantly-drawer, .btn-copy-drawer, .btn-copy-all, .btn-send-email, .btn-view-emails, .btn-instantly, button) {
+      min-height: 44px;
+      border: 0 !important;
+      border-radius: 16px !important;
+      background: #e0e5ec;
+      box-shadow: var(--neu-shadow-raised);
+      color: #3d4852;
+      transition: transform 300ms ease-out, box-shadow 300ms ease-out, background-color 300ms ease-out !important;
+    }
+    .neu-theme :where(.btn-primary, .btn-start, .btn-dl.sheet, .btn-send-email) {
+      background: #6c63ff !important;
+      color: #fff !important;
+    }
+    .neu-theme :where(.btn-nav, .btn-hub-trigger, .btn-primary, .btn-ghost, .btn-start, .btn-dl, .btn-sm, .btn-load-history, .btn-send-instantly-drawer, .btn-copy-drawer, .btn-copy-all, .btn-send-email, .btn-view-emails, .btn-instantly, button):hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: var(--neu-shadow-raised-hover) !important;
+    }
+    .neu-theme :where(.btn-nav, .btn-hub-trigger, .btn-primary, .btn-ghost, .btn-start, .btn-dl, .btn-sm, .btn-load-history, .btn-send-instantly-drawer, .btn-copy-drawer, .btn-copy-all, .btn-send-email, .btn-view-emails, .btn-instantly, button):active:not(:disabled) {
+      transform: translateY(.5px);
+      box-shadow: var(--neu-shadow-inset-small) !important;
+    }
+    .neu-theme :where(.card-icon, .type-icon-wrap, .step-icon, .feature-icon, .icon-wrap) {
+      background: #e0e5ec !important;
+      border-radius: 16px !important;
+      box-shadow: var(--neu-shadow-inset-deep) !important;
+      color: #6c63ff !important;
+    }
+    .neu-theme :where(.text-muted, .muted, .sub, .hint, .help-text, small) { color: #6b7280 !important; }
+    .neu-theme .nav-mini-brand {
+      color: #3d4852 !important;
+      -webkit-text-fill-color: currentColor !important;
+      text-shadow: none !important;
+    }
+    .neu-theme .nav-mini-brand i { color: #6c63ff; }
+    .neu-theme :where(.drawer, .modal, .overlay) { color: #3d4852; }
+    .neu-theme option { background: #e0e5ec !important; color: #3d4852 !important; }
+    @media (max-width: 767px) {
+      .neu-theme :where(.container, .wizard-panel, .step-section, .section-card, .result-card, .panel) {
+        border-radius: 24px !important;
+      }
+      .neu-theme :where(.hamburger, #hamburger, button, [role="button"]) { min-width: 44px; min-height: 44px; }
+    }
+  </style>
 </head>
-<body>
+<body class="neu-theme">
 <script>
   // Login guard: /app and /lens require a logged-in user. No stored token → bounce
   // to the login page (remembering where they were headed). login.html does the
@@ -2606,7 +2712,7 @@
 </script>
 
 <nav id="navbar" class="nav-mini">
-  <a href="index.html" class="nav-mini-brand">⚡ 智拓客</a>
+  <a href="index.html" class="nav-mini-brand"><i class="ti ti-layout-grid" aria-hidden="true"></i> 智拓客</a>
   <div class="nav-mini-links">
     <a href="/tools/">免费工具</a>
     <a href="/pricing.html">定价</a>

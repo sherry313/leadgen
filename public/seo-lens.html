@@ -127,6 +127,8 @@
   .connsteps code{ background:var(--panel); border:1px solid var(--bd2); border-radius:5px; padding:1px 6px; font-size:11.5px; color:var(--ac2); }
   .connsteps code.keyc{ color:var(--ok); word-break:break-all; }
 </style>
+<link rel="stylesheet" href="/styles/neumorphic.css">
+<body class="neu-theme">
 
 <div class="top"><div class="top-in">
   <div class="brand"><span class="logo"><i class="ti ti-world-search"></i></span> 智拓客 · SEO / GEO 获客</div>
@@ -324,3 +326,4 @@ function animRing(ringId,valId,target){
   ring._t=setInterval(()=>{ cur=Math.min(target,cur+step); ring.style.setProperty('--v',cur); val.textContent=cur; if(cur>=target)clearInterval(ring._t); },18);
 }
 </script>
+</body>

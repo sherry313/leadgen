@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>个人中心悬浮球 · 预览（临时）</title>
 <link rel="stylesheet" href="/vendor/tabler/tabler-icons.min.css">
+<link rel="stylesheet" href="/styles/neumorphic.css">
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; }
   body{ min-height:100vh; background:#030303; color:#e5e7eb;
@@ -67,8 +68,29 @@
   .account-fab:hover .fab-core{ transform:scale(1.06);
     box-shadow:0 16px 40px rgba(79,70,229,.6), inset 0 1px 9px rgba(199,210,254,.6); }
 </style>
+<style>
+  body.neu-theme{background:#e0e5ec !important;background-image:none !important;color:#3d4852}
+  .neu-theme .tip{padding:28px;border-radius:32px;background:#e0e5ec;box-shadow:var(--neu-shadow-raised)}
+  .neu-theme .tip p{color:#6b7280}
+  .neu-theme .tip .k{color:#6c63ff}
+  .neu-theme .tip .flag{min-height:44px;display:inline-flex;align-items:center;padding:8px 16px;border:0;border-radius:999px;background:#e0e5ec;color:#6c63ff;box-shadow:var(--neu-shadow-inset-small)}
+  .neu-theme .account-fab{min-width:104px;min-height:120px;color:#6c63ff;border-radius:32px;outline-offset:4px}
+  .neu-theme .fab-core{background:#e0e5ec;border:0;box-shadow:var(--neu-shadow-inset-deep);transition:transform 500ms ease-out,box-shadow 500ms ease-out}
+  .neu-theme .fab-core::before{background:conic-gradient(from 0deg,transparent 0deg,rgba(108,99,255,.85) 60deg,transparent 150deg)}
+  .neu-theme .fab-ico{color:#6c63ff;filter:none}
+  .neu-theme .fab-ico stop:first-child{stop-color:#8179ff}
+  .neu-theme .fab-ico stop:last-child{stop-color:#6c63ff}
+  .neu-theme .fab-bubbles i{background:#e0e5ec;box-shadow:var(--neu-shadow-raised)}
+  .neu-theme .fab-label{color:#3d4852;text-shadow:none}
+  .neu-theme .account-fab:hover .fab-core{transform:scale(1.05) rotate(180deg);box-shadow:var(--neu-shadow-raised-hover)}
+  .neu-theme .account-fab:active .fab-core{transform:scale(.98);box-shadow:var(--neu-shadow-inset-small)}
+  @media(max-width:767px){
+    .neu-theme .tip{left:16px;right:16px;top:16px;max-width:none;padding:22px;border-radius:24px}
+    .neu-theme .account-fab{right:18px}
+  }
+</style>
 </head>
-<body>
+<body class="neu-theme">
   <div class="tip">
     <h1>个人中心悬浮球</h1>
     <p><span class="k">按住拖动</span>可以把它挪到任意位置,松手会记住;<span class="k">轻点</span>还是进入个人中心。小泡泡不断往上冒,代表<span class="k">邮件发送中</span>。</p>

@@ -317,17 +317,29 @@
     .footer-sub { font-size: 0.78rem; color: #334155; }
 
     @media (max-width: 640px) {
+      main {
+        width: 100%;
+        min-width: 0;
+      }
       .login-card {
+        width: 100%;
+        max-width: 440px;
+        min-width: 0;
         padding: 28px 16px;
       }
+      .auth-tabs,
+      .auth-form,
+      .form-group,
+      .consent-block { min-width: 0; max-width: 100%; }
       main {
         align-items: flex-start;
         padding-top: 32px;
       }
     }
   </style>
+  <link rel="stylesheet" href="/styles/neumorphic.css">
 </head>
-<body>
+<body class="neu-theme">
 
 <!-- NAV -->
 <nav id="navbar">
@@ -347,9 +359,9 @@
     <li><a href="/pricing.html">定价</a></li>
     <li><a href="/" class="btn-nav">申请试用</a></li>
   </ul>
-  <div class="hamburger" id="hamburger" aria-label="菜单">
+  <button type="button" class="hamburger" id="hamburger" aria-label="菜单" aria-controls="navLinks" aria-expanded="false">
     <span></span><span></span><span></span>
-  </div>
+  </button>
 </nav>
 
 <!-- MAIN -->
@@ -582,8 +594,14 @@
   /* Hamburger */
   const hamburger = document.getElementById('hamburger');
   const navLinks = document.getElementById('navLinks');
-  hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
-  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+  hamburger.addEventListener('click', () => {
+    navLinks.classList.toggle('open');
+    hamburger.setAttribute('aria-expanded', String(navLinks.classList.contains('open')));
+  });
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+  }));
 </script>
 </body>
 </html>
