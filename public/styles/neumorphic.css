@@ -566,14 +566,13 @@ body.neu-theme {
   transition: transform var(--neu-transition), box-shadow var(--neu-transition) !important;
 }
 
-/* Segmented auth control: one subtle carved track, not two raised buttons in a dark frame. */
+/* Segmented auth control: no surrounding frame or carved track. */
 .neu-theme .auth-tabs {
   gap: 6px;
-  padding: 6px;
-  background: var(--neu-surface) !important;
+  padding: 0;
+  background: transparent !important;
   border: 0 !important;
-  border-radius: var(--neu-radius-control) !important;
-  box-shadow: var(--neu-shadow-inset-small) !important;
+  box-shadow: none !important;
 }
 
 .neu-theme .auth-tabs .auth-tab {
@@ -592,10 +591,10 @@ body.neu-theme {
 }
 
 .neu-theme .auth-tabs .auth-tab.active {
-  background: var(--neu-surface) !important;
-  box-shadow: var(--neu-shadow-inset-small) !important;
-  color: var(--neu-accent) !important;
-  transform: translateY(0.5px);
+  background: var(--neu-accent) !important;
+  box-shadow: var(--neu-shadow-raised) !important;
+  color: #fff !important;
+  transform: none;
 }
 
 .neu-theme :where(.btn-outline, .btn-ghost, .auth-tab, .pr-toggle button, .hamburger):active,
