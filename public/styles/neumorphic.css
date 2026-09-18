@@ -434,6 +434,12 @@ html[data-lang="en"] .st.dev::after { content: "Coming Soon" !important; }
 @media (max-width: 720px) {
   .site-preferences { top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); gap: 5px; padding: 5px; }
   .site-preferences button { min-width: 40px !important; min-height: 40px !important; padding: 0 9px !important; }
+  .site-preferences .site-language button { min-width: 40px !important; }
+  .site-preferences.is-inline { gap: 4px; padding: 3px; }
+  .neu-theme .topbar { gap: 8px !important; padding: 10px 8px !important; }
+  .neu-theme .topbar .flag { display: none !important; }
+  .neu-theme .topbar > .btn { width: 44px; padding: 0 !important; font-size: 0 !important; justify-content: center; }
+  .neu-theme .topbar > .btn i { font-size: 16px; }
 }
 
 @media (forced-colors: active) {
