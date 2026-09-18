@@ -2690,6 +2690,124 @@
       }
       .neu-theme :where(.hamburger, #hamburger, button, [role="button"]) { min-width: 44px; min-height: 44px; }
     }
+
+    /* /app business-information step — light neumorphic hierarchy (concept 2). */
+    .neu-theme #mainStepper {
+      height: 48px;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .neu-theme #mainStepper .stepper-seg {
+      min-height: 48px;
+      border: 0 !important;
+      border-radius: 16px;
+      background: #e0e5ec !important;
+      color: #6b7280 !important;
+      box-shadow: var(--neu-shadow-inset-small) !important;
+      font-size: 13px;
+      font-weight: 600;
+      transition: transform 300ms ease-out, box-shadow 300ms ease-out, color 300ms ease-out !important;
+    }
+    .neu-theme #mainStepper .stepper-seg::after { display: none !important; }
+    .neu-theme #mainStepper .stepper-seg.seg-active {
+      color: #564de8 !important;
+      box-shadow: var(--neu-shadow-inset-deep) !important;
+    }
+    .neu-theme #mainStepper .stepper-seg.seg-done { color: #6c63ff !important; }
+    .neu-theme #wizard-step-1 {
+      padding: clamp(28px, 4vw, 52px) !important;
+    }
+    .neu-theme #appBusinessInfoCard {
+      margin: 0 !important;
+      padding: clamp(24px, 3vw, 40px) !important;
+      background: rgba(108,99,255,.045) !important;
+      border: 1px solid rgba(108,99,255,.12) !important;
+      border-radius: 32px !important;
+      box-shadow: var(--neu-shadow-inset-small) !important;
+      color: #3d4852 !important;
+    }
+    .neu-theme #biTopBar { gap: 16px !important; margin-bottom: 28px !important; }
+    .neu-theme #biImportWrap i { color: #6c63ff !important; }
+    .neu-theme #biImportSelect {
+      min-height: 56px;
+      padding-left: 48px !important;
+      color: #3d4852 !important;
+      box-shadow: var(--neu-shadow-inset-deep) !important;
+    }
+    .neu-theme #biTopBar > button {
+      min-height: 56px;
+      padding-inline: 22px !important;
+      background: #6c63ff !important;
+      color: #fff !important;
+      box-shadow: 8px 8px 18px rgba(108,99,255,.26), -6px -6px 16px rgba(255,255,255,.64) !important;
+    }
+    .neu-theme #biTopBar > button i { color: #fff !important; }
+    .neu-theme #biIdentityRow { gap: 16px !important; }
+    .neu-theme #biIdentityRow .bi-identity {
+      min-height: 56px;
+      padding: 12px 16px !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      background: #e0e5ec !important;
+      color: #3d4852 !important;
+      box-shadow: var(--neu-shadow-raised) !important;
+    }
+    .neu-theme #biIdentityRow .bi-identity.is-selected {
+      background: #6c63ff !important;
+      color: #fff !important;
+      box-shadow: inset 3px 3px 6px rgba(60,54,164,.48), inset -3px -3px 6px rgba(151,145,255,.46) !important;
+      transform: translateY(.5px);
+    }
+    .neu-theme #biIdentityRow .bi-identity:focus-visible,
+    .neu-theme #biTopBar :is(select,button):focus-visible {
+      outline: 2px solid #6c63ff !important;
+      outline-offset: 2px;
+    }
+    .neu-theme #appBusinessInfoCard > div:nth-of-type(2) > i {
+      width: 48px;
+      height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      background: #e0e5ec;
+      box-shadow: var(--neu-shadow-inset-deep);
+    }
+    .neu-theme #appBusinessInfoCard label,
+    .neu-theme #appBusinessInfoCard span { color: #3d4852; }
+    .neu-theme #appBusinessInfoCard > div[style*="font-size:13px"] { color: #6b7280 !important; }
+    @media (max-width: 767px) {
+      .neu-theme #mainStepper { gap: 6px; overflow-x: auto; }
+      .neu-theme #mainStepper .stepper-seg { min-width: 112px; }
+      .neu-theme #wizard-step-1 { padding: 20px 16px !important; }
+      .neu-theme #appBusinessInfoCard { padding: 24px 18px !important; border-radius: 24px !important; }
+      .neu-theme #biTopBar, .neu-theme #biIdentityRow { flex-direction: column; }
+      .neu-theme #biTopBar > *, .neu-theme #biIdentityRow .bi-identity { width: 100%; }
+    }
+    html[data-theme="dark"] body.neu-theme #appBusinessInfoCard {
+      background: rgba(108,99,255,.07) !important;
+      border-color: rgba(139,131,255,.16) !important;
+      box-shadow: inset 6px 6px 14px rgba(0,0,0,.34), inset -5px -5px 12px rgba(255,255,255,.025) !important;
+    }
+    html[data-theme="dark"] body.neu-theme #mainStepper .stepper-seg,
+    html[data-theme="dark"] body.neu-theme #biIdentityRow .bi-identity {
+      background: #191c23 !important;
+      color: #b7bec9 !important;
+    }
+    html[data-theme="dark"] body.neu-theme #biIdentityRow .bi-identity.is-selected {
+      background: #6c63ff !important;
+      color: #fff !important;
+    }
+    html[data-theme="dark"] body.neu-theme #appBusinessInfoCard :is(label,span) { color: #f4f5f7; }
+    html[data-theme="dark"] body.neu-theme #appBusinessInfoCard > div:nth-of-type(2) > i {
+      background: #191c23;
+      box-shadow: inset 8px 8px 18px rgba(0,0,0,.42), inset -8px -8px 18px rgba(255,255,255,.025);
+    }
+    html[data-theme="dark"] body.neu-theme #biTopBar > button {
+      box-shadow: 7px 7px 16px rgba(0,0,0,.34), -5px -5px 14px rgba(255,255,255,.025) !important;
+    }
   </style>
 <script src="/assets/site-preferences.js"></script>
 </head>
@@ -3056,11 +3174,11 @@ document.querySelectorAll('#appModeSelect .mode-card').forEach(function (card) {
       <label style="display:block; font-size:13px; font-weight:500; color:var(--color-text-primary, #e5e7eb); margin-bottom:8px;">你的身份</label>
       <div id="biIdentityRow" style="display:flex; gap:10px; margin-bottom:18px;">
         <button type="button" class="bi-identity" data-identity="factory" onclick="biSelectIdentity('factory')"
-          style="flex:1; padding:12px 8px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6)); font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.15s;">🏭 工厂</button>
+          style="flex:1; padding:12px 8px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6)); font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.15s;"><i class="ti ti-building-factory-2" aria-hidden="true"></i><span>工厂</span></button>
         <button type="button" class="bi-identity" data-identity="trade" onclick="biSelectIdentity('trade')"
-          style="flex:1; padding:12px 8px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6)); font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.15s;">🌐 外贸公司</button>
+          style="flex:1; padding:12px 8px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6)); font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.15s;"><i class="ti ti-world" aria-hidden="true"></i><span>外贸公司</span></button>
         <button type="button" class="bi-identity" data-identity="both" onclick="biSelectIdentity('both')"
-          style="flex:1; padding:12px 8px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6)); font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.15s;">🔗 工贸一体</button>
+          style="flex:1; padding:12px 8px; border-radius:8px; border:0.5px solid var(--color-border-tertiary, rgba(255,255,255,0.12)); background:transparent; color:var(--color-text-secondary, rgba(255,255,255,0.6)); font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.15s;"><i class="ti ti-link" aria-hidden="true"></i><span>工贸一体</span></button>
       </div>
 
       <div id="biMainFields" style="display:none">
@@ -11436,9 +11554,8 @@ function newProduct() {
   function paintIdentity() {
     document.querySelectorAll('#biIdentityRow .bi-identity').forEach(b => {
       const on = b.dataset.identity === currentIdentity;
-      b.style.borderColor = on ? '#6366f1' : 'var(--color-border-tertiary, rgba(255,255,255,0.12))';
-      b.style.background  = on ? 'rgba(99,102,241,0.15)' : 'transparent';
-      b.style.color       = on ? '#a5a8f3' : 'var(--color-text-secondary, rgba(255,255,255,0.6))';
+      b.classList.toggle('is-selected', on);
+      b.setAttribute('aria-pressed', String(on));
     });
     if (mainFields) mainFields.style.display = currentIdentity ? 'block' : 'none';
     // 外贸公司没有固定产品 → 产品框改叫"主营品类 / 这次想推的产品"。

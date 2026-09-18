@@ -22,7 +22,10 @@
   /* ── 侧边栏 ── */
   .side{ width:238px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--bd);
     display:flex; flex-direction:column; overflow-y:auto; }
-  .side::-webkit-scrollbar{ width:6px; } .side::-webkit-scrollbar-thumb{ background:var(--bd); border-radius:3px; }
+  .side::-webkit-scrollbar{ width:4px; }
+  .side::-webkit-scrollbar-track{ background:transparent; }
+  .side::-webkit-scrollbar-thumb{ background:rgba(89,100,115,.26); border-radius:999px; }
+  .side:hover::-webkit-scrollbar-thumb{ background:rgba(108,99,255,.3); }
   .brand{ display:flex; align-items:center; gap:10px; padding:18px 16px 14px; }
   .brand .lg{ width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,#6366f1,#4f46e5);
     display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 4px 14px rgba(99,102,241,0.4); }
@@ -254,8 +257,9 @@
   .cv-btn i{ font-size:20px; }
 
   /* 侧栏拖动条(宽屏改宽度) + 汉堡按钮(窄屏抽屉) */
-  .resizer{ width:6px; flex-shrink:0; cursor:col-resize; background:transparent; transition:background .15s; }
-  .resizer:hover, .resizer.drag{ background:var(--ac); }
+  .resizer{ width:6px; flex-shrink:0; cursor:col-resize; background:transparent; position:relative; }
+  .resizer::after{ content:''; position:absolute; inset:0 auto 0 50%; width:1px; transform:translateX(-50%); background:rgba(108,99,255,.1); transition:width .3s ease-out,background .3s ease-out; }
+  .resizer:hover::after, .resizer.drag::after{ width:2px; background:rgba(108,99,255,.45); }
   .menu-btn{ display:none; align-items:center; justify-content:center; width:36px; height:34px; flex-shrink:0;
     font-size:20px; color:var(--tx2); background:var(--card); border:1px solid var(--bd); border-radius:9px; cursor:pointer; }
   .menu-btn:hover{ color:var(--tx); }
@@ -288,7 +292,10 @@
     background:#e0e5ec !important; color:#3d4852;
   }
   .neu-theme .shell,.neu-theme .main,.neu-theme #view-frame iframe{background:#e0e5ec}
-  .neu-theme .side{background:#e0e5ec;border-right:0;box-shadow:10px 0 24px rgba(163,177,198,.52);position:relative;z-index:7}
+  .neu-theme .side{background:#e0e5ec;border-right:1px solid rgba(108,99,255,.1);box-shadow:6px 0 16px rgba(163,177,198,.22);position:relative;z-index:7}
+  html[data-theme="dark"] body.neu-theme .side{border-right-color:rgba(139,131,255,.12);box-shadow:6px 0 18px rgba(0,0,0,.24)}
+  html[data-theme="dark"] body.neu-theme .side::-webkit-scrollbar-thumb{background:rgba(183,190,201,.18)}
+  html[data-theme="dark"] body.neu-theme .side:hover::-webkit-scrollbar-thumb{background:rgba(139,131,255,.3)}
   .neu-theme .brand .lg,.neu-theme .userbox .av,.neu-theme .acc-hero .big{background:#6c63ff;box-shadow:var(--neu-shadow-raised);border-radius:16px}
   .neu-theme .grp{
     display:flex;
