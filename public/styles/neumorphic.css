@@ -318,6 +318,22 @@ body.neu-theme {
   }
 }
 
+/* Native choice controls must not inherit text-input wells or 44px visual boxes. */
+.neu-theme input[type="checkbox"],
+.neu-theme input[type="radio"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  accent-color: var(--neu-accent);
+}
+
 /* Safe compatibility layer for existing app pages. */
 body.neu-theme {
   --bg: var(--neu-bg); --panel: var(--neu-surface); --card: var(--neu-surface); --card2: var(--neu-surface);
