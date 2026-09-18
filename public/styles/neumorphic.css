@@ -566,6 +566,38 @@ body.neu-theme {
   transition: transform var(--neu-transition), box-shadow var(--neu-transition) !important;
 }
 
+/* Segmented auth control: one subtle carved track, not two raised buttons in a dark frame. */
+.neu-theme .auth-tabs {
+  gap: 6px;
+  padding: 6px;
+  background: var(--neu-surface) !important;
+  border: 0 !important;
+  border-radius: var(--neu-radius-control) !important;
+  box-shadow: var(--neu-shadow-inset-small) !important;
+}
+
+.neu-theme .auth-tabs .auth-tab {
+  min-height: 44px;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  color: var(--neu-text) !important;
+  transform: none;
+}
+
+.neu-theme .auth-tabs .auth-tab:hover {
+  color: var(--neu-accent) !important;
+  transform: translateY(-1px);
+}
+
+.neu-theme .auth-tabs .auth-tab.active {
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-inset-small) !important;
+  color: var(--neu-accent) !important;
+  transform: translateY(0.5px);
+}
+
 .neu-theme :where(.btn-outline, .btn-ghost, .auth-tab, .pr-toggle button, .hamburger):active,
 .neu-theme :where(.auth-tab.active, .pr-toggle button.active) {
   transform: translateY(0.5px);
