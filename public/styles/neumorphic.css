@@ -308,6 +308,119 @@ body.neu-theme {
   }
 }
 
+/* Global language and appearance controls. Injected by site-preferences.js. */
+.site-preferences {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 2147483000;
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 18px;
+  background: var(--neu-surface);
+  box-shadow: var(--neu-shadow-raised);
+}
+.site-preferences button {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 0 12px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: var(--neu-surface) !important;
+  color: var(--neu-text) !important;
+  box-shadow: var(--neu-shadow-inset-small) !important;
+  font: 700 13px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+.site-preferences button:hover { color: var(--neu-accent) !important; transform: translateY(-1px); }
+.site-preferences button:active { transform: translateY(.5px); box-shadow: var(--neu-shadow-inset-deep) !important; }
+.site-preferences button:focus-visible { outline: 2px solid var(--neu-accent) !important; outline-offset: 2px; }
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --neu-bg: #111318;
+  --neu-surface: #191c23;
+  --neu-text: #f1f3f7;
+  --neu-muted: #b7bec9;
+  --neu-accent: #8b83ff;
+  --neu-accent-strong: #756cff;
+  --neu-accent-soft: rgba(139, 131, 255, 0.16);
+  --neu-shadow-raised: 10px 10px 22px rgba(0,0,0,.42), -8px -8px 20px rgba(52,58,72,.34);
+  --neu-shadow-raised-hover: 13px 13px 26px rgba(0,0,0,.5), -10px -10px 24px rgba(52,58,72,.4);
+  --neu-shadow-inset: inset 6px 6px 12px rgba(0,0,0,.42), inset -5px -5px 11px rgba(52,58,72,.3);
+  --neu-shadow-inset-deep: inset 10px 10px 20px rgba(0,0,0,.52), inset -8px -8px 18px rgba(52,58,72,.28);
+  --neu-shadow-inset-small: inset 3px 3px 6px rgba(0,0,0,.46), inset -3px -3px 6px rgba(52,58,72,.28);
+  --neu-shadow-accent-pressed: inset 4px 4px 9px rgba(24,18,100,.72), inset -4px -4px 9px rgba(180,176,255,.18);
+}
+html[data-theme="dark"] body.neu-theme,
+html[data-theme="dark"] body.neu-theme :where(.shell,.main,.side,.sidebar,.wrap,.page,.content,#cover) {
+  background-color: var(--neu-bg) !important;
+  color: var(--neu-text) !important;
+}
+html[data-theme="dark"] body.neu-theme {
+  --bg: var(--neu-bg) !important;
+  --panel: var(--neu-surface) !important;
+  --card: var(--neu-surface) !important;
+  --card2: #20242d !important;
+  --surface: var(--neu-surface) !important;
+  --text: var(--neu-text) !important;
+  --tx: var(--neu-text) !important;
+  --tx2: #c8ced8 !important;
+  --tx3: var(--neu-muted) !important;
+  --sub: var(--neu-muted) !important;
+  --sub2: var(--neu-muted) !important;
+  --bd: rgba(139,131,255,.2) !important;
+  --bd2: rgba(139,131,255,.34) !important;
+  --ac: var(--neu-accent) !important;
+  --ac2: var(--neu-accent) !important;
+  --acbg: var(--neu-accent-soft) !important;
+}
+html[data-theme="dark"] body.neu-theme :where(nav,header,footer,.header,.nav,.navbar,.topbar,.acct-bar) {
+  background: rgba(25,28,35,.94) !important;
+  color: var(--neu-text) !important;
+  border-color: rgba(139,131,255,.18) !important;
+}
+html[data-theme="dark"] body.neu-theme :where(.panel,.card,.kpi,.dash-hero,.qs-card,.box,.acc-hero,.prod,.acc-tw,.send-card,.send-note,.gate-card,.h-card,.stat-tile,.note-card,.tool-card,.section,.steps-card,.result-card,.preview-card,.word-list-card,.seq-panel,.pw-panel,.p-card,.prod-detail,.lead-panel,.drop,.file-info,.ready) {
+  background: var(--neu-surface) !important;
+  color: var(--neu-text) !important;
+  border-color: rgba(139,131,255,.16) !important;
+  box-shadow: var(--neu-shadow-raised) !important;
+}
+html[data-theme="dark"] body.neu-theme :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.fn-track) {
+  background: #14171d !important;
+  color: var(--neu-text) !important;
+  border-color: rgba(139,131,255,.2) !important;
+  box-shadow: var(--neu-shadow-inset) !important;
+}
+html[data-theme="dark"] body.neu-theme :where(button,.btn,.b,.mini-btn,.menu-btn,.nav-back,.header-link) {
+  background: var(--neu-surface) !important;
+  color: var(--neu-text) !important;
+}
+html[data-theme="dark"] body.neu-theme :where(.primary,.btn-primary,.save,.use,.cv-btn,.sc-btn:not(.ghost),.cs-search) {
+  background: var(--neu-accent-strong) !important;
+  color: #fff !important;
+}
+html[data-theme="dark"] body.neu-theme :where(.sub,.meta,.hint,.muted,.psub,.hs,.d,.bs,.mt,.qd,.sc-dt,.cv-sub,label) { color: var(--neu-muted) !important; }
+html[data-theme="dark"] body.neu-theme ::placeholder { color: #89919f !important; opacity: 1; }
+html[data-theme="dark"] body.neu-theme :where(.grp,.ni.on,.pill,.tag,.badge,.chip) { border-color: rgba(139,131,255,.2) !important; }
+html[data-theme="dark"] .site-preferences { background: #232731; border: 1px solid rgba(139,131,255,.28); box-shadow: var(--neu-shadow-raised); }
+html[data-theme="dark"] body.neu-theme .cv-shape {
+  background: #20242d !important;
+  border-color: rgba(139,131,255,.24) !important;
+  box-shadow: 10px 10px 24px rgba(0,0,0,.44), -8px -8px 20px rgba(52,58,72,.28), 0 0 20px rgba(139,131,255,.1) !important;
+}
+html[data-lang="en"] .st.dev::after { content: "Coming Soon" !important; }
+
+@media (max-width: 720px) {
+  .site-preferences { top: max(8px, env(safe-area-inset-top)); right: max(8px, env(safe-area-inset-right)); gap: 5px; padding: 5px; }
+  .site-preferences button { min-width: 40px !important; min-height: 40px !important; padding: 0 9px !important; }
+}
+
 @media (forced-colors: active) {
   .neu-theme .neu-card,
   .neu-theme .neu-button,
