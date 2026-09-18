@@ -323,7 +323,16 @@
   .neu-theme :is(.act,.task,.acc-tb th,.acc-tb td){border-color:rgba(108,99,255,.12)}
   .neu-theme .cs-empty{border-color:rgba(108,99,255,.3);border-radius:24px;color:#6b7280}
   .neu-theme #cover{background:#e0e5ec}
-  .neu-theme .cv-shape{filter:none;opacity:.75;background:#e0e5ec;box-shadow:var(--neu-shadow-raised)}
+  .neu-theme .cv-shape{
+    filter:none;
+    opacity:.82;
+    background:#e0e5ec;
+    border:1px solid rgba(108,99,255,.24);
+    box-shadow:
+      12px 12px 28px rgba(163,177,198,.62),
+      -12px -12px 28px rgba(255,255,255,.72),
+      0 0 24px rgba(108,99,255,.12);
+  }
   .neu-theme .cv-l1,.neu-theme .cv-l2{background:none;-webkit-text-fill-color:currentColor}
   .neu-theme .cv-l1{color:#3d4852}
   .neu-theme .cv-l2{color:#6c63ff}
