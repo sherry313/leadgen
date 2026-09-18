@@ -2754,11 +2754,14 @@
       color: #3d4852 !important;
       box-shadow: var(--neu-shadow-raised) !important;
     }
-    .neu-theme #biIdentityRow .bi-identity.is-selected {
+    html body.neu-theme #appBusinessInfoCard #biIdentityRow button.bi-identity[aria-pressed="true"] {
       background: #6c63ff !important;
       color: #fff !important;
       box-shadow: inset 3px 3px 6px rgba(60,54,164,.48), inset -3px -3px 6px rgba(151,145,255,.46) !important;
       transform: translateY(.5px);
+    }
+    html body.neu-theme #appBusinessInfoCard #biIdentityRow button.bi-identity[aria-pressed="true"] :is(i,span) {
+      color: #fff !important;
     }
     .neu-theme #biIdentityRow .bi-identity:focus-visible,
     .neu-theme #biTopBar :is(select,button):focus-visible {
@@ -2801,7 +2804,7 @@
       background: #191c23 !important;
       color: #b7bec9 !important;
     }
-    html[data-theme="dark"] body.neu-theme #biIdentityRow .bi-identity.is-selected {
+    html[data-theme="dark"] body.neu-theme #appBusinessInfoCard #biIdentityRow button.bi-identity[aria-pressed="true"] {
       background: #6c63ff !important;
       color: #fff !important;
     }
