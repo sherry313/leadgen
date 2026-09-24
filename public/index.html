@@ -96,7 +96,7 @@
     .nav-dd-sep { height: 1px; background: var(--border); margin: 4px 0; }
 
     /* ── Layout ── */
-    .container { max-width: 1060px; margin: 0 auto; padding: 88px 18px 56px; }
+    .container { max-width: 1060px; margin: 0 auto; padding: 24px 18px 56px; }
 
     /* ── Stepper (capsule bar) ── */
     .stepper {
@@ -1620,8 +1620,9 @@
 
     /* ── New nav (minimal) ── */
     nav#navbar.nav-mini {
+      display: none !important;
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
+      align-items: center; justify-content: space-between;
       padding: 12px 20px; height: auto;
       background: rgba(3,3,3,0.85);
       border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -2420,7 +2421,7 @@
     #appModeSelect {
       background: #030303;
       min-height: 100vh;
-      padding: 96px 1.5rem 2.5rem;
+      padding: 32px 1.5rem 2.5rem;
     }
 
     #appModeSelect .mode-sys-label {
@@ -2544,7 +2545,7 @@
     #appAutoPanel {
       background: #030303;
       min-height: 100vh;
-      padding: 96px 1.5rem 2rem;
+      padding: 32px 1.5rem 2rem;
       color: #e5e7eb;
     }
     /* Auto mode hosts the SHARED #appBusinessInfoCard (moved in by appConfirmMode).
@@ -2925,12 +2926,7 @@
   })();
 </script>
 
-<nav id="navbar" class="nav-mini">
-  <a href="index.html" class="nav-mini-brand"><i class="ti ti-layout-grid" aria-hidden="true"></i> 智拓客</a>
-  <div class="nav-mini-links">
-    <a href="/tools/">免费工具</a>
-    <a href="/pricing.html">定价</a>
-  </div>
+<nav id="navbar" class="nav-mini" aria-hidden="true">
   <!-- 个人中心 入口移到 </nav> 后的圆形悬浮大按钮（id 保留在那个元素上，toggle JS 不变） -->
 
   <!-- Legacy nav stubs (kept for JS compatibility — hidden) -->
