@@ -3793,10 +3793,11 @@ document.querySelectorAll('#appModeSelect .mode-card').forEach(function (card) {
             <option value="Egypt"                style="background:#0b0b0c;color:#e5e7eb">🇪🇬 埃及 · Egypt</option>
             <option value="Morocco"              style="background:#0b0b0c;color:#e5e7eb">🇲🇦 摩洛哥 · Morocco</option>
           </select>
-          <select id="gmCity" onchange="onGmCityChange()" disabled
+          <select id="gmCity" onchange="onGmCityChange()" onmousedown="guardGmCity(event)" onkeydown="guardGmCity(event)" aria-describedby="gmCityHint"
                   style="width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;appearance:none;-webkit-appearance:none">
-            <option value="" disabled selected style="background:#0b0b0c;color:#94a3b8">请选择城市</option>
+            <option value="" disabled selected style="background:#0b0b0c;color:#94a3b8">请先选择国家</option>
           </select>
+          <div id="gmCityHint" role="status" aria-live="polite" style="font-size:12px;color:#94a3b8;margin-top:-4px">请先选择国家，再选择城市</div>
           <input type="text" id="gmCityManual" oninput="updateGmLocation()" placeholder="输入城市英文名，例：Cairns" autocomplete="off"
                  style="display:none;width:100%;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(99,102,241,0.5);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
         </div>
@@ -6417,6 +6418,7 @@ function onGmCountryChange() {
   const country = document.getElementById('gmCountry').value;
   const citySel = document.getElementById('gmCity');
   const manual  = document.getElementById('gmCityManual');
+  const hint    = document.getElementById('gmCityHint');
   manual.style.display = 'none';
   manual.value = '';
   citySel.innerHTML = '<option value="" disabled selected style="background:#0b0b0c;color:#94a3b8">请选择城市</option>';
@@ -6434,8 +6436,20 @@ function onGmCountryChange() {
   other.style.background = '#0b0b0c';
   other.style.color = '#e5e7eb';
   citySel.appendChild(other);
-  citySel.disabled = !country;
+  citySel.disabled = false;
+  if (hint) hint.textContent = country
+    ? `已加载 ${(_GM_CITIES[country] || []).length} 个常用城市，也可以手动输入其他城市`
+    : '请先选择国家，再选择城市';
   updateGmLocation();
+}
+function guardGmCity(event) {
+  const country = document.getElementById('gmCountry');
+  if (country && country.value) return;
+  const actionableKey = event.type !== 'keydown' || ['Enter', ' ', 'ArrowDown', 'ArrowUp'].includes(event.key);
+  if (!actionableKey) return;
+  event.preventDefault();
+  _showToast('请先选择国家，再选择城市');
+  country?.focus();
 }
 function onGmCityChange() {
   const manual = document.getElementById('gmCityManual');
