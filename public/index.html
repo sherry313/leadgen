@@ -3851,6 +3851,7 @@ document.querySelectorAll('#appModeSelect .mode-card').forEach(function (card) {
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">搜索关键词</label>
         <div style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.45));margin-bottom:8px">AI 根据你的产品和目标客户推荐搜索词，勾选要用的，也可以自定义添加。</div>
         <div id="gsKwStatus" style="font-size:12px;color:var(--color-text-secondary, rgba(255,255,255,0.4));margin-bottom:10px">填好「业务信息」的产品和目标客户后，AI 会在这里推荐搜索关键词。</div>
+        <div id="gsKwSelected" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
         <div style="position:relative;margin-bottom:10px">
           <button type="button" id="gsKwToggle"
                   style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 14px;background:#0b0b0c;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-family:inherit;font-size:14px;cursor:pointer;text-align:left;box-sizing:border-box">
@@ -3866,7 +3867,6 @@ document.querySelectorAll('#appModeSelect .mode-card').forEach(function (card) {
             </div>
           </div>
         </div>
-        <div id="gsKwSelected" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
 
         <label style="display:block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;margin-bottom:10px">地区（每次只能一个）</label>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
