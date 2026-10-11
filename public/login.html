@@ -288,6 +288,24 @@
     }
     .ok-msg.visible { display: block; }
 
+    .auth-recovery {
+      display: none;
+      margin-top: 12px;
+      text-align: center;
+    }
+    .auth-recovery.visible { display: block; }
+    .auth-recovery button {
+      border: 0;
+      background: transparent;
+      color: #60a5fa;
+      font: inherit;
+      font-size: 0.84rem;
+      cursor: pointer;
+      padding: 6px 10px;
+    }
+    .auth-recovery button:hover { text-decoration: underline; }
+    .auth-recovery button:disabled { color: #64748b; cursor: wait; }
+
     /* ── HELPER TEXT ── */
     .helper-text {
       margin-top: 16px;
@@ -409,6 +427,9 @@
 
     <div class="error-msg" id="errorMsg">请填写邮箱和密码并同意用户协议</div>
     <div class="ok-msg" id="okMsg"></div>
+    <div class="auth-recovery" id="authRecovery">
+      <button type="button" id="resendConfirmBtn" onclick="resendConfirmation()">重新发送确认邮件</button>
+    </div>
 
     <p class="helper-text" id="helperText">
       没有账号？点上面「注册」，几秒就能开通。
@@ -474,6 +495,24 @@
     el.classList.add('visible');
   }
 
+  function _loginError(message) {
+    const raw = String(message || '');
+    if (/Email not confirmed/i.test(raw)) {
+      return { message: '这个邮箱还没确认。请点下面“重新发送确认邮件”，然后去邮箱完成确认。', canResend: true };
+    }
+    if (/Invalid login credentials/i.test(raw)) {
+      return { message: '邮箱或密码不正确。请检查后重试；如果刚注册，请先确认邮箱。', canResend: true };
+    }
+    if (/rate limit|too many requests/i.test(raw)) {
+      return { message: '尝试次数太多，请稍等几分钟再试。', canResend: false };
+    }
+    return { message: '登录失败：' + (raw || '请稍后再试'), canResend: false };
+  }
+
+  function _showRecovery(show) {
+    document.getElementById('authRecovery').classList.toggle('visible', !!show);
+  }
+
   function updateButtonState() {
     const email   = document.getElementById('loginEmail').value.trim();
     const pwd     = document.getElementById('loginPassword').value;
@@ -510,6 +549,7 @@
       : '没有账号？点上面「注册」，几秒就能开通。';
     document.getElementById('errorMsg').classList.remove('visible');
     document.getElementById('okMsg').classList.remove('visible');
+    _showRecovery(false);
     updateButtonState();
   }
 
@@ -517,6 +557,7 @@
     updateButtonState();
     document.getElementById('errorMsg').classList.remove('visible');
     document.getElementById('okMsg').classList.remove('visible');
+    _showRecovery(false);
   }
 
   function onConsentChange() {
@@ -569,7 +610,9 @@
       // login
       const { data, error } = await _sbClient.auth.signInWithPassword({ email, password: pwd });
       if (error || !data?.session?.access_token) {
-        _showError('邮箱或密码错误（或邮箱还没确认）');
+        const failure = _loginError(error?.message || '没有收到登录凭证');
+        _showError(failure.message);
+        _showRecovery(failure.canResend);
         return;
       }
       localStorage.setItem('leadgen_accessToken', data.session.access_token);
@@ -582,6 +625,35 @@
       btn.disabled = false;
       btn.textContent = origText;
       updateButtonState();
+    }
+  }
+
+  async function resendConfirmation() {
+    const email = document.getElementById('loginEmail').value.trim();
+    if (!email) {
+      _showError('请先填写注册时使用的邮箱。');
+      return;
+    }
+    const button = document.getElementById('resendConfirmBtn');
+    button.disabled = true;
+    button.textContent = '发送中…';
+    try {
+      await _supabaseReady;
+      if (!_sbClient) throw new Error('认证服务暂不可用');
+      const { error } = await _sbClient.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: window.location.origin + '/login.html' },
+      });
+      if (error) throw error;
+      _showRecovery(false);
+      _showOk('确认邮件已重新发送。请打开邮箱里的链接，确认后再回来登录。');
+    } catch (error) {
+      const failure = _loginError(error?.message);
+      _showError(failure.message);
+    } finally {
+      button.disabled = false;
+      button.textContent = '重新发送确认邮件';
     }
   }
 
