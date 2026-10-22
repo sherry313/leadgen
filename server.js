@@ -3218,30 +3218,8 @@ app.post('/api/send-quote', requireAuth, async (req, res) => {
 // Body: { keyword, maxResults, fields:['email','phone','website','linkedin'] }
 const axios = require('axios');
 const APIFY_TOKEN = process.env.APIFY_API_TOKEN;
-const APIFY_BASE  = 'https://api.apify.com/v2';
-
-async function _runApifyActor(actorId, input) {
-  const start = await axios.post(
-    `${APIFY_BASE}/acts/${actorId}/runs`,
-    input,
-    { params: { token: APIFY_TOKEN }, headers: { 'Content-Type': 'application/json' } }
-  );
-  const runId = start.data.data.id;
-  let status = 'RUNNING';
-  const deadline = Date.now() + 10 * 60 * 1000;
-  while (status === 'RUNNING' || status === 'READY') {
-    if (Date.now() > deadline) throw new Error('Apify run timeout after 10 min');
-    await new Promise(r => setTimeout(r, 4000));
-    const s = await axios.get(`${APIFY_BASE}/actor-runs/${runId}`, { params: { token: APIFY_TOKEN } });
-    status = s.data.data.status;
-  }
-  if (status !== 'SUCCEEDED') throw new Error(`Apify run failed: ${status}`);
-  const items = await axios.get(
-    `${APIFY_BASE}/actor-runs/${runId}/dataset/items`,
-    { params: { token: APIFY_TOKEN, format: 'json' } }
-  );
-  return items.data || [];
-}
+const { createApifyRunner } = require('./services/apifyRunner');
+const _runApifyActor = createApifyRunner({ http: axios, token: APIFY_TOKEN });
 
 // ── Scraped-email quality helpers (shared by the search/scrape routes) ────────
 // Page HTML is full of strings that LOOK like emails but are not contactable:
