@@ -5589,6 +5589,10 @@ function showAppStep3View(view) {
   const isFilter   = (view === 'filter');
   const isEmail    = (view === 'email');
   const isAnalysis = !isFilter && !isEmail;
+  // Keep one authoritative sub-view state. AI filtering is asynchronous; without
+  // this marker a request that finishes after the user returns to the lead list
+  // can re-open its stale results and leave two screens stacked together.
+  window._appStep3View = isFilter ? 'filter' : isEmail ? 'email' : 'analysis';
   const setDisp = (id, show) => { const el = document.getElementById(id); if (el) el.style.display = show ? '' : 'none'; };
 
   // Analysis sub-view: field filters + select-all + lead list + "→ AI 筛选".
@@ -5596,6 +5600,7 @@ function showAppStep3View(view) {
   setDisp('appSelectAllRow',       isAnalysis);
   setDisp('appLeadList',           isAnalysis);
   setDisp('appToFilterBtn',        isAnalysis);
+  setDisp('appAiFilterResults',    isFilter);
   // 邮件发送 button belongs to the AI 筛选 results (shown by startAppAiFilter),
   // not the lead-list step — keep it hidden here.
   if (isAnalysis) setDisp('appToEmailBtn', false);
@@ -13125,10 +13130,13 @@ async function biPolishField(textareaId, kind, btn) {
         </div>
       `).join('')}
     `;
-    resultsDiv.style.display = 'block';
+    // The user may have navigated back while the per-lead requests were still
+    // running. Preserve the completed results, but never resurrect the filter
+    // screen on top of the currently active analysis/email screen.
+    resultsDiv.style.display = window._appStep3View === 'filter' ? 'block' : 'none';
 
     const toEmailBtn = document.getElementById('appToEmailBtn');
-    if (toEmailBtn) toEmailBtn.style.display = 'block';
+    if (toEmailBtn) toEmailBtn.style.display = window._appStep3View === 'filter' ? 'block' : 'none';
 
     window._filteredLeads = recommended;
   };
