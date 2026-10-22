@@ -2893,6 +2893,63 @@
       outline: 2px solid #8b83ff !important;
       outline-offset: 3px;
     }
+
+    /* Step 3: the generic neumorphic rule above is light. Keep the lead review,
+       AI-filter results and email hand-off on the same dark surface as steps 1–2. */
+    html[data-theme="dark"] body.neu-theme #wizard-step-3 {
+      background: #191c23 !important;
+      color: #f4f5f7 !important;
+      border: 1px solid rgba(139,131,255,.12) !important;
+      border-radius: 32px !important;
+      box-shadow: 12px 12px 28px rgba(0,0,0,.42), -8px -8px 22px rgba(255,255,255,.025) !important;
+    }
+    html[data-theme="dark"] body.neu-theme #appAiPanel {
+      color: #f4f5f7 !important;
+    }
+    html[data-theme="dark"] body.neu-theme #appBackBtn {
+      background: #1d2129 !important;
+      color: #d8dde6 !important;
+      border: 1px solid rgba(255,255,255,.08) !important;
+      box-shadow: 6px 6px 14px rgba(0,0,0,.34), -4px -4px 12px rgba(255,255,255,.025) !important;
+    }
+    html[data-theme="dark"] body.neu-theme #appFieldFilterSection > label,
+    html[data-theme="dark"] body.neu-theme #appSelectAllRow label {
+      color: #d8dde6 !important;
+    }
+    html[data-theme="dark"] body.neu-theme #appFilteredCount {
+      color: #9fa8b7 !important;
+    }
+    html[data-theme="dark"] body.neu-theme #appLeadList {
+      background: #14171d !important;
+      color: #f4f5f7 !important;
+      border: 1px solid rgba(255,255,255,.075) !important;
+      box-shadow: inset 6px 6px 14px rgba(0,0,0,.32), inset -4px -4px 10px rgba(255,255,255,.018) !important;
+    }
+    html[data-theme="dark"] body.neu-theme #appAiFilterPanel {
+      background: #14171d !important;
+      color: #f4f5f7 !important;
+      border: 1px solid rgba(255,255,255,.075) !important;
+      box-shadow: inset 6px 6px 14px rgba(0,0,0,.32), inset -4px -4px 10px rgba(255,255,255,.018) !important;
+    }
+    html[data-theme="dark"] body.neu-theme #appAiFilterResults {
+      color: #d8dde6 !important;
+    }
+    html[data-theme="dark"] body.neu-theme #appToFilterBtn,
+    html[data-theme="dark"] body.neu-theme #appToEmailBtn {
+      background: #6c63ff !important;
+      color: #fff !important;
+      box-shadow: 7px 7px 16px rgba(0,0,0,.34), -5px -5px 14px rgba(255,255,255,.025) !important;
+    }
+    html[data-theme="dark"] body.neu-theme #refresh-warning-banner {
+      background: rgba(245,158,11,.09) !important;
+      color: #f8ce5a !important;
+      border: 1px solid rgba(245,158,11,.28) !important;
+      box-shadow: none !important;
+    }
+    html[data-theme="dark"] body.neu-theme #wizard-step-3 :is(button,input):focus-visible {
+      outline: 2px solid #8b83ff !important;
+      outline-offset: 3px;
+    }
     @media (min-width: 1024px) {
       html[data-theme="dark"] body.neu-theme #wizard-step-2 .ws-card { max-width: 760px; }
       html[data-theme="dark"] body.neu-theme #wizard-step-2 .ws-body #dsGrid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
