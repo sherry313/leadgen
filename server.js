@@ -77,6 +77,16 @@ const passwordGateLimiter = rateLimit({
   message: { error: '尝试次数过多，请 15 分钟后再试' },
 });
 
+// Public auth calls are proxied through this origin so mobile browsers that
+// cannot reach Supabase directly can still register, sign in, and resend mail.
+const authProxyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '认证请求过于频繁，请稍后再试' },
+});
+
 // Page routes — explicit handlers before static so '/' isn't captured by index.html default.
 // Helper: send an HTML page with no-cache headers so the browser / CDN always
 // fetches the latest version (visitors won't see stale UI after a deploy).
@@ -165,6 +175,59 @@ app.get('/api/config', (req, res) => {
     supabaseUrl:     process.env.SUPABASE_URL,
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
   });
+});
+
+// Supabase Auth proxy. Signup/login/resend are public by design; rate limited
+// and forwarded with the public anon key only (never the service-role key).
+app.post('/api/auth/:action', authProxyLimiter, async (req, res) => {
+  const { action } = req.params;
+  const routes = {
+    signup: '/auth/v1/signup',
+    login: '/auth/v1/token?grant_type=password',
+    resend: '/auth/v1/resend',
+  };
+  if (!routes[action]) return res.status(404).json({ error: '认证操作不存在' });
+
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  if (!email || email.length > 320) return res.status(400).json({ message: '请填写有效邮箱地址。' });
+  if ((action === 'signup' || action === 'login') && !password) {
+    return res.status(400).json({ message: '请填写密码。' });
+  }
+  if (action === 'signup' && password.length < 6) {
+    return res.status(400).json({ message: '密码至少 6 位。' });
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !anonKey) return res.status(503).json({ message: '认证服务配置暂不可用。' });
+
+  try {
+    const endpoint = new URL(routes[action], supabaseUrl);
+    if (action === 'signup' || action === 'resend') {
+      endpoint.searchParams.set('redirect_to', 'https://ignightlead.com/login.html?email_confirmed=1');
+    }
+    const body = action === 'resend'
+      ? { type: 'signup', email }
+      : { email, password };
+    const result = await withTimeout((async () => {
+      const upstream = await fetch(endpoint, {
+        method: 'POST',
+        headers: { apikey: anonKey, 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(12000),
+      });
+      const responseText = await upstream.text();
+      let payload;
+      try { payload = responseText ? JSON.parse(responseText) : {}; }
+      catch { payload = { message: '认证服务返回了无法识别的响应。' }; }
+      return { status: upstream.status, payload };
+    })(), 15000, `Supabase auth ${action}`);
+    res.set('Cache-Control', 'no-store').status(result.status).json(result.payload);
+  } catch (error) {
+    console.error(`[auth] ${action} proxy failed:`, error.message);
+    res.status(502).json({ message: '认证服务暂时连接失败，请稍后重试。' });
+  }
 });
 
 // ── ICP generator (new-user wizard → editable ICP text) ──────────────────────

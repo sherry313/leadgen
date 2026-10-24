@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>登录 - 智拓客</title>
   <meta name="robots" content="noindex, nofollow">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -458,7 +457,6 @@
     return /^\/[^/]/.test(p) ? p : '/app';
   }
 
-  const _emailConfirmationRedirect = new URL('/login.html?email_confirmed=1', window.location.origin).toString();
   function _isAuthCallback() {
     const query = new URLSearchParams(window.location.search);
     const hash = new URLSearchParams(window.location.hash.slice(1));
@@ -476,26 +474,7 @@
     }
   })();
 
-  /* Supabase client init — fetch public credentials from /api/config so the
-     anon key isn't hardcoded in source. doSubmit() awaits this promise.
-     Local variable is `_sbClient` (not `supabase`) because the
-     @supabase/supabase-js UMD bundle defines a global `supabase` in script
-     scope; a top-level `let supabase` would throw
-     "Identifier 'supabase' has already been declared". */
-  let _sbClient = null;
   let _authMode = 'login'; // 'login' | 'register'
-  const _supabaseReady = (async () => {
-    try {
-      const r = await fetch('/api/config');
-      if (!r.ok) throw new Error('config fetch failed');
-      const cfg = await r.json();
-      if (cfg.supabaseUrl && cfg.supabaseAnonKey) {
-        _sbClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
-      }
-    } catch (e) {
-      console.error('[login] supabase init failed:', e);
-    }
-  })();
 
   function _showError(msg) {
     const el = document.getElementById('errorMsg');
@@ -549,29 +528,27 @@
       return;
     }
 
-    await _supabaseReady;
-    if (!_sbClient) {
-      _showError('邮箱确认已返回，但认证服务暂不可用，请刷新页面重试。');
-      return;
-    }
-
-    const { data, error } = await _sbClient.auth.getSession();
-    if (error) {
-      _showError('读取确认结果失败：' + error.message);
-      return;
-    }
-
-    const session = data?.session;
-    if (session?.access_token) {
-      localStorage.setItem('leadgen_accessToken', session.access_token);
+    const accessToken = hash.get('access_token');
+    const refreshToken = hash.get('refresh_token');
+    if (accessToken && refreshToken) {
+      const expiresIn = Number(hash.get('expires_in')) || 3600;
+      const session = {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: hash.get('token_type') || 'bearer',
+        expires_in: expiresIn,
+        expires_at: Math.floor(Date.now() / 1000) + expiresIn,
+      };
+      localStorage.setItem('leadgen_accessToken', accessToken);
       localStorage.setItem('leadgen_supabase_session', JSON.stringify(session));
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
       _showOk('邮箱确认成功，正在进入应用…');
       window.setTimeout(() => window.location.replace(_redirectTarget()), 600);
       return;
     }
 
     setMode('login');
-    _showOk('邮箱确认链接已打开，请使用刚注册的邮箱和密码登录。');
+    _showError('确认链接已失效或已使用。请重新发送确认邮件，再点最新邮件中的链接。');
   }
   function _regError(m) {
     m = m || '';
@@ -579,6 +556,18 @@
     if (/password/i.test(m) && /6/.test(m)) return '密码至少 6 位。';
     if (/valid email|invalid email/i.test(m)) return '邮箱格式不对。';
     return '注册失败：' + m;
+  }
+  async function _authProxyRequest(action, payload) {
+    const response = await fetch('/api/auth/' + encodeURIComponent(action), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.msg || data.message || data.error_description || data.error || ('HTTP ' + response.status));
+    }
+    return data;
   }
   function setMode(mode) {
     _authMode = mode;
@@ -628,42 +617,38 @@
     btn.textContent = _authMode === 'register' ? '注册中…' : '登录中…';
 
     try {
-      await _supabaseReady;
-      if (!_sbClient) {
-        _showError('服务暂不可用，请稍后再试');
-        return;
-      }
-
       if (_authMode === 'register') {
-        const { data, error } = await _sbClient.auth.signUp({
-          email,
-          password: pwd,
-          options: { emailRedirectTo: _emailConfirmationRedirect },
-        });
-        if (error) { _showError(_regError(error.message)); return; }
+        const data = await _authProxyRequest('signup', { email, password: pwd });
         // Email-confirmation OFF in Supabase → a session is returned, log in directly.
-        if (data?.session?.access_token) {
-          localStorage.setItem('leadgen_accessToken', data.session.access_token);
-          localStorage.setItem('leadgen_supabase_session', JSON.stringify(data.session));
+        const session = data?.session || (data?.access_token ? data : null);
+        if (session?.access_token) {
+          localStorage.setItem('leadgen_accessToken', session.access_token);
+          localStorage.setItem('leadgen_supabase_session', JSON.stringify(session));
           window.location.href = _redirectTarget();
           return;
         }
         // Otherwise email confirmation is required.
-        _showOk('注册成功！请到邮箱点确认链接，然后回来登录。');
         setMode('login');
+        _showOk('注册成功！请到邮箱点确认链接，然后回来登录。');
         return;
       }
 
       // login
-      const { data, error } = await _sbClient.auth.signInWithPassword({ email, password: pwd });
-      if (error || !data?.session?.access_token) {
-        const failure = _loginError(error?.message || '没有收到登录凭证');
+      let data;
+      try {
+        data = await _authProxyRequest('login', { email, password: pwd });
+      } catch (error) {
+        const failure = _loginError(error.message);
         _showError(failure.message);
         _showRecovery(failure.canResend);
         return;
       }
-      localStorage.setItem('leadgen_accessToken', data.session.access_token);
-      localStorage.setItem('leadgen_supabase_session', JSON.stringify(data.session));
+      if (!data?.access_token) {
+        _showError('登录失败：认证服务没有返回登录凭证，请重试。');
+        return;
+      }
+      localStorage.setItem('leadgen_accessToken', data.access_token);
+      localStorage.setItem('leadgen_supabase_session', JSON.stringify(data));
       window.location.href = _redirectTarget();
     } catch (e) {
       console.error('[auth] error:', e);
@@ -685,14 +670,7 @@
     button.disabled = true;
     button.textContent = '发送中…';
     try {
-      await _supabaseReady;
-      if (!_sbClient) throw new Error('认证服务暂不可用');
-      const { error } = await _sbClient.auth.resend({
-        type: 'signup',
-        email,
-        options: { emailRedirectTo: _emailConfirmationRedirect },
-      });
-      if (error) throw error;
+      await _authProxyRequest('resend', { email });
       _showRecovery(false);
       _showOk('确认邮件已重新发送。请打开邮箱里的链接，确认后再回来登录。');
     } catch (error) {
