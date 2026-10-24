@@ -457,6 +457,19 @@
     return /^\/[^/]/.test(p) ? p : '/app';
   }
 
+  function _prepareAccountState(userId) {
+    if (!userId) return;
+    const marker = 'ztk_auth_user_id';
+    const previous = localStorage.getItem(marker);
+    if (previous !== userId) {
+      const keep = new Set(['leadgen_accessToken', 'leadgen_supabase_session', marker, 'ztk_side_w']);
+      Object.keys(localStorage).forEach(key => {
+        if (!keep.has(key)) localStorage.removeItem(key);
+      });
+    }
+    localStorage.setItem(marker, userId);
+  }
+
   function _isAuthCallback() {
     const query = new URLSearchParams(window.location.search);
     const hash = new URLSearchParams(window.location.hash.slice(1));
@@ -626,6 +639,7 @@
           expires_at: rawSession.expires_at || Math.floor(Date.now() / 1000) + (Number(rawSession.expires_in) || 3600),
         } : null;
         if (session?.access_token) {
+          _prepareAccountState(session.user?.id || data?.user?.id);
           localStorage.setItem('leadgen_accessToken', session.access_token);
           localStorage.setItem('leadgen_supabase_session', JSON.stringify(session));
           window.location.href = _redirectTarget();
@@ -652,6 +666,7 @@
         return;
       }
       data.expires_at = data.expires_at || Math.floor(Date.now() / 1000) + (Number(data.expires_in) || 3600);
+      _prepareAccountState(data.user?.id);
       localStorage.setItem('leadgen_accessToken', data.access_token);
       localStorage.setItem('leadgen_supabase_session', JSON.stringify(data));
       window.location.href = _redirectTarget();

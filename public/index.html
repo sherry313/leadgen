@@ -2976,7 +2976,20 @@
     var hasToken = false;
     try {
       var s = localStorage.getItem('leadgen_supabase_session');
-      if (s) { var o = JSON.parse(s); hasToken = !!(o && o.access_token); }
+      if (s) {
+        var o = JSON.parse(s);
+        hasToken = !!(o && o.access_token);
+        var userId = o && o.user && o.user.id;
+        if (hasToken && userId) {
+          var marker = 'ztk_auth_user_id';
+          var previous = localStorage.getItem(marker);
+          if (previous !== userId) {
+            var keep = new Set(['leadgen_accessToken', 'leadgen_supabase_session', marker, 'ztk_side_w']);
+            Object.keys(localStorage).forEach(function (key) { if (!keep.has(key)) localStorage.removeItem(key); });
+          }
+          localStorage.setItem(marker, userId);
+        }
+      }
       if (!hasToken) { var t = localStorage.getItem('leadgen_accessToken'); hasToken = !!(t && t.trim()); }
     } catch (e) {}
     if (!hasToken) location.replace('/login.html?redirect=' + encodeURIComponent(p));
