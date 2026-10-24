@@ -620,7 +620,11 @@
       if (_authMode === 'register') {
         const data = await _authProxyRequest('signup', { email, password: pwd });
         // Email-confirmation OFF in Supabase → a session is returned, log in directly.
-        const session = data?.session || (data?.access_token ? data : null);
+        const rawSession = data?.session || (data?.access_token ? data : null);
+        const session = rawSession ? {
+          ...rawSession,
+          expires_at: rawSession.expires_at || Math.floor(Date.now() / 1000) + (Number(rawSession.expires_in) || 3600),
+        } : null;
         if (session?.access_token) {
           localStorage.setItem('leadgen_accessToken', session.access_token);
           localStorage.setItem('leadgen_supabase_session', JSON.stringify(session));
@@ -647,6 +651,7 @@
         _showError('登录失败：认证服务没有返回登录凭证，请重试。');
         return;
       }
+      data.expires_at = data.expires_at || Math.floor(Date.now() / 1000) + (Number(data.expires_in) || 3600);
       localStorage.setItem('leadgen_accessToken', data.access_token);
       localStorage.setItem('leadgen_supabase_session', JSON.stringify(data));
       window.location.href = _redirectTarget();
