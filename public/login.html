@@ -458,12 +458,20 @@
     return /^\/[^/]/.test(p) ? p : '/app';
   }
 
+  const _emailConfirmationRedirect = new URL('/login.html?email_confirmed=1', window.location.origin).toString();
+  function _isAuthCallback() {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    return query.get('email_confirmed') === '1' || hash.has('access_token') ||
+      hash.has('error_description') || hash.get('type') === 'signup';
+  }
+
   /* Auto-redirect if already logged in (either auth scheme leaves the JWT
      under leadgen_accessToken; the supabase session blob is the source of
      truth but checking the token is faster). */
   (function() {
     const token = localStorage.getItem('leadgen_accessToken');
-    if (token && token.trim()) {
+    if (token && token.trim() && !_isAuthCallback()) {
       window.location.href = _redirectTarget();
     }
   })();
@@ -530,6 +538,41 @@
     el.classList.add('visible');
     document.getElementById('errorMsg').classList.remove('visible');
   }
+
+  async function _handleEmailConfirmationCallback() {
+    if (!_isAuthCallback()) return;
+
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const callbackError = hash.get('error_description');
+    if (callbackError) {
+      _showError('邮箱确认失败：' + callbackError.replace(/\+/g, ' '));
+      return;
+    }
+
+    await _supabaseReady;
+    if (!_sbClient) {
+      _showError('邮箱确认已返回，但认证服务暂不可用，请刷新页面重试。');
+      return;
+    }
+
+    const { data, error } = await _sbClient.auth.getSession();
+    if (error) {
+      _showError('读取确认结果失败：' + error.message);
+      return;
+    }
+
+    const session = data?.session;
+    if (session?.access_token) {
+      localStorage.setItem('leadgen_accessToken', session.access_token);
+      localStorage.setItem('leadgen_supabase_session', JSON.stringify(session));
+      _showOk('邮箱确认成功，正在进入应用…');
+      window.setTimeout(() => window.location.replace(_redirectTarget()), 600);
+      return;
+    }
+
+    setMode('login');
+    _showOk('邮箱确认链接已打开，请使用刚注册的邮箱和密码登录。');
+  }
   function _regError(m) {
     m = m || '';
     if (/already registered|already exists|User already/i.test(m)) return '该邮箱已注册，请直接登录。';
@@ -592,7 +635,11 @@
       }
 
       if (_authMode === 'register') {
-        const { data, error } = await _sbClient.auth.signUp({ email, password: pwd });
+        const { data, error } = await _sbClient.auth.signUp({
+          email,
+          password: pwd,
+          options: { emailRedirectTo: _emailConfirmationRedirect },
+        });
         if (error) { _showError(_regError(error.message)); return; }
         // Email-confirmation OFF in Supabase → a session is returned, log in directly.
         if (data?.session?.access_token) {
@@ -643,7 +690,7 @@
       const { error } = await _sbClient.auth.resend({
         type: 'signup',
         email,
-        options: { emailRedirectTo: window.location.origin + '/login.html' },
+        options: { emailRedirectTo: _emailConfirmationRedirect },
       });
       if (error) throw error;
       _showRecovery(false);
@@ -656,6 +703,11 @@
       button.textContent = '重新发送确认邮件';
     }
   }
+
+  _handleEmailConfirmationCallback().catch(error => {
+    console.error('[auth] email confirmation callback failed:', error);
+    _showError('处理邮箱确认失败：' + (error.message || '请刷新页面重试'));
+  });
 
   /* Allow Enter key to submit from either field. */
   ['loginEmail', 'loginPassword', 'loginPasswordConfirm'].forEach(id => {
